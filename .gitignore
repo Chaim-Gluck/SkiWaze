@@ -29,5 +29,6 @@ pipeline/.cache/
 *.sln
 *.sw?
 
-# Pipeline scratch/probe files
-pipeline/_*
+# Pipeline probe/scratch dumps (regenerable). Real tools like _trapped.ts / _routetest.ts
+# are tracked; only ignore genuine throwaway probe output.
+pipeline/_probe.json

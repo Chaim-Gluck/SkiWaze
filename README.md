@@ -81,11 +81,41 @@ no per-resort graph code; adding a resort just runs the same passes.
   (force-merge/split nodes, add/remove connectors, set lift download capability).
 
 ## Adding a resort
-1. Add an entry to `RESORTS` in `src/config/resorts.ts` (id, name, country, center, bbox, timezone).
-2. Run `npm run data <id>` (or `npm run data:all`). The **same** graph-building rules above run
-   automatically — no per-resort code. The compiled dataset lands in `public/resorts/<id>/`.
-3. Audit connectivity with `npm run check:trapped <id>`; fix any genuinely isolated fragments via
-   `pipeline/overrides/<id>.json`. Commit the `public/resorts/<id>/*` files.
+The pipeline is fully generic — the same graph rules apply to every resort, with **no
+per-resort code**. To add one:
+
+1. **Define it** — add an entry to `RESORTS` in `src/config/resorts.ts`
+   (`id`, `name`, `country`, `center`, `bbox`, `defaultZoom`, `timezone`). The **`bbox`** is
+   the OpenStreetMap extraction area, so make it cover the whole ski area (not too tight).
+2. **Build its data** — `npm run data <id>`. Fetches OSM + elevation and writes
+   `public/resorts/<id>/{graph,geo,meta}.json` and updates `resorts/index.json`.
+3. **Audit connectivity** —
+   ```bash
+   npm run check:trapped <id>   # nodes that can't reach a lift / are isolated
+   npm run routetest <id>       # smoke-test real routing from the summit
+   ```
+   Fix genuine data gaps with a `pipeline/overrides/<id>.json` file. Real-world dead-ends
+   (e.g. a valley run ending at a road with no lift) are fine to leave.
+4. **Preview** — `npm run dev`, pick the resort, try a few A→B routes and the longest-run widget.
+5. **Ship** — commit the `public/resorts/<id>/*` files and `src/config/resorts.ts` (plus any
+   override), push, then deploy (below).
+
+## Deploy
+Hosted on **Azure Static Web Apps** (app `skiwaze`, resource group `skiwaze-rg`). Deploys are
+**manual** — a plain `git push` never publishes.
+
+- **GitHub Actions (recommended):** Actions tab → *Deploy to Azure Static Web Apps (manual)* →
+  **Run workflow**. It builds on the runner and uploads `dist/`. Requires the repo secret
+  `AZURE_STATIC_WEB_APPS_API_TOKEN` (the SWA deployment token). The workflow re-resolves
+  dependencies from public npm, so it does not depend on the local corporate registry.
+- **CLI (local):**
+  ```bash
+  npm run build
+  npx @azure/static-web-apps-cli deploy dist \
+    --deployment-token $(az staticwebapp secrets list -n skiwaze -g skiwaze-rg --query properties.apiKey -o tsv) \
+    --env production
+  ```
+  (Ensure `az account show` is on the subscription that owns the resource first.)
 
 ## Project layout
 ```
