@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy to <resortId>.json (e.g. madonna-di-campiglio.json) to correct graph heuristics. Applied after auto-build.",
+  "mergeNodes": [["n12", "n340"]],
+  "removeEdges": ["e501"],
+  "addConnectors": [
+    { "from": "n18", "to": "n77", "kind": "skiable_down" },
+    { "from": "n90", "to": "n91", "kind": "flat_traverse", "bidirectional": true }
+  ],
+  "setLiftDownload": [{ "liftName": "Spinale Express", "canDownload": true }]
+}

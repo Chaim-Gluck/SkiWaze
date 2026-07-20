@@ -1,0 +1,13 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/resorts/*", "/favicon.svg"]
+  },
+  "routes": [
+    { "route": "/resorts/*", "headers": { "cache-control": "public, max-age=3600" } },
+    { "route": "/assets/*", "headers": { "cache-control": "public, max-age=31536000, immutable" } }
+  ],
+  "mimeTypes": {
+    ".json": "application/json"
+  }
+}
