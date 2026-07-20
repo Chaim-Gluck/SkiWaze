@@ -1,0 +1,16 @@
+{
+  "addConnectors": [
+    {
+      "from": "n234",
+      "to": "n95",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "from": "n95",
+      "to": "n235",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    }
+  ]
+}
