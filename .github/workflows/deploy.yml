@@ -1,0 +1,42 @@
+name: Deploy to Azure Static Web Apps (manual)
+
+# Manual-only: this deploy runs when you click "Run workflow" in the Actions tab.
+# It does NOT run automatically on push.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    name: Build and deploy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        # The committed package-lock.json resolves against an internal corp npm mirror that
+        # GitHub-hosted runners can't reach, so we drop it and resolve fresh from public npm.
+        run: |
+          rm -f package-lock.json
+          npm install --registry=https://registry.npmjs.org --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          # We build above, so skip the action's built-in Oryx build and just upload dist/.
+          skip_app_build: true
+          skip_api_build: true
+          app_location: "dist"
