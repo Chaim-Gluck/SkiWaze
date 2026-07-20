@@ -1,0 +1,10 @@
+{
+  "addConnectors": [
+    {
+      "from": "n2410",
+      "to": "n2411",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    }
+  ]
+}

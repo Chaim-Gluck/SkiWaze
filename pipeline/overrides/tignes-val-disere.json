@@ -1,0 +1,10 @@
+{
+  "addConnectors": [
+    {
+      "from": "n74",
+      "to": "n453",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    }
+  ]
+}
