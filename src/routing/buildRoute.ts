@@ -6,9 +6,11 @@ import type {
   RouteObjective,
   RouteStats,
   RouteWarning,
+  DisplayStep,
 } from '../types/domain';
 import type { GraphIndex } from './graphIndex';
 import { edgeCost } from './cost';
+import { liftClosureKey, pisteClosureKey } from './closures';
 
 function pisteLabel(edge: GraphEdge): string {
   const ref = edge.pisteRef;
@@ -139,5 +141,77 @@ export function buildRoute(
     return true;
   });
 
-  return { id, objective, legs, stats, warnings };
+  return { id, objective, legs, steps: groupSteps(edges, legs), stats, warnings };
+}
+
+const SHORT_CONNECTOR_M = 40;
+
+function stepKeyForEdge(e: GraphEdge): string {
+  if (e.kind === 'piste') return `piste|${e.pisteRef ?? e.pisteName ?? ''}|${e.color ?? ''}`;
+  if (e.kind === 'lift') return `lift|${e.liftName ?? ''}|${e.isDownload ? 'd' : 'u'}`;
+  return 'conn';
+}
+
+function stepLabelForEdge(e: GraphEdge): string {
+  if (e.kind === 'piste') return `Ski ${pisteLabel(e)} (${e.color ?? 'unknown'})`;
+  if (e.kind === 'lift') {
+    const name = e.liftName ? `"${e.liftName}"` : 'lift';
+    return `Take ${name} (${(e.liftType ?? 'lift').replace('_', ' ')}) ${e.isDownload ? 'down' : 'up'}`;
+  }
+  return 'Traverse';
+}
+
+function closureForEdge(e: GraphEdge): { key: string | null; label: string | null } {
+  if (e.kind === 'lift') {
+    const key = liftClosureKey(e);
+    if (key) return { key, label: `Lift: ${e.liftName}` };
+  }
+  if (e.kind === 'piste') {
+    const key = pisteClosureKey(e);
+    if (key) return { key, label: `Run: ${pisteLabel(e)}` };
+  }
+  return { key: null, label: null };
+}
+
+/**
+ * Consolidate consecutive legs into readable steps: merge same-run / same-lift legs, and
+ * absorb short (<40 m) connectors into the current step. Display-only; leg indices are
+ * preserved via [fromLeg, toLeg] so a step can still highlight its edges on the map.
+ */
+function groupSteps(edges: GraphEdge[], legs: RouteLeg[]): DisplayStep[] {
+  const steps: DisplayStep[] = [];
+  let cur: DisplayStep | null = null;
+  let curKey = '';
+
+  edges.forEach((e, i) => {
+    const shortConnector = e.kind === 'connector' && e.lengthM < SHORT_CONNECTOR_M;
+    const key = stepKeyForEdge(e);
+    if (cur && (shortConnector || key === curKey)) {
+      cur.distanceM += legs[i].distanceM;
+      cur.durationS += legs[i].durationS;
+      cur.toLeg = i;
+      cur.synthetic = cur.synthetic || !!e.synthetic;
+      cur.custom = cur.custom || !!e.custom;
+    } else {
+      const cl = closureForEdge(e);
+      cur = {
+        kind: e.kind,
+        label: stepLabelForEdge(e),
+        distanceM: legs[i].distanceM,
+        durationS: legs[i].durationS,
+        color: e.color,
+        isDownload: e.isDownload,
+        synthetic: !!e.synthetic,
+        custom: !!e.custom,
+        fromLeg: i,
+        toLeg: i,
+        closureKey: cl.key,
+        closureLabel: cl.label,
+      };
+      steps.push(cur);
+      curKey = key;
+    }
+  });
+
+  return steps;
 }

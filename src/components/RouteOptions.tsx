@@ -8,11 +8,12 @@ interface Props {
   routes: Route[];
   selectedIndex: number;
   onSelect: (i: number) => void;
-  selectedStep: number | null;
-  onStepClick: (routeIndex: number, legIndex: number) => void;
+  selectedRange: [number, number] | null;
+  onStepClick: (routeIndex: number, fromLeg: number, toLeg: number) => void;
+  onMarkClosed: (key: string, label: string) => void;
 }
 
-export function RouteOptions({ routes, selectedIndex, onSelect, selectedStep, onStepClick }: Props) {
+export function RouteOptions({ routes, selectedIndex, onSelect, selectedRange, onStepClick, onMarkClosed }: Props) {
   return (
     <div className="panel">
       <h3>{routes.length} route option{routes.length === 1 ? '' : 's'}</h3>
@@ -23,9 +24,10 @@ export function RouteOptions({ routes, selectedIndex, onSelect, selectedStep, on
           index={i}
           color={ROUTE_COLORS[i % ROUTE_COLORS.length]}
           selected={i === selectedIndex}
-          selectedStep={i === selectedIndex ? selectedStep : null}
+          selectedRange={i === selectedIndex ? selectedRange : null}
           onSelect={() => onSelect(i)}
           onStepClick={onStepClick}
+          onMarkClosed={onMarkClosed}
         />
       ))}
     </div>
@@ -37,17 +39,19 @@ function RouteCard({
   index,
   color,
   selected,
-  selectedStep,
+  selectedRange,
   onSelect,
   onStepClick,
+  onMarkClosed,
 }: {
   route: Route;
   index: number;
   color: string;
   selected: boolean;
-  selectedStep: number | null;
+  selectedRange: [number, number] | null;
   onSelect: () => void;
-  onStepClick: (routeIndex: number, legIndex: number) => void;
+  onStepClick: (routeIndex: number, fromLeg: number, toLeg: number) => void;
+  onMarkClosed: (key: string, label: string) => void;
 }) {
   const [showSteps, setShowSteps] = useState(false);
   const s = route.stats;
@@ -113,24 +117,46 @@ function RouteCard({
           setShowSteps((v) => !v);
         }}
       >
-        {showSteps ? 'Hide steps' : `Show ${route.legs.length} steps`}
+        {showSteps ? 'Hide steps' : `Show ${route.steps.length} steps`}
       </button>
 
       {showSteps && (
         <ol className="steps">
-          {route.legs.map((l, i) => (
-            <li
-              key={i}
-              className={`step step-${l.kind} ${l.custom ? 'step-custom' : l.synthetic ? 'step-synthetic' : ''} ${selectedStep === i ? 'step-active' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onStepClick(index, i);
-              }}
-            >
-              {l.custom ? '★ ' : l.synthetic ? '⚠ ' : ''}{l.description}
-              <span className="muted"> · {fmtDuration(l.durationS)}</span>
-            </li>
-          ))}
+          {route.steps.map((step, i) => {
+            const active = !!selectedRange && selectedRange[0] === step.fromLeg && selectedRange[1] === step.toLeg;
+            const icon =
+              step.kind === 'lift'
+                ? step.isDownload ? '🚠⬇' : '🚠'
+                : step.custom ? '★' : step.synthetic ? '⚠' : step.kind === 'connector' ? '↔' : '🎿';
+            return (
+              <li
+                key={i}
+                className={`step step-${step.kind} ${step.custom ? 'step-custom' : step.synthetic ? 'step-synthetic' : ''} ${active ? 'step-active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStepClick(index, step.fromLeg, step.toLeg);
+                }}
+              >
+                <span className="step-body">
+                  <span className="step-ico">{icon}</span> {step.label}
+                  <span className="muted"> · {fmtDistance(step.distanceM)} · {fmtDuration(step.durationS)}</span>
+                </span>
+                {step.closureKey && (
+                  <button
+                    type="button"
+                    className="step-close"
+                    title={`Mark "${step.closureLabel}" closed`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMarkClosed(step.closureKey!, step.closureLabel!);
+                    }}
+                  >
+                    ⊘
+                  </button>
+                )}
+              </li>
+            );
+          })}
         </ol>
       )}
     </div>

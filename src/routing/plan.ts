@@ -5,6 +5,7 @@ import { shortestPath } from './dijkstra';
 import { alternativeRoutes } from './alternatives';
 import { longestDownhillStreak, longestDownhillRuns } from './longestStreak';
 import { buildRoute } from './buildRoute';
+import { resolveClosedEdgeIds } from './closures';
 import { haversineM } from '../utils/geo';
 
 export interface PlanResult {
@@ -24,11 +25,19 @@ export interface LongestRun {
   startNodeId: string;
   endNodeId: string;
   coords: [number, number][];
+  /** The exact ordered edge chain of the run (for rendering it as a route). */
+  edges: GraphEdge[];
 }
 
 /** Find the longest possible ski run (no lift) across the whole resort, within the user's level. */
 export function findLongestRun(graph: ResortGraph, prefs: Preferences): LongestRun | null {
   return findLongestRuns(graph, prefs, 1)[0] ?? null;
+}
+
+/** Build a Route object from an explicit edge chain (e.g. to display a longest run as a route). */
+export function routeForEdges(graph: ResortGraph, prefs: Preferences, edges: GraphEdge[], id = 'longest-run'): Route {
+  const index = new GraphIndex(graph);
+  return buildRoute(index, edges, prefs, new Date(), 'fastest', id);
 }
 
 /** Find up to `k` diverse longest lift-free runs across the resort, within the user's level. */
@@ -52,6 +61,7 @@ export function findLongestRuns(graph: ResortGraph, prefs: Preferences, k = 3): 
       startNodeId: chain[0].from,
       endNodeId: chain[chain.length - 1].to,
       coords,
+      edges: chain,
     };
   });
 }
@@ -68,13 +78,14 @@ function rankRoute(r: Route, prefs: Preferences): number {
 }
 
 /** Nodes reachable from `startId` using skiing only (pistes within level + connectors, no lifts). */
-function skiOnlyReachable(index: GraphIndex, startId: string, prefs: Preferences): Set<string> {
+function skiOnlyReachable(index: GraphIndex, startId: string, prefs: Preferences, closedEdgeIds: ReadonlySet<string>): Set<string> {
   const maxRank = colorRank(prefs.maxDifficulty);
   const seen = new Set<string>([startId]);
   const queue = [startId];
   while (queue.length) {
     const cur = queue.shift()!;
     for (const e of index.outEdges(cur)) {
+      if (closedEdgeIds.has(e.id)) continue;
       if (e.kind === 'lift') continue;
       if (e.kind === 'piste' && colorRank(e.color) > maxRank) continue;
       if (prefs.avoidSyntheticBridges && e.synthetic && !e.custom) continue;
@@ -94,8 +105,9 @@ function nearestSkiDestination(
   fromNodeId: string,
   toNodeId: string,
   prefs: Preferences,
+  closedEdgeIds: ReadonlySet<string>,
 ): { skiable: boolean; suggestion?: { name: string; nodeId: string } } {
-  const reachable = skiOnlyReachable(index, fromNodeId, prefs);
+  const reachable = skiOnlyReachable(index, fromNodeId, prefs, closedEdgeIds);
   if (reachable.has(toNodeId)) return { skiable: true };
 
   const toNode = index.node(toNodeId);
@@ -120,6 +132,7 @@ function nearestSkiDestination(
 export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResult {
   const index = new GraphIndex(graph);
   const { fromNodeId, toNodeId, prefs, objective, timing } = request;
+  const closedEdgeIds = resolveClosedEdgeIds(graph, request.closedKeys ?? []);
 
   if (!index.node(fromNodeId)) return { routes: [], error: 'Start point not found.' };
   if (!index.node(toNodeId)) return { routes: [], error: 'Destination not found.' };
@@ -141,12 +154,18 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
   };
 
   if (objective === 'longest_streak') {
-    return planLongestStreak(index, fromNodeId, prefs, provisionalStart, finalize);
+    return planLongestStreak(index, fromNodeId, prefs, provisionalStart, finalize, closedEdgeIds);
   }
 
-  const paths = alternativeRoutes(index, fromNodeId, toNodeId, prefs, provisionalStart, 3);
+  const paths = alternativeRoutes(index, fromNodeId, toNodeId, prefs, provisionalStart, 3, 0.7, closedEdgeIds);
   if (paths.length === 0) {
-    return { routes: [], error: 'No route found with your current preferences (try relaxing difficulty, lift types, or turning off "Avoid app-added bridges").' };
+    const anyClosed = closedEdgeIds.size > 0;
+    return {
+      routes: [],
+      error: anyClosed
+        ? 'No route found — some lifts/runs on the way are marked closed. Try reopening one, or relax difficulty / lift types.'
+        : 'No route found with your current preferences (try relaxing difficulty, lift types, or turning off "Avoid app-added bridges").',
+    };
   }
   const routes = paths
     .map((edges, i) => finalize(edges, `route-${i + 1}`))
@@ -154,7 +173,7 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     .sort((a, b) => rankRoute(a, prefs) - rankRoute(b, prefs));
 
   // Note when no lift-free ski route exists to this destination, with a suggestion.
-  const ski = nearestSkiDestination(graph, index, fromNodeId, toNodeId, prefs);
+  const ski = nearestSkiDestination(graph, index, fromNodeId, toNodeId, prefs, closedEdgeIds);
   if (!ski.skiable) {
     return { routes, noLiftFreeRoute: true, nearestSkiDestination: ski.suggestion };
   }
@@ -167,6 +186,7 @@ function planLongestStreak(
   prefs: RouteRequest['prefs'],
   provisionalStart: Date,
   finalize: (edges: GraphEdge[], id: string) => Route,
+  closedEdgeIds: ReadonlySet<string>,
 ): PlanResult {
   const streak = longestDownhillStreak(index);
   if (streak.length === 0) {
@@ -179,7 +199,7 @@ function planLongestStreak(
   if (fromNodeId === streakTop) {
     combined = streak;
   } else {
-    const approach = shortestPath(index, fromNodeId, streakTop, prefs, provisionalStart);
+    const approach = shortestPath(index, fromNodeId, streakTop, prefs, provisionalStart, undefined, closedEdgeIds);
     if (!approach) {
       // Can't reach the streak top; offer the streak alone.
       combined = streak;

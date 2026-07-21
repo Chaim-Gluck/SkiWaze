@@ -26,6 +26,38 @@ export function distance3dM(a: GeoPoint, b: GeoPoint): number {
   return Math.sqrt(flat * flat + dz * dz);
 }
 
+/** Project a point onto a single segment [a,b]; returns closest point, distance, param t∈[0,1]. */
+export function projectOnSegment(p: GeoPoint, a: GeoPoint, b: GeoPoint): { point: GeoPoint; dist: number; t: number } {
+  const mLat = 111320;
+  const mLon = 111320 * Math.cos((p.lat * Math.PI) / 180);
+  const ax = (a.lon - p.lon) * mLon;
+  const ay = (a.lat - p.lat) * mLat;
+  const bx = (b.lon - p.lon) * mLon;
+  const by = (b.lat - p.lat) * mLat;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len2 = dx * dx + dy * dy || 1;
+  let t = -(ax * dx + ay * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  const cx = ax + t * dx;
+  const cy = ay + t * dy;
+  const dist = Math.hypot(cx, cy);
+  const lon = a.lon + t * (b.lon - a.lon);
+  const lat = a.lat + t * (b.lat - a.lat);
+  const ele = a.ele != null && b.ele != null ? a.ele + t * (b.ele - a.ele) : (a.ele ?? b.ele ?? null);
+  return { point: { lon, lat, ele }, dist, t };
+}
+
+/** Project a point onto a polyline; returns the closest point + its segment index (1-based: segment geometry[i-1]->geometry[i]) and distance. */
+export function projectOnPolyline(p: GeoPoint, geometry: GeoPoint[]): { point: GeoPoint; dist: number; segIdx: number; t: number } {
+  let best = { point: geometry[0], dist: Infinity, segIdx: 1, t: 0 };
+  for (let i = 1; i < geometry.length; i++) {
+    const pr = projectOnSegment(p, geometry[i - 1], geometry[i]);
+    if (pr.dist < best.dist) best = { point: pr.point, dist: pr.dist, segIdx: i, t: pr.t };
+  }
+  return best;
+}
+
 /** Sum of 3D segment lengths along a polyline. */
 export function polylineLength3dM(points: GeoPoint[]): number {
   let total = 0;

@@ -210,6 +210,8 @@ export interface RouteRequest {
   objective: RouteObjective;
   timing: TripTiming;
   prefs: Preferences;
+  /** Closure keys (lift:<name> / piste:<ref|name> / edge:<id>) to exclude from routing. */
+  closedKeys?: string[];
 }
 
 export interface RouteLeg {
@@ -258,10 +260,33 @@ export interface RouteStats {
   arriveTime?: string;
 }
 
+/**
+ * A consolidated, human-readable route step covering one or more consecutive legs
+ * (same run/lift; tiny connectors absorbed). Display-only — routing uses `legs`.
+ */
+export interface DisplayStep {
+  kind: EdgeKind;
+  label: string;
+  distanceM: number;
+  durationS: number;
+  color?: PisteColor;
+  isDownload?: boolean;
+  synthetic: boolean;
+  custom: boolean;
+  /** Inclusive leg-index range this step covers (for map highlight). */
+  fromLeg: number;
+  toLeg: number;
+  /** Key to mark this run/lift closed, or null when not directly closable. */
+  closureKey: string | null;
+  closureLabel: string | null;
+}
+
 export interface Route {
   id: string;
   objective: RouteObjective;
   legs: RouteLeg[];
+  /** Grouped, readable steps derived from `legs` (presentation only). */
+  steps: DisplayStep[];
   stats: RouteStats;
   warnings: RouteWarning[];
 }

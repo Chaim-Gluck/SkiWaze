@@ -295,9 +295,23 @@ button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .link-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 12px; padding: 6px 0 0; }
 .steps { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
-.step { margin-bottom: 4px; cursor: pointer; border-radius: 4px; padding: 2px 4px; }
+.step { margin-bottom: 4px; cursor: pointer; border-radius: 4px; padding: 2px 4px; display: flex; align-items: flex-start; gap: 6px; }
 .step:hover { background: rgba(255, 152, 0, 0.12); }
 .step-active { background: rgba(255, 152, 0, 0.28); outline: 1px solid var(--accent); }
+.step-body { flex: 1; min-width: 0; }
+.step-ico { display: inline-block; }
+.step-close {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  color: #ef5350;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.2;
+  padding: 0 2px;
+}
+.step-close:hover { color: #ff8a80; }
+.closed-dot { background: #ef5350; }
 .step-lift { color: #ce93d8; }
 .step-connector { color: var(--muted); }
 .step-synthetic { color: #e991ff; border-left: 3px dashed #b04fd6; padding-left: 6px; }

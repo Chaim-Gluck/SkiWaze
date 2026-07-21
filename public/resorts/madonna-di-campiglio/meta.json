@@ -16,20 +16,20 @@
     "defaultZoom": 12.5,
     "timezone": "Europe/Rome"
   },
-  "generatedAt": "2026-07-20T21:51:46.211Z",
+  "generatedAt": "2026-07-21T11:38:29.229Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
     "nodeCount": 450,
-    "edgeCount": 1203,
-    "pisteEdges": 329,
+    "edgeCount": 1205,
+    "pisteEdges": 330,
     "liftEdges": 96,
-    "connectorEdges": 778,
+    "connectorEdges": 779,
     "meaningfulPoints": 235,
-    "reachableFromLifts": 449,
+    "reachableFromLifts": 450,
     "unreachableNodes": 1,
     "warningsByCode": {
       "missing_opening_hours": 76,
-      "inferred_connector": 3,
+      "inferred_connector": 4,
       "unreachable_component": 1
     }
   },
@@ -349,6 +349,10 @@
     {
       "code": "inferred_connector",
       "message": "Added 240 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
       "code": "unreachable_component",

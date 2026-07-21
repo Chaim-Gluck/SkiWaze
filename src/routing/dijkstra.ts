@@ -59,6 +59,7 @@ export function shortestPath(
   prefs: Preferences,
   startDate: Date,
   penalties?: Map<string, number>,
+  closedEdgeIds?: ReadonlySet<string>,
 ): PathResult | null {
   const bestWeight = new Map<string, number>();
   const timeAt = new Map<string, number>();
@@ -77,6 +78,7 @@ export function shortestPath(
     const arrival = new Date(startDate.getTime() + elapsed * 1000);
 
     for (const edge of index.outEdges(cur)) {
+      if (closedEdgeIds?.has(edge.id)) continue; // manually/live closed
       const cost = edgeCost(edge, prefs, arrival);
       if (!cost.allowed || !Number.isFinite(cost.weight)) continue;
       const penalty = penalties?.get(edge.id) ?? 1;

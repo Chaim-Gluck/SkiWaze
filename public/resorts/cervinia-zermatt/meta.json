@@ -16,20 +16,20 @@
     "defaultZoom": 12,
     "timezone": "Europe/Zurich"
   },
-  "generatedAt": "2026-07-20T21:42:03.865Z",
+  "generatedAt": "2026-07-21T11:38:29.652Z",
   "stats": {
     "resortId": "cervinia-zermatt",
     "nodeCount": 934,
-    "edgeCount": 2760,
-    "pisteEdges": 824,
+    "edgeCount": 2763,
+    "pisteEdges": 825,
     "liftEdges": 121,
-    "connectorEdges": 1815,
+    "connectorEdges": 1817,
     "meaningfulPoints": 349,
-    "reachableFromLifts": 914,
+    "reachableFromLifts": 915,
     "unreachableNodes": 20,
     "warningsByCode": {
       "missing_opening_hours": 98,
-      "inferred_connector": 4,
+      "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
@@ -441,6 +441,10 @@
     {
       "code": "inferred_connector",
       "message": "Rescued 3 trapped node(s) with a forced traverse to the nearest reachable point."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
       "code": "unreachable_component",

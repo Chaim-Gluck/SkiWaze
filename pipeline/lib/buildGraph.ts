@@ -759,6 +759,99 @@ export function buildResortGraph(
     });
   }
 
+  // --- Lift-top ski-out snap ---------------------------------------------
+  // A lift top you can only ride back down (no ski-out at all) but a piste passes within
+  // liftSkiOutRadius mid-edge. Unlike the general 45m endpoint snap (node-to-line) and the
+  // node-to-node bridge/rescue passes, this targets lift tops specifically with a larger
+  // radius and projects onto the nearest downhill point of a piste line (splitting it).
+  {
+    const liftTops = new Set<string>();
+    for (const e of edges) if (e.kind === 'lift' && !e.isDownload) liftTops.add(e.to);
+    const hasNonLiftOut = new Set<string>();
+    for (const e of edges) if (e.kind !== 'lift') hasNonLiftOut.add(e.from);
+    let nextNodeNum = nodes.size;
+    let linked = 0;
+    for (const topId of liftTops) {
+      if (hasNonLiftOut.has(topId)) continue; // already has a ski-out
+      const T = nodes.get(topId);
+      if (!T || T.ele == null) continue;
+      const tp: GeoPoint = { lon: T.lon, lat: T.lat, ele: T.ele };
+      let best: { edge: GraphEdge; segIdx: number; point: GeoPoint; dist: number } | null = null;
+      for (const X of edges) {
+        if (X.kind !== 'piste' || X.from === topId || X.to === topId) continue;
+        for (let i = 1; i < X.geometry.length; i++) {
+          const pr = projectOnSegment(tp, X.geometry[i - 1], X.geometry[i]);
+          // Only a downhill ski-on: the projected point must be at/below the lift top.
+          if ((pr.point.ele ?? 0) > T.ele + 2) continue;
+          if (pr.dist <= c.liftSkiOutRadius && pr.dist < (best?.dist ?? Infinity)) {
+            best = { edge: X, segIdx: i, point: pr.point, dist: pr.dist };
+          }
+        }
+      }
+      if (!best) continue;
+      const X = best.edge;
+      const P = best.point;
+
+      // Reuse an existing endpoint if the projection lands on it; otherwise split X.
+      const fromN = nodes.get(X.from)!;
+      const toN = nodes.get(X.to)!;
+      const dFrom = haversineM(P, { lon: fromN.lon, lat: fromN.lat, ele: fromN.ele });
+      const dTo = haversineM(P, { lon: toN.lon, lat: toN.lat, ele: toN.ele });
+      let N: string;
+      if (dFrom <= 3) {
+        N = X.from;
+      } else if (dTo <= 3) {
+        N = X.to;
+      } else {
+        N = `n${nextNodeNum++}`;
+        nodes.set(N, { id: N, lon: P.lon, lat: P.lat, ele: P.ele, isLiftStation: false, members: [] });
+        const g1 = [...X.geometry.slice(0, best.segIdx), P];
+        const g2 = [P, ...X.geometry.slice(best.segIdx)];
+        const fromEle = fromN.ele ?? 0;
+        const toEle = toN.ele ?? 0;
+        const idx = edges.indexOf(X);
+        if (idx >= 0) edges.splice(idx, 1);
+        edges.push({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: (P.ele ?? 0) - fromEle });
+        edges.push({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: toEle - (P.ele ?? 0) });
+      }
+
+      const dz = (P.ele ?? 0) - T.ele; // typically <= 0 (ski down onto the run)
+      const oneWayDown = dz < -c.maxTraverseClimb;
+      edges.push({
+        id: nextEdgeId(),
+        from: topId,
+        to: N,
+        kind: 'connector',
+        connectorKind: oneWayDown ? 'skiable_down' : 'flat_traverse',
+        geometry: [tp, { lon: nodes.get(N)!.lon, lat: nodes.get(N)!.lat, ele: nodes.get(N)!.ele }],
+        lengthM: best.dist,
+        dropM: oneWayDown ? -Math.abs(dz) : 0,
+        gradient: best.dist > 0 ? dz / best.dist : 0,
+        synthetic: true,
+      });
+      if (!oneWayDown) {
+        edges.push({
+          id: nextEdgeId(),
+          from: N,
+          to: topId,
+          kind: 'connector',
+          connectorKind: 'flat_traverse',
+          geometry: [{ lon: nodes.get(N)!.lon, lat: nodes.get(N)!.lat, ele: nodes.get(N)!.ele }, tp],
+          lengthM: best.dist,
+          dropM: 0,
+          synthetic: true,
+        });
+      }
+      linked++;
+    }
+    if (linked > 0) {
+      warnings.push({
+        code: 'inferred_connector',
+        message: `Linked ${linked} lift top(s) with no ski-out onto a nearby piste line.`,
+      });
+    }
+  }
+
   // --- Finalize nodes -----------------------------------------------------
   const degree = new Map<string, number>();
   for (const e of edges) {

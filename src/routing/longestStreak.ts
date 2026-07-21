@@ -74,8 +74,11 @@ export function longestDownhillRuns(index: GraphIndex, maxColorRank = Infinity, 
   // through lift-base junctions to rack up metres. Penalised edges are still allowed (for
   // connectivity) — they just don't inflate the score.
   const scoreOf = (e: GraphEdge): number => {
+    // Reward real downhill skiing distance; lightly discourage flat/connector padding so the
+    // run stays a natural descent; still kill pipeline-inferred bridge padding (−3×) — but
+    // never penalise the user's own custom links (they're deliberately drawn = real terrain).
     let s = e.dropM < -1 ? e.lengthM : -0.75 * e.lengthM;
-    if (e.synthetic) s -= 3 * e.lengthM;
+    if (e.synthetic && !e.custom) s -= 3 * e.lengthM;
     return s;
   };
 

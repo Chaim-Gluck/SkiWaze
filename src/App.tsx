@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   GraphEdge,
   GraphNode,
+  GeoPoint,
   Preferences,
   ResortGraph,
   Route,
@@ -11,20 +12,33 @@ import type { GeoFeatureCollection, ResortIndexEntry } from './data/resortData';
 import { loadResortGeo, loadResortGraph, loadResortIndex } from './data/resortData';
 import { loadPreferences, savePreferences } from './state/preferences';
 import { loadCustomEdges, saveCustomEdges } from './state/customEdges';
+import { loadCustomNodes, saveCustomNodes, type CustomNode } from './state/customNodes';
+import { buildEffectiveGraph } from './routing/customGraph';
+import { loadClosures, saveClosures } from './state/closures';
+import { geometryForClosure } from './routing/closures';
 import { nearestNode, nearestResort } from './utils/nearest';
-import { distance3dM, haversineM } from './utils/geo';
-import { planRoutes, findLongestRuns, type PlanResult, type LongestRun } from './routing/plan';
+import { distance3dM, haversineM, projectOnPolyline } from './utils/geo';
+import { planRoutes, findLongestRuns, routeForEdges, type PlanResult, type LongestRun } from './routing/plan';
 import { MapView, type LonLat, type RouteFeatureCollection } from './components/MapView';
 import { PointPicker } from './components/PointPicker';
 import { PreferencesPanel } from './components/PreferencesPanel';
 import { RouteOptions } from './components/RouteOptions';
 import { CustomLinkPanel, type LinkColor, type LinkDirection } from './components/CustomLinkPanel';
+import { ClosedPanel } from './components/ClosedPanel';
 import { LongestRunPanel } from './components/LongestRunPanel';
 import { Legend } from './components/Legend';
 import { Logo } from './components/Logo';
 import './App.css';
 
 const DEFAULT_RESORT_ID = 'madonna-di-campiglio';
+
+/** A custom-link endpoint: an existing graph node, or an arbitrary map point. */
+type LinkEnd =
+  | { kind: 'node'; nodeId: string; label: string }
+  | { kind: 'point'; lon: number; lat: number; label: string };
+
+const LINK_NODE_SNAP_M = 15;
+const LINK_EDGE_SNAP_M = 40;
 
 function nowLocalDatetime(offsetMinutes = 60): string {
   const d = new Date(Date.now() + offsetMinutes * 60000);
@@ -39,6 +53,12 @@ export default function App() {
   const [geo, setGeo] = useState<GeoFeatureCollection | null>(null);
   const [prefs, setPrefs] = useState<Preferences>(() => loadPreferences());
   const [customEdges, setCustomEdges] = useState<GraphEdge[]>([]);
+  const [customNodes, setCustomNodes] = useState<CustomNode[]>([]);
+  const [linkFrom, setLinkFrom] = useState<LinkEnd | null>(null);
+  const [linkTo, setLinkTo] = useState<LinkEnd | null>(null);
+  const [linkPinMode, setLinkPinMode] = useState<'from' | 'to' | null>(null);
+  const [closedKeys, setClosedKeys] = useState<string[]>([]);
+  const closedRef = useRef<string[]>([]);
 
   const [fromNodeId, setFromNodeId] = useState<string | null>(null);
   const [toNodeId, setToNodeId] = useState<string | null>(null);
@@ -52,7 +72,7 @@ export default function App() {
 
   const [plan, setPlan] = useState<PlanResult | null>(null);
   const [selectedRoute, setSelectedRoute] = useState(0);
-  const [selectedStep, setSelectedStep] = useState<number | null>(null);
+  const [selectedRange, setSelectedRange] = useState<[number, number] | null>(null);
   const [popup, setPopup] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('Loading resorts…');
   const [focusGeometry, setFocusGeometry] = useState<[number, number][] | null>(null);
@@ -93,13 +113,20 @@ export default function App() {
     setGraph(null);
     setGeo(null);
     setPlan(null);
-    setSelectedStep(null);
+    setSelectedRange(null);
     setLongestRuns(null);
     setLongestIdx(0);
     setFocusGeometry(null);
     setFromNodeId(null);
     setToNodeId(null);
     setCustomEdges(loadCustomEdges(resortId));
+    setCustomNodes(loadCustomNodes(resortId));
+    setLinkFrom(null);
+    setLinkTo(null);
+    setLinkPinMode(null);
+    const cl = loadClosures(resortId);
+    setClosedKeys(cl);
+    closedRef.current = cl;
     setStatus('Loading resort data…');
     Promise.all([loadResortGraph(resortId), loadResortGeo(resortId)])
       .then(([g, ge]) => {
@@ -110,12 +137,11 @@ export default function App() {
       .catch((e) => setStatus(`Could not load resort: ${String(e)}`));
   }, [resortId]);
 
-  // Graph + geo including any user-added custom links.
+  // Graph + geo including any user-added custom nodes/links.
   const effectiveGraph = useMemo<ResortGraph | null>(() => {
     if (!graph) return null;
-    if (customEdges.length === 0) return graph;
-    return { ...graph, edges: [...graph.edges, ...customEdges] };
-  }, [graph, customEdges]);
+    return buildEffectiveGraph(graph, customNodes, customEdges);
+  }, [graph, customNodes, customEdges]);
 
   const effectiveGeo = useMemo<GeoFeatureCollection | null>(() => {
     if (!geo) return null;
@@ -159,13 +185,6 @@ export default function App() {
     return n ? { lon: n.point.lon, lat: n.point.lat } : null;
   };
 
-  const labelFor = (nodeId: string | null, custom: string | null): string | null => {
-    if (!nodeId) return null;
-    if (custom) return custom;
-    const p = graph?.points.find((x) => x.nodeId === nodeId);
-    return p?.name ?? nodeMap.get(nodeId)?.name ?? 'Selected point';
-  };
-
   const selected: Route | undefined = plan?.routes[selectedRoute];
   const routeFC: RouteFeatureCollection = useMemo(() => {
     if (!selected) return { type: 'FeatureCollection', features: [] };
@@ -196,6 +215,13 @@ export default function App() {
 
   const handleMapClick = useCallback(
     (p: LonLat) => {
+      if (linkPinMode) {
+        const label = `📍 map point`;
+        if (linkPinMode === 'from') setLinkFrom({ kind: 'point', lon: p.lon, lat: p.lat, label });
+        else setLinkTo({ kind: 'point', lon: p.lon, lat: p.lat, label });
+        setLinkPinMode(null);
+        return;
+      }
       if (!pinMode || !effectiveGraph) return;
       const n = nearestNode(effectiveGraph, p.lon, p.lat);
       if (!n) return;
@@ -208,7 +234,7 @@ export default function App() {
       }
       setPinMode(null);
     },
-    [pinMode, effectiveGraph],
+    [pinMode, linkPinMode, effectiveGraph],
   );
 
   const pickLocationFor = (which: 'from' | 'to') => {
@@ -243,10 +269,12 @@ export default function App() {
           ? { mode: 'arrive_by', time: new Date(arriveTime).toISOString() }
           : { mode: 'now' },
       prefs,
+      closedKeys: closedRef.current,
     });
     setPlan(result);
     setSelectedRoute(0);
-    setSelectedStep(null);
+    setSelectedRange(null);
+    setFocusGeometry(null);
     setPanelOpen(false);
     if (result.error) {
       setPopup(result.error);
@@ -260,17 +288,60 @@ export default function App() {
     if (notes.length) setPopup(notes.join('\n'));
   };
 
+  // Resolve a link endpoint to a concrete node id, creating a custom node for an arbitrary
+  // point: snap to a nearby existing node, else attach onto the nearest piste (split it), else
+  // a free node. Returns the node id/point and any new custom node to persist.
+  const resolveLinkEnd = (
+    end: LinkEnd,
+  ): { id: string; point: GeoPoint; newNode?: CustomNode } | null => {
+    if (!graph) return null;
+    if (end.kind === 'node') {
+      const n = nodeMap.get(end.nodeId);
+      return n ? { id: n.id, point: n.point } : null;
+    }
+    const pt: GeoPoint = { lon: end.lon, lat: end.lat, ele: null };
+    // 1) snap to a very near existing node
+    let nn: GraphNode | undefined;
+    let nnDist = Infinity;
+    for (const n of graph.nodes) {
+      const d = haversineM(pt, n.point);
+      if (d < nnDist) { nnDist = d; nn = n; }
+    }
+    if (nn && nnDist <= LINK_NODE_SNAP_M) return { id: nn.id, point: nn.point };
+
+    // 2) project onto the nearest piste edge (attach + split there)
+    let bestEdge: GraphEdge | undefined;
+    let bestProj: ReturnType<typeof projectOnPolyline> | undefined;
+    for (const e of graph.edges) {
+      if (e.kind !== 'piste' || e.geometry.length < 2) continue;
+      const pr = projectOnPolyline(pt, e.geometry);
+      if (pr.dist < (bestProj?.dist ?? Infinity)) { bestProj = pr; bestEdge = e; }
+    }
+    const id = `cn-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+    if (bestEdge && bestProj && bestProj.dist <= LINK_EDGE_SNAP_M) {
+      const node: CustomNode = { id, point: bestProj.point, attachEdgeId: bestEdge.id };
+      return { id, point: bestProj.point, newNode: node };
+    }
+    // 3) free node — elevation from the nearest existing node
+    const ele = nn?.point.ele ?? null;
+    const node: CustomNode = { id, point: { lon: pt.lon, lat: pt.lat, ele } };
+    return { id, point: node.point, newNode: node };
+  };
+
   const addCustomLink = (color: LinkColor, direction: LinkDirection) => {
-    if (!fromNodeId || !toNodeId || !nodeMap.size) return;
-    const a = nodeMap.get(fromNodeId);
-    const b = nodeMap.get(toNodeId);
+    if (!linkFrom || !linkTo) {
+      setPopup('Pick both a "Link from" and a "Link to" point for the link.');
+      return;
+    }
+    const a = resolveLinkEnd(linkFrom);
+    const b = resolveLinkEnd(linkTo);
     if (!a || !b || a.id === b.id) {
-      setPopup('Pick two different points (A and B) for the link.');
+      setPopup('Pick two different points for the link.');
       return;
     }
     const len = distance3dM(a.point, b.point);
     const stamp = Date.now();
-    const mk = (from: GraphNode, to: GraphNode, tag: string): GraphEdge => ({
+    const mk = (from: { id: string; point: GeoPoint }, to: { id: string; point: GeoPoint }, tag: string): GraphEdge => ({
       id: `cust-${stamp}-${tag}`,
       from: from.id,
       to: to.id,
@@ -287,15 +358,37 @@ export default function App() {
     const added: GraphEdge[] = [];
     if (direction === 'ab' || direction === 'both') added.push(mk(a, b, 'ab'));
     if (direction === 'ba' || direction === 'both') added.push(mk(b, a, 'ba'));
+
+    const newNodes = [a.newNode, b.newNode].filter((n): n is CustomNode => !!n);
+    if (newNodes.length) {
+      const nextNodes = [...customNodes, ...newNodes];
+      setCustomNodes(nextNodes);
+      saveCustomNodes(resortId, nextNodes);
+    }
     const next = [...customEdges, ...added];
     setCustomEdges(next);
     saveCustomEdges(resortId, next);
+    setLinkFrom(null);
+    setLinkTo(null);
     setPopup(`Added a ${color === 'none' ? 'flat' : color} link (${direction === 'both' ? 'both ways' : direction.toUpperCase()}). Press "Find routes" to use it.`);
+  };
+
+  /** Drop custom nodes no longer referenced by any custom edge. */
+  const gcCustomNodes = (edges: GraphEdge[]): void => {
+    const used = new Set<string>();
+    for (const e of edges) { used.add(e.from); used.add(e.to); }
+    const kept = customNodes.filter((n) => used.has(n.id));
+    if (kept.length !== customNodes.length) {
+      setCustomNodes(kept);
+      saveCustomNodes(resortId, kept);
+    }
   };
 
   const clearCustomLinks = () => {
     setCustomEdges([]);
     saveCustomEdges(resortId, []);
+    setCustomNodes([]);
+    saveCustomNodes(resortId, []);
   };
 
   const deleteCustomLinks = (ids: string[]) => {
@@ -303,11 +396,16 @@ export default function App() {
     const next = customEdges.filter((e) => !dead.has(e.id));
     setCustomEdges(next);
     saveCustomEdges(resortId, next);
+    gcCustomNodes(next);
   };
 
   const nodeLabelFor = (nodeId: string): string => {
     const p = graph?.points.find((x) => x.nodeId === nodeId);
     if (p) return p.name;
+    if (nodeId.startsWith('cn-')) {
+      const cn = customNodes.find((n) => n.id === nodeId);
+      return cn?.point.ele != null ? `📍 map point · ${Math.round(cn.point.ele)} m` : '📍 map point';
+    }
     const n = nodeMap.get(nodeId);
     if (n?.name) return n.name;
     // Fall back to the nearest named point ("near X") so unnamed graph nodes read meaningfully.
@@ -346,6 +444,10 @@ export default function App() {
     }));
     setLongestRuns(named);
     setLongestIdx(0);
+    // Showing the longest run is a highlight, not a route — clear any route options so only
+    // one thing glows on the map at a time.
+    setPlan(null);
+    setSelectedRange(null);
     setFocusGeometry(named[0].coords);
     setPanelOpen(false);
   };
@@ -354,6 +456,8 @@ export default function App() {
     if (!longestRuns || longestRuns.length === 0) return;
     const next = (longestIdx + delta + longestRuns.length) % longestRuns.length;
     setLongestIdx(next);
+    setPlan(null);
+    setSelectedRange(null);
     setFocusGeometry(longestRuns[next].coords);
   };
 
@@ -370,23 +474,53 @@ export default function App() {
   };
 
   const navigateToLongestEnd = () => {
-    if (!currentLongest) return;
-    // Assume the user is already at the top: auto-fill A = start, B = end and route it now.
+    if (!currentLongest || !effectiveGraph) return;
+    // You're at the top and want to ski THIS run — show the exact longest run as the route
+    // (not a fresh A→B search that would find different options).
     setFromNodeId(currentLongest.startNodeId);
     setFromCustom(currentLongest.startName);
     setToNodeId(currentLongest.endNodeId);
     setToCustom(currentLongest.endName);
     setFocusGeometry(null);
-    doPlan(currentLongest.startNodeId, currentLongest.endNodeId);
+    const route = routeForEdges(effectiveGraph, prefs, currentLongest.edges, 'longest-run');
+    setPlan({ routes: [route] });
+    setSelectedRoute(0);
+    setSelectedRange(null);
+    setPanelOpen(false);
   };
 
-  const handleStepClick = (routeIndex: number, legIndex: number) => {
+  const handleStepClick = (routeIndex: number, fromLeg: number, toLeg: number) => {
     if (routeIndex !== selectedRoute) {
       setSelectedRoute(routeIndex);
-      setSelectedStep(legIndex);
+      setSelectedRange([fromLeg, toLeg]);
     } else {
-      setSelectedStep((cur) => (cur === legIndex ? null : legIndex));
+      setSelectedRange((cur) => (cur && cur[0] === fromLeg && cur[1] === toLeg ? null : [fromLeg, toLeg]));
     }
+  };
+
+  // --- Closures (assumed-open reality: user marks lifts/runs closed) ---
+  const applyClosures = (next: string[]) => {
+    closedRef.current = next;
+    setClosedKeys(next);
+    saveClosures(resortId, next);
+    // Re-plan so routes immediately avoid (or re-include) the closure.
+    if (fromNodeId && toNodeId) doPlan();
+  };
+
+  const markClosed = (key: string, label: string) => {
+    if (closedRef.current.includes(key)) return;
+    applyClosures([...closedRef.current, key]);
+    setPopup(`Marked "${label}" closed — routes will avoid it. Reopen it in the "Closed today" panel.`);
+  };
+
+  const reopenClosure = (key: string) => applyClosures(closedRef.current.filter((k) => k !== key));
+  const reopenAllClosures = () => applyClosures([]);
+
+  const locateClosure = (key: string) => {
+    if (!effectiveGraph) return;
+    const coords = geometryForClosure(effectiveGraph, key);
+    if (coords.length >= 2) setFocusGeometry(coords);
+    else setPopup('Could not locate this closure on the map.');
   };
 
   const points = graph?.points ?? [];
@@ -405,7 +539,16 @@ export default function App() {
         <h1 className="logo">
           <Logo className="logo-mark" />
         </h1>
-        <select value={resortId} onChange={(e) => setResortId(e.target.value)} className="resort-select">
+        <select
+          value={resortId}
+          onChange={(e) => {
+            setResortId(e.target.value);
+            setPopup(
+              'Lift & slope statuses are assumed OPEN. In early/late season many may be closed — check the resort, and mark any closed run/lift (⊘ on a route step) so routes avoid it.',
+            );
+          }}
+          className="resort-select"
+        >
           {(index ?? []).map((r) => (
             <option key={r.id} value={r.id}>{r.name} ({r.country})</option>
           ))}
@@ -493,9 +636,10 @@ export default function App() {
             <RouteOptions
               routes={plan.routes}
               selectedIndex={selectedRoute}
-              onSelect={(i) => { setSelectedRoute(i); setSelectedStep(null); }}
-              selectedStep={selectedStep}
+              onSelect={(i) => { setSelectedRoute(i); setSelectedRange(null); }}
+              selectedRange={selectedRange}
               onStepClick={handleStepClick}
+              onMarkClosed={markClosed}
             />
           )}
 
@@ -505,20 +649,41 @@ export default function App() {
             onFind={computeLongestRun}
             onPrev={() => stepLongest(-1)}
             onNext={() => stepLongest(1)}
-            onShowOnMap={() => currentLongest && setFocusGeometry(currentLongest.coords)}
+            onShowOnMap={() => {
+              if (!currentLongest) return;
+              setPlan(null);
+              setSelectedRange(null);
+              setFocusGeometry(currentLongest.coords);
+            }}
             onNavigateStart={navigateToLongestStart}
             onNavigateEnd={navigateToLongestEnd}
           />
 
           <CustomLinkPanel
-            fromLabel={labelFor(fromNodeId, fromCustom)}
-            toLabel={labelFor(toNodeId, toCustom)}
+            points={points}
+            fromLabel={linkFrom?.label ?? null}
+            toLabel={linkTo?.label ?? null}
+            onPickFrom={(nodeId) => setLinkFrom({ kind: 'node', nodeId, label: nodeLabelFor(nodeId) })}
+            onPickTo={(nodeId) => setLinkTo({ kind: 'node', nodeId, label: nodeLabelFor(nodeId) })}
+            onPinFrom={() => setLinkPinMode(linkPinMode === 'from' ? null : 'from')}
+            onPinTo={() => setLinkPinMode(linkPinMode === 'to' ? null : 'to')}
+            pinFromActive={linkPinMode === 'from'}
+            pinToActive={linkPinMode === 'to'}
+            onClearFrom={() => setLinkFrom(null)}
+            onClearTo={() => setLinkTo(null)}
             links={customEdges}
             nodeLabel={nodeLabelFor}
             onAdd={addCustomLink}
             onDelete={deleteCustomLinks}
             onLocate={setFocusGeometry}
             onClear={clearCustomLinks}
+          />
+
+          <ClosedPanel
+            closedKeys={closedKeys}
+            onReopen={reopenClosure}
+            onReopenAll={reopenAllClosures}
+            onLocate={locateClosure}
           />
 
           <PreferencesPanel prefs={prefs} onChange={setPrefs} />
@@ -536,13 +701,14 @@ export default function App() {
             zoom={12}
             geo={effectiveGeo}
             routeFC={routeFC}
-            selectedStep={selectedStep}
+            selectedRange={selectedRange}
             from={pointFor(fromNodeId)}
             to={pointFor(toNodeId)}
             focusGeometry={focusGeometry}
             onMapClick={handleMapClick}
           />
           {pinMode && <div className="pin-hint">Click the map to set point {pinMode === 'from' ? 'A' : 'B'}</div>}
+          {linkPinMode && <div className="pin-hint">Click the map to place the link's {linkPinMode === 'from' ? '"from"' : '"to"'} point (anywhere)</div>}
           <Legend />
         </main>
       </div>

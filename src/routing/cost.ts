@@ -108,7 +108,7 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date): Ed
   }
 
   // connector
-  const penalty = edge.synthetic ? SYNTHETIC_PENALTY : 1;
+  const penalty = edge.synthetic && !edge.custom ? SYNTHETIC_PENALTY : 1;
   if (edge.connectorKind === 'flat_traverse') {
     const seconds = distanceM / prefs.speeds.flatTraverseSpeed;
     return { allowed: true, seconds, distanceM, descentM, ascentM, weight: seconds * penalty, warnings };

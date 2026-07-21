@@ -16,20 +16,20 @@
     "defaultZoom": 12,
     "timezone": "Europe/Paris"
   },
-  "generatedAt": "2026-07-20T21:42:06.738Z",
+  "generatedAt": "2026-07-21T11:38:33.035Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
     "nodeCount": 3777,
-    "edgeCount": 14737,
-    "pisteEdges": 3509,
+    "edgeCount": 14740,
+    "pisteEdges": 3510,
     "liftEdges": 227,
-    "connectorEdges": 11001,
+    "connectorEdges": 11003,
     "meaningfulPoints": 848,
-    "reachableFromLifts": 3706,
+    "reachableFromLifts": 3707,
     "unreachableNodes": 71,
     "warningsByCode": {
       "missing_opening_hours": 179,
-      "inferred_connector": 4,
+      "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
@@ -765,6 +765,10 @@
     {
       "code": "inferred_connector",
       "message": "Rescued 15 trapped node(s) with a forced traverse to the nearest reachable point."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
       "code": "unreachable_component",

@@ -1,13 +1,22 @@
 import { useState } from 'react';
-import type { GraphEdge, PisteColor } from '../types/domain';
+import type { GraphEdge, MeaningfulPoint, PisteColor } from '../types/domain';
 import { fmtDistance } from '../utils/format';
 
 export type LinkColor = PisteColor | 'none';
 export type LinkDirection = 'ab' | 'ba' | 'both';
 
 interface Props {
+  points: MeaningfulPoint[];
   fromLabel: string | null;
   toLabel: string | null;
+  onPickFrom: (nodeId: string) => void;
+  onPickTo: (nodeId: string) => void;
+  onPinFrom: () => void;
+  onPinTo: () => void;
+  pinFromActive: boolean;
+  pinToActive: boolean;
+  onClearFrom: () => void;
+  onClearTo: () => void;
   links: GraphEdge[];
   nodeLabel: (nodeId: string) => string;
   onAdd: (color: LinkColor, direction: LinkDirection) => void;
@@ -24,7 +33,6 @@ const COLORS: { value: LinkColor; label: string }[] = [
   { value: 'none', label: 'Flat / connector' },
 ];
 
-/** Group directed custom edges that were added together (same timestamp id prefix). */
 interface LinkGroup {
   ids: string[];
   fromNodeId: string;
@@ -38,8 +46,7 @@ interface LinkGroup {
 function groupLinks(edges: GraphEdge[]): LinkGroup[] {
   const byStamp = new Map<string, GraphEdge[]>();
   for (const e of edges) {
-    // id form: cust-<stamp>-<ab|ba>
-    const stamp = e.id.split('-').slice(0, 2).join('-');
+    const stamp = e.id.split('-').slice(0, 2).join('-'); // cust-<stamp>
     const arr = byStamp.get(stamp);
     if (arr) arr.push(e);
     else byStamp.set(stamp, [e]);
@@ -60,7 +67,65 @@ function groupLinks(edges: GraphEdge[]): LinkGroup[] {
   return groups;
 }
 
-export function CustomLinkPanel({ fromLabel, toLabel, links, nodeLabel, onAdd, onDelete, onLocate, onClear }: Props) {
+function EndpointRow({
+  label,
+  accent,
+  value,
+  points,
+  onPick,
+  onPin,
+  pinActive,
+  onClear,
+}: {
+  label: string;
+  accent: string;
+  value: string | null;
+  points: MeaningfulPoint[];
+  onPick: (nodeId: string) => void;
+  onPin: () => void;
+  pinActive: boolean;
+  onClear: () => void;
+}) {
+  return (
+    <div className="field">
+      <span style={{ color: accent }}>{label}</span>
+      <select value="" onChange={(e) => e.target.value && onPick(e.target.value)}>
+        <option value="">{value ?? 'Select a point…'}</option>
+        {points.map((p) => (
+          <option key={p.id} value={p.nodeId}>{p.name}</option>
+        ))}
+      </select>
+      <div className="point-actions">
+        <button type="button" className={`mini ${pinActive ? 'active' : ''}`} onClick={onPin}>
+          {pinActive ? 'Click map…' : '🗺 Pin anywhere'}
+        </button>
+        {value && (
+          <button type="button" className="mini" onClick={onClear}>✕ Clear</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function CustomLinkPanel({
+  points,
+  fromLabel,
+  toLabel,
+  onPickFrom,
+  onPickTo,
+  onPinFrom,
+  onPinTo,
+  pinFromActive,
+  pinToActive,
+  onClearFrom,
+  onClearTo,
+  links,
+  nodeLabel,
+  onAdd,
+  onDelete,
+  onLocate,
+  onClear,
+}: Props) {
   const [color, setColor] = useState<LinkColor>('blue');
   const [direction, setDirection] = useState<LinkDirection>('ab');
   const ready = fromLabel && toLabel;
@@ -70,16 +135,30 @@ export function CustomLinkPanel({ fromLabel, toLabel, links, nodeLabel, onAdd, o
     <div className="panel">
       <h3>Custom links</h3>
       <p className="muted" style={{ marginTop: 0 }}>
-        Mark a skiable link between your selected A and B (e.g. a gap the map is missing).
+        Draw a skiable link the map is missing. Pick each end from the list, or pin it anywhere on
+        the map (even mid-slope) — pinned points become custom junctions.
       </p>
-      <div className="field">
-        <span>Between</span>
-        <div className="link-endpoints">
-          <span className="ep-a">{fromLabel ?? 'pick A'}</span>
-          <span> ↔ </span>
-          <span className="ep-b">{toLabel ?? 'pick B'}</span>
-        </div>
-      </div>
+
+      <EndpointRow
+        label="Link from"
+        accent="#2e7d32"
+        value={fromLabel}
+        points={points}
+        onPick={onPickFrom}
+        onPin={onPinFrom}
+        pinActive={pinFromActive}
+        onClear={onClearFrom}
+      />
+      <EndpointRow
+        label="Link to"
+        accent="#c62828"
+        value={toLabel}
+        points={points}
+        onPick={onPickTo}
+        onPin={onPinTo}
+        pinActive={pinToActive}
+        onClear={onClearTo}
+      />
 
       <label className="field">
         <span>Slope color</span>
@@ -93,8 +172,8 @@ export function CustomLinkPanel({ fromLabel, toLabel, links, nodeLabel, onAdd, o
       <div className="field">
         <span>Skiable direction</span>
         <div className="timing">
-          <label><input type="radio" checked={direction === 'ab'} onChange={() => setDirection('ab')} /> A → B</label>
-          <label><input type="radio" checked={direction === 'ba'} onChange={() => setDirection('ba')} /> B → A</label>
+          <label><input type="radio" checked={direction === 'ab'} onChange={() => setDirection('ab')} /> from → to</label>
+          <label><input type="radio" checked={direction === 'ba'} onChange={() => setDirection('ba')} /> to → from</label>
           <label><input type="radio" checked={direction === 'both'} onChange={() => setDirection('both')} /> Both</label>
         </div>
       </div>

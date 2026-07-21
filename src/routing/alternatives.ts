@@ -28,13 +28,14 @@ export function alternativeRoutes(
   startDate: Date,
   k = 3,
   maxOverlap = 0.7,
+  closedEdgeIds?: ReadonlySet<string>,
 ): GraphEdge[][] {
   const accepted: GraphEdge[][] = [];
   const penalties = new Map<string, number>();
   const maxAttempts = k * 4;
 
   for (let attempt = 0; attempt < maxAttempts && accepted.length < k; attempt++) {
-    const result = shortestPath(index, startId, goalId, prefs, startDate, penalties);
+    const result = shortestPath(index, startId, goalId, prefs, startDate, penalties, closedEdgeIds);
     if (!result || result.edges.length === 0) break;
 
     const isDuplicate = accepted.some(

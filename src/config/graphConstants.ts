@@ -36,6 +36,8 @@ export interface GraphConstants {
   flatJunctionDV: number;
   /** Flat-junction pass: max partners to link per dangling end (keeps it sparse). */
   flatJunctionK: number;
+  /** Lift-top ski-out pass: max distance (m) to snap a no-ski-out lift top onto a nearby piste line. */
+  liftSkiOutRadius: number;
 }
 
 export const DEFAULT_GRAPH_CONSTANTS: GraphConstants = {
@@ -55,4 +57,5 @@ export const DEFAULT_GRAPH_CONSTANTS: GraphConstants = {
   flatJunctionRadius: 120,
   flatJunctionDV: 8,
   flatJunctionK: 2,
+  liftSkiOutRadius: 130,
 };

@@ -62,6 +62,12 @@ const SLOPE_COLOR_EXPR: maplibregl.ExpressionSpecification = [
   '#ff9800',
 ];
 
+/** Highlight-filter for the currently selected step's leg-index range. */
+function rangeFilter(range: [number, number] | null): maplibregl.FilterSpecification {
+  if (!range) return ['==', ['get', 'stepIndex'], -1];
+  return ['all', ['>=', ['get', 'stepIndex'], range[0]], ['<=', ['get', 'stepIndex'], range[1]]];
+}
+
 export interface LonLat {
   lon: number;
   lat: number;
@@ -81,14 +87,14 @@ interface MapViewProps {
   zoom: number;
   geo: GeoFeatureCollection | null;
   routeFC: RouteFeatureCollection | null;
-  selectedStep: number | null;
+  selectedRange: [number, number] | null;
   from: LonLat | null;
   to: LonLat | null;
   focusGeometry: [number, number][] | null;
   onMapClick?: (p: LonLat) => void;
 }
 
-export function MapView({ center, zoom, geo, routeFC, selectedStep, from, to, focusGeometry, onMapClick }: MapViewProps) {
+export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, focusGeometry, onMapClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -106,8 +112,8 @@ export function MapView({ center, zoom, geo, routeFC, selectedStep, from, to, fo
   geoRef.current = geo;
   const routeRef = useRef(routeFC);
   routeRef.current = routeFC;
-  const stepRef = useRef(selectedStep);
-  stepRef.current = selectedStep;
+  const stepRef = useRef(selectedRange);
+  stepRef.current = selectedRange;
   const clickCb = useRef(onMapClick);
   clickCb.current = onMapClick;
 
@@ -226,7 +232,7 @@ export function MapView({ center, zoom, geo, routeFC, selectedStep, from, to, fo
       (map.getSource('pistes') as maplibregl.GeoJSONSource).setData(splitPistes(geoRef.current) as never);
       (map.getSource('lifts') as maplibregl.GeoJSONSource).setData(splitLifts(geoRef.current) as never);
       (map.getSource('route') as maplibregl.GeoJSONSource).setData((routeRef.current ?? EMPTY_FC) as never);
-      map.setFilter('route-step', ['==', ['get', 'stepIndex'], stepRef.current ?? -1]);
+      map.setFilter('route-step', rangeFilter(stepRef.current));
       setLoaded(true);
     });
 
@@ -251,8 +257,8 @@ export function MapView({ center, zoom, geo, routeFC, selectedStep, from, to, fo
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded) return;
-    map.setFilter('route-step', ['==', ['get', 'stepIndex'], selectedStep ?? -1]);
-  }, [selectedStep, loaded]);
+    map.setFilter('route-step', rangeFilter(selectedRange));
+  }, [selectedRange, loaded]);
 
   // Locate/recenter a custom link when requested.
   useEffect(() => {

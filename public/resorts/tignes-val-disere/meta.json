@@ -16,20 +16,20 @@
     "defaultZoom": 12,
     "timezone": "Europe/Paris"
   },
-  "generatedAt": "2026-07-20T21:42:07.183Z",
+  "generatedAt": "2026-07-21T11:38:33.361Z",
   "stats": {
     "resortId": "tignes-val-disere",
     "nodeCount": 959,
-    "edgeCount": 3029,
-    "pisteEdges": 832,
+    "edgeCount": 3035,
+    "pisteEdges": 834,
     "liftEdges": 93,
-    "connectorEdges": 2104,
+    "connectorEdges": 2108,
     "meaningfulPoints": 380,
-    "reachableFromLifts": 919,
+    "reachableFromLifts": 921,
     "unreachableNodes": 40,
     "warningsByCode": {
       "missing_opening_hours": 84,
-      "inferred_connector": 4,
+      "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
@@ -385,6 +385,10 @@
     {
       "code": "inferred_connector",
       "message": "Rescued 2 trapped node(s) with a forced traverse to the nearest reachable point."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Linked 2 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
       "code": "unreachable_component",
