@@ -16,10 +16,10 @@
     "defaultZoom": 12,
     "timezone": "Europe/Paris"
   },
-  "generatedAt": "2026-07-21T11:38:33.361Z",
+  "generatedAt": "2026-07-21T21:16:03.573Z",
   "stats": {
     "resortId": "tignes-val-disere",
-    "nodeCount": 959,
+    "nodeCount": 961,
     "edgeCount": 3035,
     "pisteEdges": 834,
     "liftEdges": 93,

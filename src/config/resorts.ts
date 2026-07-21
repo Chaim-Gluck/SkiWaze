@@ -38,7 +38,7 @@ export const RESORTS: Resort[] = [
     name: 'Val Thorens \u2013 Les 3 Vall\u00e9es',
     country: 'France',
     center: { lon: 6.58, lat: 45.36 },
-    bbox: { minLon: 6.5, minLat: 45.28, maxLon: 6.68, maxLat: 45.44 },
+    bbox: { minLon: 6.5, minLat: 45.19, maxLon: 6.68, maxLat: 45.44 },
     defaultZoom: 12,
     timezone: 'Europe/Paris',
   },

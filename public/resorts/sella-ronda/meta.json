@@ -16,10 +16,10 @@
     "defaultZoom": 12,
     "timezone": "Europe/Rome"
   },
-  "generatedAt": "2026-07-21T11:38:30.477Z",
+  "generatedAt": "2026-07-21T21:15:59.545Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1448,
+    "nodeCount": 1449,
     "edgeCount": 4355,
     "pisteEdges": 1270,
     "liftEdges": 214,

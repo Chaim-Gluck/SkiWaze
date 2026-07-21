@@ -858,7 +858,9 @@ export function buildResortGraph(
     degree.set(e.from, (degree.get(e.from) ?? 0) + 1);
     degree.set(e.to, (degree.get(e.to) ?? 0) + 1);
   }
-  const graphNodes: GraphNode[] = nodeList.map((n) => ({
+  // Iterate the live node map (not the earlier `nodeList` snapshot) so nodes created by
+  // late passes (e.g. lift-top ski-out splits) are included — otherwise their edges dangle.
+  const graphNodes: GraphNode[] = [...nodes.values()].map((n) => ({
     id: n.id,
     point: { lon: n.lon, lat: n.lat, ele: n.ele },
     kind: n.isLiftStation

@@ -9,26 +9,26 @@
     },
     "bbox": {
       "minLon": 6.5,
-      "minLat": 45.28,
+      "minLat": 45.19,
       "maxLon": 6.68,
       "maxLat": 45.44
     },
     "defaultZoom": 12,
     "timezone": "Europe/Paris"
   },
-  "generatedAt": "2026-07-21T11:38:33.035Z",
+  "generatedAt": "2026-07-21T21:32:48.096Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
-    "nodeCount": 3777,
-    "edgeCount": 14740,
-    "pisteEdges": 3510,
-    "liftEdges": 227,
-    "connectorEdges": 11003,
-    "meaningfulPoints": 848,
-    "reachableFromLifts": 3707,
-    "unreachableNodes": 71,
+    "nodeCount": 4051,
+    "edgeCount": 15767,
+    "pisteEdges": 3763,
+    "liftEdges": 244,
+    "connectorEdges": 11760,
+    "meaningfulPoints": 897,
+    "reachableFromLifts": 3964,
+    "unreachableNodes": 87,
     "warningsByCode": {
-      "missing_opening_hours": 179,
+      "missing_opening_hours": 189,
       "inferred_connector": 5,
       "unreachable_component": 1
     }
@@ -65,6 +65,18 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Moutière\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Rosaël\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Peyron\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Bouchet\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -512,6 +524,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Thorens\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Saulire Express 2\" has no opening_hours in OSM."
     },
     {
@@ -529,6 +545,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"181944021\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Super-Bissorte\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -541,6 +561,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Bouc Blanc\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Tyrolienne\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -660,6 +684,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Télécabine d'Orelle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Télécabine d'Orelle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Biolley 2\" has no opening_hours in OSM."
     },
     {
@@ -732,11 +764,19 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Face Nord\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"1315599743\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Deux Lacs\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Marmottons\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -752,15 +792,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 727 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 772 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 2161 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 2296 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 2424 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 2591 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
@@ -772,28 +812,28 @@
     },
     {
       "code": "unreachable_component",
-      "message": "71 node(s) unreachable from the main lift network.",
+      "message": "87 node(s) unreachable from the main lift network.",
       "refs": [
         "n5",
-        "n239",
-        "n241",
-        "n283",
-        "n328",
-        "n380",
-        "n425",
-        "n427",
-        "n478",
-        "n535",
-        "n545",
-        "n556",
-        "n557",
-        "n558",
-        "n718",
-        "n746",
-        "n841",
-        "n844",
-        "n872",
-        "n910"
+        "n90",
+        "n267",
+        "n312",
+        "n359",
+        "n411",
+        "n456",
+        "n458",
+        "n509",
+        "n552",
+        "n561",
+        "n575",
+        "n587",
+        "n598",
+        "n599",
+        "n600",
+        "n760",
+        "n788",
+        "n885",
+        "n888"
       ]
     }
   ]
