@@ -185,6 +185,12 @@ export default function App() {
     return n ? { lon: n.point.lon, lat: n.point.lat } : null;
   };
 
+  const linkEndPos = (end: LinkEnd | null): LonLat | null => {
+    if (!end) return null;
+    if (end.kind === 'point') return { lon: end.lon, lat: end.lat };
+    return pointFor(end.nodeId);
+  };
+
   const selected: Route | undefined = plan?.routes[selectedRoute];
   const routeFC: RouteFeatureCollection = useMemo(() => {
     if (!selected) return { type: 'FeatureCollection', features: [] };
@@ -704,6 +710,8 @@ export default function App() {
             selectedRange={selectedRange}
             from={pointFor(fromNodeId)}
             to={pointFor(toNodeId)}
+            linkFrom={linkEndPos(linkFrom)}
+            linkTo={linkEndPos(linkTo)}
             focusGeometry={focusGeometry}
             onMapClick={handleMapClick}
           />

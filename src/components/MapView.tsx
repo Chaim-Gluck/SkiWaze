@@ -68,6 +68,13 @@ function rangeFilter(range: [number, number] | null): maplibregl.FilterSpecifica
   return ['all', ['>=', ['get', 'stepIndex'], range[0]], ['<=', ['get', 'stepIndex'], range[1]]];
 }
 
+/** A distinct dot marker (not the teardrop nav pin) for custom-link endpoints. */
+function linkDotEl(color: string): HTMLElement {
+  const el = document.createElement('div');
+  el.style.cssText = `width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 5px rgba(0,0,0,.55);cursor:pointer;`;
+  return el;
+}
+
 export interface LonLat {
   lon: number;
   lat: number;
@@ -90,16 +97,20 @@ interface MapViewProps {
   selectedRange: [number, number] | null;
   from: LonLat | null;
   to: LonLat | null;
+  linkFrom: LonLat | null;
+  linkTo: LonLat | null;
   focusGeometry: [number, number][] | null;
   onMapClick?: (p: LonLat) => void;
 }
 
-export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, focusGeometry, onMapClick }: MapViewProps) {
+export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, onMapClick }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [loaded, setLoaded] = useState(false);
   const fromMarker = useRef<maplibregl.Marker | null>(null);
   const toMarker = useRef<maplibregl.Marker | null>(null);
+  const linkFromMarker = useRef<maplibregl.Marker | null>(null);
+  const linkToMarker = useRef<maplibregl.Marker | null>(null);
 
   const [base, setBase] = useState<BaseMap>('standard');
   const [is3D, setIs3D] = useState(false);
@@ -301,6 +312,26 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, f
       toMarker.current = null;
     }
   }, [from, to]);
+
+  // Custom-link endpoint markers (dots, distinct from the nav pins).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (linkFrom) {
+      if (!linkFromMarker.current) linkFromMarker.current = new maplibregl.Marker({ element: linkDotEl('#2e7d32') });
+      linkFromMarker.current.setLngLat([linkFrom.lon, linkFrom.lat]).addTo(map);
+    } else {
+      linkFromMarker.current?.remove();
+      linkFromMarker.current = null;
+    }
+    if (linkTo) {
+      if (!linkToMarker.current) linkToMarker.current = new maplibregl.Marker({ element: linkDotEl('#c62828') });
+      linkToMarker.current.setLngLat([linkTo.lon, linkTo.lat]).addTo(map);
+    } else {
+      linkToMarker.current?.remove();
+      linkToMarker.current = null;
+    }
+  }, [linkFrom, linkTo]);
 
   // Base-map switch: toggle visibility of the three base raster layers.
   useEffect(() => {
