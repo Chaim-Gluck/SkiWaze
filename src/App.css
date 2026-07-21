@@ -45,17 +45,94 @@ body {
   display: flex;
   flex: 1;
   min-height: 0;
+  position: relative;
 }
 
 .sidebar {
-  width: 340px;
+  width: 400px;
   padding: 12px;
   overflow-y: auto;
   background: var(--bg);
   border-right: 1px solid var(--line);
 }
 
-.map-wrap { flex: 1; position: relative; }
+.map-wrap { flex: 1; position: relative; min-width: 0; }
+
+.map-shell { width: 100%; height: 100%; position: relative; }
+.map-canvas { position: absolute; inset: 0; }
+.map-controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(20, 29, 38, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  backdrop-filter: blur(3px);
+}
+.mc-group { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.mc-btn {
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.mc-btn.active { border-color: var(--accent); color: var(--accent); }
+.mc-check { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text); white-space: nowrap; cursor: pointer; }
+.mc-check input { width: 14px; height: 14px; }
+
+/* Mobile drawer toggle + backdrop (hidden on desktop) */
+.panel-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 11px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.backdrop { display: none; }
+
+/* Tablet / phone: full-screen map with a slide-in controls drawer */
+@media (max-width: 820px) {
+  .panel-toggle { display: inline-flex; }
+  .logo-mark { height: 34px; }
+  .resort-select { min-width: 0; flex: 1; }
+  .status { display: none; }
+  .topbar { gap: 8px; padding: 8px 12px; }
+
+  .sidebar {
+    position: absolute;
+    z-index: 20;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(86%, 360px);
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 2px 0 18px rgba(0, 0, 0, 0.45);
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 15;
+  }
+}
 
 .panel {
   background: var(--panel);

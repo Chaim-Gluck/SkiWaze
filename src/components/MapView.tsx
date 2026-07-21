@@ -10,11 +10,45 @@ const BASE_STYLE: StyleSpecification = {
       type: 'raster',
       tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
       tileSize: 256,
+      maxzoom: 19,
       attribution: '© OpenStreetMap contributors',
     },
+    topo: {
+      type: 'raster',
+      tiles: [
+        'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+        'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+        'https://c.tile.opentopomap.org/{z}/{x}/{y}.png',
+      ],
+      tileSize: 256,
+      maxzoom: 17,
+      attribution: '© OpenTopoMap (CC-BY-SA), © OpenStreetMap contributors',
+    },
+    satellite: {
+      type: 'raster',
+      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
+    },
+    dem: {
+      type: 'raster-dem',
+      tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+      encoding: 'terrarium',
+      tileSize: 256,
+      maxzoom: 15,
+      attribution: 'Elevation: Terrain Tiles (AWS Open Data)',
+    },
   },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+  layers: [
+    { id: 'base-osm', type: 'raster', source: 'osm' },
+    { id: 'base-topo', type: 'raster', source: 'topo', layout: { visibility: 'none' } },
+    { id: 'base-satellite', type: 'raster', source: 'satellite', layout: { visibility: 'none' } },
+    { id: 'hillshade', type: 'hillshade', source: 'dem', layout: { visibility: 'none' }, paint: { 'hillshade-exaggeration': 0.35 } },
+  ],
 };
+
+export type BaseMap = 'standard' | 'topo' | 'satellite';
 
 const EMPTY_FC: GeoFeatureCollection = { type: 'FeatureCollection', features: [] };
 
@@ -60,6 +94,11 @@ export function MapView({ center, zoom, geo, routeFC, selectedStep, from, to, fo
   const [loaded, setLoaded] = useState(false);
   const fromMarker = useRef<maplibregl.Marker | null>(null);
   const toMarker = useRef<maplibregl.Marker | null>(null);
+
+  const [base, setBase] = useState<BaseMap>('standard');
+  const [is3D, setIs3D] = useState(false);
+  const [showPistes, setShowPistes] = useState(true);
+  const [showLifts, setShowLifts] = useState(true);
 
   // Keep latest data/handlers in refs so the map's async 'load' handler never
   // captures stale values (this is what previously left overlays blank on first load).
@@ -257,7 +296,68 @@ export function MapView({ center, zoom, geo, routeFC, selectedStep, from, to, fo
     }
   }, [from, to]);
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
+  // Base-map switch: toggle visibility of the three base raster layers.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    map.setLayoutProperty('base-osm', 'visibility', base === 'standard' ? 'visible' : 'none');
+    map.setLayoutProperty('base-topo', 'visibility', base === 'topo' ? 'visible' : 'none');
+    map.setLayoutProperty('base-satellite', 'visibility', base === 'satellite' ? 'visible' : 'none');
+  }, [base, loaded]);
+
+  // 3D terrain toggle: DEM-based terrain + hillshade + pitched camera + sky.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    if (is3D) {
+      map.setTerrain({ source: 'dem', exaggeration: 1.4 });
+      map.setLayoutProperty('hillshade', 'visibility', 'visible');
+      try {
+        (map as { setSky?: (s: unknown) => void }).setSky?.({
+          'sky-color': '#a4c8ff',
+          'sky-horizon-blend': 0.5,
+          'horizon-color': '#eaf2fb',
+          'horizon-fog-blend': 0.5,
+          'fog-color': '#f3f7fc',
+          'fog-ground-blend': 0.7,
+        });
+      } catch { /* sky is cosmetic */ }
+      map.easeTo({ pitch: 62, duration: 600 });
+    } else {
+      map.setTerrain(null);
+      map.setLayoutProperty('hillshade', 'visibility', 'none');
+      map.easeTo({ pitch: 0, duration: 600 });
+    }
+  }, [is3D, loaded]);
+
+  // Overlay toggles: pistes/connectors and lifts.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    const pisteLayers = ['pistes-line', 'connectors', 'synthetic-links', 'custom-links'];
+    for (const l of pisteLayers) map.setLayoutProperty(l, 'visibility', showPistes ? 'visible' : 'none');
+    map.setLayoutProperty('lifts-line', 'visibility', showLifts ? 'visible' : 'none');
+  }, [showPistes, showLifts, loaded]);
+
+  return (
+    <div className="map-shell">
+      <div ref={containerRef} className="map-canvas" />
+      <div className="map-controls">
+        <div className="mc-group">
+          <button type="button" className={base === 'standard' ? 'mc-btn active' : 'mc-btn'} onClick={() => setBase('standard')}>Map</button>
+          <button type="button" className={base === 'topo' ? 'mc-btn active' : 'mc-btn'} onClick={() => setBase('topo')}>Topo</button>
+          <button type="button" className={base === 'satellite' ? 'mc-btn active' : 'mc-btn'} onClick={() => setBase('satellite')}>Sat</button>
+        </div>
+        <div className="mc-group">
+          <button type="button" className={is3D ? 'mc-btn active' : 'mc-btn'} onClick={() => setIs3D((v) => !v)} title="Toggle 3D terrain">
+            {is3D ? '3D ✓' : '3D'}
+          </button>
+          <label className="mc-check"><input type="checkbox" checked={showPistes} onChange={(e) => setShowPistes(e.target.checked)} /> Pistes</label>
+          <label className="mc-check"><input type="checkbox" checked={showLifts} onChange={(e) => setShowLifts(e.target.checked)} /> Lifts</label>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function splitPistes(geo: GeoFeatureCollection | null): GeoFeatureCollection {

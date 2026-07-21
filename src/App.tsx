@@ -58,6 +58,7 @@ export default function App() {
   const [focusGeometry, setFocusGeometry] = useState<[number, number][] | null>(null);
   const [longestRuns, setLongestRuns] = useState<(LongestRun & { startName: string; endName: string })[] | null>(null);
   const [longestIdx, setLongestIdx] = useState(0);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const geolocated = useRef(false);
 
@@ -246,6 +247,7 @@ export default function App() {
     setPlan(result);
     setSelectedRoute(0);
     setSelectedStep(null);
+    setPanelOpen(false);
     if (result.error) {
       setPopup(result.error);
       return;
@@ -345,6 +347,7 @@ export default function App() {
     setLongestRuns(named);
     setLongestIdx(0);
     setFocusGeometry(named[0].coords);
+    setPanelOpen(false);
   };
 
   const stepLongest = (delta: number) => {
@@ -391,6 +394,14 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
+        <button
+          type="button"
+          className="panel-toggle"
+          onClick={() => setPanelOpen((o) => !o)}
+          aria-label={panelOpen ? 'Hide controls' : 'Show controls'}
+        >
+          ☰
+        </button>
         <h1 className="logo">
           <Logo className="logo-mark" />
         </h1>
@@ -403,7 +414,8 @@ export default function App() {
       </header>
 
       <div className="body">
-        <aside className="sidebar">
+        {panelOpen && <div className="backdrop" onClick={() => setPanelOpen(false)} />}
+        <aside className={panelOpen ? 'sidebar open' : 'sidebar'}>
           <div className="panel">
             <h3>Plan a route</h3>
             <PointPicker
