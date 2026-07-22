@@ -23,6 +23,18 @@
       "to": "n334",
       "kind": "flat_traverse",
       "bidirectional": true
+    },
+    {
+      "from": "n208",
+      "to": "n382",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "from": "n119",
+      "to": "n382",
+      "kind": "flat_traverse",
+      "bidirectional": true
     }
   ]
 }

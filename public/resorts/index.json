@@ -1,20 +1,20 @@
 [
   {
-    "id": "cervinia-zermatt",
-    "name": "Cervinia–Zermatt",
-    "country": "Italy / Switzerland",
-    "center": {
-      "lon": 7.69,
-      "lat": 45.97
-    }
-  },
-  {
     "id": "madonna-di-campiglio",
     "name": "Madonna di Campiglio",
     "country": "Italy",
     "center": {
       "lon": 10.826,
       "lat": 46.23
+    }
+  },
+  {
+    "id": "cervinia-zermatt",
+    "name": "Cervinia–Zermatt",
+    "country": "Italy / Switzerland",
+    "center": {
+      "lon": 7.69,
+      "lat": 45.97
     }
   },
   {

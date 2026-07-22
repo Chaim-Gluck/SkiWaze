@@ -16,14 +16,14 @@
     "defaultZoom": 12.5,
     "timezone": "Europe/Rome"
   },
-  "generatedAt": "2026-07-22T08:32:23.351Z",
+  "generatedAt": "2026-07-22T18:29:28.218Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
     "nodeCount": 451,
-    "edgeCount": 1205,
+    "edgeCount": 1209,
     "pisteEdges": 330,
     "liftEdges": 96,
-    "connectorEdges": 779,
+    "connectorEdges": 783,
     "meaningfulPoints": 235,
     "reachableFromLifts": 450,
     "unreachableNodes": 1,
