@@ -1,5 +1,6 @@
 import type { GraphEdge, Preferences, PisteColor, RouteWarning } from '../types/domain';
 import { PISTE_COLOR_ORDER } from '../types/domain';
+import { SKILL_SPEED_MULTIPLIER } from '../config/defaults';
 import { parseDailyWindows, isOpenAt, minutesUntilClose } from './openingHours';
 
 /** Minutes-before-close under which we warn the user to hurry. */
@@ -28,10 +29,12 @@ function colorRank(c: PisteColor | undefined): number {
 }
 
 function skiSpeedFor(color: PisteColor | undefined, prefs: Preferences): { speed: number; usedDefault: boolean } {
+  // All skiing speeds scale with the skier's self-rated pace (lifts are unaffected).
+  const mult = SKILL_SPEED_MULTIPLIER[prefs.skillLevel] ?? 1;
   if (color && color !== 'unknown') {
-    return { speed: prefs.speeds.skiSpeedByColor[color], usedDefault: false };
+    return { speed: prefs.speeds.skiSpeedByColor[color] * mult, usedDefault: false };
   }
-  return { speed: prefs.speeds.fallbackSkiSpeed, usedDefault: true };
+  return { speed: prefs.speeds.fallbackSkiSpeed * mult, usedDefault: true };
 }
 
 /**
@@ -109,11 +112,12 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date): Ed
 
   // connector
   const penalty = edge.synthetic && !edge.custom ? SYNTHETIC_PENALTY : 1;
+  const skiMult = SKILL_SPEED_MULTIPLIER[prefs.skillLevel] ?? 1;
   if (edge.connectorKind === 'flat_traverse') {
-    const seconds = distanceM / prefs.speeds.flatTraverseSpeed;
+    const seconds = distanceM / (prefs.speeds.flatTraverseSpeed * skiMult);
     return { allowed: true, seconds, distanceM, descentM, ascentM, weight: seconds * penalty, warnings };
   }
   // skiable_down connector: treat like an unknown-color short run.
-  const seconds = distanceM / prefs.speeds.fallbackSkiSpeed;
+  const seconds = distanceM / (prefs.speeds.fallbackSkiSpeed * skiMult);
   return { allowed: true, seconds, distanceM, descentM, ascentM, weight: seconds * penalty, warnings };
 }

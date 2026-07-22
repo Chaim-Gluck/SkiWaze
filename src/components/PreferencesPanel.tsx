@@ -1,7 +1,11 @@
-import type { LiftType, PisteColor, Preferences } from '../types/domain';
+import type { LiftType, PisteColor, Preferences, SkillLevel } from '../types/domain';
 import { ALL_LIFT_TYPES } from '../config/defaults';
 
 const COLORS: PisteColor[] = ['green', 'blue', 'red', 'black'];
+const SKILL_LEVELS: SkillLevel[] = ['cautious', 'average', 'advanced', 'expert'];
+const SKILL_LABEL: Record<SkillLevel, string> = {
+  cautious: 'Cautious', average: 'Average', advanced: 'Advanced', expert: 'Expert',
+};
 const COLOR_LABEL: Record<PisteColor, string> = {
   green: 'Green', blue: 'Blue', red: 'Red', black: 'Black', unknown: 'Unknown',
 };
@@ -48,6 +52,18 @@ export function PreferencesPanel({ prefs, onChange }: Props) {
         >
           {COLORS.map((c) => (
             <option key={c} value={c}>{COLOR_LABEL[c]}</option>
+          ))}
+        </select>
+      </label>
+
+      <label className="field">
+        <span>My skiing speed</span>
+        <select
+          value={prefs.skillLevel}
+          onChange={(e) => onChange({ ...prefs, skillLevel: e.target.value as SkillLevel })}
+        >
+          {SKILL_LEVELS.map((s) => (
+            <option key={s} value={s}>{SKILL_LABEL[s]}</option>
           ))}
         </select>
       </label>

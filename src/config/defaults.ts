@@ -1,16 +1,17 @@
-import type { LiftType, Preferences, SpeedConfig } from '../types/domain';
+import type { LiftType, Preferences, SkillLevel, SpeedConfig } from '../types/domain';
 
 /**
- * Default average speeds and lift waits. These are placeholders (the app shows a
- * popup when it falls back to them) until per-user data (e.g. Strava) exists.
- * All values are configurable in the preferences panel.
+ * Base average skiing speeds and lift waits. These are reference placeholders: the actual
+ * ski speed used is these values scaled by the skier's SKILL level (see SKILL_SPEED_MULTIPLIER),
+ * and the app shows a popup whenever it falls back to a default (unknown color / wait / hours).
+ * Lift ride speeds and waits are mechanical/queue estimates and are NOT scaled by skill.
  */
 export const DEFAULT_SPEEDS: SpeedConfig = {
   skiSpeedByColor: {
-    green: 5.0, // ~18 km/h
-    blue: 7.0, // ~25 km/h
-    red: 8.0, // ~29 km/h
-    black: 8.5, // ~31 km/h
+    green: 6.25, // ~22.5 km/h (average skier)
+    blue: 8.75, // ~31.5 km/h
+    red: 10.0, // ~36 km/h
+    black: 10.625, // ~38 km/h
   },
   liftSpeedByType: {
     gondola: 5.0,
@@ -36,10 +37,10 @@ export const DEFAULT_SPEEDS: SpeedConfig = {
     magic_carpet: 20,
     mixed_lift: 150,
   },
-  fallbackSkiSpeed: 7.0,
+  fallbackSkiSpeed: 8.75,
   fallbackLiftSpeed: 3.0,
   fallbackLiftWait: 120,
-  flatTraverseSpeed: 1.5,
+  flatTraverseSpeed: 1.875,
 };
 
 export const ALL_LIFT_TYPES: LiftType[] = [
@@ -55,6 +56,18 @@ export const ALL_LIFT_TYPES: LiftType[] = [
   'mixed_lift',
 ];
 
+/**
+ * Multiplier applied to all *skiing* speeds (pistes, flat traverses, skiable connectors,
+ * fallback ski speed) based on the skier's self-rated pace. Lift ride speeds and waits are
+ * unaffected. 'average' is the default. Tune these to taste — they scale the whole model.
+ */
+export const SKILL_SPEED_MULTIPLIER: Record<SkillLevel, number> = {
+  cautious: 0.75,
+  average: 1.0,
+  advanced: 1.25,
+  expert: 1.5,
+};
+
 export const DEFAULT_PREFERENCES: Preferences = {
   // No restriction by default; the user tightens this to their level.
   maxDifficulty: 'black',
@@ -64,5 +77,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   allowedLiftTypes: [...ALL_LIFT_TYPES],
   avoidSyntheticBridges: false,
   preferSkiing: false,
+  // Average skier pace by default.
+  skillLevel: 'average',
   speeds: DEFAULT_SPEEDS,
 };

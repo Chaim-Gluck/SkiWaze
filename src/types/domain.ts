@@ -192,8 +192,13 @@ export interface Preferences {
   avoidSyntheticBridges: boolean;
   /** When true, strongly prefer skiing over riding lifts (especially downhill lifts). */
   preferSkiing: boolean;
+  /** How fast the skier goes; scales all skiing (not lift) speeds. */
+  skillLevel: SkillLevel;
   speeds: SpeedConfig;
 }
+
+/** Self-rated skiing pace. Scales base ski speeds via SKILL_SPEED_MULTIPLIER. */
+export type SkillLevel = 'cautious' | 'average' | 'advanced' | 'expert';
 
 export type RouteObjective = 'fastest' | 'longest_streak';
 
