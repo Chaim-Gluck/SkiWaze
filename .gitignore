@@ -15,6 +15,21 @@ dist-ssr
 # Local corp npm registry override (not for CI / other users)
 .npmrc
 
+# Local-only handoff/ops notes (secrets, resource names, live URL)
+NOTES.local.md
+
+# Secrets / environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+
 # Pipeline raw-data cache (regenerable; the saved dataset is public/resorts/*)
 pipeline/.cache/
 

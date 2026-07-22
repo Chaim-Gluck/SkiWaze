@@ -22,7 +22,7 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        # The committed package-lock.json resolves against an internal corp npm mirror that
+        # The committed package-lock.json may resolve against a private registry that
         # GitHub-hosted runners can't reach, so we drop it and resolve fresh from public npm.
         run: |
           rm -f package-lock.json

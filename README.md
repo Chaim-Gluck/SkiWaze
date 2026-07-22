@@ -27,7 +27,11 @@ npm install
 npm run dev        # start the web app
 ```
 
-> Note: this environment uses a corporate npm registry via a git-ignored `.npmrc`.
+> Note: if your machine needs a private npm registry, put it in a git-ignored `.npmrc`.
+> External contributors just use public npm.
+
+> **Contributors / AI agents:** see [`AGENTS.md`](./AGENTS.md) for architecture, data model,
+> domain invariants, gotchas, and conventions.
 
 ## Data pipeline
 Resort data is fetched from OpenStreetMap + an elevation API and compiled into
@@ -101,21 +105,18 @@ per-resort code**. To add one:
    override), push, then deploy (below).
 
 ## Deploy
-Hosted on **Azure Static Web Apps** (app `skiwaze`, resource group `skiwaze-rg`). Deploys are
-**manual** — a plain `git push` never publishes.
+Hosted on a **static web host** as a plain static site. Deploys are **manual** — a plain
+`git push` never publishes.
 
 - **GitHub Actions (recommended):** Actions tab → *Deploy to Azure Static Web Apps (manual)* →
-  **Run workflow**. It builds on the runner and uploads `dist/`. Requires the repo secret
-  `AZURE_STATIC_WEB_APPS_API_TOKEN` (the SWA deployment token). The workflow re-resolves
-  dependencies from public npm, so it does not depend on the local corporate registry.
-- **CLI (local):**
-  ```bash
-  npm run build
-  npx @azure/static-web-apps-cli deploy dist \
-    --deployment-token $(az staticwebapp secrets list -n skiwaze -g skiwaze-rg --query properties.apiKey -o tsv) \
-    --env production
-  ```
-  (Ensure `az account show` is on the subscription that owns the resource first.)
+  **Run workflow**. It builds on the runner and uploads `dist/`. It reads the deploy token from
+  the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN` (stored in GitHub, never in the repo)
+  and re-resolves dependencies from public npm, so it doesn't depend on any local registry.
+- **CLI (local):** `npm run build`, then upload `dist/` with the hosting provider's CLI using
+  the deploy token.
+
+Concrete resource names, the live URL, and provider-specific admin commands are kept out of the
+repo in a git-ignored `NOTES.local.md`.
 
 ## Project layout
 ```
@@ -136,3 +137,12 @@ public/resorts/          compiled per-resort datasets (the saved data)
 ## Not in v1 (future)
 Login / accounts, Strava integration (personal average speeds), live lift status &
 queue times, live GPS turn-by-turn, 3D terrain, offline/PWA.
+
+## License & attribution
+- **Code:** [MIT](./LICENSE).
+- **Ski/route data:** derived from **© OpenStreetMap contributors**, licensed under the
+  [Open Database License (ODbL)](https://www.openstreetmap.org/copyright). The compiled
+  datasets in `public/resorts/*` are produced from OpenStreetMap via the Overpass API.
+- **Base map tiles:** OpenStreetMap (standard), OpenTopoMap (CC-BY-SA), and Esri World
+  Imagery — each credited in the in-app map attribution control.
+- **Elevation:** Terrain Tiles (AWS Open Data).
