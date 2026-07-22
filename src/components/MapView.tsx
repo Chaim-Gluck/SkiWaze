@@ -116,6 +116,7 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
   const [is3D, setIs3D] = useState(false);
   const [showPistes, setShowPistes] = useState(true);
   const [showLifts, setShowLifts] = useState(true);
+  const [showAreas, setShowAreas] = useState(false);
 
   // Keep latest data/handlers in refs so the map's async 'load' handler never
   // captures stale values (this is what previously left overlays blank on first load).
@@ -141,9 +142,26 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
 
     map.on('load', () => {
       map.addSource('pistes', { type: 'geojson', data: EMPTY_FC });
+      map.addSource('areas', { type: 'geojson', data: EMPTY_FC });
       map.addSource('lifts', { type: 'geojson', data: EMPTY_FC });
       map.addSource('route', { type: 'geojson', data: EMPTY_FC });
       map.addSource('focus', { type: 'geojson', data: EMPTY_FC });
+
+      // Area polygons (wide open bowls/aprons): translucent fill + outline, OFF by default.
+      map.addLayer({
+        id: 'areas-fill',
+        type: 'fill',
+        source: 'areas',
+        layout: { visibility: 'none' },
+        paint: { 'fill-color': SLOPE_COLOR_EXPR, 'fill-opacity': 0.25 },
+      });
+      map.addLayer({
+        id: 'areas-outline',
+        type: 'line',
+        source: 'areas',
+        layout: { visibility: 'none' },
+        paint: { 'line-color': SLOPE_COLOR_EXPR, 'line-width': 1.5, 'line-opacity': 0.9 },
+      });
 
       map.addLayer({
         id: 'connectors',
@@ -189,7 +207,7 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
         type: 'line',
         source: 'route',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#ff9800', 'line-width': 10, 'line-opacity': 0.4 },
+        paint: { 'line-color': '#ff6d00', 'line-width': 13, 'line-opacity': 0.72 },
       });
       map.addLayer({
         id: 'route-line',
@@ -197,7 +215,7 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
         source: 'route',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-width': 4,
+          'line-width': 3,
           'line-color': [
             'case',
             ['==', ['get', 'kind'], 'lift'], '#7b1fa2',
@@ -241,6 +259,7 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
 
       // Apply whatever data is current now (fixes blank-on-first-load).
       (map.getSource('pistes') as maplibregl.GeoJSONSource).setData(splitPistes(geoRef.current) as never);
+      (map.getSource('areas') as maplibregl.GeoJSONSource).setData(splitAreas(geoRef.current) as never);
       (map.getSource('lifts') as maplibregl.GeoJSONSource).setData(splitLifts(geoRef.current) as never);
       (map.getSource('route') as maplibregl.GeoJSONSource).setData((routeRef.current ?? EMPTY_FC) as never);
       map.setFilter('route-step', rangeFilter(stepRef.current));
@@ -256,6 +275,7 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
     const map = mapRef.current;
     if (!map || !loaded) return;
     (map.getSource('pistes') as maplibregl.GeoJSONSource | undefined)?.setData(splitPistes(geo) as never);
+    (map.getSource('areas') as maplibregl.GeoJSONSource | undefined)?.setData(splitAreas(geo) as never);
     (map.getSource('lifts') as maplibregl.GeoJSONSource | undefined)?.setData(splitLifts(geo) as never);
   }, [geo, loaded]);
 
@@ -374,7 +394,8 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
     const pisteLayers = ['pistes-line', 'connectors', 'synthetic-links', 'custom-links'];
     for (const l of pisteLayers) map.setLayoutProperty(l, 'visibility', showPistes ? 'visible' : 'none');
     map.setLayoutProperty('lifts-line', 'visibility', showLifts ? 'visible' : 'none');
-  }, [showPistes, showLifts, loaded]);
+    for (const l of ['areas-fill', 'areas-outline']) map.setLayoutProperty(l, 'visibility', showAreas ? 'visible' : 'none');
+  }, [showPistes, showLifts, showAreas, loaded]);
 
   return (
     <div className="map-shell">
@@ -391,6 +412,7 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
           </button>
           <label className="mc-check"><input type="checkbox" checked={showPistes} onChange={(e) => setShowPistes(e.target.checked)} /> Pistes</label>
           <label className="mc-check"><input type="checkbox" checked={showLifts} onChange={(e) => setShowLifts(e.target.checked)} /> Lifts</label>
+          <label className="mc-check"><input type="checkbox" checked={showAreas} onChange={(e) => setShowAreas(e.target.checked)} /> Areas</label>
         </div>
       </div>
     </div>
@@ -399,7 +421,125 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
 
 function splitPistes(geo: GeoFeatureCollection | null): GeoFeatureCollection {
   if (!geo) return EMPTY_FC;
-  return { type: 'FeatureCollection', features: geo.features.filter((f) => f.properties.kind !== 'lift') };
+  const pistesEtc = geo.features.filter((f) => f.properties.kind !== 'lift' && f.properties.kind !== 'area');
+  return { type: 'FeatureCollection', features: dedupePistes(pistesEtc) };
+}
+function splitAreas(geo: GeoFeatureCollection | null): GeoFeatureCollection {
+  if (!geo) return EMPTY_FC;
+  return { type: 'FeatureCollection', features: geo.features.filter((f) => f.properties.kind === 'area') };
+}
+
+type PisteFeature = GeoFeatureCollection['features'][number];
+
+/**
+ * OSM over-maps many runs as several near-parallel ways a few metres apart, and our
+ * pipeline further splits each run into `piste` (steep) + `connector` (flat) edges —
+ * so a single slope shows as 2–3 stacked lines. This collapses that visual noise for
+ * RENDERING ONLY (the routing graph is untouched), in two passes:
+ *   1. Geometric: pistes + connectors are de-duped together, grouped by colour; a line
+ *      whose path is ≥70% covered by an already-kept same-colour line within ~15m is
+ *      dropped. Pistes go first (longest first) so the colour-coded slope line survives.
+ *   2. Named-shadow: OSM traces many runs as extra UNNAMED ways 20–40m off a named run.
+ *      A remaining unnamed line whose path is ≥60% within ~30m of a same-colour NAMED
+ *      survivor is dropped (the named line is the "real" one).
+ * Named runs and standalone unnamed runs (no twin) are always kept; custom links are
+ * never touched.
+ */
+function isNamedRun(f: PisteFeature): boolean {
+  const n = f.properties.name;
+  return !!n && n !== 'Custom link' && n.trim() !== '';
+}
+
+function dedupePistes(features: PisteFeature[]): PisteFeature[] {
+  const CELL = 8; // metres — grid cell; a 3×3 neighbour check merges lines within ~15m
+  const occupied = new Set<string>();
+  const order = features
+    .map((f, i) => {
+      const kind = f.properties.kind;
+      const candidate = (kind === 'piste' || kind === 'connector') && f.properties.custom !== true;
+      return { i, pri: kind === 'piste' ? 1 : 0, len: candidate ? approxLengthM(f) : -1 };
+    })
+    .filter((x) => x.len >= 0)
+    .sort((a, b) => b.pri - a.pri || b.len - a.len);
+  const dropped = new Set<number>();
+  for (const { i } of order) {
+    const f = features[i];
+    const color = String(f.properties.color ?? '?');
+    const cells = sampleCells(f, CELL);
+    if (cells.length === 0) continue;
+    let hit = 0;
+    for (const [gx, gy] of cells) if (neighbourOccupied(occupied, color, gx, gy)) hit++;
+    if (hit / cells.length >= 0.7) { dropped.add(i); continue; }
+    for (const [gx, gy] of cells) occupied.add(`${color}:${gx}:${gy}`);
+  }
+
+  // Pass 2: drop surviving UNNAMED lines that closely shadow a same-colour NAMED survivor.
+  const NAMED_CELL = 15; // ~30m tolerance with the 3×3 neighbour check
+  const namedCells = new Set<string>();
+  for (let i = 0; i < features.length; i++) {
+    if (dropped.has(i)) continue;
+    const f = features[i];
+    const kind = f.properties.kind;
+    if ((kind !== 'piste' && kind !== 'connector') || !isNamedRun(f)) continue;
+    const color = String(f.properties.color ?? '?');
+    for (const [gx, gy] of sampleCells(f, NAMED_CELL)) namedCells.add(`${color}:${gx}:${gy}`);
+  }
+  for (let i = 0; i < features.length; i++) {
+    if (dropped.has(i)) continue;
+    const f = features[i];
+    const kind = f.properties.kind;
+    if ((kind !== 'piste' && kind !== 'connector') || f.properties.custom === true || isNamedRun(f)) continue;
+    const color = String(f.properties.color ?? '?');
+    const cells = sampleCells(f, NAMED_CELL);
+    if (cells.length === 0) continue;
+    let hit = 0;
+    for (const [gx, gy] of cells) if (neighbourOccupied(namedCells, color, gx, gy)) hit++;
+    if (hit / cells.length >= 0.6) dropped.add(i);
+  }
+
+  return dropped.size ? features.filter((_, i) => !dropped.has(i)) : features;
+}
+
+function approxLengthM(f: PisteFeature): number {
+  const c = f.geometry.coordinates as [number, number][];
+  let m = 0;
+  for (let s = 0; s < c.length - 1; s++) {
+    const dx = (c[s + 1][0] - c[s][0]) * Math.cos((c[s][1] * Math.PI) / 180) * 111320;
+    const dy = (c[s + 1][1] - c[s][1]) * 110540;
+    m += Math.hypot(dx, dy);
+  }
+  return m;
+}
+
+function sampleCells(f: PisteFeature, cell: number): [number, number][] {
+  const c = f.geometry.coordinates as [number, number][];
+  const cells: [number, number][] = [];
+  const seen = new Set<string>();
+  const push = (lon: number, lat: number) => {
+    const gx = Math.round((lon * Math.cos((lat * Math.PI) / 180) * 111320) / cell);
+    const gy = Math.round((lat * 110540) / cell);
+    const k = `${gx},${gy}`;
+    if (!seen.has(k)) { seen.add(k); cells.push([gx, gy]); }
+  };
+  for (let s = 0; s < c.length - 1; s++) {
+    const [lon1, lat1] = c[s];
+    const [lon2, lat2] = c[s + 1];
+    const dx = (lon2 - lon1) * Math.cos((lat1 * Math.PI) / 180) * 111320;
+    const dy = (lat2 - lat1) * 110540;
+    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / cell));
+    for (let t = 0; t <= steps; t++) {
+      const u = t / steps;
+      push(lon1 + (lon2 - lon1) * u, lat1 + (lat2 - lat1) * u);
+    }
+  }
+  return cells;
+}
+
+function neighbourOccupied(occ: Set<string>, color: string, gx: number, gy: number): boolean {
+  for (let dx = -1; dx <= 1; dx++)
+    for (let dy = -1; dy <= 1; dy++)
+      if (occ.has(`${color}:${gx + dx}:${gy + dy}`)) return true;
+  return false;
 }
 function splitLifts(geo: GeoFeatureCollection | null): GeoFeatureCollection {
   if (!geo) return EMPTY_FC;

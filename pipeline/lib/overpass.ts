@@ -24,6 +24,19 @@ export interface OverpassResult {
   lifts: RawWay[];
 }
 
+/**
+ * True when a piste way is an AREA polygon (OSM `area=yes` or a closed ring) rather
+ * than a centreline. Rendering an area's perimeter as a line draws two parallel lines
+ * down each side of the run, and its perimeter makes bogus routing edges — so these are
+ * excluded from the graph. Runs mapped as areas are, by OSM convention, also mapped as
+ * centreline ways, which are kept.
+ */
+export function isPisteArea(w: RawWay): boolean {
+  if (w.tags['area'] === 'yes') return true;
+  const n = w.nodes;
+  return n.length > 3 && n[0] === n[n.length - 1];
+}
+
 function buildQuery(r: Resort): string {
   const { minLat, minLon, maxLat, maxLon } = r.bbox;
   const bbox = `${minLat},${minLon},${maxLat},${maxLon}`;

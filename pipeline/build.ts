@@ -52,7 +52,14 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
   const report = validateGraph(graph);
   printReport(report);
 
-  emitResort(resort, graph, report, PUBLIC_DIR);
+  const areaPolys = pistes
+    .filter((p) => p.area && p.points.length >= 3)
+    .map((p) => ({
+      color: p.color,
+      name: p.name,
+      coordinates: p.points.map((pt) => [pt.lon, pt.lat] as [number, number]),
+    }));
+  emitResort(resort, graph, report, PUBLIC_DIR, areaPolys);
 }
 
 function writeIndex(built: Resort[]): void {

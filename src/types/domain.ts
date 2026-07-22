@@ -78,6 +78,8 @@ export interface GraphEdge {
   pisteName?: string;
   /** Piste number/reference (e.g. "56"), shown before the name in directions. */
   pisteRef?: string;
+  /** True when derived from an OSM area=yes polygon: kept for routing, hidden from the map render. */
+  area?: boolean;
 
   // Lift-only
   liftType?: LiftType;

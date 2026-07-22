@@ -1,5 +1,6 @@
 import type { LiftType, PisteColor } from '../../src/types/domain';
 import type { RawWay } from './overpass';
+import { isPisteArea } from './overpass';
 
 /** A vertex carrying its OSM node id (for topology) and coordinates (+ elevation later). */
 export interface NormPoint {
@@ -15,6 +16,8 @@ export interface NormPiste {
   name?: string;
   /** Piste number/reference (e.g. "56"), from piste:ref/ref. */
   ref?: string;
+  /** True when this piste is an OSM area=yes polygon (kept for routing, hidden from render). */
+  area: boolean;
   points: NormPoint[];
 }
 
@@ -96,6 +99,7 @@ export function normalizePiste(w: RawWay): NormPiste {
     color: colorFor(w.tags),
     name: w.tags['name'] || w.tags['piste:name'],
     ref: w.tags['piste:ref'] || w.tags['ref'],
+    area: isPisteArea(w),
     points: toPoints(w),
   };
 }

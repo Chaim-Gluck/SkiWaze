@@ -21,6 +21,7 @@ import { distance3dM, haversineM, projectOnPolyline } from './utils/geo';
 import { planRoutes, findLongestRuns, routeForEdges, type PlanResult, type LongestRun } from './routing/plan';
 import { MapView, type LonLat, type RouteFeatureCollection } from './components/MapView';
 import { PointPicker } from './components/PointPicker';
+import { AccordionSection } from './components/AccordionSection';
 import { PreferencesPanel } from './components/PreferencesPanel';
 import { RouteOptions } from './components/RouteOptions';
 import { CustomLinkPanel, type LinkColor, type LinkDirection } from './components/CustomLinkPanel';
@@ -79,6 +80,8 @@ export default function App() {
   const [longestRuns, setLongestRuns] = useState<(LongestRun & { startName: string; endName: string })[] | null>(null);
   const [longestIdx, setLongestIdx] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string>('plan');
+  const toggleSection = (id: string) => setOpenSection((cur) => (cur === id ? '' : id));
 
   const geolocated = useRef(false);
 
@@ -282,6 +285,7 @@ export default function App() {
     setSelectedRange(null);
     setFocusGeometry(null);
     setPanelOpen(false);
+    setOpenSection('routes');
     if (result.error) {
       setPopup(result.error);
       return;
@@ -456,6 +460,7 @@ export default function App() {
     setSelectedRange(null);
     setFocusGeometry(named[0].coords);
     setPanelOpen(false);
+    setOpenSection('longest');
   };
 
   const stepLongest = (delta: number) => {
@@ -493,6 +498,7 @@ export default function App() {
     setSelectedRoute(0);
     setSelectedRange(null);
     setPanelOpen(false);
+    setOpenSection('routes');
   };
 
   const handleStepClick = (routeIndex: number, fromLeg: number, toLeg: number) => {
@@ -531,6 +537,15 @@ export default function App() {
 
   const points = graph?.points ?? [];
 
+  const fromLabel = fromCustom ?? (fromNodeId ? nodeLabelFor(fromNodeId) : null);
+  const toLabel = toCustom ?? (toNodeId ? nodeLabelFor(toNodeId) : null);
+  const planSummary = fromLabel || toLabel ? `${fromLabel ?? 'A'} → ${toLabel ?? 'B'}` : 'Pick A and B';
+  const longestSummary = currentLongest
+    ? `${currentLongest.startName} → ${currentLongest.endName}`
+    : 'Find longest descents';
+  const linksSummary = customEdges.length ? `${customEdges.length} link${customEdges.length === 1 ? '' : 's'}` : 'None yet';
+  const closedSummary = closedKeys.length ? `${closedKeys.length} closed` : 'All open';
+
   return (
     <div className="app">
       <header className="topbar">
@@ -565,6 +580,12 @@ export default function App() {
       <div className="body">
         {panelOpen && <div className="backdrop" onClick={() => setPanelOpen(false)} />}
         <aside className={panelOpen ? 'sidebar open' : 'sidebar'}>
+          <AccordionSection
+            title="Plan a route"
+            summary={planSummary}
+            open={openSection === 'plan'}
+            onToggle={() => toggleSection('plan')}
+          >
           <div className="panel">
             <h3>Plan a route</h3>
             <PointPicker
@@ -613,42 +634,58 @@ export default function App() {
               Find routes
             </button>
           </div>
+          </AccordionSection>
 
-          {plan && plan.noLiftFreeRoute && (
-            <div className="ski-note">
-              <strong>No lift-free route to this point at your level.</strong>
-              {plan.nearestSkiDestination ? (
-                <>
-                  {' '}Nearest ski-down destination:{' '}
-                  <button
-                    type="button"
-                    className="link-btn inline"
-                    onClick={() => {
-                      setToNodeId(plan.nearestSkiDestination!.nodeId);
-                      setToCustom(null);
-                    }}
-                  >
-                    {plan.nearestSkiDestination.name}
-                  </button>{' '}
-                  (tap to set as destination, then Find routes).
-                </>
-              ) : (
-                ' Try a lower difficulty or a different destination.'
+          {plan && (plan.noLiftFreeRoute || plan.routes.length > 0) && (
+            <AccordionSection
+              title="Route options"
+              summary={plan.routes.length ? `${plan.routes.length} option${plan.routes.length === 1 ? '' : 's'}` : 'No route'}
+              open={openSection === 'routes'}
+              onToggle={() => toggleSection('routes')}
+            >
+              {plan.noLiftFreeRoute && (
+                <div className="ski-note">
+                  <strong>No lift-free route to this point at your level.</strong>
+                  {plan.nearestSkiDestination ? (
+                    <>
+                      {' '}Nearest ski-down destination:{' '}
+                      <button
+                        type="button"
+                        className="link-btn inline"
+                        onClick={() => {
+                          setToNodeId(plan.nearestSkiDestination!.nodeId);
+                          setToCustom(null);
+                        }}
+                      >
+                        {plan.nearestSkiDestination.name}
+                      </button>{' '}
+                      (tap to set as destination, then Find routes).
+                    </>
+                  ) : (
+                    ' Try a lower difficulty or a different destination.'
+                  )}
+                </div>
               )}
-            </div>
+
+              {plan.routes.length > 0 && (
+                <RouteOptions
+                  routes={plan.routes}
+                  selectedIndex={selectedRoute}
+                  onSelect={(i) => { setSelectedRoute(i); setSelectedRange(null); }}
+                  selectedRange={selectedRange}
+                  onStepClick={handleStepClick}
+                  onMarkClosed={markClosed}
+                />
+              )}
+            </AccordionSection>
           )}
 
-          {plan && plan.routes.length > 0 && (
-            <RouteOptions
-              routes={plan.routes}
-              selectedIndex={selectedRoute}
-              onSelect={(i) => { setSelectedRoute(i); setSelectedRange(null); }}
-              selectedRange={selectedRange}
-              onStepClick={handleStepClick}
-              onMarkClosed={markClosed}
-            />
-          )}
-
+          <AccordionSection
+            title="🏆 Longest runs"
+            summary={longestSummary}
+            open={openSection === 'longest'}
+            onToggle={() => toggleSection('longest')}
+          >
           <LongestRunPanel
             runs={longestRuns}
             index={longestIdx}
@@ -664,7 +701,14 @@ export default function App() {
             onNavigateStart={navigateToLongestStart}
             onNavigateEnd={navigateToLongestEnd}
           />
+          </AccordionSection>
 
+          <AccordionSection
+            title="🔗 Custom links"
+            summary={linksSummary}
+            open={openSection === 'links'}
+            onToggle={() => toggleSection('links')}
+          >
           <CustomLinkPanel
             points={points}
             fromLabel={linkFrom?.label ?? null}
@@ -684,15 +728,30 @@ export default function App() {
             onLocate={setFocusGeometry}
             onClear={clearCustomLinks}
           />
+          </AccordionSection>
 
+          <AccordionSection
+            title="⛔ Closed today"
+            summary={closedSummary}
+            open={openSection === 'closed'}
+            onToggle={() => toggleSection('closed')}
+          >
           <ClosedPanel
             closedKeys={closedKeys}
             onReopen={reopenClosure}
             onReopenAll={reopenAllClosures}
             onLocate={locateClosure}
           />
+          </AccordionSection>
 
+          <AccordionSection
+            title="Skiing preferences"
+            summary="Level & lift filters"
+            open={openSection === 'prefs'}
+            onToggle={() => toggleSection('prefs')}
+          >
           <PreferencesPanel prefs={prefs} onChange={setPrefs} />
+          </AccordionSection>
 
           {graph && (
             <p className="datanote">
@@ -708,8 +767,8 @@ export default function App() {
             geo={effectiveGeo}
             routeFC={routeFC}
             selectedRange={selectedRange}
-            from={pointFor(fromNodeId)}
-            to={pointFor(toNodeId)}
+            from={focusGeometry ? null : pointFor(fromNodeId)}
+            to={focusGeometry ? null : pointFor(toNodeId)}
             linkFrom={linkEndPos(linkFrom)}
             linkTo={linkEndPos(linkTo)}
             focusGeometry={focusGeometry}

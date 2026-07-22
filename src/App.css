@@ -143,6 +143,46 @@ body {
 }
 .panel h3 { margin: 0 0 10px; font-size: 15px; }
 
+/* Collapsible sidebar sections (accordion) */
+.acc {
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.acc.open { border-color: #ff6d00; }
+.acc-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel2);
+  border: none;
+  color: var(--text);
+  padding: 11px 12px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.acc-head:hover { filter: brightness(1.12); }
+.acc-title { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.acc-summary {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.acc-chevron { margin-left: auto; color: var(--muted); font-size: 11px; }
+.acc-summary + .acc-chevron { margin-left: 0; }
+.acc-body { padding: 4px 12px 12px; }
+/* Neutralize each wrapped panel's own box/heading inside the accordion body. */
+.acc-body .panel { border: none; background: none; padding: 0; margin: 0; border-radius: 0; }
+.acc-body .panel > h3:first-child { display: none; }
+
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .field > span { font-size: 13px; color: var(--muted); }
 

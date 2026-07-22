@@ -342,6 +342,7 @@ export function buildResortGraph(
             color: piste.color,
             pisteName: piste.name,
             pisteRef: piste.ref,
+            area: piste.area || undefined,
           });
         }
       } else {
@@ -361,6 +362,7 @@ export function buildResortGraph(
           color: piste.color,
           pisteName: piste.name,
           pisteRef: piste.ref,
+          area: piste.area || undefined,
         });
         const label = piste.ref && piste.name ? `${piste.ref} ${piste.name}` : piste.ref ? `Piste ${piste.ref}` : piste.name;
         if (label) {
@@ -383,6 +385,7 @@ export function buildResortGraph(
             color: piste.color,
             pisteName: piste.name,
             pisteRef: piste.ref,
+            area: piste.area || undefined,
           });
         }
       }
