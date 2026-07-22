@@ -16,14 +16,14 @@
     "defaultZoom": 12,
     "timezone": "Europe/Zurich"
   },
-  "generatedAt": "2026-07-22T08:32:24.702Z",
+  "generatedAt": "2026-07-22T11:56:56.336Z",
   "stats": {
     "resortId": "cervinia-zermatt",
     "nodeCount": 935,
-    "edgeCount": 2763,
+    "edgeCount": 2765,
     "pisteEdges": 825,
     "liftEdges": 121,
-    "connectorEdges": 1817,
+    "connectorEdges": 1819,
     "meaningfulPoints": 349,
     "reachableFromLifts": 915,
     "unreachableNodes": 20,
