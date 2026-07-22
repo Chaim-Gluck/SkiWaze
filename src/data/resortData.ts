@@ -12,15 +12,17 @@ export type GeoFeatureCollection = {
   features: {
     type: 'Feature';
     properties: {
-      kind: 'piste' | 'lift' | 'connector';
+      kind: 'piste' | 'lift' | 'connector' | 'area';
       color: string | null;
-      liftType: string | null;
+      liftType?: string | null;
       name: string | null;
-      connectorKind: string | null;
+      connectorKind?: string | null;
       synthetic?: boolean;
       custom?: boolean;
     };
-    geometry: { type: 'LineString'; coordinates: [number, number][] };
+    geometry:
+      | { type: 'LineString'; coordinates: [number, number][] }
+      | { type: 'Polygon'; coordinates: [number, number][][] };
   }[];
 };
 
