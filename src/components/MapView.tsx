@@ -75,6 +75,29 @@ function linkDotEl(color: string): HTMLElement {
   return el;
 }
 
+/** Live-location "puck": a heading arrow (when a compass heading is known) or a plain dot. */
+function userLocEl(): HTMLElement {
+  const el = document.createElement('div');
+  el.className = 'user-loc';
+  el.innerHTML =
+    '<svg class="ul-arrow" viewBox="0 0 24 24" width="38" height="38">' +
+    '<path d="M12 2 L19 20 L12 16 L5 20 Z" fill="#1a73e8" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/></svg>' +
+    '<span class="ul-dot"></span>';
+  return el;
+}
+
+/** Geodesic circle polygon (ring of lon/lat) of `radiusM` metres for the accuracy halo. */
+function circlePolygon(lon: number, lat: number, radiusM: number, n = 48): [number, number][] {
+  const latR = radiusM / 110540;
+  const lonR = radiusM / (111320 * Math.cos((lat * Math.PI) / 180) || 1e-6);
+  const ring: [number, number][] = [];
+  for (let i = 0; i <= n; i++) {
+    const t = (i / n) * 2 * Math.PI;
+    ring.push([lon + lonR * Math.cos(t), lat + latR * Math.sin(t)]);
+  }
+  return ring;
+}
+
 export interface LonLat {
   lon: number;
   lat: number;
@@ -117,6 +140,16 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
   const [showPistes, setShowPistes] = useState(true);
   const [showLifts, setShowLifts] = useState(true);
   const [showAreas, setShowAreas] = useState(false);
+
+  // Live location (Phase 1): continuous watchPosition -> heading arrow + accuracy circle,
+  // with a follow-me camera that yields as soon as the user pans the map.
+  const [tracking, setTracking] = useState(false);
+  const [following, setFollowing] = useState(true);
+  const followRef = useRef(following);
+  followRef.current = following;
+  const watchId = useRef<number | null>(null);
+  const userMarker = useRef<maplibregl.Marker | null>(null);
+  const lastPos = useRef<[number, number] | null>(null);
 
   // Keep latest data/handlers in refs so the map's async 'load' handler never
   // captures stale values (this is what previously left overlays blank on first load).
@@ -257,6 +290,21 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
         paint: { 'line-color': '#ffeb3b', 'line-width': 8, 'line-opacity': 0.9 },
       });
 
+      // Live-location accuracy halo (updated while tracking).
+      map.addSource('user-accuracy', { type: 'geojson', data: EMPTY_FC });
+      map.addLayer({
+        id: 'user-accuracy-fill',
+        type: 'fill',
+        source: 'user-accuracy',
+        paint: { 'fill-color': '#1a73e8', 'fill-opacity': 0.12 },
+      });
+      map.addLayer({
+        id: 'user-accuracy-line',
+        type: 'line',
+        source: 'user-accuracy',
+        paint: { 'line-color': '#1a73e8', 'line-opacity': 0.35, 'line-width': 1 },
+      });
+
       // Apply whatever data is current now (fixes blank-on-first-load).
       (map.getSource('pistes') as maplibregl.GeoJSONSource).setData(splitPistes(geoRef.current) as never);
       (map.getSource('areas') as maplibregl.GeoJSONSource).setData(splitAreas(geoRef.current) as never);
@@ -267,6 +315,8 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
     });
 
     map.on('click', (e) => clickCb.current?.({ lon: e.lngLat.lng, lat: e.lngLat.lat }));
+    // A user-initiated pan drops follow-me mode (our own easeTo doesn't fire dragstart).
+    map.on('dragstart', () => setFollowing(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -397,6 +447,63 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
     for (const l of ['areas-fill', 'areas-outline']) map.setLayoutProperty(l, 'visibility', showAreas ? 'visible' : 'none');
   }, [showPistes, showLifts, showAreas, loaded]);
 
+  // Live location: start/stop watchPosition when `tracking` toggles.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !tracking) return;
+    if (!('geolocation' in navigator)) {
+      setTracking(false);
+      return;
+    }
+    const id = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { longitude: lon, latitude: lat, accuracy, heading } = pos.coords;
+        lastPos.current = [lon, lat];
+        if (!userMarker.current) {
+          userMarker.current = new maplibregl.Marker({ element: userLocEl(), rotationAlignment: 'map' });
+        }
+        const el = userMarker.current.getElement();
+        const hasHeading = heading != null && !Number.isNaN(heading);
+        el.classList.toggle('has-heading', hasHeading);
+        if (hasHeading) userMarker.current.setRotation(heading as number);
+        userMarker.current.setLngLat([lon, lat]).addTo(map);
+        const acc = map.getSource('user-accuracy') as maplibregl.GeoJSONSource | undefined;
+        if (acc && accuracy) {
+          acc.setData({
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'Polygon', coordinates: [circlePolygon(lon, lat, accuracy)] },
+          } as never);
+        }
+        if (followRef.current) map.easeTo({ center: [lon, lat], duration: 500 });
+      },
+      () => setTracking(false),
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 12000 },
+    );
+    watchId.current = id;
+    return () => {
+      if (watchId.current != null) navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+      userMarker.current?.remove();
+      userMarker.current = null;
+      (map.getSource('user-accuracy') as maplibregl.GeoJSONSource | undefined)?.setData(EMPTY_FC as never);
+    };
+  }, [tracking]);
+
+  // Single locate button: start -> (following) -> recenter -> stop.
+  const onLocate = () => {
+    if (!tracking) {
+      setTracking(true);
+      setFollowing(true);
+    } else if (!following) {
+      setFollowing(true);
+      if (lastPos.current) mapRef.current?.easeTo({ center: lastPos.current, duration: 500 });
+    } else {
+      setTracking(false);
+    }
+  };
+  const locateLabel = !tracking ? '📍 Locate' : following ? '📍 Following' : '📍 Recenter';
+
   return (
     <div className="map-shell">
       <div ref={containerRef} className="map-canvas" />
@@ -413,6 +520,16 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
           <label className="mc-check"><input type="checkbox" checked={showPistes} onChange={(e) => setShowPistes(e.target.checked)} /> Pistes</label>
           <label className="mc-check"><input type="checkbox" checked={showLifts} onChange={(e) => setShowLifts(e.target.checked)} /> Lifts</label>
           <label className="mc-check"><input type="checkbox" checked={showAreas} onChange={(e) => setShowAreas(e.target.checked)} /> Areas</label>
+        </div>
+        <div className="mc-group">
+          <button
+            type="button"
+            className={tracking ? 'mc-btn active' : 'mc-btn'}
+            onClick={onLocate}
+            title="Show my live location"
+          >
+            {locateLabel}
+          </button>
         </div>
       </div>
     </div>
