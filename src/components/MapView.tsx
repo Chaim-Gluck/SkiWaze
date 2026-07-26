@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import maplibregl, { type StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { GeoFeatureCollection } from '../data/resortData';
+import type { LivePosition } from '../hooks/useLiveLocation';
 
 const BASE_STYLE: StyleSpecification = {
   version: 8,
@@ -86,6 +87,25 @@ function userLocEl(): HTMLElement {
   return el;
 }
 
+/** Bigger directional arrow used while actively navigating a route. */
+function navArrowEl(): HTMLElement {
+  const el = document.createElement('div');
+  el.className = 'nav-arrow';
+  el.innerHTML =
+    '<svg viewBox="0 0 24 24" width="46" height="46">' +
+    '<path d="M12 1 L20 21 L12 16.5 L4 21 Z" fill="#ff6d00" stroke="#ffffff" stroke-width="1.7" stroke-linejoin="round"/></svg>';
+  return el;
+}
+
+/** Wrap a coordinate list as a single-LineString FeatureCollection. */
+function lineFC(coords: [number, number][]): GeoFeatureCollection {
+  if (coords.length < 2) return EMPTY_FC;
+  return {
+    type: 'FeatureCollection',
+    features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } }],
+  } as unknown as GeoFeatureCollection;
+}
+
 /** Geodesic circle polygon (ring of lon/lat) of `radiusM` metres for the accuracy halo. */
 function circlePolygon(lon: number, lat: number, radiusM: number, n = 48): [number, number][] {
   const latR = radiusM / 110540;
@@ -112,6 +132,15 @@ export interface RouteFeatureCollection {
   }[];
 }
 
+/** Render payload for active navigation (snapped position + travelled/remaining geometry). */
+export interface NavRender {
+  lon: number;
+  lat: number;
+  bearing: number;
+  traveled: [number, number][];
+  remaining: [number, number][];
+}
+
 interface MapViewProps {
   center: LonLat;
   zoom: number;
@@ -124,9 +153,19 @@ interface MapViewProps {
   linkTo: LonLat | null;
   focusGeometry: [number, number][] | null;
   onMapClick?: (p: LonLat) => void;
+  userPosition: LivePosition | null;
+  following: boolean;
+  locateActive: boolean;
+  onLocateToggle: () => void;
+  onFollowChange: (v: boolean) => void;
+  nav: NavRender | null;
+  navHeadingUp: boolean;
 }
 
-export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, onMapClick }: MapViewProps) {
+export function MapView({
+  center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, onMapClick,
+  userPosition, following, locateActive, onLocateToggle, onFollowChange, nav, navHeadingUp,
+}: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -141,15 +180,11 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
   const [showLifts, setShowLifts] = useState(true);
   const [showAreas, setShowAreas] = useState(false);
 
-  // Live location (Phase 1): continuous watchPosition -> heading arrow + accuracy circle,
-  // with a follow-me camera that yields as soon as the user pans the map.
-  const [tracking, setTracking] = useState(false);
-  const [following, setFollowing] = useState(true);
-  const followRef = useRef(following);
-  followRef.current = following;
-  const watchId = useRef<number | null>(null);
+  // Live location + navigation are driven by props (shared hook lives in App).
   const userMarker = useRef<maplibregl.Marker | null>(null);
-  const lastPos = useRef<[number, number] | null>(null);
+  const navMarker = useRef<maplibregl.Marker | null>(null);
+  const followCb = useRef(onFollowChange);
+  followCb.current = onFollowChange;
 
   // Keep latest data/handlers in refs so the map's async 'load' handler never
   // captures stale values (this is what previously left overlays blank on first load).
@@ -305,6 +340,31 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
         paint: { 'line-color': '#1a73e8', 'line-opacity': 0.35, 'line-width': 1 },
       });
 
+      // Navigation progress: travelled (dimmed) + remaining (bright) route split.
+      map.addSource('nav-traveled', { type: 'geojson', data: EMPTY_FC });
+      map.addSource('nav-remaining', { type: 'geojson', data: EMPTY_FC });
+      map.addLayer({
+        id: 'nav-traveled',
+        type: 'line',
+        source: 'nav-traveled',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#7a8a99', 'line-width': 7, 'line-opacity': 0.8 },
+      });
+      map.addLayer({
+        id: 'nav-remaining-casing',
+        type: 'line',
+        source: 'nav-remaining',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#0b3d66', 'line-width': 11, 'line-opacity': 0.9 },
+      });
+      map.addLayer({
+        id: 'nav-remaining',
+        type: 'line',
+        source: 'nav-remaining',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#37b6ff', 'line-width': 6 },
+      });
+
       // Apply whatever data is current now (fixes blank-on-first-load).
       (map.getSource('pistes') as maplibregl.GeoJSONSource).setData(splitPistes(geoRef.current) as never);
       (map.getSource('areas') as maplibregl.GeoJSONSource).setData(splitAreas(geoRef.current) as never);
@@ -316,7 +376,7 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
 
     map.on('click', (e) => clickCb.current?.({ lon: e.lngLat.lng, lat: e.lngLat.lat }));
     // A user-initiated pan drops follow-me mode (our own easeTo doesn't fire dragstart).
-    map.on('dragstart', () => setFollowing(false));
+    map.on('dragstart', () => followCb.current(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -447,62 +507,78 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
     for (const l of ['areas-fill', 'areas-outline']) map.setLayoutProperty(l, 'visibility', showAreas ? 'visible' : 'none');
   }, [showPistes, showLifts, showAreas, loaded]);
 
-  // Live location: start/stop watchPosition when `tracking` toggles.
+  // Live-location puck from the shared position stream.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !tracking) return;
-    if (!('geolocation' in navigator)) {
-      setTracking(false);
-      return;
-    }
-    const id = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { longitude: lon, latitude: lat, accuracy, heading } = pos.coords;
-        lastPos.current = [lon, lat];
-        if (!userMarker.current) {
-          userMarker.current = new maplibregl.Marker({ element: userLocEl(), rotationAlignment: 'map' });
-        }
-        const el = userMarker.current.getElement();
-        const hasHeading = heading != null && !Number.isNaN(heading);
-        el.classList.toggle('has-heading', hasHeading);
-        if (hasHeading) userMarker.current.setRotation(heading as number);
-        userMarker.current.setLngLat([lon, lat]).addTo(map);
-        const acc = map.getSource('user-accuracy') as maplibregl.GeoJSONSource | undefined;
-        if (acc && accuracy) {
-          acc.setData({
-            type: 'Feature',
-            properties: {},
-            geometry: { type: 'Polygon', coordinates: [circlePolygon(lon, lat, accuracy)] },
-          } as never);
-        }
-        if (followRef.current) map.easeTo({ center: [lon, lat], duration: 500 });
-      },
-      () => setTracking(false),
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 12000 },
-    );
-    watchId.current = id;
-    return () => {
-      if (watchId.current != null) navigator.geolocation.clearWatch(watchId.current);
-      watchId.current = null;
+    if (!map || !loaded) return;
+    const acc = map.getSource('user-accuracy') as maplibregl.GeoJSONSource | undefined;
+    if (!userPosition) {
       userMarker.current?.remove();
       userMarker.current = null;
-      (map.getSource('user-accuracy') as maplibregl.GeoJSONSource | undefined)?.setData(EMPTY_FC as never);
-    };
-  }, [tracking]);
-
-  // Single locate button: start -> (following) -> recenter -> stop.
-  const onLocate = () => {
-    if (!tracking) {
-      setTracking(true);
-      setFollowing(true);
-    } else if (!following) {
-      setFollowing(true);
-      if (lastPos.current) mapRef.current?.easeTo({ center: lastPos.current, duration: 500 });
-    } else {
-      setTracking(false);
+      acc?.setData(EMPTY_FC as never);
+      return;
     }
-  };
-  const locateLabel = !tracking ? '📍 Locate' : following ? '📍 Following' : '📍 Recenter';
+    if (!userMarker.current) {
+      userMarker.current = new maplibregl.Marker({ element: userLocEl(), rotationAlignment: 'map' });
+    }
+    const el = userMarker.current.getElement();
+    const hasHeading = userPosition.heading != null;
+    el.classList.toggle('has-heading', hasHeading);
+    if (hasHeading) userMarker.current.setRotation(userPosition.heading as number);
+    userMarker.current.setLngLat([userPosition.lon, userPosition.lat]).addTo(map);
+    if (acc && userPosition.accuracy) {
+      acc.setData({
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [circlePolygon(userPosition.lon, userPosition.lat, userPosition.accuracy)] },
+      } as never);
+    }
+  }, [userPosition, loaded]);
+
+  // Navigation render: travelled/remaining split + a nav arrow at the snapped point.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    const trav = map.getSource('nav-traveled') as maplibregl.GeoJSONSource | undefined;
+    const rem = map.getSource('nav-remaining') as maplibregl.GeoJSONSource | undefined;
+    const routeLayers = ['route-casing', 'route-line', 'route-synthetic', 'route-custom', 'route-step'];
+    if (!nav) {
+      trav?.setData(EMPTY_FC as never);
+      rem?.setData(EMPTY_FC as never);
+      navMarker.current?.remove();
+      navMarker.current = null;
+      for (const l of routeLayers) if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', 'visible');
+      if (map.getPitch() > 0 && !is3D) map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+      return;
+    }
+    for (const l of routeLayers) if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', 'none');
+    trav?.setData(lineFC(nav.traveled) as never);
+    rem?.setData(lineFC(nav.remaining) as never);
+    if (!navMarker.current) navMarker.current = new maplibregl.Marker({ element: navArrowEl(), rotationAlignment: 'map' });
+    navMarker.current.setRotation(nav.bearing);
+    navMarker.current.setLngLat([nav.lon, nav.lat]).addTo(map);
+  }, [nav, loaded, is3D]);
+
+  // Follow-me camera (heading-up + tilted while navigating).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded || !following) return;
+    const center: [number, number] | null = nav
+      ? [nav.lon, nav.lat]
+      : userPosition
+        ? [userPosition.lon, userPosition.lat]
+        : null;
+    if (!center) return;
+    const opts: maplibregl.EaseToOptions = { center, duration: 600 };
+    if (nav && navHeadingUp) {
+      opts.bearing = nav.bearing;
+      opts.pitch = 55;
+      if (map.getZoom() < 15) opts.zoom = 16;
+    }
+    map.easeTo(opts);
+  }, [userPosition, nav, following, navHeadingUp, loaded]);
+
+  const locateLabel = !locateActive ? '📍 Locate' : following ? '📍 Following' : '📍 Recenter';
 
   return (
     <div className="map-shell">
@@ -524,8 +600,8 @@ export function MapView({ center, zoom, geo, routeFC, selectedRange, from, to, l
         <div className="mc-group">
           <button
             type="button"
-            className={tracking ? 'mc-btn active' : 'mc-btn'}
-            onClick={onLocate}
+            className={locateActive ? 'mc-btn active' : 'mc-btn'}
+            onClick={onLocateToggle}
             title="Show my live location"
           >
             {locateLabel}

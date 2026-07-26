@@ -19,6 +19,10 @@ import { geometryForClosure } from './routing/closures';
 import { nearestNode, nearestResort } from './utils/nearest';
 import { distance3dM, haversineM, projectOnPolyline } from './utils/geo';
 import { planRoutes, findLongestRuns, routeForEdges, type PlanResult, type LongestRun } from './routing/plan';
+import { buildRoutePath, snapToRoute, sliceAt, remainingStats, nextStep, type RoutePath } from './routing/navigation';
+import { useLiveLocation, type LivePosition } from './hooks/useLiveLocation';
+import { NavOverlay } from './components/NavOverlay';
+import type { NavRender } from './components/MapView';
 import { MapView, type LonLat, type RouteFeatureCollection } from './components/MapView';
 import { PointPicker } from './components/PointPicker';
 import { AccordionSection } from './components/AccordionSection';
@@ -81,6 +85,13 @@ export default function App() {
   const [longestIdx, setLongestIdx] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string>('plan');
+
+  // Live location + turn-by-turn navigation (Phase 1 + 2).
+  const live = useLiveLocation();
+  const [simPos, setSimPos] = useState<LivePosition | null>(null);
+  const userPos = simPos ?? live.position;
+  const [following, setFollowing] = useState(true);
+  const [navRoute, setNavRoute] = useState<Route | null>(null);
   const toggleSection = (id: string) => setOpenSection((cur) => (cur === id ? '' : id));
 
   const geolocated = useRef(false);
@@ -221,6 +232,103 @@ export default function App() {
         .filter((f): f is NonNullable<typeof f> => f !== null),
     };
   }, [selected, edgeMap]);
+
+  const geomOf = useCallback(
+    (edgeId: string): [number, number][] | undefined =>
+      edgeMap.get(edgeId)?.geometry.map((p) => [p.lon, p.lat] as [number, number]),
+    [edgeMap],
+  );
+
+  const navPath = useMemo<RoutePath | null>(
+    () => (navRoute ? buildRoutePath(navRoute, geomOf) : null),
+    [navRoute, geomOf],
+  );
+
+  const navData = useMemo(() => {
+    if (!navRoute || !navPath || !userPos) return null;
+    const snap = snapToRoute(navPath, userPos.lon, userPos.lat);
+    if (!snap) return null;
+    const { traveled, remaining } = sliceAt(navPath, snap.s);
+    const render: NavRender = { lon: snap.lon, lat: snap.lat, bearing: snap.bearing, traveled, remaining };
+    return {
+      render,
+      rem: remainingStats(navRoute, navPath, snap),
+      step: nextStep(navRoute, navPath, snap),
+      offRoute: snap.offM > Math.max(30, (userPos.accuracy || 0) + 20),
+    };
+  }, [navRoute, navPath, userPos]);
+
+  const onLocateToggle = () => {
+    if (!live.tracking && !simPos) {
+      live.start();
+      setFollowing(true);
+    } else if (!following) {
+      setFollowing(true);
+    } else {
+      live.stop();
+      setSimPos(null);
+      setFollowing(true);
+    }
+  };
+
+  const startNav = () => {
+    if (!selected) {
+      setPopup('Find and pick a route first, then start navigation.');
+      return;
+    }
+    setNavRoute(selected);
+    setFollowing(true);
+    if (!live.tracking && !simPos) live.start();
+  };
+  const exitNav = () => {
+    setNavRoute(null);
+    setSimPos(null);
+  };
+  const rerouteFromHere = () => {
+    if (!effectiveGraph || !userPos || !toNodeId) return;
+    const near = nearestNode(effectiveGraph, userPos.lon, userPos.lat);
+    if (!near) return;
+    const result = planRoutes(effectiveGraph, {
+      resortId,
+      fromNodeId: near.id,
+      toNodeId,
+      objective,
+      timing:
+        timingMode === 'arrive_by'
+          ? { mode: 'arrive_by', time: new Date(arriveTime).toISOString() }
+          : { mode: 'now' },
+      prefs,
+      closedKeys: closedRef.current,
+    });
+    if (result.error || !result.routes.length) {
+      setPopup(result.error || 'No route from your current position.');
+      return;
+    }
+    setPlan(result);
+    setSelectedRoute(0);
+    setNavRoute(result.routes[0]);
+  };
+
+  // Keep the screen awake while navigating.
+  useEffect(() => {
+    if (!navRoute) return;
+    let lock: { release?: () => Promise<void> } | null = null;
+    const req = async () => {
+      try {
+        lock = await (navigator as unknown as { wakeLock?: { request: (t: string) => Promise<typeof lock> } }).wakeLock?.request('screen') ?? null;
+      } catch { /* wake lock is best-effort */ }
+    };
+    void req();
+    const onVis = () => {
+      if (document.visibilityState === 'visible' && !lock) void req();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      void lock?.release?.();
+      lock = null;
+    };
+  }, [navRoute]);
 
   const handleMapClick = useCallback(
     (p: LonLat) => {
@@ -677,6 +785,11 @@ export default function App() {
                   onMarkClosed={markClosed}
                 />
               )}
+              {plan.routes.length > 0 && !navRoute && (
+                <button type="button" className="primary nav-start" onClick={startNav}>
+                  ▶ Start navigation
+                </button>
+              )}
             </AccordionSection>
           )}
 
@@ -773,10 +886,28 @@ export default function App() {
             linkTo={linkEndPos(linkTo)}
             focusGeometry={focusGeometry}
             onMapClick={handleMapClick}
+            userPosition={userPos}
+            following={following}
+            locateActive={live.tracking || !!simPos}
+            onLocateToggle={onLocateToggle}
+            onFollowChange={setFollowing}
+            nav={navData?.render ?? null}
+            navHeadingUp
           />
           {pinMode && <div className="pin-hint">Click the map to set point {pinMode === 'from' ? 'A' : 'B'}</div>}
           {linkPinMode && <div className="pin-hint">Click the map to place the link's {linkPinMode === 'from' ? '"from"' : '"to"'} point (anywhere)</div>}
           <Legend />
+          {navRoute && (
+            <NavOverlay
+              step={navData?.step}
+              remaining={navData?.rem}
+              offRoute={navData?.offRoute ?? false}
+              waiting={!userPos}
+              onExit={exitNav}
+              onReroute={rerouteFromHere}
+              sim={import.meta.env.DEV ? { path: navPath, onSim: setSimPos } : undefined}
+            />
+          )}
         </main>
       </div>
 
