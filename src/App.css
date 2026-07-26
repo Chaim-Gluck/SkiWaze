@@ -48,7 +48,20 @@ body {
   color: transparent;
 }
 .logo-tag { font-weight: 700; font-size: 12px; letter-spacing: 4px; color: #8fb0ca; margin-top: 3px; }
-.resort-select { min-width: 240px; }
+.resort-select {
+  min-width: 240px;
+  max-width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238fb0ca' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 8px;
+}
 .status { color: var(--muted); font-size: 13px; }
 
 .body {
@@ -169,9 +182,9 @@ body {
   .logo-pin { height: 42px; }
   .logo-name { font-size: 26px; }
   .logo-tag { font-size: 10px; letter-spacing: 3px; }
-  .resort-select { min-width: 0; flex: 1; }
+  .resort-select { min-width: 0; flex: 1 1 100%; width: 100%; order: 3; }
   .status { display: none; }
-  .topbar { gap: 8px; padding: 8px 12px; }
+  .topbar { gap: 8px; padding: 8px 12px; flex-wrap: wrap; }
 
   .sidebar {
     position: absolute;
