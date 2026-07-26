@@ -277,6 +277,8 @@ export interface DisplayStep {
   distanceM: number;
   durationS: number;
   color?: PisteColor;
+  /** Slope number (OSM ref) when the piste has one; many resorts don't number pistes. */
+  ref?: string;
   isDownload?: boolean;
   synthetic: boolean;
   custom: boolean;

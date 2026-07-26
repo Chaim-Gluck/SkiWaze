@@ -200,6 +200,7 @@ function groupSteps(edges: GraphEdge[], legs: RouteLeg[]): DisplayStep[] {
         distanceM: legs[i].distanceM,
         durationS: legs[i].durationS,
         color: e.color,
+        ref: e.pisteRef,
         isDownload: e.isDownload,
         synthetic: !!e.synthetic,
         custom: !!e.custom,

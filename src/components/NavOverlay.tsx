@@ -12,6 +12,7 @@ interface StepInfo {
 interface Props {
   step?: StepInfo;
   remaining?: { distM: number; timeS: number };
+  speedMps?: number | null;
   offRoute: boolean;
   waiting: boolean;
   onExit: () => void;
@@ -31,7 +32,28 @@ function stepText(st?: DisplayStep): string {
   return st?.label ?? '—';
 }
 
-export function NavOverlay({ step, remaining, offRoute, waiting, onExit, onReroute, sim }: Props) {
+const COLOR_HEX: Record<string, string> = {
+  green: '#2e7d32', blue: '#1565c0', red: '#d32f2f', black: '#111111', unknown: '#ff9800',
+};
+/** First slope number in a step label ("Ski 50 · …" -> "50"), or null. */
+function pisteNumber(label?: string): string | null {
+  const m = label?.match(/(\d+)/);
+  return m ? m[1] : null;
+}
+/** Waze-style piste "shield": colored badge with the slope number, a colored difficulty dot
+ * when the piste has no number (common — many resorts don't number pistes), or a lift glyph. */
+function StepBadge({ step, big }: { step?: DisplayStep; big?: boolean }) {
+  if (!step) return null;
+  const cls = big ? 'pbadge big' : 'pbadge';
+  if (step.kind === 'lift') return <span className={`${cls} lift`} title="lift">🚡</span>;
+  if (step.kind === 'connector') return null;
+  const bg = COLOR_HEX[step.color ?? 'unknown'] ?? COLOR_HEX.unknown;
+  const num = step.ref ?? pisteNumber(step.label);
+  if (num) return <span className={cls} style={{ background: bg }}>{num}</span>;
+  return <span className={big ? 'pdot big' : 'pdot'} style={{ background: bg }} title={step.color ?? 'run'} />;
+}
+
+export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExit, onReroute, sim }: Props) {
   // Dev simulator state
   const [, setSimS] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -55,25 +77,36 @@ export function NavOverlay({ step, remaining, offRoute, waiting, onExit, onRerou
   return (
     <div className="nav-overlay">
       <div className={offRoute ? 'nav-banner off' : 'nav-banner'}>
-        {waiting ? (
-          <div className="nav-line1">Waiting for your location…</div>
-        ) : offRoute ? (
-          <>
-            <div className="nav-line1">⚠ You're off the route</div>
-            <div className="nav-line2">Ski back to the blue line, or re-route from here.</div>
-          </>
-        ) : (
-          <>
-            <div className="nav-line1">{stepText(step?.current)}</div>
-            <div className="nav-line2">
-              {step && step.distToNextM > 5 ? `in ${fmtDist(step.distToNextM)} → ` : 'Then '}
-              {step?.next ? stepText(step.next) : 'arrive at destination'}
-            </div>
-          </>
-        )}
-        {remaining && !waiting && (
-          <div className="nav-remaining">
-            {fmtDist(remaining.distM)} · {fmtTime(remaining.timeS)} left
+        <div className="nav-main">
+          {waiting ? (
+            <div className="nav-line1">Waiting for your location…</div>
+          ) : offRoute ? (
+            <>
+              <div className="nav-line1">⚠ You're off the route</div>
+              <div className="nav-line2">Ski back to the blue line, or re-route from here.</div>
+            </>
+          ) : (
+            <>
+              <div className="nav-line1"><StepBadge step={step?.current} big /> {stepText(step?.current)}</div>
+              <div className="nav-line2">
+                {step && step.distToNextM > 5 ? `in ${fmtDist(step.distToNextM)} → ` : 'Then '}
+                <StepBadge step={step?.next} />
+                {step?.next ? stepText(step.next) : 'arrive at destination'}
+              </div>
+            </>
+          )}
+        </div>
+        {!waiting && (
+          <div className="nav-side">
+            {speedMps != null && speedMps >= 0 && (
+              <div className="nav-speed-circle">
+                <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
+                <span className="ns-unit">km/h</span>
+              </div>
+            )}
+            {remaining && (
+              <span className="nav-remaining">{fmtDist(remaining.distM)} · {fmtTime(remaining.timeS)} left</span>
+            )}
           </div>
         )}
       </div>

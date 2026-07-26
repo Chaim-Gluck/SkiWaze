@@ -23,6 +23,12 @@ import { buildRoutePath, snapToRoute, sliceAt, remainingStats, nextStep, type Ro
 import { useLiveLocation, type LivePosition } from './hooks/useLiveLocation';
 import { NavOverlay } from './components/NavOverlay';
 import type { NavRender } from './components/MapView';
+import { MeasuredSpeedsPanel } from './components/MeasuredSpeedsPanel';
+import {
+  loadMeasured, saveMeasured, emptyMeasured, addSample, measuredAverages, isSpeedColor,
+  type MeasuredSpeeds, type SpeedColor,
+} from './state/measuredSpeeds';
+import { SKILL_SPEED_MULTIPLIER } from './config/defaults';
 import { MapView, type LonLat, type RouteFeatureCollection } from './components/MapView';
 import { PointPicker } from './components/PointPicker';
 import { AccordionSection } from './components/AccordionSection';
@@ -92,6 +98,8 @@ export default function App() {
   const userPos = simPos ?? live.position;
   const [following, setFollowing] = useState(true);
   const [navRoute, setNavRoute] = useState<Route | null>(null);
+  const [measured, setMeasured] = useState<MeasuredSpeeds>(() => loadMeasured());
+  const MIN_SAMPLES = 15;
   const toggleSection = (id: string) => setOpenSection((cur) => (cur === id ? '' : id));
 
   const geolocated = useRef(false);
@@ -250,11 +258,14 @@ export default function App() {
     if (!snap) return null;
     const { traveled, remaining } = sliceAt(navPath, snap.s);
     const render: NavRender = { lon: snap.lon, lat: snap.lat, bearing: snap.bearing, traveled, remaining };
+    const curLeg = navRoute.legs[snap.leg];
     return {
       render,
       rem: remainingStats(navRoute, navPath, snap),
       step: nextStep(navRoute, navPath, snap),
       offRoute: snap.offM > Math.max(30, (userPos.accuracy || 0) + 20),
+      legKind: curLeg?.kind,
+      legColor: curLeg?.color,
     };
   }, [navRoute, navPath, userPos]);
 
@@ -329,6 +340,52 @@ export default function App() {
       lock = null;
     };
   }, [navRoute]);
+
+  // Record real skiing speed per piste colour while navigating (feeds "my measured speeds").
+  const navDataRef = useRef(navData);
+  navDataRef.current = navData;
+  useEffect(() => {
+    if (!navRoute || !userPos || userPos.speed == null) return;
+    const sp = userPos.speed;
+    if (sp < 0.8 || sp > 35) return; // filter GPS noise / stationary
+    const nd = navDataRef.current;
+    if (nd?.legKind !== 'piste' || !isSpeedColor(nd.legColor)) return;
+    const color = nd.legColor;
+    setMeasured((m) => {
+      const nm = addSample(m, color, sp);
+      saveMeasured(nm);
+      return nm;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPos]);
+
+  const applyMeasured = () => {
+    const avg = measuredAverages(measured, MIN_SAMPLES);
+    const colors = Object.keys(avg) as SpeedColor[];
+    if (!colors.length) {
+      setPopup('Not enough measured data yet — ski a bit on each colour while navigating.');
+      return;
+    }
+    setPrefs((p) => {
+      const skiSpeedByColor = { ...p.speeds.skiSpeedByColor };
+      for (const c of colors) if (avg[c] != null) skiSpeedByColor[c] = avg[c] as number;
+      return { ...p, skillLevel: 'average', speeds: { ...p.speeds, skiSpeedByColor } };
+    });
+    setPopup('Applied your measured speeds. Skill level set to Average so they’re used as-is.');
+  };
+  const resetMeasured = () => {
+    const m = emptyMeasured();
+    saveMeasured(m);
+    setMeasured(m);
+  };
+  // Effective (routing) ski speed per colour: base × the skill-level multiplier.
+  const skillMult = SKILL_SPEED_MULTIPLIER[prefs.skillLevel] ?? 1;
+  const estimatedByColor: Record<SpeedColor, number> = {
+    green: prefs.speeds.skiSpeedByColor.green * skillMult,
+    blue: prefs.speeds.skiSpeedByColor.blue * skillMult,
+    red: prefs.speeds.skiSpeedByColor.red * skillMult,
+    black: prefs.speeds.skiSpeedByColor.black * skillMult,
+  };
 
   const handleMapClick = useCallback(
     (p: LonLat) => {
@@ -864,6 +921,7 @@ export default function App() {
             onToggle={() => toggleSection('prefs')}
           >
           <PreferencesPanel prefs={prefs} onChange={setPrefs} />
+          <MeasuredSpeedsPanel measured={measured ?? emptyMeasured()} estimatedByColor={estimatedByColor} minSamples={MIN_SAMPLES} onApply={applyMeasured} onReset={resetMeasured} />
           </AccordionSection>
 
           {graph && (
@@ -901,6 +959,7 @@ export default function App() {
             <NavOverlay
               step={navData?.step}
               remaining={navData?.rem}
+              speedMps={userPos?.speed ?? null}
               offRoute={navData?.offRoute ?? false}
               waiting={!userPos}
               onExit={exitNav}
