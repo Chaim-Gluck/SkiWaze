@@ -2,11 +2,17 @@ import type { GraphNode, ResortGraph } from '../types/domain';
 import type { ResortIndexEntry } from '../data/resortData';
 import { haversineM } from './geo';
 
-/** Nearest resort to a coordinate (by center distance). */
+/**
+ * Nearest resort to a coordinate (by center distance), but only within `maxDistanceM`.
+ * Returns undefined when the user is far from every resort (e.g. at home on another
+ * continent) so callers can keep the default resort instead of jumping to whichever
+ * Alp is marginally closer.
+ */
 export function nearestResort(
   entries: ResortIndexEntry[],
   lon: number,
   lat: number,
+  maxDistanceM = Infinity,
 ): ResortIndexEntry | undefined {
   let best: ResortIndexEntry | undefined;
   let bestD = Infinity;
@@ -17,7 +23,7 @@ export function nearestResort(
       best = e;
     }
   }
-  return best;
+  return bestD <= maxDistanceM ? best : undefined;
 }
 
 /** Nearest graph node to a coordinate; returns null if the graph is empty. */

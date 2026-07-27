@@ -149,7 +149,10 @@ export default function App() {
           geolocated.current = true;
           navigator.geolocation.getCurrentPosition(
             (pos) => {
-              const near = nearestResort(entries, pos.coords.longitude, pos.coords.latitude);
+              // Only switch if the user is actually near a resort (within ~50 km — covers a
+              // large ski area's extent + a nearby town); otherwise keep the default (Madonna)
+              // instead of jumping to the nearest Alp from afar.
+              const near = nearestResort(entries, pos.coords.longitude, pos.coords.latitude, 50_000);
               if (near) setResortId(near.id);
             },
             () => {},
