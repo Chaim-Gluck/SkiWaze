@@ -12,7 +12,8 @@
     "data:all": "tsx pipeline/build.ts all",
     "data:refresh": "tsx pipeline/build.ts all --refresh",
     "routetest": "tsx pipeline/_routetest.ts",
-    "check:trapped": "tsx pipeline/_trapped.ts"
+    "check:trapped": "tsx pipeline/_trapped.ts",
+    "check:audit": "tsx pipeline/_phantoms.ts"
   },
   "dependencies": {
     "maplibre-gl": "^5.24.0",

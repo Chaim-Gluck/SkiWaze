@@ -1,4 +1,10 @@
 {
+  "removePistes": [
+    { "bbox": [6.95973, 45.45736, 6.96111, 45.45923] }
+  ],
+  "reclassifyLift": [
+    { "pisteName": "Carpe Diem", "liftType": "magic_carpet" }
+  ],
   "addConnectors": [
     {
       "from": "n74",

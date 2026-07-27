@@ -13,6 +13,7 @@ import { buildResortGraph } from './lib/buildGraph';
 import { applyOverrides, loadOverrides } from './lib/overrides';
 import { printReport, validateGraph } from './lib/validate';
 import { emitResort } from './lib/emit';
+import { auditGraph, auditSummary } from './_phantoms';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -51,6 +52,11 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
 
   const report = validateGraph(graph);
   printReport(report);
+
+  // Surface likely data issues (false-elevation reversals / non-skiable long connections)
+  // so they're caught when adding or refreshing a resort. Review with: npm run check:audit <id>
+  const summary = auditSummary(auditGraph(graph));
+  if (summary) console.warn(`  audit: ${summary} to review — run: npm run check:audit ${resort.id}`);
 
   const areaPolys = pistes
     .filter((p) => p.area && p.points.length >= 3)

@@ -1,4 +1,7 @@
 {
+  "setNodeElevation": [
+    { "node": "n444", "ele": 1800 }
+  ],
   "addConnectors": [
     {
       "from": "n542",

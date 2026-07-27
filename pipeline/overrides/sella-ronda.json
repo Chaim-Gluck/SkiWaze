@@ -1,4 +1,14 @@
 {
+  "removePistes": [
+    { "name": "Monte Pana" },
+    { "name": "Promenade Luis Trenker Weg - Passeggiata Luis Trenker" },
+    { "bbox": [11.69736, 46.53262, 11.70974, 46.54507] },
+    { "bbox": [11.71247, 46.54704, 11.71544, 46.55068] },
+    { "bbox": [11.70985, 46.54502, 11.71288, 46.54757] }
+  ],
+  "reclassifyLift": [
+    { "pisteName": "Gherdënia Ronda Express - Gardena Ronda Express", "liftType": "funicular", "bidirectional": true }
+  ],
   "addConnectors": [
     {
       "from": "n1265",

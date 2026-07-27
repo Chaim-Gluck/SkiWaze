@@ -39,7 +39,8 @@ pipeline/
                          emit, cache
   build.ts               orchestrator (npm run data)
   _trapped.ts, _routetest.ts   connectivity / routing smoke tests
-  overrides/<id>.json    per-resort human corrections (merge/split, connectors, lift dl)
+  overrides/<id>.json    per-resort human corrections (merge/split, connectors, lift dl,
+                         setNodeElevation, removePistes, reclassifyLift)
 public/resorts/<id>/     compiled datasets: graph.json, geo.json, meta.json (+ index.json)
 ```
 
@@ -102,6 +103,7 @@ npm run data <id>      # build one resort (uses 30-day disk cache)
 npm run data:all       # build all resorts
 npm run data:refresh   # force re-fetch OSM (ignores cache; renumbers node ids)
 npm run check:trapped <id>   # nodes that can't reach a lift / are isolated
+npm run check:audit <id>     # false-elevation reversals + non-skiable long connections
 npm run routetest <id>       # routing smoke test from the summit
 ```
 > If your machine needs a private npm registry, put it in a **git-ignored `.npmrc`**.
@@ -138,6 +140,15 @@ npm run routetest <id>       # routing smoke test from the summit
   (e.g. only reachable by a ski bus) and should be left disconnected.
 - The OSM cache is keyed by **resort id, not bbox** — after changing a bbox you must
   `data:refresh` to actually re-fetch.
+- **False-elevation reversals** (arrows/ski-direction wrong): a mis-sampled DEM elevation at a
+  junction flips a piste segment. `npm run check:audit` flags them as "reversal candidates"
+  (a piste starts at a node reachable only via an *uphill* flat); fix with `setNodeElevation`
+  in `overrides/<id>.json`. `npm run data` prints an `audit:` line when a resort has candidates.
+- **Non-skiable / mis-tagged connections**: OSM `piste:type=connection` imports as an orange
+  (unrated) piste with a forced direction. `check:audit` lists "long connections" (>250 m) to
+  review — some are roads/ski-bus links (long + near-flat → `removePistes` by name/bbox), some
+  are lifts mis-tagged as pistes (funicular, magic carpet → `reclassifyLift`), some are real
+  runs (long + steady descent, e.g. a race stadium → keep).
 
 ## Conventions
 - Static, offline-compiled data; the app is read-only over `public/resorts/*`.

@@ -2,7 +2,7 @@
 // Applied LAST so humans can fix wrong auto-decisions without changing code.
 import fs from 'node:fs';
 import path from 'node:path';
-import type { GraphEdge, ResortGraph } from '../../src/types/domain';
+import type { GraphEdge, LiftType, ResortGraph } from '../../src/types/domain';
 import { haversineM, polylineLength3dM } from '../../src/utils/geo';
 
 export interface Overrides {
@@ -17,6 +17,17 @@ export interface Overrides {
   setNodeElevation?: { node: string; ele: number }[];
   /** Edge ids to delete. */
   removeEdges?: string[];
+  /**
+   * Remove non-skiable pistes that OSM tagged as ski runs/connections (roads, walking paths,
+   * mapping bugs). Match by exact `name`, and/or by a `bbox` [minLon,minLat,maxLon,maxLat]
+   * (bbox only removes UNRATED pistes fully inside it, so it can't clip a real coloured run).
+   */
+  removePistes?: { name?: string; bbox?: [number, number, number, number] }[];
+  /**
+   * Reclassify a piste (that is really a lift OSM mis-tagged as piste:type=connection) into a
+   * lift of the given type. `bidirectional` (e.g. a funicular) keeps both travel directions.
+   */
+  reclassifyLift?: { pisteName: string; liftType: LiftType; bidirectional?: boolean }[];
   /** Extra connectors to add. */
   addConnectors?: {
     from: string;
@@ -56,6 +67,60 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
   if (ov.removeEdges?.length) {
     const dead = new Set(ov.removeEdges);
     edges = edges.filter((e) => !dead.has(e.id));
+  }
+
+  // 2a. Remove non-skiable pistes (roads/paths/mapping bugs) by name and/or bbox.
+  if (ov.removePistes?.length) {
+    const names = new Set(ov.removePistes.map((r) => r.name).filter((n): n is string => !!n));
+    const boxes = ov.removePistes.map((r) => r.bbox).filter((b): b is [number, number, number, number] => !!b);
+    const inBox = (p: { lon: number; lat: number }, b: [number, number, number, number]) =>
+      p.lon >= b[0] && p.lat >= b[1] && p.lon <= b[2] && p.lat <= b[3];
+    edges = edges.filter((e) => {
+      if (e.pisteName && names.has(e.pisteName)) return false;
+      // bbox removes an UNRATED edge whose midpoint is inside a box (robust to boundary
+      // crossings; can't clip a real coloured run since those are never unrated).
+      if (boxes.length && (e.color === 'unknown' || e.color == null)) {
+        const mid = e.geometry[Math.floor(e.geometry.length / 2)];
+        if (mid && boxes.some((b) => inBox(mid, b))) return false;
+      }
+      return true;
+    });
+  }
+
+  // 2c. Reclassify a piste that is really a lift (OSM tagged it piste:type=connection) into a
+  // lift edge, keeping geometry. All matching-name edges become lift edges (so a bidirectional
+  // funicular stays usable both ways); non-bidirectional keeps only the uphill direction.
+  if (ov.reclassifyLift?.length) {
+    const spec = new Map(ov.reclassifyLift.map((r) => [r.pisteName, r]));
+    const eleOf = new Map(nodes.map((n) => [n.id, n.point.ele ?? 0]));
+    let li = 0;
+    const kept: GraphEdge[] = [];
+    const seenPair = new Set<string>();
+    for (const e of edges) {
+      const r = e.pisteName ? spec.get(e.pisteName) : undefined;
+      if (!r) {
+        kept.push(e);
+        continue;
+      }
+      const uphill = (eleOf.get(e.to) ?? 0) >= (eleOf.get(e.from) ?? 0);
+      if (!r.bidirectional && !uphill) continue; // one-way lift: drop the downhill copy
+      const key = [e.from, e.to].sort().join('~');
+      if (!r.bidirectional && seenPair.has(key)) continue; // keep a single uphill edge per pair
+      seenPair.add(key);
+      kept.push({
+        id: `eovl${li++}`,
+        from: e.from,
+        to: e.to,
+        kind: 'lift',
+        liftType: r.liftType,
+        liftName: e.pisteName,
+        isDownload: !uphill, // downhill copy renders once-skipped by emit, still routable
+        geometry: e.geometry,
+        lengthM: e.lengthM,
+        dropM: (eleOf.get(e.to) ?? 0) - (eleOf.get(e.from) ?? 0),
+      });
+    }
+    edges = kept;
   }
 
   // 2b. Correct mis-sampled node elevations, then re-derive direction/drop for touching
