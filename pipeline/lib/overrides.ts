@@ -8,6 +8,13 @@ import { haversineM, polylineLength3dM } from '../../src/utils/geo';
 export interface Overrides {
   /** Groups of node ids to force-merge into a single node. */
   mergeNodes?: string[][];
+  /**
+   * Correct a mis-sampled node elevation (e.g. a DEM spike/dip at a junction). After the
+   * correction, any piste edge touching the node is re-oriented to descend (high→low) and
+   * its dropM/geometry endpoint elevations are recomputed, so arrows, cost and longest-run
+   * stay consistent. Reusable across resorts.
+   */
+  setNodeElevation?: { node: string; ele: number }[];
   /** Edge ids to delete. */
   removeEdges?: string[];
   /** Extra connectors to add. */
@@ -49,6 +56,32 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
   if (ov.removeEdges?.length) {
     const dead = new Set(ov.removeEdges);
     edges = edges.filter((e) => !dead.has(e.id));
+  }
+
+  // 2b. Correct mis-sampled node elevations, then re-derive direction/drop for touching
+  // piste edges (a DEM spike/dip at a junction can orient a segment the wrong way).
+  if (ov.setNodeElevation?.length) {
+    const corr = new Map(ov.setNodeElevation.map((s) => [s.node, s.ele]));
+    nodes = nodes.map((n) =>
+      corr.has(n.id) ? { ...n, point: { ...n.point, ele: corr.get(n.id)! } } : n,
+    );
+    const eleOf = new Map(nodes.map((n) => [n.id, n.point.ele ?? 0]));
+    edges = edges.map((e) => {
+      if (!corr.has(e.from) && !corr.has(e.to)) return e;
+      const geom = e.geometry.map((p) => ({ ...p }));
+      if (geom.length >= 2) {
+        geom[0] = { ...geom[0], ele: eleOf.get(e.from) ?? geom[0].ele };
+        geom[geom.length - 1] = { ...geom[geom.length - 1], ele: eleOf.get(e.to) ?? geom[geom.length - 1].ele };
+      }
+      // Flat traverses stay directionless (dropM 0); only refresh geometry.
+      if (e.connectorKind === 'flat_traverse') return { ...e, geometry: geom };
+      const drop = (eleOf.get(e.to) ?? 0) - (eleOf.get(e.from) ?? 0);
+      // A piste (or skiable_down connector) now pointing uphill is flipped to descend.
+      if (drop > 0 && (e.kind === 'piste' || e.connectorKind === 'skiable_down')) {
+        return { ...e, from: e.to, to: e.from, geometry: [...geom].reverse(), dropM: -Math.abs(drop) };
+      }
+      return { ...e, geometry: geom, dropM: -Math.abs(drop) };
+    });
   }
 
   // 3. Set lift download capability by name.
