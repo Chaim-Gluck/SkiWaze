@@ -16,6 +16,7 @@ export type GeoFeatureCollection = {
       color: string | null;
       liftType?: string | null;
       name: string | null;
+      ref?: string | null;
       connectorKind?: string | null;
       synthetic?: boolean;
       custom?: boolean;

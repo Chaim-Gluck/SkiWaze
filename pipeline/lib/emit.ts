@@ -32,6 +32,7 @@ function geoJson(graph: ResortGraph, areaPolys: AreaPoly[]) {
         color: e.color ?? null,
         liftType: e.liftType ?? null,
         name: e.pisteName ?? e.liftName ?? null,
+        ref: e.pisteRef ?? null,
         connectorKind: e.connectorKind ?? null,
         synthetic: e.synthetic ?? false,
       },

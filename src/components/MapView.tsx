@@ -6,6 +6,7 @@ import type { LivePosition } from '../hooks/useLiveLocation';
 
 const BASE_STYLE: StyleSpecification = {
   version: 8,
+  glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
   sources: {
     osm: {
       type: 'raster',
@@ -97,6 +98,62 @@ function navArrowEl(): HTMLElement {
   return el;
 }
 
+/**
+ * A small map-aligned direction arrow (white with a dark halo), pointing +x (east) at
+ * rotation 0 — this is MapLibre's line-symbol convention (the icon's horizontal axis is
+ * aligned to the line tangent), so a +x arrow follows the line direction. `double` draws
+ * a two-headed arrow (shaft with a head at each end) for lifts that run both ways.
+ * Returned as ImageData for map.addImage (rendered at pixelRatio 2).
+ */
+function arrowImage(double: boolean): ImageData {
+  const S = 30;
+  const c = document.createElement('canvas');
+  c.width = S;
+  c.height = S;
+  const ctx = c.getContext('2d')!;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const cy = S / 2;
+  const paths = () => {
+    if (double) {
+      ctx.beginPath();
+      ctx.moveTo(6, cy);
+      ctx.lineTo(24, cy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(11, cy - 5);
+      ctx.lineTo(6, cy);
+      ctx.lineTo(11, cy + 5);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(19, cy - 5);
+      ctx.lineTo(24, cy);
+      ctx.lineTo(19, cy + 5);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(7, cy);
+      ctx.lineTo(22, cy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(16, cy - 6);
+      ctx.lineTo(23, cy);
+      ctx.lineTo(16, cy + 6);
+      ctx.stroke();
+    }
+  };
+  ctx.strokeStyle = 'rgba(15,20,28,0.92)';
+  ctx.lineWidth = 7;
+  paths();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  paths();
+  return ctx.getImageData(0, 0, S, S);
+}
+
+/** Lift types that realistically carry riders down as well as up (double-headed arrow). */
+const TWO_WAY_LIFTS = ['gondola', 'cable_car', 'funicular', 'mixed_lift'];
+
 /** Wrap a coordinate list as a single-LineString FeatureCollection. */
 function lineFC(coords: [number, number][]): GeoFeatureCollection {
   if (coords.length < 2) return EMPTY_FC;
@@ -179,6 +236,7 @@ export function MapView({
   const [showPistes, setShowPistes] = useState(true);
   const [showLifts, setShowLifts] = useState(true);
   const [showAreas, setShowAreas] = useState(false);
+  const [showLabels, setShowLabels] = useState(true);
 
   // Live location + navigation are driven by props (shared hook lives in App).
   const userMarker = useRef<maplibregl.Marker | null>(null);
@@ -365,6 +423,88 @@ export function MapView({
         paint: { 'line-color': '#37b6ff', 'line-width': 6 },
       });
 
+      // Piste/lift labels + direction arrows: only when zoomed in. Arrows and text are
+      // SEPARATE symbol layers on purpose — an icon-only layer follows the line
+      // (icon-rotation-alignment: map), while a text-only layer stays readable. Combining
+      // them stops the icon from rotating to the line. Geometry is emitted downhill for
+      // pistes and base→top for lifts, so a +x arrow (icon-keep-upright:false) points the
+      // right way; two-way lifts get a double-headed arrow.
+      if (!map.hasImage('ski-arrow')) map.addImage('ski-arrow', arrowImage(false), { pixelRatio: 2 });
+      if (!map.hasImage('ski-arrow2')) map.addImage('ski-arrow2', arrowImage(true), { pixelRatio: 2 });
+
+      map.addLayer({
+        id: 'piste-arrows',
+        type: 'symbol',
+        source: 'pistes',
+        filter: ['==', ['get', 'kind'], 'piste'],
+        minzoom: 12,
+        layout: {
+          'symbol-placement': 'line',
+          'symbol-spacing': 130,
+          'icon-image': 'ski-arrow',
+          'icon-rotation-alignment': 'map',
+          'icon-pitch-alignment': 'map',
+          'icon-keep-upright': false,
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.5, 17, 0.85],
+          'icon-allow-overlap': false,
+        },
+      });
+      map.addLayer({
+        id: 'lift-arrows',
+        type: 'symbol',
+        source: 'lifts',
+        minzoom: 12,
+        layout: {
+          'symbol-placement': 'line',
+          'symbol-spacing': 130,
+          'icon-image': ['case', ['in', ['get', 'liftType'], ['literal', TWO_WAY_LIFTS]], 'ski-arrow2', 'ski-arrow'],
+          'icon-rotation-alignment': 'map',
+          'icon-pitch-alignment': 'map',
+          'icon-keep-upright': false,
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.55, 17, 0.95],
+          'icon-allow-overlap': false,
+        },
+      });
+
+      map.addLayer({
+        id: 'piste-labels',
+        type: 'symbol',
+        source: 'pistes',
+        filter: ['==', ['get', 'kind'], 'piste'],
+        minzoom: 12,
+        layout: {
+          'symbol-placement': 'line',
+          'symbol-spacing': 450,
+          'text-field': ['coalesce', ['get', 'ref'], ['get', 'name'], ''],
+          'text-font': ['Noto Sans Bold'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 12, 11, 17, 13],
+          'text-max-angle': 40,
+        },
+        paint: {
+          'text-color': '#0b1622',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.8,
+        },
+      });
+      map.addLayer({
+        id: 'lift-labels',
+        type: 'symbol',
+        source: 'lifts',
+        minzoom: 12,
+        layout: {
+          'symbol-placement': 'line-center',
+          'text-field': ['coalesce', ['get', 'name'], ''],
+          'text-font': ['Noto Sans Bold'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 12, 11, 17, 13],
+          'text-max-angle': 40,
+        },
+        paint: {
+          'text-color': '#4a148c',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.8,
+        },
+      });
+
       // Apply whatever data is current now (fixes blank-on-first-load).
       (map.getSource('pistes') as maplibregl.GeoJSONSource).setData(splitPistes(geoRef.current) as never);
       (map.getSource('areas') as maplibregl.GeoJSONSource).setData(splitAreas(geoRef.current) as never);
@@ -505,7 +645,11 @@ export function MapView({
     for (const l of pisteLayers) map.setLayoutProperty(l, 'visibility', showPistes ? 'visible' : 'none');
     map.setLayoutProperty('lifts-line', 'visibility', showLifts ? 'visible' : 'none');
     for (const l of ['areas-fill', 'areas-outline']) map.setLayoutProperty(l, 'visibility', showAreas ? 'visible' : 'none');
-  }, [showPistes, showLifts, showAreas, loaded]);
+    map.setLayoutProperty('piste-labels', 'visibility', showLabels ? 'visible' : 'none');
+    map.setLayoutProperty('lift-labels', 'visibility', showLabels ? 'visible' : 'none');
+    map.setLayoutProperty('piste-arrows', 'visibility', showLabels ? 'visible' : 'none');
+    map.setLayoutProperty('lift-arrows', 'visibility', showLabels ? 'visible' : 'none');
+  }, [showPistes, showLifts, showAreas, showLabels, loaded]);
 
   // Live-location puck from the shared position stream.
   useEffect(() => {
@@ -596,6 +740,7 @@ export function MapView({
           <label className="mc-check"><input type="checkbox" checked={showPistes} onChange={(e) => setShowPistes(e.target.checked)} /> Pistes</label>
           <label className="mc-check"><input type="checkbox" checked={showLifts} onChange={(e) => setShowLifts(e.target.checked)} /> Lifts</label>
           <label className="mc-check"><input type="checkbox" checked={showAreas} onChange={(e) => setShowAreas(e.target.checked)} /> Areas</label>
+          <label className="mc-check"><input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} /> Labels</label>
         </div>
         <div className="mc-group">
           <button
