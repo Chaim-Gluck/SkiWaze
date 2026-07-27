@@ -57,9 +57,37 @@ function nowLocalDatetime(offsetMinutes = 60): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/**
+ * Optional map deep-link from the URL, e.g. `?resort=cervinia-zermatt&at=45.897,7.658&z=18`.
+ * `at` is "lat,lon". Used to jump the map straight to a spot (e.g. to verify a slope's arrow).
+ */
+function parseDeepLink(): { resortId?: string; lon?: number; lat?: number; zoom?: number } {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    const resortId = q.get('resort') ?? undefined;
+    let lon: number | undefined;
+    let lat: number | undefined;
+    const at = q.get('at');
+    if (at) {
+      const [a, b] = at.split(',').map((s) => parseFloat(s.trim()));
+      if (Number.isFinite(a) && Number.isFinite(b)) {
+        lat = a;
+        lon = b;
+      }
+    }
+    const z = q.get('z');
+    const zoom = z != null && Number.isFinite(parseFloat(z)) ? parseFloat(z) : undefined;
+    return { resortId, lon, lat, zoom };
+  } catch {
+    return {};
+  }
+}
+
 export default function App() {
+  const [deepLink] = useState(parseDeepLink);
   const [index, setIndex] = useState<ResortIndexEntry[] | null>(null);
-  const [resortId, setResortId] = useState<string>(DEFAULT_RESORT_ID);
+  const [resortId, setResortId] = useState<string>(deepLink.resortId ?? DEFAULT_RESORT_ID);
+  const [deepLinkActive, setDeepLinkActive] = useState(deepLink.lat != null && deepLink.lon != null);
   const [graph, setGraph] = useState<ResortGraph | null>(null);
   const [geo, setGeo] = useState<GeoFeatureCollection | null>(null);
   const [prefs, setPrefs] = useState<Preferences>(() => loadPreferences());
@@ -112,9 +140,12 @@ export default function App() {
       .then((entries) => {
         setIndex(entries);
         const hasDefault = entries.some((e) => e.id === DEFAULT_RESORT_ID);
-        setResortId(hasDefault ? DEFAULT_RESORT_ID : entries[0]?.id ?? DEFAULT_RESORT_ID);
+        const linked = deepLink.resortId && entries.some((e) => e.id === deepLink.resortId);
+        setResortId(
+          linked ? deepLink.resortId! : hasDefault ? DEFAULT_RESORT_ID : entries[0]?.id ?? DEFAULT_RESORT_ID,
+        );
         setStatus('');
-        if (!geolocated.current && 'geolocation' in navigator) {
+        if (!linked && !geolocated.current && 'geolocation' in navigator) {
           geolocated.current = true;
           navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -127,6 +158,7 @@ export default function App() {
         }
       })
       .catch((e) => setStatus(`Could not load resorts: ${String(e)}`));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load graph + geo + custom edges when resort changes.
@@ -185,9 +217,12 @@ export default function App() {
   }, [geo, customEdges]);
 
   const resortEntry = index?.find((e) => e.id === resortId);
-  const center: LonLat = resortEntry
-    ? { lon: resortEntry.center.lon, lat: resortEntry.center.lat }
-    : { lon: 10.826, lat: 46.23 };
+  const center: LonLat =
+    deepLinkActive && deepLink.lon != null && deepLink.lat != null
+      ? { lon: deepLink.lon, lat: deepLink.lat }
+      : resortEntry
+        ? { lon: resortEntry.center.lon, lat: resortEntry.center.lat }
+        : { lon: 10.826, lat: 46.23 };
 
   const nodeMap = useMemo(() => {
     const m = new Map<string, GraphNode>();
@@ -729,6 +764,7 @@ export default function App() {
           value={resortId}
           onChange={(e) => {
             setResortId(e.target.value);
+            setDeepLinkActive(false);
             setPopup(
               'Lift & slope statuses are assumed OPEN. In early/late season many may be closed — check the resort, and mark any closed run/lift (⊘ on a route step) so routes avoid it.',
             );
@@ -934,7 +970,7 @@ export default function App() {
         <main className="map-wrap">
           <MapView
             center={center}
-            zoom={12}
+            zoom={deepLinkActive && deepLink.zoom != null ? deepLink.zoom : 12}
             geo={effectiveGeo}
             routeFC={routeFC}
             selectedRange={selectedRange}
