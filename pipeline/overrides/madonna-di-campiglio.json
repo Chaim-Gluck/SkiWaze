@@ -1,6 +1,7 @@
 {
   "setNodeElevation": [
-    { "node": "n386", "ele": 1952 }
+    { "node": "n386", "ele": 1952 },
+    { "node": "n226", "ele": 1635 }
   ],
   "addConnectors": [
     {
