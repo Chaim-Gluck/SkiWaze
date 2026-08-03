@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl, { type StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
 import type { GeoFeatureCollection } from '../data/resortData';
 import type { LivePosition } from '../hooks/useLiveLocation';
 
@@ -645,10 +653,12 @@ export function MapView({
     for (const l of pisteLayers) map.setLayoutProperty(l, 'visibility', showPistes ? 'visible' : 'none');
     map.setLayoutProperty('lifts-line', 'visibility', showLifts ? 'visible' : 'none');
     for (const l of ['areas-fill', 'areas-outline']) map.setLayoutProperty(l, 'visibility', showAreas ? 'visible' : 'none');
-    map.setLayoutProperty('piste-labels', 'visibility', showLabels ? 'visible' : 'none');
-    map.setLayoutProperty('lift-labels', 'visibility', showLabels ? 'visible' : 'none');
-    map.setLayoutProperty('piste-arrows', 'visibility', showLabels ? 'visible' : 'none');
-    map.setLayoutProperty('lift-arrows', 'visibility', showLabels ? 'visible' : 'none');
+    const pisteLabelsOn = showLabels && showPistes ? 'visible' : 'none';
+    const liftLabelsOn = showLabels && showLifts ? 'visible' : 'none';
+    map.setLayoutProperty('piste-labels', 'visibility', pisteLabelsOn);
+    map.setLayoutProperty('piste-arrows', 'visibility', pisteLabelsOn);
+    map.setLayoutProperty('lift-labels', 'visibility', liftLabelsOn);
+    map.setLayoutProperty('lift-arrows', 'visibility', liftLabelsOn);
   }, [showPistes, showLifts, showAreas, showLabels, loaded]);
 
   // Live-location puck from the shared position stream.
@@ -722,37 +732,51 @@ export function MapView({
     map.easeTo(opts);
   }, [userPosition, nav, following, navHeadingUp, loaded]);
 
-  const locateLabel = !locateActive ? '📍 Locate' : following ? '📍 Following' : '📍 Recenter';
+  const locateLabel = !locateActive ? 'Locate' : following ? 'Following' : 'Recenter';
 
   return (
     <div className="map-shell">
       <div ref={containerRef} className="map-canvas" />
-      <div className="map-controls">
-        <div className="mc-group">
-          <button type="button" className={base === 'standard' ? 'mc-btn active' : 'mc-btn'} onClick={() => setBase('standard')}>Map</button>
-          <button type="button" className={base === 'topo' ? 'mc-btn active' : 'mc-btn'} onClick={() => setBase('topo')}>Topo</button>
-          <button type="button" className={base === 'satellite' ? 'mc-btn active' : 'mc-btn'} onClick={() => setBase('satellite')}>Sat</button>
-        </div>
-        <div className="mc-group">
-          <button type="button" className={is3D ? 'mc-btn active' : 'mc-btn'} onClick={() => setIs3D((v) => !v)} title="Toggle 3D terrain">
-            {is3D ? '3D ✓' : '3D'}
-          </button>
-          <label className="mc-check"><input type="checkbox" checked={showPistes} onChange={(e) => setShowPistes(e.target.checked)} /> Pistes</label>
-          <label className="mc-check"><input type="checkbox" checked={showLifts} onChange={(e) => setShowLifts(e.target.checked)} /> Lifts</label>
-          <label className="mc-check"><input type="checkbox" checked={showAreas} onChange={(e) => setShowAreas(e.target.checked)} /> Areas</label>
-          <label className="mc-check"><input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} /> Labels</label>
-        </div>
-        <div className="mc-group">
-          <button
-            type="button"
-            className={locateActive ? 'mc-btn active' : 'mc-btn'}
-            onClick={onLocateToggle}
-            title="Show my live location"
-          >
-            {locateLabel}
-          </button>
-        </div>
-      </div>
+      <Paper
+        elevation={3}
+        sx={{
+          position: 'absolute', top: 10, left: 10, zIndex: 5, p: 0.75, borderRadius: 2,
+          display: 'flex', flexDirection: 'column', gap: 0.75, bgcolor: 'var(--glass)',
+          backdropFilter: 'blur(3px)', maxWidth: 'calc(100% - 20px)',
+        }}
+      >
+        <ToggleButtonGroup exclusive size="small" value={base} onChange={(_, v) => v && setBase(v)}>
+          <ToggleButton value="standard" sx={{ px: 1.25, py: 0.25 }}>Map</ToggleButton>
+          <ToggleButton value="topo" sx={{ px: 1.25, py: 0.25 }}>Topo</ToggleButton>
+          <ToggleButton value="satellite" sx={{ px: 1.25, py: 0.25 }}>Sat</ToggleButton>
+        </ToggleButtonGroup>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.25 }}>
+          <ToggleButton value="3d" selected={is3D} size="small" onClick={() => setIs3D((v) => !v)} title="Toggle 3D terrain" sx={{ px: 1, py: 0.25, mr: 0.5 }}>
+            3D
+          </ToggleButton>
+          {([['Pistes', showPistes, setShowPistes], ['Lifts', showLifts, setShowLifts], ['Areas', showAreas, setShowAreas], ['Labels', showLabels, setShowLabels]] as const).map(
+            ([label, checked, setter]) => (
+              <FormControlLabel
+                key={label}
+                sx={{ m: 0, mr: 0.5 }}
+                control={<Checkbox size="small" sx={{ p: 0.25 }} checked={checked} onChange={(e) => setter(e.target.checked)} />}
+                label={label}
+                slotProps={{ typography: { variant: 'caption' } }}
+              />
+            ),
+          )}
+        </Box>
+        <Button
+          size="small"
+          variant={locateActive ? 'contained' : 'outlined'}
+          startIcon={<MyLocationIcon />}
+          onClick={onLocateToggle}
+          title="Show my live location"
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          {locateLabel}
+        </Button>
+      </Paper>
     </div>
   );
 }

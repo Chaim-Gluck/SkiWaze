@@ -157,6 +157,21 @@ npm run routetest <id>       # routing smoke test from the summit
 - Synthetic/inferred edges are always marked and visually distinct.
 - Comments explain non-obvious *why*, not *what*.
 
+## UI / styling (see docs/STYLE_GUIDE.md)
+- **UI = Material UI (MUI) + a shared light/dark theme.** Source of truth: `src/theme.tsx`
+  (+ `src/theme-context.ts`), which builds the MUI theme AND mirrors it to CSS vars
+  (`--bg/--panel/--text/--accent/--glass/…`) so MapLibre-coupled overlays follow the theme.
+- **Going forward, new/changed UI uses MUI components + theme tokens (per the style guide),
+  not ad-hoc CSS**, whenever possible.
+- **Do-no-harm:** styling is presentational only — never change routing/graph/nav math, state,
+  or module signatures for a visual result. Keep logic in pure modules; verify `npm run build`
+  + `npm run lint` stay green and behavior is unchanged.
+- **MUI owns the chrome** (AppBar, controls panel / mobile bottom sheet, cards, route options,
+  nav banner, legend + layer selector, Snackbar/Dialog). **MapLibre visuals stay tokenized CSS**
+  (location puck, on-map arrows, route lines, piste badges, pin hints) — they must read over the
+  unchanging map tiles in both themes, so don't tie them to the light panel colour.
+- Mobile = **bottom sheet** (≤820px), not a bottom-nav bar.
+
 ## Outstanding follow-ups (not in v1)
 - Login/accounts; Strava integration for personal average speeds.
 - Live lift status & queue/wait times; live GPS turn-by-turn; 3D terrain; offline/PWA.

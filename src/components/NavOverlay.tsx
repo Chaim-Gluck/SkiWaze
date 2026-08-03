@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import type { DisplayStep } from '../types/domain';
 import type { LivePosition } from '../hooks/useLiveLocation';
 import { posAtS, type RoutePath } from '../routing/navigation';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Slider from '@mui/material/Slider';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import ReplayIcon from '@mui/icons-material/Replay';
 
 interface StepInfo {
   current?: DisplayStep;
@@ -75,29 +84,44 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
   }, [playing, speed, sim]);
 
   return (
-    <div className="nav-overlay">
-      <div className={offRoute ? 'nav-banner off' : 'nav-banner'}>
-        <div className="nav-main">
+    <Box
+      sx={{
+        position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5, p: 1.25,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, pointerEvents: 'none',
+      }}
+    >
+      <Paper
+        elevation={8}
+        sx={{
+          pointerEvents: 'auto', width: 'min(560px, 94%)', p: 1.5, borderRadius: 3,
+          display: 'flex', alignItems: 'center', gap: 1.75,
+          bgcolor: offRoute ? 'error.main' : 'background.paper',
+          color: offRoute ? 'error.contrastText' : 'text.primary',
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           {waiting ? (
-            <div className="nav-line1">Waiting for your location…</div>
+            <Typography sx={{ fontWeight: 800, fontSize: 19 }}>Waiting for your location…</Typography>
           ) : offRoute ? (
             <>
-              <div className="nav-line1">⚠ You're off the route</div>
-              <div className="nav-line2">Ski back to the blue line, or re-route from here.</div>
+              <Typography sx={{ fontWeight: 800, fontSize: 19 }}>⚠ You're off the route</Typography>
+              <Typography variant="body2">Ski back to the blue line, or re-route from here.</Typography>
             </>
           ) : (
             <>
-              <div className="nav-line1"><StepBadge step={step?.current} big /> {stepText(step?.current)}</div>
-              <div className="nav-line2">
+              <Typography sx={{ fontWeight: 800, fontSize: 19, display: 'flex', alignItems: 'center' }}>
+                <StepBadge step={step?.current} big /> {stepText(step?.current)}
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 0.25 }} color={offRoute ? 'inherit' : 'text.secondary'}>
                 {step && step.distToNextM > 5 ? `in ${fmtDist(step.distToNextM)} → ` : 'Then '}
                 <StepBadge step={step?.next} />
                 {step?.next ? stepText(step.next) : 'arrive at destination'}
-              </div>
+              </Typography>
             </>
           )}
-        </div>
+        </Box>
         {!waiting && (
-          <div className="nav-side">
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
             {speedMps != null && speedMps >= 0 && (
               <div className="nav-speed-circle">
                 <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
@@ -105,37 +129,37 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               </div>
             )}
             {remaining && (
-              <span className="nav-remaining">{fmtDist(remaining.distM)} · {fmtTime(remaining.timeS)} left</span>
+              <Typography variant="caption" sx={{ fontWeight: 700 }} color={offRoute ? 'inherit' : 'primary.main'}>
+                {fmtDist(remaining.distM)} · {fmtTime(remaining.timeS)} left
+              </Typography>
             )}
-          </div>
+          </Box>
         )}
-      </div>
+      </Paper>
 
-      <div className="nav-actions">
-        <button type="button" className="nav-btn reroute" onClick={onReroute}>Re-route from here</button>
-        <button type="button" className="nav-btn exit" onClick={onExit}>Exit</button>
-      </div>
+      <Box sx={{ pointerEvents: 'auto', display: 'flex', gap: 1 }}>
+        <Button size="small" variant="contained" onClick={onReroute}>Re-route from here</Button>
+        <Button size="small" variant="outlined" color="inherit" onClick={onExit} sx={{ bgcolor: 'background.paper' }}>Exit</Button>
+      </Box>
 
       {sim && (
-        <div className="nav-sim">
-          <span>DEV sim</span>
-          <button type="button" onClick={() => setPlaying((p) => !p)}>{playing ? '⏸' : '▶'}</button>
-          <button
-            type="button"
-            onClick={() => {
-              setPlaying(false);
-              setSimS(0);
-              sim.onSim(null);
-            }}
+        <Paper elevation={4} sx={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 2 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700 }}>DEV sim</Typography>
+          <IconButton size="small" onClick={() => setPlaying((p) => !p)} aria-label={playing ? 'Pause' : 'Play'}>
+            {playing ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
+          </IconButton>
+          <IconButton
+            size="small"
+            aria-label="Reset simulator"
+            onClick={() => { setPlaying(false); setSimS(0); sim.onSim(null); }}
           >
-            ⟲
-          </button>
-          <label>
-            {speed} m/s
-            <input type="range" min={3} max={25} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} />
-          </label>
-        </div>
+            <ReplayIcon fontSize="small" />
+          </IconButton>
+          <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>{speed} m/s</Typography>
+          <Slider size="small" min={3} max={25} value={speed} onChange={(_, v) => setSpeed(v as number)} sx={{ width: 110 }} />
+        </Paper>
       )}
-    </div>
+    </Box>
   );
 }
+

@@ -1,4 +1,30 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import AltRouteIcon from '@mui/icons-material/AltRoute';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import LinkIcon from '@mui/icons-material/Link';
+import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
+import TuneIcon from '@mui/icons-material/Tune';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import Select from '@mui/material/Select';
+import FormControl from '@mui/material/FormControl';
+import Tooltip from '@mui/material/Tooltip';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import MenuIcon from '@mui/icons-material/Menu';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import Box from '@mui/material/Box';
+import { useThemeMode } from './theme-context';
+import Typography from '@mui/material/Typography';
 import type {
   GraphEdge,
   GraphNode,
@@ -742,50 +768,65 @@ export default function App() {
 
   const fromLabel = fromCustom ?? (fromNodeId ? nodeLabelFor(fromNodeId) : null);
   const toLabel = toCustom ?? (toNodeId ? nodeLabelFor(toNodeId) : null);
-  const planSummary = fromLabel || toLabel ? `${fromLabel ?? 'A'} → ${toLabel ?? 'B'}` : 'Pick A and B';
+  const planSummary = fromLabel || toLabel ? `${fromLabel ?? 'From'} → ${toLabel ?? 'To'}` : 'Pick start & end';
   const longestSummary = currentLongest
     ? `${currentLongest.startName} → ${currentLongest.endName}`
     : 'Find longest descents';
   const linksSummary = customEdges.length ? `${customEdges.length} link${customEdges.length === 1 ? '' : 's'}` : 'None yet';
   const closedSummary = closedKeys.length ? `${closedKeys.length} closed` : 'All open';
+  const { mode, toggle: toggleTheme } = useThemeMode();
 
   return (
     <div className="app">
-      <header className="topbar">
-        <button
-          type="button"
-          className="panel-toggle"
-          onClick={() => setPanelOpen((o) => !o)}
-          aria-label={panelOpen ? 'Hide controls' : 'Show controls'}
-        >
-          ☰
-        </button>
-        <h1 className="logo">
-          <Logo className="logo-mark" />
-        </h1>
-        <select
-          value={resortId}
-          onChange={(e) => {
-            setResortId(e.target.value);
-            setDeepLinkActive(false);
-            setPopup(
-              'Lift & slope statuses are assumed OPEN. In early/late season many may be closed — check the resort, and mark any closed run/lift (⊘ on a route step) so routes avoid it.',
-            );
-          }}
-          className="resort-select"
-        >
-          {(index ?? []).map((r) => (
-            <option key={r.id} value={r.id}>{r.name} ({r.country})</option>
-          ))}
-        </select>
-        {status && <span className="status">{status}</span>}
-      </header>
+      <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+        <Toolbar sx={{ gap: 1, minHeight: 60, px: { xs: 1, sm: 2 } }}>
+          <IconButton
+            edge="start"
+            onClick={() => setPanelOpen((o) => !o)}
+            aria-label={panelOpen ? 'Hide controls' : 'Show controls'}
+            sx={{ display: 'inline-flex', '@media (min-width:821px)': { display: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Logo className="logo-mark" />
+          </Box>
+          {status && (
+            <Typography variant="body2" color="text.secondary" noWrap sx={{ display: { xs: 'none', sm: 'block' }, ml: 1 }}>
+              {status}
+            </Typography>
+          )}
+          <Box sx={{ flex: 1 }} />
+          <FormControl size="small" sx={{ minWidth: 150, maxWidth: 260 }}>
+            <Select
+              value={resortId}
+              onChange={(e) => {
+                setResortId(e.target.value);
+                setDeepLinkActive(false);
+                setPopup(
+                  'Lift & slope statuses are assumed OPEN. In early/late season many may be closed — check the resort, and mark any closed run/lift (⊘ on a route step) so routes avoid it.',
+                );
+              }}
+            >
+              {(index ?? []).map((r) => (
+                <MenuItem key={r.id} value={r.id}>{r.name} ({r.country})</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <IconButton onClick={toggleTheme} aria-label="Toggle light/dark theme">
+              {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+          </Tooltip>
+        </Toolbar>
+      </AppBar>
 
       <div className="body">
         {panelOpen && <div className="backdrop" onClick={() => setPanelOpen(false)} />}
         <aside className={panelOpen ? 'sidebar open' : 'sidebar'}>
           <AccordionSection
             title="Plan a route"
+            icon={<AltRouteIcon fontSize="small" />}
             summary={planSummary}
             open={openSection === 'plan'}
             onToggle={() => toggleSection('plan')}
@@ -793,7 +834,7 @@ export default function App() {
           <div className="panel">
             <h3>Plan a route</h3>
             <PointPicker
-              label="From (A)"
+              label="From"
               accent="#2e7d32"
               points={points}
               valueNodeId={fromNodeId}
@@ -804,7 +845,7 @@ export default function App() {
               pinActive={pinMode === 'from'}
             />
             <PointPicker
-              label="To (B)"
+              label="To"
               accent="#c62828"
               points={points}
               valueNodeId={toNodeId}
@@ -815,60 +856,88 @@ export default function App() {
               pinActive={pinMode === 'to'}
             />
 
-            <label className="field">
-              <span>Objective</span>
-              <select value={objective} onChange={(e) => setObjective(e.target.value as RouteObjective)}>
-                <option value="fastest">Fastest route</option>
-                <option value="longest_streak">Longest skiable streak</option>
-              </select>
-            </label>
+            <TextField
+              select
+              size="small"
+              fullWidth
+              label="Objective"
+              value={objective}
+              onChange={(e) => setObjective(e.target.value as RouteObjective)}
+              sx={{ mb: 1.5 }}
+            >
+              <MenuItem value="fastest">Fastest route</MenuItem>
+              <MenuItem value="longest_streak">Longest skiable streak</MenuItem>
+            </TextField>
 
-            <div className="field">
-              <span>When</span>
-              <div className="timing">
-                <label><input type="radio" checked={timingMode === 'now'} onChange={() => setTimingMode('now')} /> Now</label>
-                <label><input type="radio" checked={timingMode === 'arrive_by'} onChange={() => setTimingMode('arrive_by')} /> Arrive by</label>
-              </div>
+            <Box sx={{ mb: 1.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                When
+              </Typography>
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={timingMode}
+                onChange={(_, v) => v && setTimingMode(v)}
+              >
+                <ToggleButton value="now">Now</ToggleButton>
+                <ToggleButton value="arrive_by">Arrive by</ToggleButton>
+              </ToggleButtonGroup>
               {timingMode === 'arrive_by' && (
-                <input type="datetime-local" value={arriveTime} onChange={(e) => setArriveTime(e.target.value)} />
+                <TextField
+                  type="datetime-local"
+                  size="small"
+                  fullWidth
+                  value={arriveTime}
+                  onChange={(e) => setArriveTime(e.target.value)}
+                  sx={{ mt: 1 }}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
               )}
-            </div>
+            </Box>
 
-            <button type="button" className="primary" onClick={() => doPlan()} disabled={!graph}>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              onClick={() => doPlan()}
+              disabled={!graph}
+            >
               Find routes
-            </button>
+            </Button>
           </div>
           </AccordionSection>
 
           {plan && (plan.noLiftFreeRoute || plan.routes.length > 0) && (
             <AccordionSection
               title="Route options"
+              icon={<FormatListBulletedIcon fontSize="small" />}
               summary={plan.routes.length ? `${plan.routes.length} option${plan.routes.length === 1 ? '' : 's'}` : 'No route'}
               open={openSection === 'routes'}
               onToggle={() => toggleSection('routes')}
             >
               {plan.noLiftFreeRoute && (
-                <div className="ski-note">
+                <Alert severity="warning" sx={{ mb: 1 }}>
                   <strong>No lift-free route to this point at your level.</strong>
                   {plan.nearestSkiDestination ? (
                     <>
                       {' '}Nearest ski-down destination:{' '}
-                      <button
+                      <Box
+                        component="button"
                         type="button"
-                        className="link-btn inline"
                         onClick={() => {
                           setToNodeId(plan.nearestSkiDestination!.nodeId);
                           setToCustom(null);
                         }}
+                        sx={{ background: 'none', border: 0, p: 0, color: 'primary.main', cursor: 'pointer', font: 'inherit', textDecoration: 'underline' }}
                       >
                         {plan.nearestSkiDestination.name}
-                      </button>{' '}
+                      </Box>{' '}
                       (tap to set as destination, then Find routes).
                     </>
                   ) : (
                     ' Try a lower difficulty or a different destination.'
                   )}
-                </div>
+                </Alert>
               )}
 
               {plan.routes.length > 0 && (
@@ -882,15 +951,16 @@ export default function App() {
                 />
               )}
               {plan.routes.length > 0 && !navRoute && (
-                <button type="button" className="primary nav-start" onClick={startNav}>
-                  ▶ Start navigation
-                </button>
+                <Button variant="contained" color="success" fullWidth startIcon={<PlayArrowIcon />} onClick={startNav} sx={{ mt: 1 }}>
+                  Start navigation
+                </Button>
               )}
             </AccordionSection>
           )}
 
           <AccordionSection
-            title="🏆 Longest runs"
+            title="Longest runs"
+            icon={<EmojiEventsIcon fontSize="small" />}
             summary={longestSummary}
             open={openSection === 'longest'}
             onToggle={() => toggleSection('longest')}
@@ -913,7 +983,8 @@ export default function App() {
           </AccordionSection>
 
           <AccordionSection
-            title="🔗 Custom links"
+            title="Custom links"
+            icon={<LinkIcon fontSize="small" />}
             summary={linksSummary}
             open={openSection === 'links'}
             onToggle={() => toggleSection('links')}
@@ -940,7 +1011,8 @@ export default function App() {
           </AccordionSection>
 
           <AccordionSection
-            title="⛔ Closed today"
+            title="Closed today"
+            icon={<DoNotDisturbOnIcon fontSize="small" color="error" />}
             summary={closedSummary}
             open={openSection === 'closed'}
             onToggle={() => toggleSection('closed')}
@@ -955,6 +1027,7 @@ export default function App() {
 
           <AccordionSection
             title="Skiing preferences"
+            icon={<TuneIcon fontSize="small" />}
             summary="Level & lift filters"
             open={openSection === 'prefs'}
             onToggle={() => toggleSection('prefs')}
@@ -964,9 +1037,9 @@ export default function App() {
           </AccordionSection>
 
           {graph && (
-            <p className="datanote">
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', py: 1 }}>
               {effectiveGraph?.nodes.length} nodes · {effectiveGraph?.edges.length} edges · {points.length} named points
-            </p>
+            </Typography>
           )}
         </aside>
 
@@ -991,7 +1064,7 @@ export default function App() {
             nav={navData?.render ?? null}
             navHeadingUp
           />
-          {pinMode && <div className="pin-hint">Click the map to set point {pinMode === 'from' ? 'A' : 'B'}</div>}
+          {pinMode && <div className="pin-hint">Click the map to set the {pinMode === 'from' ? 'From' : 'To'} point</div>}
           {linkPinMode && <div className="pin-hint">Click the map to place the link's {linkPinMode === 'from' ? '"from"' : '"to"'} point (anywhere)</div>}
           <Legend />
           {navRoute && (
@@ -1010,13 +1083,27 @@ export default function App() {
       </div>
 
       {popup && (
-        <div className="popup-overlay" onClick={() => setPopup(null)}>
-          <div className="popup" onClick={(e) => e.stopPropagation()}>
-            <h4>Heads up</h4>
-            {popup.split('\n').map((line, i) => <p key={i}>{line}</p>)}
-            <button type="button" className="primary" onClick={() => setPopup(null)}>Got it</button>
-          </div>
-        </div>
+        <Snackbar
+          open={!!popup}
+          autoHideDuration={7000}
+          onClose={(_, reason) => { if (reason !== 'clickaway') setPopup(null); }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setPopup(null)}
+            severity={
+              /could not|couldn't|no route|not available|no lift-free|not enough|pick both|pick two|pick a|first\b/i.test(popup)
+                ? 'warning'
+                : /applied|added|marked|✓/i.test(popup)
+                  ? 'success'
+                  : 'info'
+            }
+            variant="filled"
+            sx={{ whiteSpace: 'pre-line', maxWidth: 480, boxShadow: 6 }}
+          >
+            {popup}
+          </Alert>
+        </Snackbar>
       )}
     </div>
   );

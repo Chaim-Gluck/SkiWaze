@@ -1,4 +1,13 @@
 import { fmtDistance } from '../utils/format';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import MapIcon from '@mui/icons-material/Map';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import DownhillSkiingIcon from '@mui/icons-material/DownhillSkiing';
 
 export interface LongestRunView {
   distanceM: number;
@@ -32,40 +41,40 @@ export function LongestRunPanel({
   const total = runs?.length ?? 0;
 
   return (
-    <div className="panel">
-      <h3>🏆 Longest runs in the resort</h3>
-      <p className="muted" style={{ marginTop: 0 }}>
+    <Box>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
         The longest possible descents without taking a lift (top to bottom), for your level.
-      </p>
-      <button type="button" className="secondary" onClick={onFind}>
+      </Typography>
+      <Button variant="outlined" fullWidth onClick={onFind}>
         Find the longest runs
-      </button>
+      </Button>
 
       {run && (
-        <div className="longest-result">
+        <Box sx={{ mt: 1.5 }}>
           {total > 1 && (
-            <div className="longest-carousel">
-              <button type="button" className="mini arrow" onClick={onPrev} aria-label="Previous run">‹</button>
-              <span className="muted">#{index + 1} of {total} longest</span>
-              <button type="button" className="mini arrow" onClick={onNext} aria-label="Next run">›</button>
-            </div>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}>
+              <IconButton size="small" onClick={onPrev} aria-label="Previous run"><ChevronLeftIcon /></IconButton>
+              <Typography variant="body2" color="text.secondary">#{index + 1} of {total} longest</Typography>
+              <IconButton size="small" onClick={onNext} aria-label="Next run"><ChevronRightIcon /></IconButton>
+            </Box>
           )}
-          <div className="longest-stats">
-            <strong>{fmtDistance(run.distanceM)}</strong>
-            <span className="muted">⬇ {fmtDistance(run.descentM)} descent</span>
-          </div>
-          <div className="longest-ends">
-            <span className="ep-a">{run.startName}</span>
-            <span> → </span>
-            <span className="ep-b">{run.endName}</span>
-          </div>
-          <div className="longest-actions">
-            <button type="button" className="mini" onClick={onShowOnMap}>🗺 Show on map</button>
-            <button type="button" className="mini" onClick={onNavigateStart}>📍 Navigate to start</button>
-            <button type="button" className="mini" onClick={onNavigateEnd}>⛷ Navigate to end</button>
-          </div>
-        </div>
+          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>{fmtDistance(run.distanceM)}</Typography>
+            <Typography variant="body2" color="text.secondary">⬇ {fmtDistance(run.descentM)} descent</Typography>
+          </Box>
+          <Typography variant="body2" sx={{ my: 0.5 }}>
+            <Box component="span" sx={{ color: 'success.main', fontWeight: 600 }}>{run.startName}</Box>
+            {' → '}
+            <Box component="span" sx={{ color: 'error.main', fontWeight: 600 }}>{run.endName}</Box>
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+            <Button size="small" variant="outlined" startIcon={<MapIcon />} onClick={onShowOnMap}>Show on map</Button>
+            <Button size="small" variant="outlined" startIcon={<MyLocationIcon />} onClick={onNavigateStart}>To start</Button>
+            <Button size="small" variant="outlined" startIcon={<DownhillSkiingIcon />} onClick={onNavigateEnd}>To end</Button>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }
+
