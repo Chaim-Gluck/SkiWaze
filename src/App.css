@@ -25,6 +25,26 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
+}
+
+/* Keep MapLibre's bottom-corner controls (attribution, etc.) above the device's
+   safe area (e.g. Android gesture bar / iOS home indicator). */
+.maplibregl-ctrl-bottom-left,
+.maplibregl-ctrl-bottom-right {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Bottom-left overlay stack: Locate button sits above the (dynamic-height) Legend. */
+.bl-stack {
+  position: absolute;
+  left: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .logo-mark { display: flex; align-items: center; gap: 12px; }

@@ -25,12 +25,12 @@ const ROWS: { swatch: string; label: string }[] = [
 ];
 
 export function Legend() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   return (
     <Paper
       elevation={3}
       sx={{
-        position: 'absolute', bottom: 12, left: 12, zIndex: 5, p: 0.75, borderRadius: 2,
+        p: 0.75, borderRadius: 2,
         maxWidth: 240, bgcolor: 'var(--glass)', backdropFilter: 'blur(3px)',
       }}
     >

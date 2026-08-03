@@ -9,10 +9,6 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Fab from '@mui/material/Fab';
-import Tooltip from '@mui/material/Tooltip';
-import MyLocationIcon from '@mui/icons-material/MyLocation';
-import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import LayersIcon from '@mui/icons-material/Layers';
 import CloseIcon from '@mui/icons-material/Close';
 import type { GeoFeatureCollection } from '../data/resortData';
@@ -226,8 +222,6 @@ interface MapViewProps {
   onMapClick?: (p: LonLat) => void;
   userPosition: LivePosition | null;
   following: boolean;
-  locateActive: boolean;
-  onLocateToggle: () => void;
   onFollowChange: (v: boolean) => void;
   nav: NavRender | null;
   navHeadingUp: boolean;
@@ -235,7 +229,7 @@ interface MapViewProps {
 
 export function MapView({
   center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, onMapClick,
-  userPosition, following, locateActive, onLocateToggle, onFollowChange, nav, navHeadingUp,
+  userPosition, following, onFollowChange, nav, navHeadingUp,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -251,7 +245,7 @@ export function MapView({
   const [showLifts, setShowLifts] = useState(true);
   const [showAreas, setShowAreas] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
-  const [controlsOpen, setControlsOpen] = useState(true);
+  const [controlsOpen, setControlsOpen] = useState(false);
 
   // Live location + navigation are driven by props (shared hook lives in App).
   const userMarker = useRef<maplibregl.Marker | null>(null);
@@ -739,8 +733,6 @@ export function MapView({
     map.easeTo(opts);
   }, [userPosition, nav, following, navHeadingUp, loaded]);
 
-  const locateTip = !locateActive ? 'Show my location' : following ? 'Following you — tap to stop' : 'Recenter on me';
-
   return (
     <div className="map-shell">
       <div ref={containerRef} className="map-canvas" />
@@ -790,20 +782,6 @@ export function MapView({
           </>
         )}
       </Paper>
-      <Tooltip title={locateTip} placement="left">
-        <Fab
-          size="small"
-          color={following ? 'primary' : 'default'}
-          onClick={onLocateToggle}
-          aria-label={locateTip}
-          sx={{
-            position: 'absolute', bottom: 44, right: 12, zIndex: 5,
-            ...(following ? {} : { bgcolor: 'background.paper', color: 'text.primary' }),
-          }}
-        >
-          {locateActive && !following ? <LocationSearchingIcon /> : <MyLocationIcon />}
-        </Fab>
-      </Tooltip>
     </div>
   );
 }

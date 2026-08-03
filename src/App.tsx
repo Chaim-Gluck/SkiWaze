@@ -16,14 +16,20 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Select from '@mui/material/Select';
+import Menu from '@mui/material/Menu';
 import FormControl from '@mui/material/FormControl';
+import IosShareIcon from '@mui/icons-material/IosShare';
 import Tooltip from '@mui/material/Tooltip';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import Box from '@mui/material/Box';
+import Fab from '@mui/material/Fab';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import { useThemeMode } from './theme-context';
 import Typography from '@mui/material/Typography';
 import type {
@@ -87,24 +93,43 @@ function nowLocalDatetime(offsetMinutes = 60): string {
 /**
  * Optional map deep-link from the URL, e.g. `?resort=cervinia-zermatt&at=45.897,7.658&z=18`.
  * `at` is "lat,lon". Used to jump the map straight to a spot (e.g. to verify a slope's arrow).
+ *
+ * A shared-location link additionally carries `to=lat,lon` (a destination to navigate to) and an
+ * optional `name` label, e.g. `?resort=cervinia-zermatt&to=45.897,7.658&name=Meet%20here`.
  */
-function parseDeepLink(): { resortId?: string; lon?: number; lat?: number; zoom?: number } {
+function parseDeepLink(): {
+  resortId?: string;
+  lon?: number;
+  lat?: number;
+  zoom?: number;
+  toLat?: number;
+  toLon?: number;
+  toName?: string;
+} {
+  const parseLatLon = (v: string | null): [number, number] | undefined => {
+    if (!v) return undefined;
+    const [a, b] = v.split(',').map((s) => parseFloat(s.trim()));
+    return Number.isFinite(a) && Number.isFinite(b) ? [a, b] : undefined;
+  };
   try {
     const q = new URLSearchParams(window.location.search);
     const resortId = q.get('resort') ?? undefined;
     let lon: number | undefined;
     let lat: number | undefined;
-    const at = q.get('at');
-    if (at) {
-      const [a, b] = at.split(',').map((s) => parseFloat(s.trim()));
-      if (Number.isFinite(a) && Number.isFinite(b)) {
-        lat = a;
-        lon = b;
-      }
+    const at = parseLatLon(q.get('at'));
+    if (at) [lat, lon] = at;
+    let toLat: number | undefined;
+    let toLon: number | undefined;
+    const to = parseLatLon(q.get('to'));
+    if (to) {
+      [toLat, toLon] = to;
+      // A shared destination also centres the map there when no explicit `at` was given.
+      if (lat == null) [lat, lon] = to;
     }
+    const toName = q.get('name') ?? undefined;
     const z = q.get('z');
     const zoom = z != null && Number.isFinite(parseFloat(z)) ? parseFloat(z) : undefined;
-    return { resortId, lon, lat, zoom };
+    return { resortId, lon, lat, zoom, toLat, toLon, toName };
   } catch {
     return {};
   }
@@ -158,6 +183,9 @@ export default function App() {
   const toggleSection = (id: string) => setOpenSection((cur) => (cur === id ? '' : id));
 
   const geolocated = useRef(false);
+  const [shareAnchor, setShareAnchor] = useState<null | HTMLElement>(null);
+  const [sharePrompt, setSharePrompt] = useState(false);
+  const sharedApplied = useRef(false);
 
   useEffect(() => savePreferences(prefs), [prefs]);
 
@@ -345,7 +373,7 @@ export default function App() {
     } else {
       live.stop();
       setSimPos(null);
-      setFollowing(true);
+      setFollowing(false);
       setPopup('Stopped following your location.');
     }
   };
@@ -529,6 +557,81 @@ export default function App() {
     if (codes.has('using_default_wait')) notes.push('Default lift wait times were used (no measured data).');
     if (codes.has('using_default_speed')) notes.push('Default ski speeds were used for some runs (unknown difficulty).');
     if (notes.length) setPopup(notes.join('\n'));
+  };
+
+  // ---- Share a location ------------------------------------------------------------------
+  // Build a deep-link that opens SkiWaze at this resort with `coord` as the destination.
+  const buildShareUrl = (coord: LonLat, name?: string): string => {
+    const url = new URL(window.location.origin + window.location.pathname);
+    url.searchParams.set('resort', resortId);
+    url.searchParams.set('to', `${coord.lat.toFixed(5)},${coord.lon.toFixed(5)}`);
+    if (name) url.searchParams.set('name', name);
+    return url.toString();
+  };
+
+  const shareCoord = async (coord: LonLat, name: string | undefined, message: string) => {
+    const url = buildShareUrl(coord, name);
+    if (navigator.share) {
+      try { await navigator.share({ title: 'SkiWaze', text: message, url }); }
+      catch { /* user cancelled the share sheet */ }
+    } else if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(`${message}\n${url}`); setPopup('Message + link copied to clipboard — paste it to a friend.'); }
+      catch { setPopup(`${message}\n${url}`); }
+    } else {
+      setPopup(`${message}\n${url}`);
+    }
+  };
+
+  const shareMyLocation = () => {
+    setShareAnchor(null);
+    const msg = "📍 Come meet me on the slopes! Open this SkiWaze link and it'll route you to my location:";
+    if (userPos) { void shareCoord({ lon: userPos.lon, lat: userPos.lat }, 'My location', msg); return; }
+    if (!('geolocation' in navigator)) { setPopup('Geolocation is not available in this browser.'); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p) => void shareCoord({ lon: p.coords.longitude, lat: p.coords.latitude }, 'My location', msg),
+      () => setPopup('Could not get your location to share.'),
+      { timeout: 5000 },
+    );
+  };
+
+  // Recipient side: once the graph for the shared resort is ready, snap the shared point to the
+  // nearest routable node and prefill it as the destination, then prompt the recipient. Getting
+  // their current location + running the route happens when they tap "Navigate" (a user gesture),
+  // handled by navigateToShared().
+  useEffect(() => {
+    if (sharedApplied.current) return;
+    if (deepLink.toLat == null || deepLink.toLon == null || !effectiveGraph) return;
+    if (deepLink.resortId && resortId !== deepLink.resortId) return;
+    sharedApplied.current = true;
+    const dest = nearestNode(effectiveGraph, deepLink.toLon, deepLink.toLat);
+    if (!dest) { setPopup('Could not place the shared location on this resort.'); return; }
+    setToNodeId(dest.id);
+    setToCustom(deepLink.toName ? `📍 ${deepLink.toName}` : '📍 Shared location');
+    setOpenSection('plan');
+    setSharePrompt(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveGraph, resortId]);
+
+  // "Navigate" on the shared-location prompt: fetch the recipient's current location, set it as
+  // the start, and run the route straight away (passing ids explicitly to avoid a stale-state race).
+  const navigateToShared = (toId: string | null) => {
+    setSharePrompt(false);
+    if (!toId) return;
+    if (!('geolocation' in navigator)) {
+      setPopup('Geolocation is not available — pick a start point (From), then Find routes.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const n = effectiveGraph ? nearestNode(effectiveGraph, pos.coords.longitude, pos.coords.latitude) : null;
+        if (!n) { setPopup('Could not place your location on this resort — pick a start point (From).'); return; }
+        setFromNodeId(n.id);
+        setFromCustom('My location');
+        doPlan(n.id, toId);
+      },
+      () => setPopup('Could not get your location — pick a start point (From), then Find routes.'),
+      { timeout: 5000 },
+    );
   };
 
   // Resolve a link endpoint to a concrete node id, creating a custom node for an arbitrary
@@ -783,6 +886,8 @@ export default function App() {
   const linksSummary = linkGroupCount ? `${linkGroupCount} link${linkGroupCount === 1 ? '' : 's'}` : 'None yet';
   const closedSummary = closedKeys.length ? `${closedKeys.length} closed` : 'All open';
   const { mode, toggle: toggleTheme } = useThemeMode();
+  const locateActive = live.tracking || !!simPos;
+  const locateTip = !locateActive ? 'Show my location' : following ? 'Following you — tap to stop' : 'Recenter on me';
 
   // Mobile bottom sheet: drag the handle downwards to dismiss.
   const sheetRef = useRef<HTMLElement | null>(null);
@@ -944,6 +1049,32 @@ export default function App() {
             >
               Find routes
             </Button>
+
+            <Button
+              variant="outlined"
+              size="large"
+              fullWidth
+              startIcon={<IosShareIcon />}
+              onClick={(e) => setShareAnchor(e.currentTarget)}
+              sx={{ mt: 1 }}
+            >
+              Share a location
+            </Button>
+            <Menu anchorEl={shareAnchor} open={!!shareAnchor} onClose={() => setShareAnchor(null)}>
+              <MenuItem onClick={shareMyLocation}>Share my current location</MenuItem>
+              <MenuItem
+                disabled={!toNodeId}
+                onClick={() => {
+                  setShareAnchor(null);
+                  const coord = pointFor(toNodeId);
+                  if (!coord) { setPopup('Pick a destination (To) first, then share it.'); return; }
+                  const place = toLabel ?? 'this spot';
+                  void shareCoord(coord, place, `📍 Meet me at ${place} — open this SkiWaze link to navigate there:`);
+                }}
+              >
+                {toLabel ? `Share the “To” destination: ${toLabel}` : 'Share the “To” destination'}
+              </MenuItem>
+            </Menu>
           </div>
           </AccordionSection>
 
@@ -1052,7 +1183,7 @@ export default function App() {
 
           <AccordionSection
             title="Closed today"
-            icon={<DoNotDisturbOnIcon fontSize="small" color="error" />}
+            icon={<DoNotDisturbOnIcon fontSize="small" />}
             summary={closedSummary}
             open={openSection === 'closed'}
             onToggle={() => toggleSection('closed')}
@@ -1098,15 +1229,26 @@ export default function App() {
             onMapClick={handleMapClick}
             userPosition={userPos}
             following={following}
-            locateActive={live.tracking || !!simPos}
-            onLocateToggle={onLocateToggle}
             onFollowChange={setFollowing}
             nav={navData?.render ?? null}
             navHeadingUp
           />
           {pinMode && <div className="pin-hint">Click the map to set the {pinMode === 'from' ? 'From' : 'To'} point</div>}
           {linkPinMode && <div className="pin-hint">Click the map to place the link's {linkPinMode === 'from' ? '"from"' : '"to"'} point (anywhere)</div>}
-          <Legend />
+          <div className="bl-stack">
+            <Tooltip title={locateTip} placement="right">
+              <Fab
+                size="small"
+                color={locateActive && following ? 'primary' : 'default'}
+                onClick={onLocateToggle}
+                aria-label={locateTip}
+                sx={locateActive && following ? undefined : { bgcolor: 'background.paper', color: 'text.primary' }}
+              >
+                {locateActive && !following ? <LocationSearchingIcon /> : <MyLocationIcon />}
+              </Fab>
+            </Tooltip>
+            <Legend />
+          </div>
           {navRoute && (
             <NavOverlay
               step={navData?.step}
@@ -1142,6 +1284,33 @@ export default function App() {
             sx={{ whiteSpace: 'pre-line', maxWidth: 480, boxShadow: 6 }}
           >
             {popup}
+          </Alert>
+        </Snackbar>
+      )}
+
+      {sharePrompt && (
+        <Snackbar
+          open={sharePrompt}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={{ mb: { xs: 9, sm: 2 } }}
+        >
+          <Alert
+            severity="info"
+            variant="filled"
+            onClose={() => setSharePrompt(false)}
+            action={
+              <>
+                <Button color="inherit" size="small" onClick={() => navigateToShared(toNodeId)}>
+                  Navigate
+                </Button>
+                <IconButton size="small" color="inherit" aria-label="Dismiss" onClick={() => setSharePrompt(false)}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </>
+            }
+            sx={{ boxShadow: 6 }}
+          >
+            A location was shared with you — set as your destination. Navigate there?
           </Alert>
         </Snackbar>
       )}
