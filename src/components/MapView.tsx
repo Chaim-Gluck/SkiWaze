@@ -3,12 +3,18 @@ import maplibregl, { type StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import Fab from '@mui/material/Fab';
+import Tooltip from '@mui/material/Tooltip';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
+import LayersIcon from '@mui/icons-material/Layers';
+import CloseIcon from '@mui/icons-material/Close';
 import type { GeoFeatureCollection } from '../data/resortData';
 import type { LivePosition } from '../hooks/useLiveLocation';
 
@@ -245,6 +251,7 @@ export function MapView({
   const [showLifts, setShowLifts] = useState(true);
   const [showAreas, setShowAreas] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
+  const [controlsOpen, setControlsOpen] = useState(true);
 
   // Live location + navigation are driven by props (shared hook lives in App).
   const userMarker = useRef<maplibregl.Marker | null>(null);
@@ -732,7 +739,7 @@ export function MapView({
     map.easeTo(opts);
   }, [userPosition, nav, following, navHeadingUp, loaded]);
 
-  const locateLabel = !locateActive ? 'Locate' : following ? 'Following' : 'Recenter';
+  const locateTip = !locateActive ? 'Show my location' : following ? 'Following you — tap to stop' : 'Recenter on me';
 
   return (
     <div className="map-shell">
@@ -745,38 +752,58 @@ export function MapView({
           backdropFilter: 'blur(3px)', maxWidth: 'calc(100% - 20px)',
         }}
       >
-        <ToggleButtonGroup exclusive size="small" value={base} onChange={(_, v) => v && setBase(v)}>
-          <ToggleButton value="standard" sx={{ px: 1.25, py: 0.25 }}>Map</ToggleButton>
-          <ToggleButton value="topo" sx={{ px: 1.25, py: 0.25 }}>Topo</ToggleButton>
-          <ToggleButton value="satellite" sx={{ px: 1.25, py: 0.25 }}>Sat</ToggleButton>
-        </ToggleButtonGroup>
-        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.25 }}>
-          <ToggleButton value="3d" selected={is3D} size="small" onClick={() => setIs3D((v) => !v)} title="Toggle 3D terrain" sx={{ px: 1, py: 0.25, mr: 0.5 }}>
-            3D
-          </ToggleButton>
-          {([['Pistes', showPistes, setShowPistes], ['Lifts', showLifts, setShowLifts], ['Areas', showAreas, setShowAreas], ['Labels', showLabels, setShowLabels]] as const).map(
-            ([label, checked, setter]) => (
-              <FormControlLabel
-                key={label}
-                sx={{ m: 0, mr: 0.5 }}
-                control={<Checkbox size="small" sx={{ p: 0.25 }} checked={checked} onChange={(e) => setter(e.target.checked)} />}
-                label={label}
-                slotProps={{ typography: { variant: 'caption' } }}
-              />
-            ),
-          )}
-        </Box>
-        <Button
-          size="small"
-          variant={locateActive ? 'contained' : 'outlined'}
-          startIcon={<MyLocationIcon />}
-          onClick={onLocateToggle}
-          title="Show my live location"
-          sx={{ alignSelf: 'flex-start' }}
-        >
-          {locateLabel}
-        </Button>
+        {!controlsOpen ? (
+          <IconButton size="small" onClick={() => setControlsOpen(true)} aria-label="Show map layers" title="Map layers">
+            <LayersIcon fontSize="small" />
+          </IconButton>
+        ) : (
+          <>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <LayersIcon fontSize="small" /> Layers
+              </Typography>
+              <IconButton size="small" onClick={() => setControlsOpen(false)} aria-label="Collapse map layers" sx={{ p: 0.25 }}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <ToggleButtonGroup exclusive size="small" value={base} onChange={(_, v) => v && setBase(v)}>
+              <ToggleButton value="standard" sx={{ px: 1.25, py: 0.25 }}>Map</ToggleButton>
+              <ToggleButton value="topo" sx={{ px: 1.25, py: 0.25 }}>Topo</ToggleButton>
+              <ToggleButton value="satellite" sx={{ px: 1.25, py: 0.25 }}>Sat</ToggleButton>
+            </ToggleButtonGroup>
+            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.25 }}>
+              <ToggleButton value="3d" selected={is3D} size="small" onClick={() => setIs3D((v) => !v)} title="Toggle 3D terrain" sx={{ px: 1, py: 0.25, mr: 0.5 }}>
+                3D
+              </ToggleButton>
+              {([['Pistes', showPistes, setShowPistes], ['Lifts', showLifts, setShowLifts], ['Areas', showAreas, setShowAreas], ['Labels', showLabels, setShowLabels]] as const).map(
+                ([label, checked, setter]) => (
+                  <FormControlLabel
+                    key={label}
+                    sx={{ m: 0, mr: 0.5 }}
+                    control={<Checkbox size="small" sx={{ p: 0.25 }} checked={checked} onChange={(e) => setter(e.target.checked)} />}
+                    label={label}
+                    slotProps={{ typography: { variant: 'caption' } }}
+                  />
+                ),
+              )}
+            </Box>
+          </>
+        )}
       </Paper>
+      <Tooltip title={locateTip} placement="left">
+        <Fab
+          size="small"
+          color={following ? 'primary' : 'default'}
+          onClick={onLocateToggle}
+          aria-label={locateTip}
+          sx={{
+            position: 'absolute', bottom: 44, right: 12, zIndex: 5,
+            ...(following ? {} : { bgcolor: 'background.paper', color: 'text.primary' }),
+          }}
+        >
+          {locateActive && !following ? <LocationSearchingIcon /> : <MyLocationIcon />}
+        </Fab>
+      </Tooltip>
     </div>
   );
 }

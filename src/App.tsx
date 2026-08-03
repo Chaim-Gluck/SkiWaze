@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
@@ -337,12 +338,15 @@ export default function App() {
     if (!live.tracking && !simPos) {
       live.start();
       setFollowing(true);
+      setPopup('Showing your location — following you. Tap the button again to stop.');
     } else if (!following) {
       setFollowing(true);
+      setPopup('Recentered — following you again. Tap the button again to stop.');
     } else {
       live.stop();
       setSimPos(null);
       setFollowing(true);
+      setPopup('Stopped following your location.');
     }
   };
 
@@ -772,9 +776,37 @@ export default function App() {
   const longestSummary = currentLongest
     ? `${currentLongest.startName} → ${currentLongest.endName}`
     : 'Find longest descents';
-  const linksSummary = customEdges.length ? `${customEdges.length} link${customEdges.length === 1 ? '' : 's'}` : 'None yet';
+  const linkGroupCount = useMemo(
+    () => new Set(customEdges.map((e) => e.id.split('-').slice(0, 2).join('-'))).size,
+    [customEdges],
+  );
+  const linksSummary = linkGroupCount ? `${linkGroupCount} link${linkGroupCount === 1 ? '' : 's'}` : 'None yet';
   const closedSummary = closedKeys.length ? `${closedKeys.length} closed` : 'All open';
   const { mode, toggle: toggleTheme } = useThemeMode();
+
+  // Mobile bottom sheet: drag the handle downwards to dismiss.
+  const sheetRef = useRef<HTMLElement | null>(null);
+  const sheetDrag = useRef<{ y: number; dy: number } | null>(null);
+  const onSheetDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    sheetDrag.current = { y: e.clientY, dy: 0 };
+    if (sheetRef.current) sheetRef.current.style.transition = 'none';
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onSheetMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!sheetDrag.current) return;
+    const dy = Math.max(0, e.clientY - sheetDrag.current.y);
+    sheetDrag.current.dy = dy;
+    if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)`;
+  };
+  const onSheetUp = () => {
+    const d = sheetDrag.current;
+    sheetDrag.current = null;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = '';
+      sheetRef.current.style.transform = '';
+    }
+    if (d && d.dy > 80) setPanelOpen(false);
+  };
 
   return (
     <div className="app">
@@ -823,7 +855,15 @@ export default function App() {
 
       <div className="body">
         {panelOpen && <div className="backdrop" onClick={() => setPanelOpen(false)} />}
-        <aside className={panelOpen ? 'sidebar open' : 'sidebar'}>
+        <aside ref={sheetRef} className={panelOpen ? 'sidebar open' : 'sidebar'}>
+          <div
+            className="sheet-handle"
+            onPointerDown={onSheetDown}
+            onPointerMove={onSheetMove}
+            onPointerUp={onSheetUp}
+            onPointerCancel={onSheetUp}
+            aria-label="Drag down to close"
+          />
           <AccordionSection
             title="Plan a route"
             icon={<AltRouteIcon fontSize="small" />}

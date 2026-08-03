@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
-import LayersIcon from '@mui/icons-material/Layers';
+import LegendToggleIcon from '@mui/icons-material/LegendToggle';
 
 const SWATCH: Record<string, Record<string, unknown>> = {
   'piste-multi': { height: 3, width: 22, borderRadius: '2px', background: 'linear-gradient(90deg,#1565c0 0 33%,#d32f2f 33% 66%,#111 66% 100%)' },
@@ -34,23 +34,29 @@ export function Legend() {
         maxWidth: 240, bgcolor: 'var(--glass)', backdropFilter: 'blur(3px)',
       }}
     >
-      <Button
-        size="small"
-        onClick={() => setOpen((v) => !v)}
-        startIcon={open ? <CloseIcon fontSize="small" /> : <LayersIcon fontSize="small" />}
-        sx={{ fontWeight: 700, minWidth: 0, py: 0.25 }}
-      >
-        Legend
-      </Button>
-      {open && (
-        <Box sx={{ mt: 0.5 }}>
-          {ROWS.map((r) => (
-            <Box key={r.swatch} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <Box component="span" sx={{ flex: '0 0 auto', ...SWATCH[r.swatch] }} />
-              <Typography variant="caption">{r.label}</Typography>
-            </Box>
-          ))}
-        </Box>
+      {!open ? (
+        <IconButton size="small" onClick={() => setOpen(true)} aria-label="Show legend" title="Legend">
+          <LegendToggleIcon fontSize="small" />
+        </IconButton>
+      ) : (
+        <>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <LegendToggleIcon fontSize="small" /> Legend
+            </Typography>
+            <IconButton size="small" onClick={() => setOpen(false)} aria-label="Collapse legend" sx={{ p: 0.25 }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+          <Box sx={{ mt: 0.5 }}>
+            {ROWS.map((r) => (
+              <Box key={r.swatch} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Box component="span" sx={{ flex: '0 0 auto', ...SWATCH[r.swatch] }} />
+                <Typography variant="caption">{r.label}</Typography>
+              </Box>
+            ))}
+          </Box>
+        </>
       )}
     </Paper>
   );
