@@ -7,11 +7,11 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import AltRouteIcon from '@mui/icons-material/AltRoute';
+import SearchIcon from '@mui/icons-material/Search';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import LinkIcon from '@mui/icons-material/Link';
 import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import TuneIcon from '@mui/icons-material/Tune';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
@@ -70,7 +70,6 @@ import { RouteOptions } from './components/RouteOptions';
 import { CustomLinkPanel, type LinkColor, type LinkDirection } from './components/CustomLinkPanel';
 import { ClosedPanel } from './components/ClosedPanel';
 import { LongestRunPanel } from './components/LongestRunPanel';
-import { Legend } from './components/Legend';
 import { Logo } from './components/Logo';
 import './App.css';
 
@@ -913,6 +912,22 @@ export default function App() {
     if (d && d.dy > 80) setPanelOpen(false);
   };
 
+  // Peek pull-tab (closed state): tap or drag up to open the sheet.
+  const peekDrag = useRef<{ y: number; dy: number } | null>(null);
+  const onPeekDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    peekDrag.current = { y: e.clientY, dy: 0 };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onPeekMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (peekDrag.current) peekDrag.current.dy = e.clientY - peekDrag.current.y;
+  };
+  const onPeekUp = () => {
+    const d = peekDrag.current;
+    peekDrag.current = null;
+    if (!d) return;
+    if (Math.abs(d.dy) < 8 || d.dy < -30) setPanelOpen(true);
+  };
+
   return (
     <div className="app">
       <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
@@ -971,7 +986,7 @@ export default function App() {
           />
           <AccordionSection
             title="Plan a route"
-            icon={<AltRouteIcon fontSize="small" />}
+            icon={<SearchIcon fontSize="small" />}
             summary={planSummary}
             open={openSection === 'plan'}
             onToggle={() => toggleSection('plan')}
@@ -1081,7 +1096,7 @@ export default function App() {
           {plan && (plan.noLiftFreeRoute || plan.routes.length > 0) && (
             <AccordionSection
               title="Route options"
-              icon={<FormatListBulletedIcon fontSize="small" />}
+              icon={<AltRouteIcon fontSize="small" />}
               summary={plan.routes.length ? `${plan.routes.length} option${plan.routes.length === 1 ? '' : 's'}` : 'No route'}
               open={openSection === 'routes'}
               onToggle={() => toggleSection('routes')}
@@ -1214,6 +1229,21 @@ export default function App() {
           )}
         </aside>
 
+        {!panelOpen && (
+          <div
+            className="sheet-peek"
+            onPointerDown={onPeekDown}
+            onPointerMove={onPeekMove}
+            onPointerUp={onPeekUp}
+            onPointerCancel={onPeekUp}
+            role="button"
+            aria-label="Open controls"
+          >
+            <span className="grip" />
+            Controls
+          </div>
+        )}
+
         <main className="map-wrap">
           <MapView
             center={center}
@@ -1229,14 +1259,13 @@ export default function App() {
             onMapClick={handleMapClick}
             userPosition={userPos}
             following={following}
-            onFollowChange={setFollowing}
             nav={navData?.render ?? null}
             navHeadingUp
           />
           {pinMode && <div className="pin-hint">Click the map to set the {pinMode === 'from' ? 'From' : 'To'} point</div>}
           {linkPinMode && <div className="pin-hint">Click the map to place the link's {linkPinMode === 'from' ? '"from"' : '"to"'} point (anywhere)</div>}
-          <div className="bl-stack">
-            <Tooltip title={locateTip} placement="right">
+          <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Tooltip title={locateTip} placement="left">
               <Fab
                 size="small"
                 color={locateActive && following ? 'primary' : 'default'}
@@ -1247,8 +1276,29 @@ export default function App() {
                 {locateActive && !following ? <LocationSearchingIcon /> : <MyLocationIcon />}
               </Fab>
             </Tooltip>
-            <Legend />
-          </div>
+            <Tooltip title="Plan a route" placement="left">
+              <Fab
+                size="small"
+                aria-label="Plan a route"
+                onClick={() => { setOpenSection('plan'); setPanelOpen(true); }}
+                sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
+              >
+                <SearchIcon />
+              </Fab>
+            </Tooltip>
+            {plan && plan.routes.length > 0 && (
+              <Tooltip title="Route options" placement="left">
+                <Fab
+                  size="small"
+                  aria-label="Route options"
+                  onClick={() => { setOpenSection('routes'); setPanelOpen(true); }}
+                  sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
+                >
+                  <AltRouteIcon />
+                </Fab>
+              </Tooltip>
+            )}
+          </Box>
           {navRoute && (
             <NavOverlay
               step={navData?.step}
@@ -1281,7 +1331,7 @@ export default function App() {
                   : 'info'
             }
             variant="filled"
-            sx={{ whiteSpace: 'pre-line', maxWidth: 480, boxShadow: 6 }}
+            sx={{ whiteSpace: 'pre-line', maxWidth: 'min(480px, calc(100vw - 24px))', boxShadow: 6 }}
           >
             {popup}
           </Alert>
@@ -1308,7 +1358,7 @@ export default function App() {
                 </IconButton>
               </>
             }
-            sx={{ boxShadow: 6 }}
+            sx={{ boxShadow: 6, maxWidth: 'min(480px, calc(100vw - 24px))' }}
           >
             A location was shared with you — set as your destination. Navigate there?
           </Alert>

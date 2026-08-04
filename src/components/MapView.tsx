@@ -11,6 +11,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LayersIcon from '@mui/icons-material/Layers';
 import CloseIcon from '@mui/icons-material/Close';
+import { Legend } from './Legend';
 import type { GeoFeatureCollection } from '../data/resortData';
 import type { LivePosition } from '../hooks/useLiveLocation';
 
@@ -222,14 +223,13 @@ interface MapViewProps {
   onMapClick?: (p: LonLat) => void;
   userPosition: LivePosition | null;
   following: boolean;
-  onFollowChange: (v: boolean) => void;
   nav: NavRender | null;
   navHeadingUp: boolean;
 }
 
 export function MapView({
   center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, onMapClick,
-  userPosition, following, onFollowChange, nav, navHeadingUp,
+  userPosition, following, nav, navHeadingUp,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -250,8 +250,6 @@ export function MapView({
   // Live location + navigation are driven by props (shared hook lives in App).
   const userMarker = useRef<maplibregl.Marker | null>(null);
   const navMarker = useRef<maplibregl.Marker | null>(null);
-  const followCb = useRef(onFollowChange);
-  followCb.current = onFollowChange;
 
   // Keep latest data/handlers in refs so the map's async 'load' handler never
   // captures stale values (this is what previously left overlays blank on first load).
@@ -263,6 +261,24 @@ export function MapView({
   stepRef.current = selectedRange;
   const clickCb = useRef(onMapClick);
   clickCb.current = onMapClick;
+  // Latest follow inputs in refs, so the one-time map 'load' handlers can implement
+  // "suspend auto-centering while the user interacts, then recentre after they stop".
+  const followingRef = useRef(following);
+  followingRef.current = following;
+  const userPosRef = useRef(userPosition);
+  userPosRef.current = userPosition;
+  const navRef = useRef(nav);
+  navRef.current = nav;
+  const navHeadingUpRef = useRef(navHeadingUp);
+  navHeadingUpRef.current = navHeadingUp;
+  const followSuspended = useRef(false);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wasFollowing = useRef(following);
+  const wasNav = useRef<boolean>(!!nav);
+  // Default camera zoom for follow-me mode, and how long after the last user gesture we
+  // wait before recentring back onto the user.
+  const FOLLOW_ZOOM = 15;
+  const FOLLOW_RESUME_MS = 4000;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -272,7 +288,7 @@ export function MapView({
       center: [center.lon, center.lat],
       zoom,
     });
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
     mapRef.current = map;
 
     map.on('load', () => {
@@ -524,8 +540,34 @@ export function MapView({
     });
 
     map.on('click', (e) => clickCb.current?.({ lon: e.lngLat.lng, lat: e.lngLat.lat }));
-    // A user-initiated pan drops follow-me mode (our own easeTo doesn't fire dragstart).
-    map.on('dragstart', () => followCb.current(false));
+    // While following, a user gesture (pan/pinch) should NOT drop follow mode. Instead we
+    // suspend auto-centering, then recentre on the user once they stop interacting for a beat.
+    // `originalEvent` is present only for real user gestures (absent for our own easeTo).
+    const onUserGesture = (e: { originalEvent?: unknown }) => {
+      if (!e.originalEvent || !followingRef.current) return;
+      followSuspended.current = true;
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      idleTimer.current = setTimeout(() => {
+        followSuspended.current = false;
+        if (!followingRef.current) return;
+        const nv = navRef.current;
+        const p = userPosRef.current;
+        const c: [number, number] | null = nv ? [nv.lon, nv.lat] : p ? [p.lon, p.lat] : null;
+        if (!c) return;
+        const opts: maplibregl.EaseToOptions = { center: c, duration: 600 };
+        if (nv && navHeadingUpRef.current) {
+          opts.bearing = nv.bearing;
+          opts.pitch = 55;
+          opts.zoom = 16;
+        } else {
+          opts.zoom = FOLLOW_ZOOM;
+        }
+        map.easeTo(opts);
+      }, FOLLOW_RESUME_MS);
+    };
+    map.on('movestart', onUserGesture);
+    map.on('zoomstart', onUserGesture);
+    map.on('rotatestart', onUserGesture);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -717,7 +759,12 @@ export function MapView({
   // Follow-me camera (heading-up + tilted while navigating).
   useEffect(() => {
     const map = mapRef.current;
+    const starting = following && !wasFollowing.current;
+    wasFollowing.current = following;
+    const endingNav = !nav && wasNav.current;
+    wasNav.current = !!nav;
     if (!map || !loaded || !following) return;
+    if (followSuspended.current) return; // user is interacting; recentre happens after they stop
     const center: [number, number] | null = nav
       ? [nav.lon, nav.lat]
       : userPosition
@@ -729,19 +776,28 @@ export function MapView({
       opts.bearing = nav.bearing;
       opts.pitch = 55;
       if (map.getZoom() < 15) opts.zoom = 16;
+    } else if (endingNav && !is3D) {
+      // Leaving navigation: flatten the heading-up tilt (our recentre easeTo would otherwise
+      // cancel the nav-cleanup pitch reset and keep the map tilted).
+      opts.pitch = 0;
+      opts.bearing = 0;
+    } else if (starting && map.getZoom() < FOLLOW_ZOOM) {
+      // On starting to follow, zoom in to the default follow level (never zoom out).
+      opts.zoom = FOLLOW_ZOOM;
     }
     map.easeTo(opts);
-  }, [userPosition, nav, following, navHeadingUp, loaded]);
+  }, [userPosition, nav, following, navHeadingUp, loaded, is3D]);
 
   return (
     <div className="map-shell">
       <div ref={containerRef} className="map-canvas" />
+      <Box sx={{ position: 'absolute', top: 10, left: 10, zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start', maxWidth: 'calc(100% - 20px)' }}>
       <Paper
         elevation={3}
         sx={{
-          position: 'absolute', top: 10, left: 10, zIndex: 5, p: 0.75, borderRadius: 2,
+          p: 0.75, borderRadius: 2,
           display: 'flex', flexDirection: 'column', gap: 0.75, bgcolor: 'var(--glass)',
-          backdropFilter: 'blur(3px)', maxWidth: 'calc(100% - 20px)',
+          backdropFilter: 'blur(3px)',
         }}
       >
         {!controlsOpen ? (
@@ -782,6 +838,8 @@ export function MapView({
           </>
         )}
       </Paper>
+      <Legend />
+      </Box>
     </div>
   );
 }

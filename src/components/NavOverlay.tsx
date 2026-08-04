@@ -11,6 +11,8 @@ import Slider from '@mui/material/Slider';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import ReplayIcon from '@mui/icons-material/Replay';
+import AltRouteIcon from '@mui/icons-material/AltRoute';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface StepInfo {
   current?: DisplayStep;
@@ -84,32 +86,32 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
   }, [playing, speed, sim]);
 
   return (
-    <Box
-      sx={{
-        position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5, p: 1.25,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, pointerEvents: 'none',
-      }}
-    >
-      <Paper
-        elevation={8}
+    <>
+      {/* Top: compact next-turn instruction pill (centred, narrow so it clears the corner icons). */}
+      <Box
         sx={{
-          pointerEvents: 'auto', width: 'min(560px, 94%)', p: 1.5, borderRadius: 3,
-          display: 'flex', alignItems: 'center', gap: 1.75,
-          bgcolor: offRoute ? 'error.main' : 'background.paper',
-          color: offRoute ? 'error.contrastText' : 'text.primary',
+          position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5, p: 1.25,
+          display: 'flex', justifyContent: 'center', pointerEvents: 'none',
         }}
       >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Paper
+          elevation={8}
+          sx={{
+            pointerEvents: 'auto', maxWidth: 'min(430px, 76%)', px: 2, py: 1.25, borderRadius: 3,
+            bgcolor: offRoute ? 'error.main' : 'background.paper',
+            color: offRoute ? 'error.contrastText' : 'text.primary',
+          }}
+        >
           {waiting ? (
-            <Typography sx={{ fontWeight: 800, fontSize: 19 }}>Waiting for your location…</Typography>
+            <Typography sx={{ fontWeight: 800, fontSize: 18 }}>Waiting for your location…</Typography>
           ) : offRoute ? (
             <>
-              <Typography sx={{ fontWeight: 800, fontSize: 19 }}>⚠ You're off the route</Typography>
-              <Typography variant="body2">Ski back to the blue line, or re-route from here.</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: 18 }}>⚠ You're off the route</Typography>
+              <Typography variant="body2">Ski back to the blue line, or re-route.</Typography>
             </>
           ) : (
             <>
-              <Typography sx={{ fontWeight: 800, fontSize: 19, display: 'flex', alignItems: 'center' }}>
+              <Typography sx={{ fontWeight: 800, fontSize: 18, display: 'flex', alignItems: 'center' }}>
                 <StepBadge step={step?.current} big /> {stepText(step?.current)}
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.25 }} color={offRoute ? 'inherit' : 'text.secondary'}>
@@ -119,47 +121,87 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               </Typography>
             </>
           )}
-        </Box>
-        {!waiting && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
-            {speedMps != null && speedMps >= 0 && (
-              <div className="nav-speed-circle">
-                <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
-                <span className="ns-unit">km/h</span>
-              </div>
-            )}
-            {remaining && (
-              <Typography variant="caption" sx={{ fontWeight: 700 }} color={offRoute ? 'inherit' : 'primary.main'}>
+        </Paper>
+      </Box>
+
+      {/* Bottom: ETA + speed + actions bar (plus the dev simulator strip above it). */}
+      <Box
+        sx={{
+          position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 6,
+          px: 1.25, pt: 1.25, pb: 'calc(10px + env(safe-area-inset-bottom, 0px))',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, pointerEvents: 'none',
+        }}
+      >
+        {sim && (
+          <Paper elevation={4} sx={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 2 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>DEV sim</Typography>
+            <IconButton size="small" onClick={() => setPlaying((p) => !p)} aria-label={playing ? 'Pause' : 'Play'}>
+              {playing ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
+            </IconButton>
+            <IconButton
+              size="small"
+              aria-label="Reset simulator"
+              onClick={() => { setPlaying(false); setSimS(0); sim.onSim(null); }}
+            >
+              <ReplayIcon fontSize="small" />
+            </IconButton>
+            <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>{speed} m/s</Typography>
+            <Slider size="small" min={3} max={25} value={speed} onChange={(_, v) => setSpeed(v as number)} sx={{ width: 110 }} />
+          </Paper>
+        )}
+        <Paper
+          elevation={8}
+          sx={{
+            pointerEvents: 'auto', width: 'min(560px, 94%)', px: 1.75, py: 1, borderRadius: 3,
+            display: 'flex', alignItems: 'center', gap: 1.5,
+            bgcolor: offRoute ? 'error.main' : 'background.paper',
+            color: offRoute ? 'error.contrastText' : 'text.primary',
+          }}
+        >
+          {!waiting && speedMps != null && speedMps >= 0 && (
+            <div className="nav-speed-circle">
+              <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
+              <span className="ns-unit">km/h</span>
+            </div>
+          )}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            {remaining ? (
+              <Typography sx={{ fontWeight: 800, fontSize: 17 }} color={offRoute ? 'inherit' : 'primary.main'}>
                 {fmtDist(remaining.distM)} · {fmtTime(remaining.timeS)} left
+              </Typography>
+            ) : (
+              <Typography variant="body2" color={offRoute ? 'inherit' : 'text.secondary'}>
+                {waiting ? 'Acquiring GPS…' : 'En route'}
               </Typography>
             )}
           </Box>
-        )}
-      </Paper>
-
-      <Box sx={{ pointerEvents: 'auto', display: 'flex', gap: 1 }}>
-        <Button size="small" variant="contained" onClick={onReroute}>Re-route from here</Button>
-        <Button size="small" variant="outlined" color="inherit" onClick={onExit} sx={{ bgcolor: 'background.paper' }}>Exit</Button>
-      </Box>
-
-      {sim && (
-        <Paper elevation={4} sx={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 2 }}>
-          <Typography variant="caption" sx={{ fontWeight: 700 }}>DEV sim</Typography>
-          <IconButton size="small" onClick={() => setPlaying((p) => !p)} aria-label={playing ? 'Pause' : 'Play'}>
-            {playing ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
-          </IconButton>
-          <IconButton
-            size="small"
-            aria-label="Reset simulator"
-            onClick={() => { setPlaying(false); setSimS(0); sim.onSim(null); }}
+          {offRoute && (
+            <Button
+              variant="contained"
+              startIcon={<AltRouteIcon />}
+              onClick={onReroute}
+              sx={{ borderRadius: 5, textTransform: 'none', fontWeight: 700, px: 2, boxShadow: 2, flexShrink: 0 }}
+            >
+              Re-route
+            </Button>
+          )}
+          <Button
+            variant={offRoute ? 'contained' : 'outlined'}
+            color="inherit"
+            startIcon={<CloseIcon />}
+            onClick={onExit}
+            sx={{
+              borderRadius: 5, textTransform: 'none', fontWeight: 700, px: 2, flexShrink: 0,
+              ...(offRoute
+                ? { bgcolor: 'background.paper', color: 'text.primary', boxShadow: 2 }
+                : { borderColor: 'divider', color: 'text.secondary' }),
+            }}
           >
-            <ReplayIcon fontSize="small" />
-          </IconButton>
-          <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>{speed} m/s</Typography>
-          <Slider size="small" min={3} max={25} value={speed} onChange={(_, v) => setSpeed(v as number)} sx={{ width: 110 }} />
+            Exit
+          </Button>
         </Paper>
-      )}
-    </Box>
+      </Box>
+    </>
   );
 }
 
