@@ -101,16 +101,16 @@ body {
   .logo-name { font-size: 26px; }
   .logo-tag { font-size: 10px; letter-spacing: 3px; }
 
-  /* Controls become a bottom sheet on phones (map stays full-screen behind). */
+  /* Controls become a bottom sheet on phones, sitting above the bottom navigation bar. */
   .sidebar {
-    position: absolute;
+    position: fixed;
     z-index: 20;
     left: 0;
     right: 0;
     bottom: 0;
     width: auto;
     max-height: 82vh;
-    padding: 10px 12px 16px;
+    padding: 10px 12px calc(16px + 56px + env(safe-area-inset-bottom, 0px));
     background: var(--panel);
     border-right: none;
     border-top: 1px solid var(--line);
@@ -136,6 +136,12 @@ body {
     flex: 0 0 auto;
   }
   .sheet-handle:active { cursor: grabbing; }
+
+  /* Keep the map's bottom-corner controls (zoom, attribution) above the bottom nav bar. */
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right {
+    margin-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
 
   /* Peek pull-tab: a small centred grabber that's always visible while the sheet is
      closed, so the panel is discoverable. Tap or drag it up to open. Sits centre-bottom

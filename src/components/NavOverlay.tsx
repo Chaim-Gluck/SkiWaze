@@ -40,7 +40,9 @@ function fmtTime(s: number): string {
   return min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`;
 }
 function stepText(st?: DisplayStep): string {
-  return st?.label ?? '—';
+  // The colored number shield already conveys the difficulty, so drop a redundant
+  // trailing "(blue)" / "(red)" etc. from the label.
+  return (st?.label ?? '—').replace(/\s*\((?:green|blue|red|black|unknown)\)\s*$/i, '');
 }
 
 const COLOR_HEX: Record<string, string> = {

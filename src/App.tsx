@@ -22,11 +22,16 @@ import IosShareIcon from '@mui/icons-material/IosShare';
 import Tooltip from '@mui/material/Tooltip';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
+import Badge from '@mui/material/Badge';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 import Fab from '@mui/material/Fab';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
@@ -70,6 +75,7 @@ import { RouteOptions } from './components/RouteOptions';
 import { CustomLinkPanel, type LinkColor, type LinkDirection } from './components/CustomLinkPanel';
 import { ClosedPanel } from './components/ClosedPanel';
 import { LongestRunPanel } from './components/LongestRunPanel';
+import { RoutePreview } from './components/RoutePreview';
 import { Logo } from './components/Logo';
 import './App.css';
 
@@ -155,6 +161,8 @@ export default function App() {
   const [fromCustom, setFromCustom] = useState<string | null>(null);
   const [toCustom, setToCustom] = useState<string | null>(null);
   const [pinMode, setPinMode] = useState<'from' | 'to' | null>(null);
+  const [previewDismissed, setPreviewDismissed] = useState(false);
+  const isMobile = useMediaQuery('(max-width:820px)');
 
   const [objective, setObjective] = useState<RouteObjective>('fastest');
   const [timingMode, setTimingMode] = useState<'now' | 'arrive_by'>('now');
@@ -384,12 +392,15 @@ export default function App() {
     }
     setNavRoute(selected);
     setFollowing(true);
+    setPanelOpen(false);
     if (!live.tracking && !simPos) live.start();
   };
   const exitNav = () => {
     setNavRoute(null);
     setSimPos(null);
   };
+  // On mobile the bottom sheet must never overlap the navigation overlay.
+  useEffect(() => { if (navRoute) setPanelOpen(false); }, [navRoute]);
   const rerouteFromHere = () => {
     if (!effectiveGraph || !userPos || !toNodeId) return;
     const near = nearestNode(effectiveGraph, userPos.lon, userPos.lat);
@@ -489,6 +500,7 @@ export default function App() {
         if (linkPinMode === 'from') setLinkFrom({ kind: 'point', lon: p.lon, lat: p.lat, label });
         else setLinkTo({ kind: 'point', lon: p.lon, lat: p.lat, label });
         setLinkPinMode(null);
+        if (isMobile) setPanelOpen(true); // restore the sheet we minimised to reveal the map
         return;
       }
       if (!pinMode || !effectiveGraph) return;
@@ -502,9 +514,26 @@ export default function App() {
         setToCustom(n.name ?? 'Pinned location');
       }
       setPinMode(null);
+      if (isMobile) setPanelOpen(true);
     },
-    [pinMode, linkPinMode, effectiveGraph],
+    [pinMode, linkPinMode, effectiveGraph, isMobile],
   );
+
+  // Enter map-pin mode; on mobile also minimise the sheet so the map is tappable.
+  const enterPinMode = (which: 'from' | 'to') => {
+    setPinMode((cur) => {
+      const next = cur === which ? null : which;
+      if (next && isMobile) setPanelOpen(false);
+      return next;
+    });
+  };
+  const enterLinkPinMode = (which: 'from' | 'to') => {
+    setLinkPinMode((cur) => {
+      const next = cur === which ? null : which;
+      if (next && isMobile) setPanelOpen(false);
+      return next;
+    });
+  };
 
   const pickLocationFor = (which: 'from' | 'to') => {
     if (!effectiveGraph || !('geolocation' in navigator)) {
@@ -546,6 +575,7 @@ export default function App() {
     setFocusGeometry(null);
     setPanelOpen(false);
     setOpenSection('routes');
+    setPreviewDismissed(false);
     if (result.error) {
       setPopup(result.error);
       return;
@@ -888,6 +918,16 @@ export default function App() {
   const locateActive = live.tracking || !!simPos;
   const locateTip = !locateActive ? 'Show my location' : following ? 'Following you — tap to stop' : 'Recenter on me';
 
+  // Mobile bottom navigation. "Route options" is folded into the Plan tab, giving 5 fixed tabs.
+  const mobileTab = openSection === 'routes' ? 'plan' : openSection;
+  const showSec = (key: string) =>
+    !isMobile || (key === 'routes' ? mobileTab === 'plan' : mobileTab === key);
+  const selectMobileTab = (v: string) => {
+    if (panelOpen && v === mobileTab) { setPanelOpen(false); return; }
+    setOpenSection(v);
+    setPanelOpen(true);
+  };
+
   // Mobile bottom sheet: drag the handle downwards to dismiss.
   const sheetRef = useRef<HTMLElement | null>(null);
   const sheetDrag = useRef<{ y: number; dy: number } | null>(null);
@@ -912,22 +952,6 @@ export default function App() {
     if (d && d.dy > 80) setPanelOpen(false);
   };
 
-  // Peek pull-tab (closed state): tap or drag up to open the sheet.
-  const peekDrag = useRef<{ y: number; dy: number } | null>(null);
-  const onPeekDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    peekDrag.current = { y: e.clientY, dy: 0 };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onPeekMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (peekDrag.current) peekDrag.current.dy = e.clientY - peekDrag.current.y;
-  };
-  const onPeekUp = () => {
-    const d = peekDrag.current;
-    peekDrag.current = null;
-    if (!d) return;
-    if (Math.abs(d.dy) < 8 || d.dy < -30) setPanelOpen(true);
-  };
-
   return (
     <div className="app">
       <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
@@ -936,7 +960,7 @@ export default function App() {
             edge="start"
             onClick={() => setPanelOpen((o) => !o)}
             aria-label={panelOpen ? 'Hide controls' : 'Show controls'}
-            sx={{ display: 'inline-flex', '@media (min-width:821px)': { display: 'none' } }}
+            sx={{ display: 'none' }}
           >
             <MenuIcon />
           </IconButton>
@@ -984,6 +1008,7 @@ export default function App() {
             onPointerCancel={onSheetUp}
             aria-label="Drag down to close"
           />
+          {showSec('plan') && (
           <AccordionSection
             title="Plan a route"
             icon={<SearchIcon fontSize="small" />}
@@ -1001,7 +1026,7 @@ export default function App() {
               customLabel={fromCustom}
               onPick={(id) => { setFromNodeId(id); setFromCustom(null); }}
               onUseLocation={() => pickLocationFor('from')}
-              onPinMode={() => setPinMode(pinMode === 'from' ? null : 'from')}
+              onPinMode={() => enterPinMode('from')}
               pinActive={pinMode === 'from'}
             />
             <PointPicker
@@ -1012,7 +1037,7 @@ export default function App() {
               customLabel={toCustom}
               onPick={(id) => { setToNodeId(id); setToCustom(null); }}
               onUseLocation={() => pickLocationFor('to')}
-              onPinMode={() => setPinMode(pinMode === 'to' ? null : 'to')}
+              onPinMode={() => enterPinMode('to')}
               pinActive={pinMode === 'to'}
             />
 
@@ -1092,8 +1117,9 @@ export default function App() {
             </Menu>
           </div>
           </AccordionSection>
+          )}
 
-          {plan && (plan.noLiftFreeRoute || plan.routes.length > 0) && (
+          {showSec('routes') && plan && (plan.noLiftFreeRoute || plan.routes.length > 0) && (
             <AccordionSection
               title="Route options"
               icon={<AltRouteIcon fontSize="small" />}
@@ -1144,6 +1170,7 @@ export default function App() {
             </AccordionSection>
           )}
 
+          {showSec('longest') && (
           <AccordionSection
             title="Longest runs"
             icon={<EmojiEventsIcon fontSize="small" />}
@@ -1167,7 +1194,9 @@ export default function App() {
             onNavigateEnd={navigateToLongestEnd}
           />
           </AccordionSection>
+          )}
 
+          {showSec('links') && (
           <AccordionSection
             title="Custom links"
             icon={<LinkIcon fontSize="small" />}
@@ -1181,8 +1210,8 @@ export default function App() {
             toLabel={linkTo?.label ?? null}
             onPickFrom={(nodeId) => setLinkFrom({ kind: 'node', nodeId, label: nodeLabelFor(nodeId) })}
             onPickTo={(nodeId) => setLinkTo({ kind: 'node', nodeId, label: nodeLabelFor(nodeId) })}
-            onPinFrom={() => setLinkPinMode(linkPinMode === 'from' ? null : 'from')}
-            onPinTo={() => setLinkPinMode(linkPinMode === 'to' ? null : 'to')}
+            onPinFrom={() => enterLinkPinMode('from')}
+            onPinTo={() => enterLinkPinMode('to')}
             pinFromActive={linkPinMode === 'from'}
             pinToActive={linkPinMode === 'to'}
             onClearFrom={() => setLinkFrom(null)}
@@ -1195,7 +1224,9 @@ export default function App() {
             onClear={clearCustomLinks}
           />
           </AccordionSection>
+          )}
 
+          {showSec('closed') && (
           <AccordionSection
             title="Closed today"
             icon={<DoNotDisturbOnIcon fontSize="small" />}
@@ -1210,7 +1241,9 @@ export default function App() {
             onLocate={locateClosure}
           />
           </AccordionSection>
+          )}
 
+          {showSec('prefs') && (
           <AccordionSection
             title="Skiing preferences"
             icon={<TuneIcon fontSize="small" />}
@@ -1221,28 +1254,14 @@ export default function App() {
           <PreferencesPanel prefs={prefs} onChange={setPrefs} />
           <MeasuredSpeedsPanel measured={measured ?? emptyMeasured()} estimatedByColor={estimatedByColor} minSamples={MIN_SAMPLES} onApply={applyMeasured} onReset={resetMeasured} />
           </AccordionSection>
+          )}
 
-          {graph && (
+          {!isMobile && graph && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', py: 1 }}>
               {effectiveGraph?.nodes.length} nodes · {effectiveGraph?.edges.length} edges · {points.length} named points
             </Typography>
           )}
         </aside>
-
-        {!panelOpen && (
-          <div
-            className="sheet-peek"
-            onPointerDown={onPeekDown}
-            onPointerMove={onPeekMove}
-            onPointerUp={onPeekUp}
-            onPointerCancel={onPeekUp}
-            role="button"
-            aria-label="Open controls"
-          >
-            <span className="grip" />
-            Controls
-          </div>
-        )}
 
         <main className="map-wrap">
           <MapView
@@ -1276,17 +1295,19 @@ export default function App() {
                 {locateActive && !following ? <LocationSearchingIcon /> : <MyLocationIcon />}
               </Fab>
             </Tooltip>
-            <Tooltip title="Plan a route" placement="left">
-              <Fab
-                size="small"
-                aria-label="Plan a route"
-                onClick={() => { setOpenSection('plan'); setPanelOpen(true); }}
-                sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
-              >
-                <SearchIcon />
-              </Fab>
-            </Tooltip>
-            {plan && plan.routes.length > 0 && (
+            {!isMobile && (
+              <Tooltip title="Plan a route" placement="left">
+                <Fab
+                  size="small"
+                  aria-label="Plan a route"
+                  onClick={() => { setOpenSection('plan'); setPanelOpen(true); }}
+                  sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
+                >
+                  <SearchIcon />
+                </Fab>
+              </Tooltip>
+            )}
+            {!isMobile && plan && plan.routes.length > 0 && (
               <Tooltip title="Route options" placement="left">
                 <Fab
                   size="small"
@@ -1311,8 +1332,46 @@ export default function App() {
               sim={import.meta.env.DEV ? { path: navPath, onSim: setSimPos } : undefined}
             />
           )}
+          {plan && plan.routes.length > 0 && !navRoute && !previewDismissed && (!isMobile || !panelOpen) && (
+            <RoutePreview
+              routes={plan.routes}
+              selectedIndex={selectedRoute}
+              onSelect={(i) => { setSelectedRoute(i); setSelectedRange(null); }}
+              onStart={startNav}
+              onDetails={() => { setOpenSection('routes'); setPanelOpen(true); }}
+              onDismiss={() => setPreviewDismissed(true)}
+              bottom={isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : 16}
+            />
+          )}
         </main>
       </div>
+
+      {isMobile && !navRoute && (
+        <Paper
+          elevation={8}
+          sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 30, borderTop: 1, borderColor: 'divider', pb: 'env(safe-area-inset-bottom, 0px)' }}
+        >
+          <BottomNavigation
+            showLabels
+            value={panelOpen ? (mobileTab || false) : false}
+            onChange={(_, v) => selectMobileTab(v)}
+          >
+            <BottomNavigationAction
+              value="plan"
+              label="Plan"
+              icon={
+                <Badge color="primary" badgeContent={plan?.routes.length ?? 0} invisible={!(plan && plan.routes.length)}>
+                  <SearchIcon />
+                </Badge>
+              }
+            />
+            <BottomNavigationAction value="longest" label="Longest" icon={<EmojiEventsIcon />} />
+            <BottomNavigationAction value="links" label="Links" icon={<LinkIcon />} />
+            <BottomNavigationAction value="closed" label="Closed" icon={<DoNotDisturbOnIcon />} />
+            <BottomNavigationAction value="prefs" label="Filters" icon={<TuneIcon />} />
+          </BottomNavigation>
+        </Paper>
+      )}
 
       {popup && (
         <Snackbar
