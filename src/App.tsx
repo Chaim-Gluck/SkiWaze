@@ -398,6 +398,13 @@ export default function App() {
   const exitNav = () => {
     setNavRoute(null);
     setSimPos(null);
+    // Return to a clean map: drop the computed routes (options list, drawn line, preview card),
+    // but keep the From/To selections so re-planning is one tap.
+    setPlan(null);
+    setSelectedRoute(0);
+    setSelectedRange(null);
+    setFocusGeometry(null);
+    setPreviewDismissed(false);
   };
   // On mobile the bottom sheet must never overlap the navigation overlay.
   useEffect(() => { if (navRoute) setPanelOpen(false); }, [navRoute]);
