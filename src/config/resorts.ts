@@ -51,6 +51,15 @@ export const RESORTS: Resort[] = [
     defaultZoom: 12,
     timezone: 'Europe/Paris',
   },
+  {
+    id: 'st-anton-arlberg',
+    name: 'St. Anton am Arlberg',
+    country: 'Austria',
+    center: { lon: 10.24, lat: 47.13 },
+    bbox: { minLon: 10.13, minLat: 47.09, maxLon: 10.33, maxLat: 47.21 },
+    defaultZoom: 12,
+    timezone: 'Europe/Vienna',
+  },
 ];
 
 /** Fallback resort when geolocation is unavailable. */

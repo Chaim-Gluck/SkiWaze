@@ -1,11 +1,11 @@
 [
   {
-    "id": "sella-ronda",
-    "name": "Sella Ronda (Canazei)",
-    "country": "Italy",
+    "id": "st-anton-arlberg",
+    "name": "St. Anton am Arlberg",
+    "country": "Austria",
     "center": {
-      "lon": 11.79,
-      "lat": 46.5
+      "lon": 10.24,
+      "lat": 47.13
     }
   },
   {
@@ -24,6 +24,15 @@
     "center": {
       "lon": 7.69,
       "lat": 45.97
+    }
+  },
+  {
+    "id": "sella-ronda",
+    "name": "Sella Ronda (Canazei)",
+    "country": "Italy",
+    "center": {
+      "lon": 11.79,
+      "lat": 46.5
     }
   },
   {
