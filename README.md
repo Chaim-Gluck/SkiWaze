@@ -104,6 +104,34 @@ per-resort code**. To add one:
 5. **Ship** — commit the `public/resorts/<id>/*` files and `src/config/resorts.ts` (plus any
    override), push, then deploy (below).
 
+### Pitfall checklist & override recipes
+
+Step 3 is where the real work is. Run **`npm run check:audit <id>`** and **`npm run check:trapped
+<id>`**, then walk this list. Every fix goes in `pipeline/overrides/<id>.json` (see
+`overrides/example.json.example` for the schema; overrides run *after* the generic passes).
+Verify any candidate on the map with the deep-link `?resort=<id>&at=<lat>,<lon>&z=18` before
+"fixing" it — the auditor flags *candidates*, not certainties, and some are legitimate.
+
+| Symptom | How to spot it | Fix (override primitive) |
+|---|---|---|
+| **Arrow / ski direction reversed** on a piste; a run appears to start uphill | `check:audit` lists it as a **reversal candidate** (piste starts at a node only reachable via an *uphill* flat). `npm run data` prints an `audit:` line when candidates exist. | `setNodeElevation` — correct the mis-sampled DEM elevation at the junction node; it re-orients every touching piste/skiable_down edge. |
+| **Phantom top** — a piste hangs off a node nothing can reach | `check:trapped` / `check:audit`; the node is an isolated source in SCC analysis | Add a connector in the override (merge the stray node, or `addConnectors`) — but first confirm it's not a **legitimate** ski-bus-only island (those stay disconnected). |
+| **Connectivity island** — a whole sub-area routes to nothing | `check:trapped` via **strongly-connected-component** analysis (not just dead-end leaves) | Add connector edges linking the island to the reachable graph. Leave genuinely bus-only areas alone. |
+| **Non-skiable "connection"** drawn as an orange (unrated) piste with a forced direction — a road, path, or ski-bus link | `check:audit` "long connections" (>250 m); long **and near-flat** | `removePistes` by `name` and/or `bbox` (removes unrated edges whose midpoint is inside). |
+| **Lift mis-tagged as a piste** (funicular, magic carpet, people-mover) | `check:audit` long connection that is actually mechanical uphill | `reclassifyLift` `{ pisteName, liftType, bidirectional? }` — converts the piste edges to lift edges (bidirectional keeps both directions, else uphill-only). |
+| **Real long run flagged** (e.g. a race stadium, a long steady descent) | `check:audit` long connection but **steadily descending** | **Keep it** — no override. Not every candidate is a bug. |
+| **Lift doesn't let you ski down** where it should (gondola/cable-car/funicular) | Route refuses to descend via the lift | `setLiftDownload` — mark the lift as carrying skiers downhill. |
+| **Two runs that touch aren't joined**, or a hut splits into duplicates | Missing T-junction / over-eager merge | `mergeNodes` (join) or `removeEdges` / `addConnectors` as needed. |
+
+**Gotchas that bite every time:**
+- **`npm run data:refresh` renumbers all node ids**, so any id-based override entry breaks — after
+  a refresh, re-find and update the node ids in `overrides/<id>.json`.
+- The OSM cache is keyed by **resort id, not bbox** — after you change a resort's `bbox` you must
+  `data:refresh` (not plain `data`) to actually re-fetch.
+- **Never add per-resort routing code.** All corrections are data (`RESORTS` entry + override
+  JSON); the graph passes are global.
+- Validate with **`npm run build`** (`tsc -b`) and **`npm run lint`** — both must stay green.
+
 ## Deploy
 Hosted on a **static web host** as a plain static site. Deploys are **manual** — a plain
 `git push` never publishes.
