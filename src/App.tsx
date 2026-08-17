@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -15,7 +15,10 @@ import TuneIcon from '@mui/icons-material/Tune';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
-import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
+import Select from '@mui/material/Select';
+import InputLabel from '@mui/material/InputLabel';
+import ListSubheader from '@mui/material/ListSubheader';
+import FormControl from '@mui/material/FormControl';
 import Menu from '@mui/material/Menu';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import Tooltip from '@mui/material/Tooltip';
@@ -144,11 +147,6 @@ interface ResortOption {
   name: string;
   country: string;
 }
-
-/** Filter matches on both resort name and country, so typing e.g. "austria" narrows to that group. */
-const resortOptionFilter = createFilterOptions<ResortOption>({
-  stringify: (o) => `${o.name} ${o.country}`,
-});
 
 export default function App() {
   const [deepLink] = useState(parseDeepLink);
@@ -292,14 +290,48 @@ export default function App() {
 
   const resortEntry = index?.find((e) => e.id === resortId);
   // Build picker rows grouped by country; a resort whose country lists several (e.g. "Italy /
-  // Switzerland") appears once under EACH country, sorted country-then-name for MUI grouping.
+  // Switzerland") appears once under EACH country, sorted country-then-name for grouped headers.
   const resortOptions = useMemo<ResortOption[]>(() => {
     const opts = (index ?? []).flatMap((r) =>
       r.country.split('/').map((c) => ({ id: r.id, name: r.name, country: c.trim() })),
     );
     return opts.sort((a, b) => a.country.localeCompare(b.country) || a.name.localeCompare(b.name));
   }, [index]);
-  const selectedResortOption = resortOptions.find((o) => o.id === resortId) ?? null;
+  // Flatten into <ListSubheader> country headers + <MenuItem> rows for the grouped Select.
+  const resortMenuItems = useMemo(() => {
+    const items: ReactNode[] = [];
+    let lastCountry: string | null = null;
+    for (const o of resortOptions) {
+      if (o.country !== lastCountry) {
+        items.push(
+          <ListSubheader
+            key={`country-${o.country}`}
+            sx={{
+              bgcolor: 'background.default',
+              color: 'primary.main',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              lineHeight: '32px',
+              borderBottom: 1,
+              borderColor: 'divider',
+              pointerEvents: 'none',
+            }}
+          >
+            {o.country}
+          </ListSubheader>,
+        );
+        lastCountry = o.country;
+      }
+      items.push(
+        <MenuItem key={`${o.country}-${o.id}`} value={o.id} sx={{ pl: 3 }}>
+          {o.name}
+        </MenuItem>,
+      );
+    }
+    return items;
+  }, [resortOptions]);
   const center: LonLat =
     deepLinkActive && deepLink.lon != null && deepLink.lat != null
       ? { lon: deepLink.lon, lat: deepLink.lat }
@@ -999,29 +1031,24 @@ export default function App() {
             </Typography>
           )}
           <Box sx={{ flex: 1 }} />
-          {selectedResortOption && (
-            <Autocomplete
-              size="small"
-              sx={{ minWidth: 190, maxWidth: 300 }}
-              options={resortOptions}
-              groupBy={(o) => o.country}
-              getOptionLabel={(o) => o.name}
-              filterOptions={resortOptionFilter}
-              isOptionEqualToValue={(o, v) => o.id === v.id && o.country === v.country}
-              value={selectedResortOption}
-              disableClearable
-              blurOnSelect
-              onChange={(_, o) => {
-                if (!o) return;
-                setResortId(o.id);
+          <FormControl size="small" sx={{ minWidth: 170, maxWidth: 280 }}>
+            <InputLabel id="resort-picker-label">Resort</InputLabel>
+            <Select
+              labelId="resort-picker-label"
+              label="Resort"
+              value={index ? resortId : ''}
+              renderValue={() => resortEntry?.name ?? ''}
+              onChange={(e) => {
+                setResortId(e.target.value);
                 setDeepLinkActive(false);
                 setPopup(
                   'Lift & slope statuses are assumed OPEN. In early/late season many may be closed — check the resort, and mark any closed run/lift (⊘ on a route step) so routes avoid it.',
                 );
               }}
-              renderInput={(params) => <TextField {...params} label="Resort" placeholder="Search…" />}
-            />
-          )}
+            >
+              {resortMenuItems}
+            </Select>
+          </FormControl>
           <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
             <IconButton onClick={toggleTheme} aria-label="Toggle light/dark theme">
               {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
