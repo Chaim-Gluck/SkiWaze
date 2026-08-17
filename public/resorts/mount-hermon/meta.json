@@ -1,0 +1,89 @@
+{
+  "resort": {
+    "id": "mount-hermon",
+    "name": "Mount Hermon",
+    "country": "Israel",
+    "center": {
+      "lon": 35.785,
+      "lat": 33.302
+    },
+    "bbox": {
+      "minLon": 35.75,
+      "minLat": 33.28,
+      "maxLon": 35.81,
+      "maxLat": 33.32
+    },
+    "defaultZoom": 13.5,
+    "timezone": "Asia/Jerusalem"
+  },
+  "generatedAt": "2026-08-17T06:39:13.790Z",
+  "stats": {
+    "resortId": "mount-hermon",
+    "nodeCount": 67,
+    "edgeCount": 179,
+    "pisteEdges": 42,
+    "liftEdges": 11,
+    "connectorEdges": 126,
+    "meaningfulPoints": 36,
+    "reachableFromLifts": 67,
+    "unreachableNodes": 0,
+    "warningsByCode": {
+      "missing_opening_hours": 10,
+      "inferred_connector": 3
+    }
+  },
+  "warnings": [
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"רכבל מבקרים\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"שיאון\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"טי-בר שיאון\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"טי-בר ערער\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"רכבל 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"טי-בר בית הספר 1\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"רכבל חדש\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"טי-בר בית הספר 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"טי-בר\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"רכבל 7\" has no opening_hours in OSM."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Snapped 9 dead-end run(s) onto a nearby piste line (T-junction)."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Inferred 39 skiable/flat connector(s) to bridge stuck nodes."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 34 flat-junction traverse(s) bridging dangling run ends across level areas."
+    }
+  ]
+}

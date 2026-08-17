@@ -14,6 +14,7 @@ import type { GraphConstants } from '../../src/config/graphConstants';
 import { DEFAULT_SPEEDS } from '../../src/config/defaults';
 import { haversineM, polylineLength3dM } from '../../src/utils/geo';
 import type { NormPiste, NormLift, NormPoint } from './normalize';
+import { inheritUnratedPisteColors } from './inferColors';
 
 // ---- Union-Find -----------------------------------------------------------
 class UnionFind {
@@ -853,6 +854,16 @@ export function buildResortGraph(
         message: `Linked ${linked} lift top(s) with no ski-out onto a nearby piste line.`,
       });
     }
+  }
+
+  // --- Infer difficulty for unrated pistes (global rule) -----------------
+  // Untagged downhill runs import as color `unknown`, which the router treats as harder than
+  // black and filters out — orphaning any section only reachable through one. Give them their
+  // rated neighbours' difficulty (easiest feeder; guarded sole-feeder downstream; else hardest
+  // neighbour). See inferColors.ts.
+  const coloredUnrated = inheritUnratedPisteColors(edges);
+  if (coloredUnrated > 0) {
+    console.log(`  inferred difficulty for ${coloredUnrated} unrated piste segment(s)`);
   }
 
   // --- Finalize nodes -----------------------------------------------------

@@ -60,6 +60,15 @@ export const RESORTS: Resort[] = [
     defaultZoom: 12,
     timezone: 'Europe/Vienna',
   },
+  {
+    id: 'mount-hermon',
+    name: 'Mount Hermon',
+    country: 'Israel',
+    center: { lon: 35.785, lat: 33.302 },
+    bbox: { minLon: 35.75, minLat: 33.28, maxLon: 35.81, maxLat: 33.32 },
+    defaultZoom: 13.5,
+    timezone: 'Asia/Jerusalem',
+  },
 ];
 
 /** Fallback resort when geolocation is unavailable. */

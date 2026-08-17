@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl, { type StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import rtlTextPluginUrl from '@mapbox/mapbox-gl-rtl-text/mapbox-gl-rtl-text.min.js?url';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -64,6 +65,26 @@ const BASE_STYLE: StyleSpecification = {
 export type BaseMap = 'standard' | 'topo' | 'satellite';
 
 const EMPTY_FC: GeoFeatureCollection = { type: 'FeatureCollection', features: [] };
+
+/**
+ * Register MapLibre's RTL text plugin once per page. Without it, right-to-left scripts
+ * (Hebrew, Arabic — e.g. Mount Hermon's labels) render reversed/disconnected. Deferred, so the
+ * plugin is only fetched when RTL text actually appears. Bundled locally to stay offline-friendly.
+ */
+let rtlTextPluginRequested = false;
+function ensureRtlTextPlugin(): void {
+  if (rtlTextPluginRequested) return;
+  rtlTextPluginRequested = true;
+  try {
+    const status = maplibregl.getRTLTextPluginStatus?.();
+    if (status && status !== 'unavailable') return; // already set by another map instance
+    void Promise.resolve(maplibregl.setRTLTextPlugin(rtlTextPluginUrl, true /* lazy */)).catch(() => {
+      // Plugin load/register failure is non-fatal — labels just fall back to default shaping.
+    });
+  } catch {
+    // setRTLTextPlugin throws if already registered — safe to ignore.
+  }
+}
 
 const SLOPE_COLOR_EXPR: maplibregl.ExpressionSpecification = [
   'match',
@@ -282,6 +303,7 @@ export function MapView({
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
+    ensureRtlTextPlugin();
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: BASE_STYLE,

@@ -48,6 +48,7 @@ export function loadOverrides(resortId: string, dir: string): Overrides | null {
 export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
   let nodes = graph.nodes;
   let edges = graph.edges;
+  let points = graph.points;
 
   // 1. Merge nodes: remap all members to the first id, drop the rest, average position.
   if (ov.mergeNodes?.length) {
@@ -130,6 +131,16 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
     nodes = nodes.map((n) =>
       corr.has(n.id) ? { ...n, point: { ...n.point, ele: corr.get(n.id)! } } : n,
     );
+    // Refresh the "· <ele> m" suffix baked into meaningful-point labels at build time, so the
+    // A/B picker shows the corrected height instead of the stale DEM value.
+    points = points.map((p) => {
+      if (!corr.has(p.nodeId)) return p;
+      const ele = Math.round(corr.get(p.nodeId)!);
+      const name = /\u00b7\s*-?\d+\s*m/.test(p.name)
+        ? p.name.replace(/\u00b7\s*-?\d+\s*m/, `\u00b7 ${ele} m`)
+        : `${p.name} \u00b7 ${ele} m`;
+      return { ...p, name };
+    });
     const eleOf = new Map(nodes.map((n) => [n.id, n.point.ele ?? 0]));
     edges = edges.map((e) => {
       if (!corr.has(e.from) && !corr.has(e.to)) return e;
@@ -141,6 +152,9 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
       // Flat traverses stay directionless (dropM 0); only refresh geometry.
       if (e.connectorKind === 'flat_traverse') return { ...e, geometry: geom };
       const drop = (eleOf.get(e.to) ?? 0) - (eleOf.get(e.from) ?? 0);
+      // Lifts are directional by construction (up, or a marked download): keep their direction
+      // and just refresh the signed drop, so correcting a station height can't invert/negate it.
+      if (e.kind === 'lift') return { ...e, geometry: geom, dropM: drop };
       // A piste (or skiable_down connector) now pointing uphill is flipped to descend.
       if (drop > 0 && (e.kind === 'piste' || e.connectorKind === 'skiable_down')) {
         return { ...e, from: e.to, to: e.from, geometry: [...geom].reverse(), dropM: -Math.abs(drop) };
@@ -214,5 +228,5 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
     }
   }
 
-  return { ...graph, nodes, edges };
+  return { ...graph, nodes, edges, points };
 }

@@ -1,11 +1,11 @@
 [
   {
-    "id": "st-anton-arlberg",
-    "name": "St. Anton am Arlberg",
-    "country": "Austria",
+    "id": "mount-hermon",
+    "name": "Mount Hermon",
+    "country": "Israel",
     "center": {
-      "lon": 10.24,
-      "lat": 47.13
+      "lon": 35.785,
+      "lat": 33.302
     }
   },
   {
@@ -51,6 +51,15 @@
     "center": {
       "lon": 6.93,
       "lat": 45.46
+    }
+  },
+  {
+    "id": "st-anton-arlberg",
+    "name": "St. Anton am Arlberg",
+    "country": "Austria",
+    "center": {
+      "lon": 10.24,
+      "lat": 47.13
     }
   }
 ]
