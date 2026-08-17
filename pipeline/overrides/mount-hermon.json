@@ -1,5 +1,5 @@
 {
-  "_comment": "Mount Hermon corrections. IDS ARE FROM THE CURRENT `npm run data` BUILD; `data:refresh` renumbers nodes and will break these. (1) DEM-flat cable-car 2 (רכבל 2) stations both sampled at 1689 m; real bottom 1640 / top 1720. (2) The confluence where black #2 / red #3 / blue #6 meet (n40/n54/n66/n55/n1/n51) was over-sampled at 1736-1745 m — above the lift-2 top — which reversed blue #6; real junction is ~1710 m, so blue #6 now descends from the lift-2 top into it. (3) The central T-bar top (n24) skis out only via 4A in OSM but really also drops onto red Piste 12 at its nearest point (n5) — add that skiable connector.",
+  "_comment": "Mount Hermon corrections. IDS ARE FROM THE CURRENT `npm run data` BUILD; `data:refresh` renumbers nodes and will break these. (1) DEM-flat cable-car 2 (רכבל 2) stations both sampled at 1689 m; real bottom 1640 / top 1720. (2) The confluence where black #2 / red #3 / blue #6 meet (n40/n54/n66/n55/n1/n51) was over-sampled at 1736-1745 m — above the lift-2 top — which reversed blue #6; real junction is ~1710 m, so blue #6 now descends from the lift-2 top into it. (3) The central T-bar top (n24) skis out only via 4A in OSM but really also drops onto red Piste 12 at its nearest point (n5) — add that skiable connector. (4) רכבל מבקרים is a foot-passenger sightseeing gondola, not a ski lift — remove it from routing (the summit is still served by רכבל חדש / רכבל 7 / שיאון).",
   "setNodeElevation": [
     { "node": "n43", "ele": 1640 },
     { "node": "n19", "ele": 1720 },
@@ -12,5 +12,8 @@
   ],
   "addConnectors": [
     { "from": "n24", "to": "n5", "kind": "skiable_down" }
+  ],
+  "removeLifts": [
+    { "liftName": "רכבל מבקרים" }
   ]
 }

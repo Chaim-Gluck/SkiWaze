@@ -16,13 +16,13 @@
     "defaultZoom": 13.5,
     "timezone": "Asia/Jerusalem"
   },
-  "generatedAt": "2026-08-17T06:39:13.790Z",
+  "generatedAt": "2026-08-17T06:58:12.680Z",
   "stats": {
     "resortId": "mount-hermon",
     "nodeCount": 67,
-    "edgeCount": 179,
+    "edgeCount": 177,
     "pisteEdges": 42,
-    "liftEdges": 11,
+    "liftEdges": 9,
     "connectorEdges": 126,
     "meaningfulPoints": 36,
     "reachableFromLifts": 67,

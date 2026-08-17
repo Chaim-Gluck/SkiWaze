@@ -24,6 +24,12 @@ export interface Overrides {
    */
   removePistes?: { name?: string; bbox?: [number, number, number, number] }[];
   /**
+   * Remove lifts that are not usable by skiers (e.g. a foot-passenger sightseeing gondola), by
+   * exact `liftName`. All lift edges with that name — up and any download — are dropped from the
+   * routing graph so routes never board them.
+   */
+  removeLifts?: { liftName: string }[];
+  /**
    * Reclassify a piste (that is really a lift OSM mis-tagged as piste:type=connection) into a
    * lift of the given type. `bidirectional` (e.g. a funicular) keeps both travel directions.
    */
@@ -68,6 +74,12 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
   if (ov.removeEdges?.length) {
     const dead = new Set(ov.removeEdges);
     edges = edges.filter((e) => !dead.has(e.id));
+  }
+
+  // 2-lift. Remove non-skiable lifts (e.g. foot-passenger sightseeing gondolas) by name.
+  if (ov.removeLifts?.length) {
+    const deadLifts = new Set(ov.removeLifts.map((r) => r.liftName));
+    edges = edges.filter((e) => !(e.kind === 'lift' && e.liftName != null && deadLifts.has(e.liftName)));
   }
 
   // 2a. Remove non-skiable pistes (roads/paths/mapping bugs) by name and/or bbox.
