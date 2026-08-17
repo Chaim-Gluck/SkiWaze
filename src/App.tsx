@@ -44,7 +44,6 @@ import type {
   Preferences,
   ResortGraph,
   Route,
-  RouteObjective,
 } from './types/domain';
 import type { GeoFeatureCollection, ResortIndexEntry } from './data/resortData';
 import { loadResortGeo, loadResortGraph, loadResortIndex } from './data/resortData';
@@ -164,7 +163,6 @@ export default function App() {
   const [previewDismissed, setPreviewDismissed] = useState(false);
   const isMobile = useMediaQuery('(max-width:820px)');
 
-  const [objective, setObjective] = useState<RouteObjective>('fastest');
   const [timingMode, setTimingMode] = useState<'now' | 'arrive_by'>('now');
   const [arriveTime, setArriveTime] = useState<string>(() => nowLocalDatetime());
 
@@ -416,7 +414,6 @@ export default function App() {
       resortId,
       fromNodeId: near.id,
       toNodeId,
-      objective,
       timing:
         timingMode === 'arrive_by'
           ? { mode: 'arrive_by', time: new Date(arriveTime).toISOString() }
@@ -568,7 +565,6 @@ export default function App() {
       resortId,
       fromNodeId: fromId,
       toNodeId: toId,
-      objective,
       timing:
         timingMode === 'arrive_by'
           ? { mode: 'arrive_by', time: new Date(arriveTime).toISOString() }
@@ -1047,19 +1043,6 @@ export default function App() {
               onPinMode={() => enterPinMode('to')}
               pinActive={pinMode === 'to'}
             />
-
-            <TextField
-              select
-              size="small"
-              fullWidth
-              label="Objective"
-              value={objective}
-              onChange={(e) => setObjective(e.target.value as RouteObjective)}
-              sx={{ mb: 1.5 }}
-            >
-              <MenuItem value="fastest">Fastest route</MenuItem>
-              <MenuItem value="longest_streak">Longest skiable streak</MenuItem>
-            </TextField>
 
             <Box sx={{ mb: 1.5 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>

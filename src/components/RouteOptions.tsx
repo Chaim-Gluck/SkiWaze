@@ -82,7 +82,13 @@ function RouteCard({
         <Box sx={{ width: 14, height: 14, borderRadius: '4px', bgcolor: color, flexShrink: 0 }} />
         <Typography sx={{ fontWeight: 700 }} variant="h6">{fmtDuration(s.totalDurationS)}</Typography>
         <Typography variant="body2" color="text.secondary">{fmtDistance(s.totalDistanceM)}</Typography>
-        {route.objective === 'longest_streak' && <Chip size="small" label="longest streak" sx={{ ml: 'auto', height: 20 }} />}
+        {route.labels && route.labels.length > 0 && (
+          <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {route.labels.map((label) => (
+              <Chip key={label} size="small" color="primary" variant="outlined" label={label} sx={{ height: 20 }} />
+            ))}
+          </Box>
+        )}
       </Box>
 
       {usesLiftDownhill && <Alert severity="warning" icon={false} sx={{ py: 0, my: 0.5 }}>🚠⬇ This route rides a lift downhill</Alert>}

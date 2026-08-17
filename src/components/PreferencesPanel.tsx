@@ -1,4 +1,4 @@
-import type { LiftType, PisteColor, Preferences, SkillLevel } from '../types/domain';
+import type { LiftType, PisteColor, Preferences, SkillLevel, RouteType } from '../types/domain';
 import { ALL_LIFT_TYPES } from '../config/defaults';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -7,6 +7,15 @@ import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+
+const ROUTE_TYPES: RouteType[] = ['balanced', 'fastest', 'fewest_lifts', 'preferred', 'longest'];
+const ROUTE_TYPE_LABEL: Record<RouteType, string> = {
+  balanced: 'Balanced (one of each)',
+  fastest: 'Fastest',
+  fewest_lifts: 'Fewest lifts',
+  preferred: 'My preferred runs',
+  longest: 'Longest run',
+};
 
 const COLORS: PisteColor[] = ['green', 'blue', 'red', 'black'];
 const SKILL_LEVELS: SkillLevel[] = ['cautious', 'average', 'advanced', 'expert'];
@@ -48,6 +57,19 @@ export function PreferencesPanel({ prefs, onChange }: Props) {
 
   return (
     <Box>
+      <TextField
+        select size="small" fullWidth label="Find route: what matters most" sx={{ mb: 1.5 }}
+        value={prefs.routeType ?? 'balanced'}
+        onChange={(e) => onChange({ ...prefs, routeType: e.target.value as RouteType })}
+        helperText={
+          (prefs.routeType ?? 'balanced') === 'balanced'
+            ? 'Shows one best route per objective.'
+            : 'Shows up to 3 routes of this type.'
+        }
+      >
+        {ROUTE_TYPES.map((t) => <MenuItem key={t} value={t}>{ROUTE_TYPE_LABEL[t]}</MenuItem>)}
+      </TextField>
+
       <TextField
         select size="small" fullWidth label="Max difficulty I can handle" sx={{ mb: 1.5 }}
         value={prefs.maxDifficulty}

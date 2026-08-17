@@ -77,6 +77,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
   allowedLiftTypes: [...ALL_LIFT_TYPES],
   avoidSyntheticBridges: false,
   preferSkiing: false,
+  // Balanced by default: one best route per objective, deduped.
+  routeType: 'balanced',
   // Average skier pace by default.
   skillLevel: 'average',
   speeds: DEFAULT_SPEEDS,

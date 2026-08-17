@@ -1,4 +1,4 @@
-import type { GraphEdge, Preferences, PisteColor, RouteWarning } from '../types/domain';
+import type { GraphEdge, Preferences, PisteColor, RouteWarning, RouteObjective } from '../types/domain';
 import { PISTE_COLOR_ORDER } from '../types/domain';
 import { SKILL_SPEED_MULTIPLIER } from '../config/defaults';
 import { parseDailyWindows, isOpenAt, minutesUntilClose } from './openingHours';
@@ -11,6 +11,14 @@ const NON_PREFERRED_PENALTY = 1.6;
 
 /** Penalty multiplier so routing prefers real terrain over auto-added / custom links. */
 const SYNTHETIC_PENALTY = 2.5;
+
+/**
+ * Lexicographic penalties for single-objective planning. They dwarf any realistic time cost so
+ * the objective's primary key (lift count / non-preferred distance) is minimised first, then
+ * time acts as the tie-breaker. Only applied for the matching `objective`.
+ */
+const FEWEST_LIFTS_PENALTY = 1e6; // per lift boarded
+const PREFERRED_OFF_COLOR_PENALTY = 1e4; // per metre skied on a non-preferred colour
 
 export interface EdgeCost {
   allowed: boolean;
@@ -41,7 +49,7 @@ function skiSpeedFor(color: PisteColor | undefined, prefs: Preferences): { speed
  * Compute the traversal cost of an edge, honoring the user's max difficulty,
  * preferred colors, allowed lift types, and lift opening hours at `arrival`.
  */
-export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date): EdgeCost {
+export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, objective: RouteObjective = 'fastest'): EdgeCost {
   const warnings: RouteWarning[] = [];
   const distanceM = edge.lengthM;
   const descentM = edge.dropM < 0 ? -edge.dropM : 0;
@@ -62,6 +70,8 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date): Ed
     let weight = seconds;
     if (edge.color && edge.color !== 'unknown' && !prefs.preferredColors.includes(edge.color)) {
       weight *= NON_PREFERRED_PENALTY;
+      // In "My preferred runs" mode, minimise non-preferred distance first (then time).
+      if (objective === 'preferred') weight += PREFERRED_OFF_COLOR_PENALTY * distanceM;
       warnings.push({
         code: 'above_preferred_color',
         message: `${edge.pisteName ?? 'Run'} is ${edge.color}, outside your preferred colors.`,
@@ -107,6 +117,8 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date): Ed
     if (prefs.preferSkiing) {
       weight *= edge.isDownload ? 40 : 1.8;
     }
+    // In "Fewest lifts" mode, minimise the number of lifts boarded first (then time).
+    if (objective === 'fewest_lifts') weight += FEWEST_LIFTS_PENALTY;
     return { allowed: true, seconds, distanceM, descentM, ascentM, weight, warnings };
   }
 

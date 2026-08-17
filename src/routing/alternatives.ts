@@ -1,4 +1,4 @@
-import type { GraphEdge, Preferences } from '../types/domain';
+import type { GraphEdge, Preferences, RouteObjective } from '../types/domain';
 import type { GraphIndex } from './graphIndex';
 import { shortestPath } from './dijkstra';
 
@@ -29,13 +29,14 @@ export function alternativeRoutes(
   k = 3,
   maxOverlap = 0.7,
   closedEdgeIds?: ReadonlySet<string>,
+  objective: RouteObjective = 'fastest',
 ): GraphEdge[][] {
   const accepted: GraphEdge[][] = [];
   const penalties = new Map<string, number>();
   const maxAttempts = k * 4;
 
   for (let attempt = 0; attempt < maxAttempts && accepted.length < k; attempt++) {
-    const result = shortestPath(index, startId, goalId, prefs, startDate, penalties, closedEdgeIds);
+    const result = shortestPath(index, startId, goalId, prefs, startDate, penalties, closedEdgeIds, objective);
     if (!result || result.edges.length === 0) break;
 
     const isDuplicate = accepted.some(

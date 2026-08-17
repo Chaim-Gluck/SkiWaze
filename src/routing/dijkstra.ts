@@ -1,4 +1,4 @@
-import type { GraphEdge, Preferences } from '../types/domain';
+import type { GraphEdge, Preferences, RouteObjective } from '../types/domain';
 import type { GraphIndex } from './graphIndex';
 import { edgeCost } from './cost';
 
@@ -60,6 +60,7 @@ export function shortestPath(
   startDate: Date,
   penalties?: Map<string, number>,
   closedEdgeIds?: ReadonlySet<string>,
+  objective: RouteObjective = 'fastest',
 ): PathResult | null {
   const bestWeight = new Map<string, number>();
   const timeAt = new Map<string, number>();
@@ -79,7 +80,7 @@ export function shortestPath(
 
     for (const edge of index.outEdges(cur)) {
       if (closedEdgeIds?.has(edge.id)) continue; // manually/live closed
-      const cost = edgeCost(edge, prefs, arrival);
+      const cost = edgeCost(edge, prefs, arrival, objective);
       if (!cost.allowed || !Number.isFinite(cost.weight)) continue;
       const penalty = penalties?.get(edge.id) ?? 1;
       const newWeight = curWeight + cost.weight * penalty;

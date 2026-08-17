@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -65,6 +66,13 @@ export function RoutePreview({ routes, selectedIndex, onSelect, onStart, onDetai
         <Typography sx={{ fontWeight: 800 }} variant="h6">{fmtDuration(s.totalDurationS)}</Typography>
         <Typography variant="body2" color="text.secondary">{fmtDistance(s.totalDistanceM)}</Typography>
         <Typography variant="body2" color="text.secondary">🚠 {s.liftCount} lift{s.liftCount === 1 ? '' : 's'}</Typography>
+        {r.labels && r.labels.length > 0 && (
+          <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end', alignSelf: 'center' }}>
+            {r.labels.map((label) => (
+              <Chip key={label} size="small" color="primary" variant="outlined" label={label} sx={{ height: 20 }} />
+            ))}
+          </Box>
+        )}
       </Box>
 
       {colorParts.length > 0 && (

@@ -192,6 +192,8 @@ export interface Preferences {
   avoidSyntheticBridges: boolean;
   /** When true, strongly prefer skiing over riding lifts (especially downhill lifts). */
   preferSkiing: boolean;
+  /** Which "Find route" mode to use: balanced (one per objective) or a single objective ×3. */
+  routeType: RouteType;
   /** How fast the skier goes; scales all skiing (not lift) speeds. */
   skillLevel: SkillLevel;
   speeds: SpeedConfig;
@@ -200,7 +202,13 @@ export interface Preferences {
 /** Self-rated skiing pace. Scales base ski speeds via SKILL_SPEED_MULTIPLIER. */
 export type SkillLevel = 'cautious' | 'average' | 'advanced' | 'expert';
 
-export type RouteObjective = 'fastest' | 'longest_streak';
+export type RouteObjective = 'fastest' | 'fewest_lifts' | 'preferred' | 'longest_ab';
+
+/**
+ * What the "Find route" flow returns. `balanced` (default) shows one best route per objective
+ * (deduped); the others each show up to 3 distinct routes optimised for that single objective.
+ */
+export type RouteType = 'balanced' | 'fastest' | 'fewest_lifts' | 'preferred' | 'longest';
 
 export type TimingMode = 'now' | 'arrive_by';
 
@@ -214,7 +222,6 @@ export interface RouteRequest {
   resortId: string;
   fromNodeId: string;
   toNodeId: string;
-  objective: RouteObjective;
   timing: TripTiming;
   prefs: Preferences;
   /** Closure keys (lift:<name> / piste:<ref|name> / edge:<id>) to exclude from routing. */
@@ -293,6 +300,8 @@ export interface DisplayStep {
 export interface Route {
   id: string;
   objective: RouteObjective;
+  /** Objective badges to show on the card (e.g. ["Fastest", "Fewest lifts"] when deduped). */
+  labels?: string[];
   legs: RouteLeg[];
   /** Grouped, readable steps derived from `legs` (presentation only). */
   steps: DisplayStep[];

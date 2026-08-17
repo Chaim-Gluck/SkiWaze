@@ -303,3 +303,148 @@ export function longestDownhillRuns(index: GraphIndex, maxColorRank = Infinity, 
 export function longestDownhillStreak(index: GraphIndex, maxColorRank = Infinity): GraphEdge[] {
   return longestDownhillRuns(index, maxColorRank, 1)[0] ?? [];
 }
+
+/**
+ * Longest lift-free descent from `fromId` to `toId`, maximising total skied distance (km).
+ *
+ * The lift-free downhill sub-graph is a DAG (edges only descend), so this is exact and O(V+E):
+ * DFS from A dropping back-edges → a DAG whose post-order is reverse-topological; then a
+ * longest-distance DP toward B. Returns [] when B isn't reachable from A without a lift (the
+ * caller falls back to allowing a lift only in that case).
+ */
+export function longestDownhillPath(
+  index: GraphIndex,
+  fromId: string,
+  toId: string,
+  maxColorRank = Infinity,
+  penalties?: Map<string, number>,
+): GraphEdge[] {
+  if (fromId === toId) return [];
+
+  const colorRank = (e: GraphEdge): number => {
+    if (e.kind !== 'piste') return 0;
+    switch (e.color) {
+      case 'green': return 0;
+      case 'blue': return 1;
+      case 'red': return 2;
+      case 'black': return 3;
+      default: return 4;
+    }
+  };
+
+  // Candidate adjacency: non-lift edges within the user's colour rank.
+  const adj = new Map<string, GraphEdge[]>();
+  for (const [from, edges] of index.out) {
+    const kept = edges.filter((e) => e.kind !== 'lift' && colorRank(e) <= maxColorRank);
+    if (kept.length) adj.set(from, kept);
+  }
+
+  // DAG rooted at A (only nodes reachable downhill from A matter); drop back-edges (cycles).
+  const state = new Map<string, number>(); // 0 unseen, 1 on-stack, 2 done
+  const dagOut = new Map<string, GraphEdge[]>();
+  const finished: string[] = []; // reverse-topological (descendants first)
+  const stack: { id: string; i: number }[] = [{ id: fromId, i: 0 }];
+  state.set(fromId, 1);
+  while (stack.length) {
+    const top = stack[stack.length - 1];
+    const edges = adj.get(top.id) ?? [];
+    if (top.i < edges.length) {
+      const e = edges[top.i++];
+      const s = state.get(e.to) ?? 0;
+      if (s === 1) continue; // back-edge → drop to stay acyclic
+      let out = dagOut.get(top.id);
+      if (!out) dagOut.set(top.id, (out = []));
+      out.push(e);
+      if (s === 0) {
+        state.set(e.to, 1);
+        stack.push({ id: e.to, i: 0 });
+      }
+    } else {
+      state.set(top.id, 2);
+      finished.push(top.id);
+      stack.pop();
+    }
+  }
+
+  if (!state.has(toId)) return []; // B not reachable lift-free from A
+
+  // Longest-distance DP toward B. Processing in `finished` order resolves successors first.
+  const bestTo = new Map<string, number>([[toId, 0]]);
+  const choice = new Map<string, GraphEdge>();
+  for (const u of finished) {
+    if (u === toId) continue;
+    let best = -Infinity;
+    let bestE: GraphEdge | undefined;
+    for (const e of dagOut.get(u) ?? []) {
+      const t = bestTo.get(e.to);
+      if (t === undefined) continue; // e.to can't reach B
+      // Effective length lets callers de-prioritise already-used edges (diversity), while the
+      // returned chain always carries the real edges. penalty < 1 shrinks an edge's contribution.
+      const cand = e.lengthM * (penalties?.get(e.id) ?? 1) + t;
+      if (cand > best) {
+        best = cand;
+        bestE = e;
+      }
+    }
+    if (bestE) {
+      bestTo.set(u, best);
+      choice.set(u, bestE);
+    }
+  }
+  if (!choice.has(fromId)) return [];
+
+  const chain: GraphEdge[] = [];
+  const guard = new Set<string>();
+  let cur = fromId;
+  while (cur !== toId) {
+    if (guard.has(cur)) break;
+    guard.add(cur);
+    const e = choice.get(cur);
+    if (!e) break;
+    chain.push(e);
+    cur = e.to;
+  }
+  return cur === toId ? chain : [];
+}
+
+/**
+ * Up to `k` diverse longest lift-free A→B descents. After each found run, its edges are
+ * penalised so the next longest search is pushed onto different terrain; runs overlapping an
+ * accepted one by more than `maxOverlap` (by distance) are rejected. Returns [] if B isn't
+ * reachable from A without a lift.
+ */
+export function longestDownhillPaths(
+  index: GraphIndex,
+  fromId: string,
+  toId: string,
+  maxColorRank = Infinity,
+  k = 3,
+  maxOverlap = 0.7,
+): GraphEdge[][] {
+  const accepted: GraphEdge[][] = [];
+  const penalties = new Map<string, number>();
+  const maxAttempts = k * 4;
+
+  for (let attempt = 0; attempt < maxAttempts && accepted.length < k; attempt++) {
+    const chain = longestDownhillPath(index, fromId, toId, maxColorRank, penalties);
+    if (chain.length === 0) break;
+
+    const isDup = accepted.some(
+      (r) => r.length === chain.length && r.every((e, i) => e.id === chain[i].id),
+    );
+    const candLen = chain.reduce((s, e) => s + e.lengthM, 0) || 1;
+    const candIds = new Set(chain.map((e) => e.id));
+    let overlap = 0;
+    for (const r of accepted) {
+      let shared = 0;
+      for (const e of r) if (candIds.has(e.id)) shared += e.lengthM;
+      overlap = Math.max(overlap, shared / candLen);
+    }
+    if (!isDup && (accepted.length === 0 || overlap <= maxOverlap)) accepted.push(chain);
+    // Shrink this run's edges so the next search diverges — but only partly, so a variant that
+    // shares a common top trunk then splits off (e.g. a different bottom via another piste) can
+    // still reuse the trunk and surface instead of being forced onto unrelated terrain.
+    for (const e of chain) penalties.set(e.id, (penalties.get(e.id) ?? 1) * 0.55);
+  }
+  return accepted;
+}
