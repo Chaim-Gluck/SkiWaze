@@ -1,6 +1,6 @@
 import type { GraphEdge, Preferences, PisteColor, RouteWarning, RouteObjective } from '../types/domain';
 import { PISTE_COLOR_ORDER } from '../types/domain';
-import { SKILL_SPEED_MULTIPLIER } from '../config/defaults';
+import { progressSpeedMps, paceMultiplier, isSpeedColor } from '../config/speedModel';
 import { parseDailyWindows, isOpenAt, minutesUntilClose } from './openingHours';
 
 /** Minutes-before-close under which we warn the user to hurry. */
@@ -34,12 +34,13 @@ function colorRank(c: PisteColor | undefined): number {
 }
 
 function skiSpeedFor(color: PisteColor | undefined, prefs: Preferences): { speed: number; usedDefault: boolean } {
-  // All skiing speeds scale with the skier's self-rated pace (lifts are unaffected).
-  const mult = SKILL_SPEED_MULTIPLIER[prefs.skillLevel] ?? 1;
-  if (color && color !== 'unknown') {
-    return { speed: prefs.speeds.skiSpeedByColor[color] * mult, usedDefault: false };
+  // Base PROGRESS speed comes from the model (colour + skill); a per-colour measured override
+  // (already converted to a progress speed) wins when present. Lifts are unaffected.
+  if (isSpeedColor(color)) {
+    const override = prefs.speeds.skiSpeedByColor[color];
+    return { speed: override ?? progressSpeedMps(color, prefs.skillLevel), usedDefault: false };
   }
-  return { speed: prefs.speeds.fallbackSkiSpeed * mult, usedDefault: true };
+  return { speed: prefs.speeds.fallbackSkiSpeed * paceMultiplier(prefs.skillLevel), usedDefault: true };
 }
 
 /**
@@ -123,7 +124,7 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
 
   // connector
   const penalty = edge.synthetic && !edge.custom ? SYNTHETIC_PENALTY : 1;
-  const skiMult = SKILL_SPEED_MULTIPLIER[prefs.skillLevel] ?? 1;
+  const skiMult = paceMultiplier(prefs.skillLevel);
   if (edge.connectorKind === 'flat_traverse') {
     const seconds = distanceM / (prefs.speeds.flatTraverseSpeed * skiMult);
     return { allowed: true, seconds, distanceM, descentM, ascentM, weight: seconds * penalty, warnings };

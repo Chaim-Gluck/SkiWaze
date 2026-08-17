@@ -157,6 +157,20 @@ npm run routetest <id>       # routing smoke test from the summit
 - Synthetic/inferred edges are always marked and visually distinct.
 - Comments explain non-obvious *why*, not *what*.
 
+## Routing objectives & speed model
+- **Find route is multi-objective.** `prefs.routeType` = `balanced` (one best route per objective,
+  deduped) or a single objective (`fastest` / `fewest_lifts` / `preferred` / `longest`, ×3). Ranking
+  is a lexicographic-with-tolerance comparator over a single **base order — Preference → Lifts →
+  Skiing → Time** — with the active objective's key promoted to the front (`src/routing/ranking.ts`).
+  Time is the *least* important key by default (skiing isn't driving).
+- **Longest** = max-km **lift-free** descent A→B, exact via a DAG longest-path (`longestStreak.ts`);
+  only falls back to a lift if B is otherwise unreachable. The resort-wide "Longest runs" card is the
+  only feature that ignores A and B.
+- **Speed/time model** lives in `src/config/speedModel.ts` — see **docs/SPEED_MODEL.md**. Key idea:
+  routing uses **progress speed** (down the centerline), the UI shows **true move speed**
+  (`progress × snakeFactor`), and measured GPS speeds are true speeds divided back to progress. Base
+  per-colour speeds are derived (never persisted) so stale localStorage can't override them.
+
 ## UI / styling (see docs/STYLE_GUIDE.md)
 - **UI = Material UI (MUI) + a shared light/dark theme.** Source of truth: `src/theme.tsx`
   (+ `src/theme-context.ts`), which builds the MUI theme AND mirrors it to CSS vars

@@ -1,4 +1,4 @@
-import type { LiftType, Preferences, SkillLevel, SpeedConfig } from '../types/domain';
+import type { LiftType, Preferences, SpeedConfig } from '../types/domain';
 
 /**
  * Base average skiing speeds and lift waits. These are reference placeholders: the actual
@@ -7,12 +7,9 @@ import type { LiftType, Preferences, SkillLevel, SpeedConfig } from '../types/do
  * Lift ride speeds and waits are mechanical/queue estimates and are NOT scaled by skill.
  */
 export const DEFAULT_SPEEDS: SpeedConfig = {
-  skiSpeedByColor: {
-    green: 6.25, // ~22.5 km/h (average skier)
-    blue: 8.75, // ~31.5 km/h
-    red: 10.0, // ~36 km/h
-    black: 10.625, // ~38 km/h
-  },
+  // Base ski speed is derived per colour+skill from config/speedModel.ts; this is only a
+  // (usually empty) measured-speed override slot.
+  skiSpeedByColor: {},
   liftSpeedByType: {
     gondola: 5.0,
     cable_car: 8.0,
@@ -56,18 +53,6 @@ export const ALL_LIFT_TYPES: LiftType[] = [
   'mixed_lift',
 ];
 
-/**
- * Multiplier applied to all *skiing* speeds (pistes, flat traverses, skiable connectors,
- * fallback ski speed) based on the skier's self-rated pace. Lift ride speeds and waits are
- * unaffected. 'average' is the default. Tune these to taste — they scale the whole model.
- */
-export const SKILL_SPEED_MULTIPLIER: Record<SkillLevel, number> = {
-  cautious: 0.75,
-  average: 1.0,
-  advanced: 1.25,
-  expert: 1.5,
-};
-
 export const DEFAULT_PREFERENCES: Preferences = {
   // No restriction by default; the user tightens this to their level.
   maxDifficulty: 'black',
@@ -79,6 +64,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
   preferSkiing: false,
   // Balanced by default: one best route per objective, deduped.
   routeType: 'balanced',
+  // Use the derived model speeds by default (not measured overrides).
+  useMeasuredSpeeds: false,
   // Average skier pace by default.
   skillLevel: 'average',
   speeds: DEFAULT_SPEEDS,

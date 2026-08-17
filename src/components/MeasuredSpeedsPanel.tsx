@@ -33,7 +33,8 @@ export function MeasuredSpeedsPanel({ measured, estimatedByColor, minSamples, on
       <Divider sx={{ mb: 1.5 }} />
       <Typography sx={{ fontWeight: 700, mb: 0.5 }}>My measured speeds</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        Your real GPS pace vs the current estimate. Apply to use your measured speeds for time estimates.
+        Your real GPS speed vs our estimate of it (both are real move speeds). Turns are accounted
+        for separately, so this stays honest. Apply to use your measured speeds for ETAs.
       </Typography>
       <Table size="small" sx={{ '& td, & th': { px: 1, py: 0.5 } }}>
         <TableHead>

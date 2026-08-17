@@ -165,8 +165,12 @@ export interface ResortGraph {
 // ---------------------------------------------------------------------------
 
 export interface SpeedConfig {
-  /** Average downhill ski speed (m/s) per difficulty color. */
-  skiSpeedByColor: Record<Exclude<PisteColor, 'unknown'>, number>;
+  /**
+   * PER-COLOUR PROGRESS-SPEED OVERRIDE (m/s), applied only when the user opts into their measured
+   * speeds. Empty by default — the base speed is derived from the model (see config/speedModel.ts)
+   * from colour + skill, so it can never get "stuck" stale in localStorage.
+   */
+  skiSpeedByColor: Partial<Record<Exclude<PisteColor, 'unknown'>, number>>;
   /** Average ride speed (m/s) per lift type. */
   liftSpeedByType: Partial<Record<LiftType, number>>;
   /** Average wait time (seconds) per lift type. */
@@ -194,6 +198,8 @@ export interface Preferences {
   preferSkiing: boolean;
   /** Which "Find route" mode to use: balanced (one per objective) or a single objective ×3. */
   routeType: RouteType;
+  /** When true, use the user's measured GPS speeds (as per-colour overrides) instead of the model. */
+  useMeasuredSpeeds?: boolean;
   /** How fast the skier goes; scales all skiing (not lift) speeds. */
   skillLevel: SkillLevel;
   speeds: SpeedConfig;

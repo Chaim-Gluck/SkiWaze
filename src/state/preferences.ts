@@ -9,11 +9,16 @@ export function loadPreferences(): Preferences {
     if (!raw) return DEFAULT_PREFERENCES;
     const parsed = JSON.parse(raw) as Partial<Preferences>;
     // Merge with defaults so new fields are always populated.
-    return {
+    const merged: Preferences = {
       ...DEFAULT_PREFERENCES,
       ...parsed,
       speeds: { ...DEFAULT_PREFERENCES.speeds, ...(parsed.speeds ?? {}) },
     };
+    // Self-heal: base per-colour speeds are derived from the model, never persisted. Only keep a
+    // stored skiSpeedByColor override when the user has opted into measured speeds — otherwise
+    // drop it so old/stale cached speeds can't override the current model.
+    if (!merged.useMeasuredSpeeds) merged.speeds = { ...merged.speeds, skiSpeedByColor: {} };
+    return merged;
   } catch {
     return DEFAULT_PREFERENCES;
   }

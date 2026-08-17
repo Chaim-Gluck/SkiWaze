@@ -65,7 +65,7 @@ import {
   loadMeasured, saveMeasured, emptyMeasured, addSample, measuredAverages, isSpeedColor,
   type MeasuredSpeeds, type SpeedColor,
 } from './state/measuredSpeeds';
-import { SKILL_SPEED_MULTIPLIER } from './config/defaults';
+import { progressSpeedMps, measuredTrueToProgressMps, SNAKE_FACTOR } from './config/speedModel';
 import { MapView, type LonLat, type RouteFeatureCollection } from './components/MapView';
 import { PointPicker } from './components/PointPicker';
 import { AccordionSection } from './components/AccordionSection';
@@ -477,24 +477,27 @@ export default function App() {
       return;
     }
     setPrefs((p) => {
+      // Measured GPS speeds are TRUE move speeds — divide out the per-colour snake factor to get
+      // the PROGRESS speed the router needs, and flag that overrides are in use.
       const skiSpeedByColor = { ...p.speeds.skiSpeedByColor };
-      for (const c of colors) if (avg[c] != null) skiSpeedByColor[c] = avg[c] as number;
-      return { ...p, skillLevel: 'average', speeds: { ...p.speeds, skiSpeedByColor } };
+      for (const c of colors) if (avg[c] != null) skiSpeedByColor[c] = measuredTrueToProgressMps(avg[c] as number, c);
+      return { ...p, useMeasuredSpeeds: true, speeds: { ...p.speeds, skiSpeedByColor } };
     });
-    setPopup('Applied your measured speeds. Skill level set to Average so they’re used as-is.');
+    setPopup('Using your measured speeds. Turn off in preferences to go back to the model.');
   };
   const resetMeasured = () => {
     const m = emptyMeasured();
     saveMeasured(m);
     setMeasured(m);
+    setPrefs((p) => ({ ...p, useMeasuredSpeeds: false, speeds: { ...p.speeds, skiSpeedByColor: {} } }));
   };
-  // Effective (routing) ski speed per colour: base × the skill-level multiplier.
-  const skillMult = SKILL_SPEED_MULTIPLIER[prefs.skillLevel] ?? 1;
+  // TRUE move speed per colour for display (progress × snake factor): the override when the user
+  // opted into measured speeds, otherwise the model's derived progress speed.
   const estimatedByColor: Record<SpeedColor, number> = {
-    green: prefs.speeds.skiSpeedByColor.green * skillMult,
-    blue: prefs.speeds.skiSpeedByColor.blue * skillMult,
-    red: prefs.speeds.skiSpeedByColor.red * skillMult,
-    black: prefs.speeds.skiSpeedByColor.black * skillMult,
+    green: (prefs.speeds.skiSpeedByColor.green ?? progressSpeedMps('green', prefs.skillLevel)) * SNAKE_FACTOR.green,
+    blue: (prefs.speeds.skiSpeedByColor.blue ?? progressSpeedMps('blue', prefs.skillLevel)) * SNAKE_FACTOR.blue,
+    red: (prefs.speeds.skiSpeedByColor.red ?? progressSpeedMps('red', prefs.skillLevel)) * SNAKE_FACTOR.red,
+    black: (prefs.speeds.skiSpeedByColor.black ?? progressSpeedMps('black', prefs.skillLevel)) * SNAKE_FACTOR.black,
   };
 
   const handleMapClick = useCallback(
