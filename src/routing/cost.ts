@@ -6,19 +6,16 @@ import { parseDailyWindows, isOpenAt, minutesUntilClose } from './openingHours';
 /** Minutes-before-close under which we warn the user to hurry. */
 export const CLOSING_SOON_MIN = 20;
 
-/** Penalty multiplier applied to pistes whose color is not in the user's preferred set. */
-const NON_PREFERRED_PENALTY = 1.6;
-
 /** Penalty multiplier so routing prefers real terrain over auto-added / custom links. */
 const SYNTHETIC_PENALTY = 2.5;
 
 /**
- * Lexicographic penalties for single-objective planning. They dwarf any realistic time cost so
- * the objective's primary key (lift count / non-preferred distance) is minimised first, then
- * time acts as the tie-breaker. Only applied for the matching `objective`.
+ * Lexicographic penalty used only to *generate* a "preferred" candidate: it dwarfs any realistic
+ * time cost so that objective's search minimises non-preferred distance first, then time. Final
+ * ranking across all objectives is done purely on real metrics in ranking.ts.
  */
-const FEWEST_LIFTS_PENALTY = 1e6; // per lift boarded
 const PREFERRED_OFF_COLOR_PENALTY = 1e4; // per metre skied on a non-preferred colour
+const FEWEST_LIFTS_PENALTY = 1e6; // per lift boarded — generates a "fewest lifts" candidate
 
 export interface EdgeCost {
   allowed: boolean;
@@ -69,8 +66,10 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
     const seconds = distanceM / speed;
     let weight = seconds;
     if (edge.color && edge.color !== 'unknown' && !prefs.preferredColors.includes(edge.color)) {
-      weight *= NON_PREFERRED_PENALTY;
-      // In "My preferred runs" mode, minimise non-preferred distance first (then time).
+      // Route *selection* handles colour preference lexicographically (see ranking.ts); here we
+      // only add the strong term for the `preferred` objective so its candidate search actually
+      // finds a preference-minimising path. Other objectives keep pure costs (no colour bias),
+      // but still surface the informational warning below.
       if (objective === 'preferred') weight += PREFERRED_OFF_COLOR_PENALTY * distanceM;
       warnings.push({
         code: 'above_preferred_color',

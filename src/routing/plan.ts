@@ -2,9 +2,10 @@ import type { GraphEdge, MeaningfulPoint, Preferences, Route, RouteRequest, Reso
 import { PISTE_COLOR_ORDER } from '../types/domain';
 import { GraphIndex } from './graphIndex';
 import { alternativeRoutes } from './alternatives';
-import { longestDownhillRuns, longestDownhillPath, longestDownhillPaths } from './longestStreak';
+import { longestDownhillRuns, longestDownhillPaths } from './longestStreak';
 import { buildRoute } from './buildRoute';
 import { resolveClosedEdgeIds } from './closures';
+import { makeRouteComparator } from './ranking';
 import { haversineM } from '../utils/geo';
 
 export interface PlanResult {
@@ -68,12 +69,6 @@ export function findLongestRuns(graph: ResortGraph, prefs: Preferences, k = 3): 
 function colorRank(c: PisteColor | undefined): number {
   if (!c || c === 'unknown') return PISTE_COLOR_ORDER.length;
   return PISTE_COLOR_ORDER.indexOf(c);
-}
-
-/** Sort key for route options. When preferring skiing, put routes with fewer lifts first. */
-function rankRoute(r: Route, prefs: Preferences): number {
-  if (prefs.preferSkiing) return r.stats.liftCount * 100000 + r.stats.totalDurationS;
-  return r.stats.totalDurationS;
 }
 
 /** Nodes reachable from `startId` using skiing only (pistes within level + connectors, no lifts). */
@@ -184,8 +179,6 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
 
   const maxRank = colorRank(prefs.maxDifficulty);
   const routeType = prefs.routeType ?? 'balanced';
-  const best = (objective: RouteObjective): GraphEdge[] | undefined =>
-    alternativeRoutes(index, fromNodeId, toNodeId, prefs, provisionalStart, 1, 0.7, closedEdgeIds, objective)[0];
 
   const withSkiNote = (routes: Route[]): PlanResult => {
     const ski = nearestSkiDestination(graph, index, fromNodeId, toNodeId, prefs, closedEdgeIds);
@@ -193,64 +186,89 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     return { routes };
   };
 
-  if (routeType === 'balanced') {
-    // One best route per objective, deduped by exact path (merging labels).
-    const byKey = new Map<string, { edges: GraphEdge[]; objective: RouteObjective; labels: string[]; order: number }>();
-    const add = (edges: GraphEdge[] | undefined, objective: RouteObjective, order: number) => {
-      if (!edges || edges.length === 0) return;
+  // Finalize a set of edge-paths into deduped Route objects.
+  const toRoutes = (paths: GraphEdge[][], objective: RouteObjective): Route[] => {
+    const seen = new Set<string>();
+    const out: Route[] = [];
+    for (const edges of paths) {
+      if (edges.length === 0) continue;
       const key = pathKey(edges);
-      const existing = byKey.get(key);
-      if (existing) {
-        if (!existing.labels.includes(OBJECTIVE_LABEL[objective])) existing.labels.push(OBJECTIVE_LABEL[objective]);
-      } else {
-        byKey.set(key, { edges, objective, labels: [OBJECTIVE_LABEL[objective]], order });
-      }
-    };
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(finalize(edges, objective, `c${out.length}`));
+    }
+    return out;
+  };
+  const legKey = (r: Route): string => r.legs.map((l) => l.edgeId).join('>');
+  const genAlts = (objective: RouteObjective, k: number): GraphEdge[][] =>
+    alternativeRoutes(index, fromNodeId, toNodeId, prefs, provisionalStart, k, 0.7, closedEdgeIds, objective);
 
-    add(best('fastest'), 'fastest', 0);
-    add(best('fewest_lifts'), 'fewest_lifts', 1);
-    if (hasColorPreference(prefs)) add(best('preferred'), 'preferred', 2);
-    add(longestDownhillPath(index, fromNodeId, toNodeId, maxRank), 'longest_ab', 3);
-
-    if (byKey.size === 0) return noRouteResult(closedEdgeIds);
-    const routes = [...byKey.values()]
-      .sort((a, b) => a.order - b.order)
-      .map((v, i) => {
-        const r = finalize(v.edges, v.objective, `route-${i + 1}`);
-        r.labels = v.labels;
-        return r;
-      });
-    return withSkiNote(routes);
-  }
-
+  // Longest is a special lift-free DAG search — handle it on its own.
   if (routeType === 'longest') {
-    const chains = longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3);
-    if (chains.length === 0) {
+    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3), 'longest_ab');
+    if (longRoutes.length === 0) {
       // Only when B can't be reached lift-free do we allow a lift.
-      const withLift = best('fewest_lifts');
+      const withLift = genAlts('fewest_lifts', 1)[0];
       if (!withLift) return noRouteResult(closedEdgeIds);
       const r = finalize(withLift, 'longest_ab', 'route-1');
       r.labels = ['Longest (needs a lift)'];
       return { routes: [r] };
     }
-    const routes = chains.map((edges, i) => {
-      const r = finalize(edges, 'longest_ab', `route-${i + 1}`);
-      r.labels = [OBJECTIVE_LABEL.longest_ab];
-      return r;
-    });
+    const routes = longRoutes
+      .sort(makeRouteComparator('longest_ab', prefs))
+      .slice(0, 3)
+      .map((r, i) => { r.id = `route-${i + 1}`; r.labels = [OBJECTIVE_LABEL.longest_ab]; return r; });
     return { routes };
   }
 
-  // Individual fastest / fewest_lifts / preferred: up to 3 distinct routes of that objective.
+  // One shared candidate pool for fastest / fewest_lifts / preferred (used by Balanced too), so
+  // ranking is consistent across modes. It covers each objective's optimum plus preference
+  // variants, letting the tolerance tie-break surface a "just-as-good but nicer" route.
+  const pool = toRoutes(
+    [...genAlts('fastest', 3), ...genAlts('fewest_lifts', 2), ...(hasColorPreference(prefs) ? genAlts('preferred', 3) : [])],
+    'fastest',
+  );
+  if (pool.length === 0) return noRouteResult(closedEdgeIds);
+  const bestOf = (routes: Route[], objective: RouteObjective): Route | undefined =>
+    routes.slice().sort(makeRouteComparator(objective, prefs))[0];
+
+  if (routeType === 'balanced') {
+    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3), 'longest_ab');
+    const byKey = new Map<string, { route: Route; objective: RouteObjective; labels: string[]; order: number }>();
+    const consider = (route: Route | undefined, objective: RouteObjective, order: number) => {
+      if (!route) return;
+      const key = legKey(route);
+      const existing = byKey.get(key);
+      if (existing) {
+        if (!existing.labels.includes(OBJECTIVE_LABEL[objective])) existing.labels.push(OBJECTIVE_LABEL[objective]);
+      } else {
+        byKey.set(key, { route, objective, labels: [OBJECTIVE_LABEL[objective]], order });
+      }
+    };
+
+    consider(bestOf(pool, 'fastest'), 'fastest', 0);
+    consider(bestOf(pool, 'fewest_lifts'), 'fewest_lifts', 1);
+    if (hasColorPreference(prefs)) consider(bestOf(pool, 'preferred'), 'preferred', 2);
+    consider(bestOf(longRoutes, 'longest_ab'), 'longest_ab', 3);
+
+    if (byKey.size === 0) return noRouteResult(closedEdgeIds);
+    const routes = [...byKey.values()]
+      .sort((a, b) => a.order - b.order)
+      .map((v, i) => {
+        v.route.objective = v.objective;
+        v.route.labels = v.labels;
+        v.route.id = `route-${i + 1}`;
+        return v.route;
+      });
+    return withSkiNote(routes);
+  }
+
+  // Individual fastest / fewest_lifts / preferred: rank the shared pool, take up to 3 distinct.
   const objective: RouteObjective = routeType;
-  const paths = alternativeRoutes(index, fromNodeId, toNodeId, prefs, provisionalStart, 3, 0.7, closedEdgeIds, objective);
-  if (paths.length === 0) return noRouteResult(closedEdgeIds);
-  const routes = paths
-    .map((edges, i) => {
-      const r = finalize(edges, objective, `route-${i + 1}`);
-      r.labels = [OBJECTIVE_LABEL[objective]];
-      return r;
-    })
-    .sort((a, b) => rankRoute(a, prefs) - rankRoute(b, prefs));
+  const routes = pool
+    .slice()
+    .sort(makeRouteComparator(objective, prefs))
+    .slice(0, 3)
+    .map((r, i) => { r.id = `route-${i + 1}`; r.objective = objective; r.labels = [OBJECTIVE_LABEL[objective]]; return r; });
   return withSkiNote(routes);
 }
