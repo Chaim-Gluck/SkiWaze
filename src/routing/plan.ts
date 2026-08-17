@@ -254,12 +254,27 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     if (byKey.size === 0) return noRouteResult(closedEdgeIds);
     const routes = [...byKey.values()]
       .sort((a, b) => a.order - b.order)
-      .map((v, i) => {
+      .map((v) => {
         v.route.objective = v.objective;
         v.route.labels = v.labels;
-        v.route.id = `route-${i + 1}`;
         return v.route;
       });
+    // When every objective collapses to the same route, Balanced would show a single card — offer
+    // the next-best distinct route (from the pool or a longest variant) as an alternative so the
+    // user still gets a choice.
+    if (routes.length < 2) {
+      const shown = new Set(routes.map(legKey));
+      const alt = [...pool, ...longRoutes]
+        .slice()
+        .sort(makeRouteComparator('fastest', prefs))
+        .find((r) => !shown.has(legKey(r)));
+      if (alt) {
+        alt.objective = 'fastest';
+        alt.labels = ['Alternative'];
+        routes.push(alt);
+      }
+    }
+    routes.forEach((r, i) => { r.id = `route-${i + 1}`; });
     return withSkiNote(routes);
   }
 

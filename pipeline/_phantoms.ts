@@ -26,6 +26,13 @@ const UPHILL_FLAT_TOL = 5;
 /** Contiguous unrated (orange) "connection" chains longer than this (m) are flagged for review. */
 const LONG_CONNECTION_M = 250;
 
+/** A pothole's flat escape must climb at least this (m) — the tell that you must rise out of a dip. */
+const POTHOLE_CLIMB_TOL = 3;
+
+/** Ignore potholes fed only by piste stubs shorter than this (m) — cosmetically irrelevant. */
+const POTHOLE_MIN_IN_M = 120;
+
+
 function loadGraph(id: string): ResortGraph {
   const p = path.join(ROOT, 'public', 'resorts', id, 'graph.json');
   return JSON.parse(fs.readFileSync(p, 'utf8')) as ResortGraph;
@@ -57,6 +64,7 @@ const osmLink = (lat: number, lon: number): string =>
 
 export interface AuditResult {
   reversal: string[];
+  potholes: string[];
   disconnected: string[];
   longConnections: string[];
   uphillFlats: number;
@@ -108,6 +116,59 @@ export function auditGraph(graph: ResortGraph): AuditResult {
       disconnected.push(`${n.id} @${ele(n.id)}m [${n.kind}] nearest-lift ${d}m; skis out [${emits.join(', ')}]\n      ${link}`);
     }
   }
+
+  // Pothole sinks (false local minima mid-run): a descent ARRIVES at the node, but no descent
+  // leaves it and no lift can be boarded here — the only way onward is a flat traverse that
+  // CLIMBS to a node where the descent then RESUMES. This is the inverse of a phantom top: a
+  // mis-sampled elevation sinks an interior node below its own downstream neighbour, so the
+  // segment past it reverses and both neighbouring pistes point INTO it, leaving a dead-looking
+  // dip you can only leave by climbing out over a "flat". The climb-out is the tell that separates
+  // a real pothole from an ordinary merge-then-continue junction (whose flat link stays level or
+  // descends). Fix with setNodeElevation in pipeline/overrides/<id>.json.
+  interface Pothole { id: string; text: string; inLen: number; climb: number }
+  const potholeList: Pothole[] = [];
+  const flatOutsOf = (id: string): GraphEdge[] =>
+    (out.get(id) ?? []).filter((e) => e.connectorKind === 'flat_traverse' && !e.synthetic);
+  for (const n of graph.nodes) {
+    if (n.kind === 'lift_station') continue;
+    const outs = out.get(n.id) ?? [];
+    const ins = inc.get(n.id) ?? [];
+    const descentIns = ins.filter(isDescent);
+    if (descentIns.length === 0) continue; // no descent arrives → not a sink
+    if (outs.some(isDescent)) continue; // has a real downhill exit → fine
+    if (outs.some((e) => e.kind === 'lift')) continue; // can board a lift → real bottom
+    const flatOuts = flatOutsOf(n.id);
+    if (flatOuts.length === 0) continue; // truly terminal → genuine bottom / trapped (other checks)
+    // Follow flat traverses (bounded); find where the descent resumes and how high above this node.
+    const seenFlat = new Set<string>([n.id]);
+    const queue = flatOuts.map((e) => ({ id: e.to, hops: 1 }));
+    let resumeEle: number | null = null;
+    while (queue.length > 0) {
+      const { id, hops } = queue.shift()!;
+      if (seenFlat.has(id) || hops > 6) continue;
+      seenFlat.add(id);
+      if ((out.get(id) ?? []).some(isDescent)) {
+        resumeEle = ele(id);
+        break;
+      }
+      for (const e of flatOutsOf(id)) queue.push({ id: e.to, hops: hops + 1 });
+    }
+    if (resumeEle === null) continue; // flat escape never resumes downhill → not an interior dip
+    const climb = resumeEle - ele(n.id);
+    if (climb < POTHOLE_CLIMB_TOL) continue; // level/descending flat → ordinary junction, not a dip
+    const inLen = descentIns.reduce((s, e) => s + (e.lengthM ?? 0), 0);
+    if (inLen < POTHOLE_MIN_IN_M) continue; // only stub pistes point in → cosmetically irrelevant
+    const p = nodeById.get(n.id)!.point;
+    const inFrom = descentIns.map((e) => `${e.from}(${ele(e.from)}m)`).join(', ');
+    potholeList.push({
+      id: n.id,
+      inLen,
+      climb,
+      text: `${n.id} @${ele(n.id)}m [${n.kind}] climb-out ${climb}m; descent-in ${Math.round(inLen)}m from [${inFrom}]\n      ${osmLink(p.lat, p.lon)}`,
+    });
+  }
+  potholeList.sort((a, b) => b.inLen - a.inLen);
+  const potholes = potholeList.map((p) => p.text);
 
   // Supplementary: "flat" traverses that actually climb (>tol), excluding app-added override
   // bridges (eovc*) and synthetic pipeline connectors. Noisy on its own — count only.
@@ -163,13 +224,14 @@ export function auditGraph(graph: ResortGraph): AuditResult {
   }
   longConns.sort((a, b) => parseInt(b) - parseInt(a));
 
-  return { reversal, disconnected, longConnections: longConns, uphillFlats };
+  return { reversal, potholes, disconnected, longConnections: longConns, uphillFlats };
 }
 
 /** One-line summary for build output (empty string when nothing actionable). */
 export function auditSummary(r: AuditResult): string {
   const parts: string[] = [];
   if (r.reversal.length) parts.push(`${r.reversal.length} reversal candidate(s)`);
+  if (r.potholes.length) parts.push(`${r.potholes.length} pothole sink(s)`);
   if (r.longConnections.length) parts.push(`${r.longConnections.length} long connection(s)`);
   return parts.join(', ');
 }
@@ -178,6 +240,8 @@ function printAudit(id: string, r: AuditResult): void {
   console.log(`\n=== ${id} ===`);
   console.log(`REVERSAL candidates (false-peak, fix via setNodeElevation): ${r.reversal.length}`);
   r.reversal.forEach((s) => console.log('  ⚑ ' + s));
+  console.log(`POTHOLE sinks (false local-min mid-run, fix via setNodeElevation): ${r.potholes.length}`);
+  r.potholes.forEach((s) => console.log('  ⚑ ' + s));
   console.log(`DISCONNECTED tops (missing connector / mapping gap): ${r.disconnected.length}`);
   r.disconnected.forEach((s) => console.log('  x ' + s));
   console.log(`LONG connections (>${LONG_CONNECTION_M}m, review skiable vs road/bus): ${r.longConnections.length}`);
@@ -189,14 +253,18 @@ function main(): void {
   const id = process.argv[2];
   const ids = id ? [id] : listResorts();
   let totR = 0;
+  let totP = 0;
   let totL = 0;
   for (const r of ids) {
     const res = auditGraph(loadGraph(r));
     printAudit(r, res);
     totR += res.reversal.length;
+    totP += res.potholes.length;
     totL += res.longConnections.length;
   }
-  console.log(`\nTOTAL: ${totR} reversal candidates, ${totL} long connections across ${ids.length} resort(s).`);
+  console.log(
+    `\nTOTAL: ${totR} reversal candidates, ${totP} pothole sinks, ${totL} long connections across ${ids.length} resort(s).`,
+  );
 }
 
 // Run as a CLI only (not when imported by the build).

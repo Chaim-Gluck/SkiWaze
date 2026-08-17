@@ -15,9 +15,8 @@ import TuneIcon from '@mui/icons-material/Tune';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
-import Select from '@mui/material/Select';
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import Menu from '@mui/material/Menu';
-import FormControl from '@mui/material/FormControl';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import Tooltip from '@mui/material/Tooltip';
 import Alert from '@mui/material/Alert';
@@ -138,6 +137,18 @@ function parseDeepLink(): {
     return {};
   }
 }
+
+/** One selectable picker row: a resort under a single country (multi-country resorts yield one per country). */
+interface ResortOption {
+  id: string;
+  name: string;
+  country: string;
+}
+
+/** Filter matches on both resort name and country, so typing e.g. "austria" narrows to that group. */
+const resortOptionFilter = createFilterOptions<ResortOption>({
+  stringify: (o) => `${o.name} ${o.country}`,
+});
 
 export default function App() {
   const [deepLink] = useState(parseDeepLink);
@@ -280,6 +291,15 @@ export default function App() {
   }, [geo, customEdges]);
 
   const resortEntry = index?.find((e) => e.id === resortId);
+  // Build picker rows grouped by country; a resort whose country lists several (e.g. "Italy /
+  // Switzerland") appears once under EACH country, sorted country-then-name for MUI grouping.
+  const resortOptions = useMemo<ResortOption[]>(() => {
+    const opts = (index ?? []).flatMap((r) =>
+      r.country.split('/').map((c) => ({ id: r.id, name: r.name, country: c.trim() })),
+    );
+    return opts.sort((a, b) => a.country.localeCompare(b.country) || a.name.localeCompare(b.name));
+  }, [index]);
+  const selectedResortOption = resortOptions.find((o) => o.id === resortId) ?? null;
   const center: LonLat =
     deepLinkActive && deepLink.lon != null && deepLink.lat != null
       ? { lon: deepLink.lon, lat: deepLink.lat }
@@ -979,22 +999,29 @@ export default function App() {
             </Typography>
           )}
           <Box sx={{ flex: 1 }} />
-          <FormControl size="small" sx={{ minWidth: 150, maxWidth: 260 }}>
-            <Select
-              value={resortId}
-              onChange={(e) => {
-                setResortId(e.target.value);
+          {selectedResortOption && (
+            <Autocomplete
+              size="small"
+              sx={{ minWidth: 190, maxWidth: 300 }}
+              options={resortOptions}
+              groupBy={(o) => o.country}
+              getOptionLabel={(o) => o.name}
+              filterOptions={resortOptionFilter}
+              isOptionEqualToValue={(o, v) => o.id === v.id && o.country === v.country}
+              value={selectedResortOption}
+              disableClearable
+              blurOnSelect
+              onChange={(_, o) => {
+                if (!o) return;
+                setResortId(o.id);
                 setDeepLinkActive(false);
                 setPopup(
                   'Lift & slope statuses are assumed OPEN. In early/late season many may be closed — check the resort, and mark any closed run/lift (⊘ on a route step) so routes avoid it.',
                 );
               }}
-            >
-              {(index ?? []).map((r) => (
-                <MenuItem key={r.id} value={r.id}>{r.name} ({r.country})</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              renderInput={(params) => <TextField {...params} label="Resort" placeholder="Search…" />}
+            />
+          )}
           <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
             <IconButton onClick={toggleTheme} aria-label="Toggle light/dark theme">
               {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}

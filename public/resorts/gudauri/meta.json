@@ -1,0 +1,118 @@
+{
+  "resort": {
+    "id": "gudauri",
+    "name": "Gudauri",
+    "country": "Georgia",
+    "center": {
+      "lon": 44.47,
+      "lat": 42.47
+    },
+    "bbox": {
+      "minLon": 44.42,
+      "minLat": 42.43,
+      "maxLon": 44.51,
+      "maxLat": 42.53
+    },
+    "defaultZoom": 12.5,
+    "timezone": "Asia/Tbilisi"
+  },
+  "generatedAt": "2026-08-17T16:54:38.543Z",
+  "stats": {
+    "resortId": "gudauri",
+    "nodeCount": 105,
+    "edgeCount": 235,
+    "pisteEdges": 94,
+    "liftEdges": 18,
+    "connectorEdges": 123,
+    "meaningfulPoints": 54,
+    "reachableFromLifts": 103,
+    "unreachableNodes": 2,
+    "warningsByCode": {
+      "missing_opening_hours": 15,
+      "inferred_connector": 3,
+      "unreachable_component": 1
+    }
+  },
+  "warnings": [
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Snow Park\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Pirveli\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Sadzele\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Khada\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Goodaura\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Soliko\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Zuma\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"205547600\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Shino\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"473280434\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Kudebi\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Firni\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Kobi 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Kikilo\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"New Goodaura\" has no opening_hours in OSM."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Snapped 15 dead-end run(s) onto a nearby piste line (T-junction)."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Inferred 43 skiable/flat connector(s) to bridge stuck nodes."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 53 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "unreachable_component",
+      "message": "2 node(s) unreachable from the main lift network.",
+      "refs": [
+        "n29",
+        "n32"
+      ]
+    }
+  ]
+}

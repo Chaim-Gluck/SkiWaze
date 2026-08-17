@@ -1,0 +1,7 @@
+{
+  "_comment": "Mayrhofen corrections. IDS ARE FROM THE CURRENT `npm run data` BUILD; `data:refresh` renumbers nodes and will break these. (1) 'Talabfahrt' (Eggalm/Vorderlanersbach valley run, ref 77) had a false-low/false-high flat stretch: over the whole run the trend descends NW->SE 1610m (n112) -> 1281m (n93), but the DEM sampled the mid-run nodes n145 and n106 at 1521 m -- ABOVE their neighbour n113 (1517 m) which sits further UP the path -- so the segment between them reversed and both piste arrows jammed into n113 (a sink with no downhill exit). Trend-interpolated elevations are ~1471 m at n145 and ~1459 m at n106, so lowering them restores a clean one-way SE descent n113 -> n145 -> n106 -> n101. Both nodes belong only to Talabfahrt (no shared junctions), so this creates no new reversals.",
+  "setNodeElevation": [
+    { "node": "n145", "ele": 1471 },
+    { "node": "n106", "ele": 1459 }
+  ]
+}

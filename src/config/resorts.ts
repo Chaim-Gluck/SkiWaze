@@ -69,6 +69,24 @@ export const RESORTS: Resort[] = [
     defaultZoom: 13.5,
     timezone: 'Asia/Jerusalem',
   },
+  {
+    id: 'gudauri',
+    name: 'Gudauri',
+    country: 'Georgia',
+    center: { lon: 44.47, lat: 42.47 },
+    bbox: { minLon: 44.42, minLat: 42.43, maxLon: 44.51, maxLat: 42.53 },
+    defaultZoom: 12.5,
+    timezone: 'Asia/Tbilisi',
+  },
+  {
+    id: 'mayrhofen',
+    name: 'Mayrhofen',
+    country: 'Austria',
+    center: { lon: 11.81, lat: 47.16 },
+    bbox: { minLon: 11.72, minLat: 47.12, maxLon: 11.9, maxLat: 47.205 },
+    defaultZoom: 11.5,
+    timezone: 'Europe/Vienna',
+  },
 ];
 
 /** Fallback resort when geolocation is unavailable. */
