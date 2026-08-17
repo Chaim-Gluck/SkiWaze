@@ -16,24 +16,29 @@
     "defaultZoom": 12.5,
     "timezone": "Asia/Tbilisi"
   },
-  "generatedAt": "2026-08-17T16:54:38.543Z",
+  "generatedAt": "2026-08-17T18:01:13.901Z",
   "stats": {
     "resortId": "gudauri",
-    "nodeCount": 105,
-    "edgeCount": 235,
-    "pisteEdges": 94,
+    "nodeCount": 103,
+    "edgeCount": 225,
+    "pisteEdges": 92,
     "liftEdges": 18,
-    "connectorEdges": 123,
+    "connectorEdges": 115,
     "meaningfulPoints": 54,
-    "reachableFromLifts": 103,
+    "reachableFromLifts": 101,
     "unreachableNodes": 2,
     "warningsByCode": {
+      "pothole_repaired": 1,
       "missing_opening_hours": 15,
       "inferred_connector": 3,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "pothole_repaired",
+      "message": "Repaired 5 DEM false local-min/peak node(s) to keep runs descending monotonically."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Snow Park\" has no opening_hours in OSM."
@@ -96,15 +101,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 15 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 13 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 43 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 38 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 53 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 49 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "unreachable_component",

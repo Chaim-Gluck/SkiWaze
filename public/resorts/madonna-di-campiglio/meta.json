@@ -16,24 +16,29 @@
     "defaultZoom": 12.5,
     "timezone": "Europe/Rome"
   },
-  "generatedAt": "2026-08-17T05:38:09.799Z",
+  "generatedAt": "2026-08-17T18:01:00.255Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
-    "nodeCount": 451,
-    "edgeCount": 1209,
-    "pisteEdges": 330,
+    "nodeCount": 449,
+    "edgeCount": 1200,
+    "pisteEdges": 326,
     "liftEdges": 96,
-    "connectorEdges": 783,
+    "connectorEdges": 778,
     "meaningfulPoints": 235,
-    "reachableFromLifts": 450,
+    "reachableFromLifts": 448,
     "unreachableNodes": 1,
     "warningsByCode": {
+      "pothole_repaired": 1,
       "missing_opening_hours": 76,
       "inferred_connector": 4,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "pothole_repaired",
+      "message": "Repaired 5 DEM false local-min/peak node(s) to keep runs descending monotonically."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Spinale Express\" has no opening_hours in OSM."
@@ -340,15 +345,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 60 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 58 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 237 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 236 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 240 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 238 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

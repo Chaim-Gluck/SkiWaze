@@ -16,24 +16,29 @@
     "defaultZoom": 12,
     "timezone": "Europe/Rome"
   },
-  "generatedAt": "2026-08-17T05:38:11.378Z",
+  "generatedAt": "2026-08-17T18:01:03.592Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1449,
-    "edgeCount": 4316,
-    "pisteEdges": 1255,
+    "nodeCount": 1443,
+    "edgeCount": 4278,
+    "pisteEdges": 1220,
     "liftEdges": 217,
-    "connectorEdges": 2844,
-    "meaningfulPoints": 624,
-    "reachableFromLifts": 1379,
-    "unreachableNodes": 70,
+    "connectorEdges": 2841,
+    "meaningfulPoints": 621,
+    "reachableFromLifts": 1389,
+    "unreachableNodes": 54,
     "warningsByCode": {
+      "pothole_repaired": 1,
       "missing_opening_hours": 176,
-      "inferred_connector": 5,
+      "inferred_connector": 4,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "pothole_repaired",
+      "message": "Repaired 47 DEM false local-min/peak node(s) to keep runs descending monotonically."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Pozza - Buffaure\" has no opening_hours in OSM."
@@ -740,29 +745,24 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 266 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 259 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 755 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 754 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 800 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 769 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point."
-    },
-    {
-      "code": "inferred_connector",
-      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
+      "message": "Linked 3 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
       "code": "unreachable_component",
-      "message": "70 node(s) unreachable from the main lift network.",
+      "message": "54 node(s) unreachable from the main lift network.",
       "refs": [
-        "n147",
         "n226",
         "n227",
         "n228",
@@ -774,14 +774,15 @@
         "n425",
         "n426",
         "n427",
-        "n443",
-        "n460",
-        "n485",
-        "n497",
         "n505",
         "n506",
         "n522",
-        "n543"
+        "n568",
+        "n569",
+        "n612",
+        "n618",
+        "n619",
+        "n626"
       ]
     }
   ]

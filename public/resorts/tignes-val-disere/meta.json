@@ -16,24 +16,29 @@
     "defaultZoom": 12,
     "timezone": "Europe/Paris"
   },
-  "generatedAt": "2026-08-17T05:38:18.477Z",
+  "generatedAt": "2026-08-17T18:01:12.403Z",
   "stats": {
     "resortId": "tignes-val-disere",
-    "nodeCount": 961,
-    "edgeCount": 3033,
-    "pisteEdges": 832,
+    "nodeCount": 953,
+    "edgeCount": 3015,
+    "pisteEdges": 789,
     "liftEdges": 93,
-    "connectorEdges": 2108,
+    "connectorEdges": 2133,
     "meaningfulPoints": 380,
-    "reachableFromLifts": 921,
-    "unreachableNodes": 40,
+    "reachableFromLifts": 933,
+    "unreachableNodes": 20,
     "warningsByCode": {
+      "pothole_repaired": 1,
       "missing_opening_hours": 84,
-      "inferred_connector": 5,
+      "inferred_connector": 4,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "pothole_repaired",
+      "message": "Repaired 30 DEM false local-min/peak node(s) to keep runs descending monotonically."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"TCD10 des Boisses\" has no opening_hours in OSM."
@@ -372,19 +377,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 168 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 160 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 534 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 541 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 527 flat-junction traverse(s) bridging dangling run ends across level areas."
-    },
-    {
-      "code": "inferred_connector",
-      "message": "Rescued 2 trapped node(s) with a forced traverse to the nearest reachable point."
+      "message": "Added 490 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
@@ -392,28 +393,28 @@
     },
     {
       "code": "unreachable_component",
-      "message": "40 node(s) unreachable from the main lift network.",
+      "message": "20 node(s) unreachable from the main lift network.",
       "refs": [
-        "n32",
         "n33",
-        "n47",
-        "n96",
         "n227",
-        "n235",
-        "n264",
-        "n288",
-        "n302",
-        "n317",
         "n327",
         "n347",
         "n349",
-        "n356",
         "n396",
         "n397",
         "n400",
         "n439",
         "n458",
-        "n459"
+        "n459",
+        "n460",
+        "n582",
+        "n584",
+        "n585",
+        "n586",
+        "n587",
+        "n620",
+        "n696",
+        "n697"
       ]
     }
   ]

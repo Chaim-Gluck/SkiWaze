@@ -16,24 +16,29 @@
     "defaultZoom": 12,
     "timezone": "Europe/Vienna"
   },
-  "generatedAt": "2026-08-17T05:38:19.188Z",
+  "generatedAt": "2026-08-17T18:01:13.496Z",
   "stats": {
     "resortId": "st-anton-arlberg",
     "nodeCount": 823,
-    "edgeCount": 2438,
-    "pisteEdges": 684,
+    "edgeCount": 2461,
+    "pisteEdges": 673,
     "liftEdges": 111,
-    "connectorEdges": 1643,
-    "meaningfulPoints": 380,
-    "reachableFromLifts": 782,
-    "unreachableNodes": 41,
+    "connectorEdges": 1677,
+    "meaningfulPoints": 381,
+    "reachableFromLifts": 792,
+    "unreachableNodes": 31,
     "warningsByCode": {
+      "pothole_repaired": 1,
       "missing_opening_hours": 96,
       "inferred_connector": 4,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "pothole_repaired",
+      "message": "Repaired 15 DEM false local-min/peak node(s) to keep runs descending monotonically."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Übungshangbahn\" has no opening_hours in OSM."
@@ -424,11 +429,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 444 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 450 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 414 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 432 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
@@ -436,28 +441,28 @@
     },
     {
       "code": "unreachable_component",
-      "message": "41 node(s) unreachable from the main lift network.",
+      "message": "31 node(s) unreachable from the main lift network.",
       "refs": [
         "n35",
         "n49",
-        "n77",
         "n78",
         "n116",
-        "n197",
         "n200",
         "n210",
         "n281",
+        "n306",
+        "n307",
+        "n309",
         "n378",
         "n380",
-        "n413",
-        "n414",
-        "n415",
-        "n416",
-        "n417",
-        "n418",
-        "n419",
-        "n420",
-        "n421"
+        "n402",
+        "n403",
+        "n443",
+        "n444",
+        "n477",
+        "n544",
+        "n647",
+        "n648"
       ]
     }
   ]

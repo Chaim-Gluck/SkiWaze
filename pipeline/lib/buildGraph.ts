@@ -294,6 +294,70 @@ function liftRideSeconds(lt: LiftType, lengthM: number, durationSec?: number): n
 }
 
 /**
+ * Repair DEM "pothole"/"false-peak" nodes BEFORE edges are oriented. Piste direction is derived
+ * purely from node elevations (buildResortGraph orients each segment high->low), so a single
+ * mis-sampled interior node silently reverses a segment:
+ *   - a node sampled BELOW all its piste neighbours becomes a false local minimum — the run past it
+ *     reverses and both neighbouring pistes point INTO a dead-looking sink you could only leave by
+ *     climbing (the "arrows into itself, no way out" artifact);
+ *   - a node sampled ABOVE all its neighbours becomes a false local maximum — a phantom top you can
+ *     ski away from but never legitimately reach.
+ * Genuine tops/bottoms are piste ENDPOINTS (graph degree 1) or lift stations; an interior
+ * through/junction node (degree >= 2) that is a strict local extremum is almost always DEM noise.
+ * Pull each such node back between its two nearest neighbours so the run stays monotonic THROUGH it
+ * (one downhill exit, inflow from the rest). Iterated a few passes so cascaded dips settle.
+ * Returns the number of nodes repaired.
+ */
+function repairPotholeElevations(
+  nodes: Map<string, CanonNode>,
+  pistes: NormPiste[],
+  canonicalOf: Map<number, string>,
+  c: GraphConstants,
+): number {
+  const adj = new Map<string, Set<string>>();
+  const link = (a: string, b: string): void => {
+    (adj.get(a) ?? adj.set(a, new Set<string>()).get(a)!).add(b);
+  };
+  for (const piste of pistes) {
+    for (const seg of segmentWay(piste.points, canonicalOf)) {
+      if (seg.from === seg.to) continue;
+      link(seg.from, seg.to);
+      link(seg.to, seg.from);
+    }
+  }
+  const tol = Math.max(2, c.pisteFlatTolerance); // ignore sub-tolerance elevation noise
+  const repaired = new Set<string>();
+  for (let pass = 0; pass < 6; pass++) {
+    let changed = false;
+    for (const [id, nbrs] of adj) {
+      if (nbrs.size < 2) continue; // degree 1 = genuine run endpoint (top/bottom) — leave alone
+      const n = nodes.get(id);
+      if (!n || n.isLiftStation || n.ele == null) continue;
+      const eles = [...nbrs]
+        .map((x) => nodes.get(x)?.ele)
+        .filter((e): e is number => e != null)
+        .sort((a, b) => a - b);
+      if (eles.length < 2) continue;
+      const lowest = eles[0];
+      const second = eles[1];
+      const highest = eles[eles.length - 1];
+      const secondHighest = eles[eles.length - 2];
+      if (n.ele < lowest - tol) {
+        n.ele = (lowest + second) / 2; // false min: sit just above the lowest neighbour
+        repaired.add(id);
+        changed = true;
+      } else if (n.ele > highest + tol) {
+        n.ele = (highest + secondHighest) / 2; // false peak: sit just below the highest neighbour
+        repaired.add(id);
+        changed = true;
+      }
+    }
+    if (!changed) break;
+  }
+  return repaired.size;
+}
+
+/**
  * Build the full resort graph: piste edges (descending), flat traverses (bidirectional),
  * lift edges (up, plus down for downloadable types), and inferred skiable connectors.
  */
@@ -305,6 +369,15 @@ export function buildResortGraph(
 ): ResortGraph {
   const warnings: DataWarning[] = [];
   const { canonicalOf, nodes } = buildCanonicalNodes(pistes, lifts, c, warnings);
+
+  // Correct DEM false local-minima/maxima before edges are oriented (see repairPotholeElevations).
+  const repairedPotholes = repairPotholeElevations(nodes, pistes, canonicalOf, c);
+  if (repairedPotholes > 0) {
+    warnings.push({
+      code: 'pothole_repaired',
+      message: `Repaired ${repairedPotholes} DEM false local-min/peak node(s) to keep runs descending monotonically.`,
+    });
+  }
 
   const edges: GraphEdge[] = [];
   let edgeIdx = 0;

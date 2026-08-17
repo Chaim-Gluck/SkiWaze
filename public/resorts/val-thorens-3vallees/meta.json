@@ -16,24 +16,29 @@
     "defaultZoom": 12,
     "timezone": "Europe/Paris"
   },
-  "generatedAt": "2026-08-17T05:38:17.507Z",
+  "generatedAt": "2026-08-17T18:01:10.997Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
-    "nodeCount": 4051,
-    "edgeCount": 15767,
-    "pisteEdges": 3763,
+    "nodeCount": 4015,
+    "edgeCount": 15590,
+    "pisteEdges": 3652,
     "liftEdges": 244,
-    "connectorEdges": 11760,
-    "meaningfulPoints": 897,
-    "reachableFromLifts": 3964,
-    "unreachableNodes": 87,
+    "connectorEdges": 11694,
+    "meaningfulPoints": 896,
+    "reachableFromLifts": 3961,
+    "unreachableNodes": 54,
     "warningsByCode": {
+      "pothole_repaired": 1,
       "missing_opening_hours": 189,
       "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "pothole_repaired",
+      "message": "Repaired 78 DEM false local-min/peak node(s) to keep runs descending monotonically."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Cascades\" has no opening_hours in OSM."
@@ -792,19 +797,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 772 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 736 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 2296 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 2290 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 2591 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 2537 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 15 trapped node(s) with a forced traverse to the nearest reachable point."
+      "message": "Rescued 4 trapped node(s) with a forced traverse to the nearest reachable point."
     },
     {
       "code": "inferred_connector",
@@ -812,20 +817,14 @@
     },
     {
       "code": "unreachable_component",
-      "message": "87 node(s) unreachable from the main lift network.",
+      "message": "54 node(s) unreachable from the main lift network.",
       "refs": [
         "n5",
-        "n90",
-        "n267",
         "n312",
         "n359",
-        "n411",
         "n456",
         "n458",
         "n509",
-        "n552",
-        "n561",
-        "n575",
         "n587",
         "n598",
         "n599",
@@ -833,7 +832,13 @@
         "n760",
         "n788",
         "n885",
-        "n888"
+        "n916",
+        "n979",
+        "n1181",
+        "n1252",
+        "n1277",
+        "n1309",
+        "n1407"
       ]
     }
   ]

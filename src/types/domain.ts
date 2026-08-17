@@ -144,6 +144,7 @@ export interface DataWarning {
     | 'unreachable_component'
     | 'suspicious_merge'
     | 'inferred_connector'
+    | 'pothole_repaired'
     | 'no_wait_time';
   message: string;
   /** Optional related node/edge ids. */

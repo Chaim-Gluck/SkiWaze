@@ -16,24 +16,29 @@
     "defaultZoom": 12,
     "timezone": "Europe/Zurich"
   },
-  "generatedAt": "2026-08-17T05:38:10.483Z",
+  "generatedAt": "2026-08-17T18:01:01.357Z",
   "stats": {
     "resortId": "cervinia-zermatt",
-    "nodeCount": 935,
-    "edgeCount": 2765,
-    "pisteEdges": 825,
-    "liftEdges": 121,
-    "connectorEdges": 1819,
-    "meaningfulPoints": 349,
-    "reachableFromLifts": 915,
-    "unreachableNodes": 20,
+    "nodeCount": 937,
+    "edgeCount": 2773,
+    "pisteEdges": 809,
+    "liftEdges": 123,
+    "connectorEdges": 1841,
+    "meaningfulPoints": 348,
+    "reachableFromLifts": 925,
+    "unreachableNodes": 12,
     "warningsByCode": {
-      "missing_opening_hours": 98,
+      "pothole_repaired": 1,
+      "missing_opening_hours": 99,
       "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "pothole_repaired",
+      "message": "Repaired 18 DEM false local-min/peak node(s) to keep runs descending monotonically."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Zermatt–Sunnegga funicular\" has no opening_hours in OSM."
@@ -169,6 +174,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Plateau Rosa 1\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Matterhorn Express\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -432,15 +441,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 464 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 470 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 467 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 457 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 3 trapped node(s) with a forced traverse to the nearest reachable point."
+      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point."
     },
     {
       "code": "inferred_connector",
@@ -448,28 +457,20 @@
     },
     {
       "code": "unreachable_component",
-      "message": "20 node(s) unreachable from the main lift network.",
+      "message": "12 node(s) unreachable from the main lift network.",
       "refs": [
-        "n29",
         "n41",
         "n42",
         "n126",
         "n128",
-        "n225",
         "n250",
         "n270",
-        "n314",
-        "n365",
-        "n370",
-        "n399",
-        "n400",
         "n420",
         "n426",
         "n429",
         "n437",
         "n439",
-        "n440",
-        "n518"
+        "n440"
       ]
     }
   ]
