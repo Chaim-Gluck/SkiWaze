@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { GraphEdge, LiftType, ResortGraph } from '../../src/types/domain';
 import { haversineM, polylineLength3dM } from '../../src/utils/geo';
+import { DEFAULT_GRAPH_CONSTANTS } from '../../src/config/graphConstants';
 
 export interface Overrides {
   /** Groups of node ids to force-merge into a single node. */
@@ -154,25 +155,39 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
       return { ...p, name };
     });
     const eleOf = new Map(nodes.map((n) => [n.id, n.point.ele ?? 0]));
-    edges = edges.map((e) => {
-      if (!corr.has(e.from) && !corr.has(e.to)) return e;
-      const geom = e.geometry.map((p) => ({ ...p }));
-      if (geom.length >= 2) {
-        geom[0] = { ...geom[0], ele: eleOf.get(e.from) ?? geom[0].ele };
-        geom[geom.length - 1] = { ...geom[geom.length - 1], ele: eleOf.get(e.to) ?? geom[geom.length - 1].ele };
-      }
-      // Flat traverses stay directionless (dropM 0); only refresh geometry.
-      if (e.connectorKind === 'flat_traverse') return { ...e, geometry: geom };
-      const drop = (eleOf.get(e.to) ?? 0) - (eleOf.get(e.from) ?? 0);
-      // Lifts are directional by construction (up, or a marked download): keep their direction
-      // and just refresh the signed drop, so correcting a station height can't invert/negate it.
-      if (e.kind === 'lift') return { ...e, geometry: geom, dropM: drop };
-      // A piste (or skiable_down connector) now pointing uphill is flipped to descend.
-      if (drop > 0 && (e.kind === 'piste' || e.connectorKind === 'skiable_down')) {
-        return { ...e, from: e.to, to: e.from, geometry: [...geom].reverse(), dropM: -Math.abs(drop) };
-      }
-      return { ...e, geometry: geom, dropM: -Math.abs(drop) };
-    });
+    const flatTol = DEFAULT_GRAPH_CONSTANTS.pisteFlatTolerance;
+    edges = edges
+      .map((e): GraphEdge | null => {
+        if (!corr.has(e.from) && !corr.has(e.to)) return e;
+        const geom = e.geometry.map((p) => ({ ...p }));
+        if (geom.length >= 2) {
+          geom[0] = { ...geom[0], ele: eleOf.get(e.from) ?? geom[0].ele };
+          geom[geom.length - 1] = { ...geom[geom.length - 1], ele: eleOf.get(e.to) ?? geom[geom.length - 1].ele };
+        }
+        if (e.connectorKind === 'flat_traverse') {
+          const drop = (eleOf.get(e.to) ?? 0) - (eleOf.get(e.from) ?? 0);
+          // If the correction reveals this "flat" is really a slope (drop now exceeds the flat
+          // tolerance), promote the DOWNHILL direction to a one-way piste and drop the uphill
+          // reverse partner — otherwise a mis-sampled near-flat run stays a dashed 2-way link.
+          if (Math.abs(drop) > flatTol) {
+            if (drop >= 0) return null; // uphill half of the pair → remove
+            const { connectorKind: _flat, ...rest } = e;
+            return { ...rest, kind: 'piste', geometry: geom, lengthM: polylineLength3dM(geom), dropM: drop };
+          }
+          // Genuinely flat: stay directionless (dropM 0), only refresh geometry.
+          return { ...e, geometry: geom };
+        }
+        const drop = (eleOf.get(e.to) ?? 0) - (eleOf.get(e.from) ?? 0);
+        // Lifts are directional by construction (up, or a marked download): keep their direction
+        // and just refresh the signed drop, so correcting a station height can't invert/negate it.
+        if (e.kind === 'lift') return { ...e, geometry: geom, dropM: drop };
+        // A piste (or skiable_down connector) now pointing uphill is flipped to descend.
+        if (drop > 0 && (e.kind === 'piste' || e.connectorKind === 'skiable_down')) {
+          return { ...e, from: e.to, to: e.from, geometry: [...geom].reverse(), dropM: -Math.abs(drop) };
+        }
+        return { ...e, geometry: geom, dropM: -Math.abs(drop) };
+      })
+      .filter((e): e is GraphEdge => e !== null);
   }
 
   // 3. Set lift download capability by name.

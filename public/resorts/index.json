@@ -1,5 +1,14 @@
 [
   {
+    "id": "mount-hermon",
+    "name": "Mount Hermon",
+    "country": "Israel",
+    "center": {
+      "lon": 35.785,
+      "lat": 33.302
+    }
+  },
+  {
     "id": "madonna-di-campiglio",
     "name": "Madonna di Campiglio",
     "country": "Italy",
@@ -51,15 +60,6 @@
     "center": {
       "lon": 10.24,
       "lat": 47.13
-    }
-  },
-  {
-    "id": "mount-hermon",
-    "name": "Mount Hermon",
-    "country": "Israel",
-    "center": {
-      "lon": 35.785,
-      "lat": 33.302
     }
   },
   {
