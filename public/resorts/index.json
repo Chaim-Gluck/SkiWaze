@@ -1,11 +1,11 @@
 [
   {
-    "id": "soelden",
-    "name": "Sölden",
-    "country": "Austria",
+    "id": "les-deux-alpes",
+    "name": "Les 2 Alpes",
+    "country": "France",
     "center": {
-      "lon": 10.96,
-      "lat": 46.95
+      "lon": 6.16,
+      "lat": 45
     }
   },
   {
@@ -90,12 +90,30 @@
     }
   },
   {
+    "id": "soelden",
+    "name": "Sölden",
+    "country": "Austria",
+    "center": {
+      "lon": 10.96,
+      "lat": 46.95
+    }
+  },
+  {
     "id": "ischgl-samnaun",
     "name": "Ischgl – Samnaun (Silvretta Arena)",
     "country": "Austria / Switzerland",
     "center": {
       "lon": 10.34,
       "lat": 46.97
+    }
+  },
+  {
+    "id": "alpe-dhuez",
+    "name": "Alpe d'Huez",
+    "country": "France",
+    "center": {
+      "lon": 6.08,
+      "lat": 45.1
     }
   }
 ]

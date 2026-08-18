@@ -105,6 +105,24 @@ export const RESORTS: Resort[] = [
     defaultZoom: 12,
     timezone: 'Europe/Vienna',
   },
+  {
+    id: 'alpe-dhuez',
+    name: "Alpe d'Huez",
+    country: 'France',
+    center: { lon: 6.08, lat: 45.1 },
+    bbox: { minLon: 6.03, minLat: 45.04, maxLon: 6.14, maxLat: 45.17 },
+    defaultZoom: 11.5,
+    timezone: 'Europe/Paris',
+  },
+  {
+    id: 'les-deux-alpes',
+    name: 'Les 2 Alpes',
+    country: 'France',
+    center: { lon: 6.16, lat: 45.0 },
+    bbox: { minLon: 6.09, minLat: 44.96, maxLon: 6.23, maxLat: 45.04 },
+    defaultZoom: 12,
+    timezone: 'Europe/Paris',
+  },
 ];
 
 /** Fallback resort when geolocation is unavailable. */
