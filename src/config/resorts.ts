@@ -87,6 +87,24 @@ export const RESORTS: Resort[] = [
     defaultZoom: 11.5,
     timezone: 'Europe/Vienna',
   },
+  {
+    id: 'soelden',
+    name: 'S\u00f6lden',
+    country: 'Austria',
+    center: { lon: 10.96, lat: 46.95 },
+    bbox: { minLon: 10.912, minLat: 46.9, maxLon: 11.02, maxLat: 46.99 },
+    defaultZoom: 12,
+    timezone: 'Europe/Vienna',
+  },
+  {
+    id: 'ischgl-samnaun',
+    name: 'Ischgl \u2013 Samnaun (Silvretta Arena)',
+    country: 'Austria / Switzerland',
+    center: { lon: 10.34, lat: 46.97 },
+    bbox: { minLon: 10.27, minLat: 46.91, maxLon: 10.42, maxLat: 47.03 },
+    defaultZoom: 12,
+    timezone: 'Europe/Vienna',
+  },
 ];
 
 /** Fallback resort when geolocation is unavailable. */

@@ -1,0 +1,6 @@
+{
+  "_comment": "Sölden corrections. IDS ARE FROM THE CURRENT `npm run data` BUILD; `data:refresh` renumbers nodes. (1) OSM maps the not-yet-built Pitztal<->Sölden connector '(Projekt) Fernerkogelbahn III' as an aerialway; its top sits just inside the west bbox edge right next to the real Tiefenbachbahn, so it can't be dropped by bbox without clipping Sölden's glacier lift. Remove it so routes never board a phantom (unbuilt) lift.",
+  "removeLifts": [
+    { "liftName": "(Projekt) Fernerkogelbahn III" }
+  ]
+}

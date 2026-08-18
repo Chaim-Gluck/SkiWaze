@@ -1,0 +1,211 @@
+{
+  "resort": {
+    "id": "soelden",
+    "name": "Sölden",
+    "country": "Austria",
+    "center": {
+      "lon": 10.96,
+      "lat": 46.95
+    },
+    "bbox": {
+      "minLon": 10.912,
+      "minLat": 46.9,
+      "maxLon": 11.02,
+      "maxLat": 46.99
+    },
+    "defaultZoom": 12,
+    "timezone": "Europe/Vienna"
+  },
+  "generatedAt": "2026-08-18T09:14:34.432Z",
+  "stats": {
+    "resortId": "soelden",
+    "nodeCount": 549,
+    "edgeCount": 1864,
+    "pisteEdges": 527,
+    "liftEdges": 54,
+    "connectorEdges": 1283,
+    "meaningfulPoints": 175,
+    "reachableFromLifts": 539,
+    "unreachableNodes": 10,
+    "warningsByCode": {
+      "pothole_repaired": 1,
+      "missing_opening_hours": 34,
+      "inferred_connector": 4,
+      "unreachable_component": 1
+    }
+  },
+  "warnings": [
+    {
+      "code": "pothole_repaired",
+      "message": "Repaired 7 DEM false local-min/peak node(s) to keep runs descending monotonically."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Tiefenbachbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Seiterkar\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Karleskogl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Karleskogl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Seiterjöchl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Seiterjöchl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Rotkogl II\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Stabele\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gaislachkoglbahn I\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Wasserkar\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Heidebahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gaislachalm\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gaislachalm\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gaislachkoglbahn II\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Mutkogl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Mutkogl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Mutkogl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Mini Tiefenbach\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Schwarze Schneid II\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Innerwald I\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Innerwald I\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Innerwald II\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Innerwald II\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"448535312\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"448535313\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"448535315\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"705220570\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"705220571\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"(Projekt) Fernerkogelbahn III\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"777561186\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gletscherband\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Rotkogl I\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Heidebahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Heidebahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Snapped 87 dead-end run(s) onto a nearby piste line (T-junction)."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Inferred 281 skiable/flat connector(s) to bridge stuck nodes."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 316 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
+    },
+    {
+      "code": "unreachable_component",
+      "message": "10 node(s) unreachable from the main lift network.",
+      "refs": [
+        "n22",
+        "n62",
+        "n134",
+        "n153",
+        "n236",
+        "n237",
+        "n297",
+        "n346",
+        "n391",
+        "n499"
+      ]
+    }
+  ]
+}

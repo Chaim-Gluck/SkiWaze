@@ -1,11 +1,11 @@
 [
   {
-    "id": "mount-hermon",
-    "name": "Mount Hermon",
-    "country": "Israel",
+    "id": "soelden",
+    "name": "Sölden",
+    "country": "Austria",
     "center": {
-      "lon": 35.785,
-      "lat": 33.302
+      "lon": 10.96,
+      "lat": 46.95
     }
   },
   {
@@ -63,6 +63,15 @@
     }
   },
   {
+    "id": "mount-hermon",
+    "name": "Mount Hermon",
+    "country": "Israel",
+    "center": {
+      "lon": 35.785,
+      "lat": 33.302
+    }
+  },
+  {
     "id": "gudauri",
     "name": "Gudauri",
     "country": "Georgia",
@@ -78,6 +87,15 @@
     "center": {
       "lon": 11.81,
       "lat": 47.16
+    }
+  },
+  {
+    "id": "ischgl-samnaun",
+    "name": "Ischgl – Samnaun (Silvretta Arena)",
+    "country": "Austria / Switzerland",
+    "center": {
+      "lon": 10.34,
+      "lat": 46.97
     }
   }
 ]
