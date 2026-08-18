@@ -49,6 +49,7 @@ import type {
 } from './types/domain';
 import type { GeoFeatureCollection, ResortIndexEntry } from './data/resortData';
 import { loadResortGeo, loadResortGraph, loadResortIndex } from './data/resortData';
+import { countryCode, flagDataUrl } from './utils/flags';
 import { loadPreferences, savePreferences } from './state/preferences';
 import { loadCustomEdges, saveCustomEdges } from './state/customEdges';
 import { loadCustomNodes, saveCustomNodes, type CustomNode } from './state/customNodes';
@@ -307,6 +308,9 @@ export default function App() {
           <ListSubheader
             key={`country-${o.country}`}
             sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
               bgcolor: 'background.default',
               color: 'primary.main',
               fontSize: 11,
@@ -319,6 +323,12 @@ export default function App() {
               pointerEvents: 'none',
             }}
           >
+            <Box
+              component="img"
+              src={flagDataUrl(countryCode(o.country))}
+              alt=""
+              sx={{ width: 18, height: 12, borderRadius: '2px', flexShrink: 0 }}
+            />
             {o.country}
           </ListSubheader>,
         );
@@ -332,6 +342,15 @@ export default function App() {
     }
     return items;
   }, [resortOptions]);
+  // Shared resort selection (used by both the picker and the map's overview dots): switch resort,
+  // drop any active deep-link framing, and remind the user that lift/slope statuses are assumed open.
+  const selectResort = useCallback((id: string) => {
+    setResortId(id);
+    setDeepLinkActive(false);
+    setPopup(
+      'Lift & slope statuses are assumed OPEN. In early/late season many may be closed — check the resort, and mark any closed run/lift (⊘ on a route step) so routes avoid it.',
+    );
+  }, []);
   const center: LonLat =
     deepLinkActive && deepLink.lon != null && deepLink.lat != null
       ? { lon: deepLink.lon, lat: deepLink.lat }
@@ -1039,11 +1058,7 @@ export default function App() {
               value={index ? resortId : ''}
               renderValue={() => resortEntry?.name ?? ''}
               onChange={(e) => {
-                setResortId(e.target.value);
-                setDeepLinkActive(false);
-                setPopup(
-                  'Lift & slope statuses are assumed OPEN. In early/late season many may be closed — check the resort, and mark any closed run/lift (⊘ on a route step) so routes avoid it.',
-                );
+                selectResort(e.target.value);
               }}
             >
               {resortMenuItems}
@@ -1327,6 +1342,9 @@ export default function App() {
             following={following}
             nav={navData?.render ?? null}
             navHeadingUp
+            resorts={index ?? []}
+            selectedResortId={resortId}
+            onSelectResort={selectResort}
           />
           {pinMode && <div className="pin-hint">Click the map to set the {pinMode === 'from' ? 'From' : 'To'} point</div>}
           {linkPinMode && <div className="pin-hint">Click the map to place the link's {linkPinMode === 'from' ? '"from"' : '"to"'} point (anywhere)</div>}

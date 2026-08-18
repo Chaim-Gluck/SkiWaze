@@ -13,8 +13,9 @@ import Typography from '@mui/material/Typography';
 import LayersIcon from '@mui/icons-material/Layers';
 import CloseIcon from '@mui/icons-material/Close';
 import { Legend } from './Legend';
-import type { GeoFeatureCollection } from '../data/resortData';
+import type { GeoFeatureCollection, ResortIndexEntry } from '../data/resortData';
 import type { LivePosition } from '../hooks/useLiveLocation';
+import { resortFlagCode, flagImageData } from '../utils/flags';
 
 const BASE_STYLE: StyleSpecification = {
   version: 8,
@@ -230,6 +231,50 @@ export interface NavRender {
   remaining: [number, number][];
 }
 
+/** Below this zoom the map shows one dot+label per resort; at/above it, the selected resort's
+ * full slopes/lifts. Keeps the "whole-of-Europe" overview cheap (only centres, always loaded). */
+const RESORT_MARKER_MAXZOOM = 8.5;
+
+/** Detailed slope/lift layers hidden below the marker zoom so dots cleanly replace them. */
+const RESORT_DETAIL_LAYERS = [
+  'areas-fill',
+  'areas-outline',
+  'connectors',
+  'synthetic-links',
+  'custom-links',
+  'pistes-line',
+  'lifts-line',
+];
+
+/** Build the resort-marker GeoJSON; multi-country resorts are grouped by their first country. */
+function resortsFC(resorts: ResortIndexEntry[], selectedId: string | undefined) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: resorts.map((r) => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: [r.center.lon, r.center.lat] },
+      properties: {
+        id: r.id,
+        name: r.name,
+        country: r.country.split('/')[0].trim(),
+        code: resortFlagCode(r.country),
+        selected: r.id === selectedId,
+      },
+    })),
+  };
+}
+
+/** Register a flag icon for every distinct resort flag code (single or split), plus a fallback.
+ * Idempotent, so it can run on load and whenever the resort list changes. */
+function ensureResortFlagImages(map: maplibregl.Map, resorts: ResortIndexEntry[]): void {
+  const codes = new Set<string>(['']);
+  for (const r of resorts) codes.add(resortFlagCode(r.country));
+  for (const code of codes) {
+    const name = `flag-${code}`;
+    if (!map.hasImage(name)) map.addImage(name, flagImageData(code), { pixelRatio: 2 });
+  }
+}
+
 interface MapViewProps {
   center: LonLat;
   zoom: number;
@@ -246,11 +291,14 @@ interface MapViewProps {
   following: boolean;
   nav: NavRender | null;
   navHeadingUp: boolean;
+  resorts?: ResortIndexEntry[];
+  selectedResortId?: string;
+  onSelectResort?: (id: string) => void;
 }
 
 export function MapView({
   center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, onMapClick,
-  userPosition, following, nav, navHeadingUp,
+  userPosition, following, nav, navHeadingUp, resorts, selectedResortId, onSelectResort,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -292,6 +340,12 @@ export function MapView({
   navRef.current = nav;
   const navHeadingUpRef = useRef(navHeadingUp);
   navHeadingUpRef.current = navHeadingUp;
+  const resortsRef = useRef(resorts);
+  resortsRef.current = resorts;
+  const selectedResortIdRef = useRef(selectedResortId);
+  selectedResortIdRef.current = selectedResortId;
+  const onSelectResortRef = useRef(onSelectResort);
+  onSelectResortRef.current = onSelectResort;
   const followSuspended = useRef(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wasFollowing = useRef(following);
@@ -552,10 +606,69 @@ export function MapView({
         },
       });
 
+      // --- Resort overview markers: one dot + label per resort, shown only when zoomed out.
+      // Uses just the resort centres (always loaded from the index), so the whole-Europe view is
+      // cheap. Clicking a dot selects that resort (App reflects it in the picker and frames it).
+      map.addSource('resorts', { type: 'geojson', data: EMPTY_FC });
+      ensureResortFlagImages(map, resortsRef.current ?? []);
+      // Highlight ring + faint tint behind the currently-selected resort's badge (added before the
+      // flags so it sits underneath) — emphasises the active resort without resizing its marker.
+      map.addLayer({
+        id: 'resort-selected-glow',
+        type: 'circle',
+        source: 'resorts',
+        maxzoom: RESORT_MARKER_MAXZOOM,
+        filter: ['boolean', ['get', 'selected'], false],
+        paint: {
+          'circle-color': '#1565c0',
+          'circle-opacity': 0.2,
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 3, 10, 8, 16],
+          'circle-stroke-color': '#1565c0',
+          'circle-stroke-width': 3,
+          'circle-stroke-opacity': 0.95,
+        },
+      });
+      map.addLayer({
+        id: 'resort-flags',
+        type: 'symbol',
+        source: 'resorts',
+        maxzoom: RESORT_MARKER_MAXZOOM,
+        layout: {
+          'icon-image': ['concat', 'flag-', ['get', 'code']],
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 3, 0.55, 8, 0.9],
+          'icon-allow-overlap': true,
+          'text-field': ['get', 'name'],
+          'text-font': ['Noto Sans Bold'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 4, 10, 8, 13],
+          'text-offset': [0, 1.0],
+          'text-anchor': 'top',
+          'text-optional': true,
+        },
+        paint: {
+          'text-color': '#0b1622',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.8,
+        },
+      });
+      // Hide the selected resort's detailed slopes/lifts below the marker zoom so the flags
+      // cleanly replace them (labels/arrows are already minzoom 12).
+      for (const id of RESORT_DETAIL_LAYERS) {
+        if (map.getLayer(id)) map.setLayerZoomRange(id, RESORT_MARKER_MAXZOOM, 24);
+      }
+      map.on('click', 'resort-flags', (e) => {
+        const id = e.features?.[0]?.properties?.id;
+        if (id) onSelectResortRef.current?.(String(id));
+      });
+      map.on('mouseenter', 'resort-flags', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'resort-flags', () => { map.getCanvas().style.cursor = ''; });
+
       // Apply whatever data is current now (fixes blank-on-first-load).
       (map.getSource('pistes') as maplibregl.GeoJSONSource).setData(splitPistes(geoRef.current) as never);
       (map.getSource('areas') as maplibregl.GeoJSONSource).setData(splitAreas(geoRef.current) as never);
       (map.getSource('lifts') as maplibregl.GeoJSONSource).setData(splitLifts(geoRef.current) as never);
+      (map.getSource('resorts') as maplibregl.GeoJSONSource).setData(
+        resortsFC(resortsRef.current ?? [], selectedResortIdRef.current) as never,
+      );
       (map.getSource('route') as maplibregl.GeoJSONSource).setData((routeRef.current ?? EMPTY_FC) as never);
       map.setFilter('route-step', rangeFilter(stepRef.current));
       setLoaded(true);
@@ -601,6 +714,15 @@ export function MapView({
     (map.getSource('areas') as maplibregl.GeoJSONSource | undefined)?.setData(splitAreas(geo) as never);
     (map.getSource('lifts') as maplibregl.GeoJSONSource | undefined)?.setData(splitLifts(geo) as never);
   }, [geo, loaded]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    ensureResortFlagImages(map, resorts ?? []);
+    (map.getSource('resorts') as maplibregl.GeoJSONSource | undefined)?.setData(
+      resortsFC(resorts ?? [], selectedResortId) as never,
+    );
+  }, [resorts, selectedResortId, loaded]);
 
   useEffect(() => {
     const map = mapRef.current;
