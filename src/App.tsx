@@ -1501,12 +1501,11 @@ export default function App() {
                       href={noticeHref}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={(e) => {
-                        // Force a real external tab even inside an installed PWA / mobile webview,
-                        // where target="_blank" alone often navigates in-app. Keep the href +
-                        // target as the no-JS / long-press fallback.
-                        e.preventDefault();
-                        window.open(noticeHref, '_blank', 'noopener,noreferrer');
+                      onClick={() => {
+                        // Let the anchor's target="_blank" open the link (each OS does its best:
+                        // Android → separate Custom Tab, iOS PWA → in-app Safari view with "Done").
+                        // Dismiss the notice on the next tick so closing it can't cancel navigation.
+                        setTimeout(() => setPopup(null), 0);
                       }}
                       sx={{ color: 'inherit', fontWeight: 700, textDecorationColor: 'currentColor' }}
                     >
