@@ -56,6 +56,7 @@ import { loadResortGeo, loadResortGraph, loadResortIndex } from './data/resortDa
 import { getResort } from './config/resorts';
 import { countryCode, flagDataUrl } from './utils/flags';
 import { loadPreferences, savePreferences } from './state/preferences';
+import { shouldShowStatusNotice } from './state/statusNotice';
 import { loadCustomEdges, saveCustomEdges } from './state/customEdges';
 import { loadCustomNodes, saveCustomNodes, type CustomNode } from './state/customNodes';
 import { buildEffectiveGraph } from './routing/customGraph';
@@ -356,19 +357,24 @@ export default function App() {
     }
     return items;
   }, [resortOptions]);
-  // Shared resort selection (used by both the picker and the map's overview dots): switch resort,
-  // drop any active deep-link framing, and remind the user that lift/slope statuses are assumed open.
+  // Shared resort selection (used by both the picker and the map's overview dots). The "assumed
+  // open" status notice itself is driven by the resortId effect below (gated once per resort/day).
   const selectResort = useCallback((id: string) => {
     setResortId(id);
     setDeepLinkActive(false);
+  }, []);
+  // Show the "statuses assumed open" notice at most once per resort per day, on any resortId change
+  // (initial landing, picker, map dot, or geolocation) — not on every selection.
+  useEffect(() => {
+    if (!resortId || !shouldShowStatusNotice(resortId)) return;
     setPopup({
       title: 'Lift & slope status',
       text: 'Shown as OPEN by default — in early or late season some lifts and runs may actually be closed.',
-      href: getResort(id)?.infoUrl,
+      href: getResort(resortId)?.infoUrl,
       hrefLabel: 'Check the resort\u2019s live status \u2197',
       tip: 'Tip: mark a closed lift or run (\u2298 on a route step) and Find Route will avoid it.',
     });
-  }, []);
+  }, [resortId]);
   const center: LonLat =
     deepLinkActive && deepLink.lon != null && deepLink.lat != null
       ? { lon: deepLink.lon, lat: deepLink.lat }

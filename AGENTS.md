@@ -210,3 +210,31 @@ Phased plan:
   above a skier's level), and **daily TTL** for closures (expire at end of day, resort timezone).
 Safety note: a wrongly-suggested "skiable" connector can be dangerous, so community edges must
 stay suggestions, be filtered by the user's ability, and never auto-apply.
+
+### Live lift/piste status (assumed-open today → best-effort feed later)
+The app assumes every lift/run is **OPEN** and shows a once-per-resort-per-day notice
+(`src/state/statusNotice.ts`) with the resort's official `infoUrl` (in `RESORTS`) + a tip to mark
+things closed. Making status *real* is a research-heavy follow-up; findings so far (Aug 2026):
+- **No universal free API.** OnTheSnow/Mountain News Partner API has the broadest coverage
+  (lifts+runs) but is **gated + likely paid** (contact sales for a key; 5k req/day). **bergfex /
+  skiresort.info** cover the Alps incl. pistes but have **no public API**. **liftie**
+  (`liftie.info/api/resort/<id>`) is free/open but **lifts-only**, ~7 of our resorts, and it just
+  **HTML-scrapes** each resort (brittle CSS/`data-show`/SVG-fill-colour selectors).
+- **Static-site is fine** — don't scrape client-side (**CORS blocks reading resort HTML**). Do it
+  **server-side** via a scheduled **GitHub Action** (scrape → write `public/resorts/<id>/status.json`
+  → build+deploy) or an **Azure SWA managed Function (timer)** writing to blob (decouples from code
+  deploys). Server-side fetch has no CORS/auth problem.
+- **Sölden recon (INTERMAPS platform, powers all Ötztal):** `GET
+  https://www.soelden.com/en/nui/live-info/widget-data?documentId=<any>` returns clean JSON but only
+  **summary counts** (`"8/9"` lifts, `"41.9/42.4km"`, huts) — `documentId` is ignored. **Per-lift
+  detail is server-rendered HTML** on `/en/live-information/status?card=lifts` (no XHR), so
+  knowing *which* lift is closed needs HTML parsing. Expect this "clean summary JSON + HTML-only
+  detail" split at other resorts too.
+- **Integration is cheap:** a feed just auto-populates a per-resort "closed today" set merged with
+  the user's manual closures — `src/state/closures.ts` + existing Find-Route avoidance handle it,
+  no new routing code. Model `status.json` as per-lift `{open, hours}` + per-piste `{open, groomed}`
+  + a `fetchedAt` stamp; show a "best-effort, as of HH:MM" chip (default, no button).
+- **Recommendation:** build the real adapters **closer to the season** (summer feeds are empty; HTML
+  layouts will change by winter). Start with 1–2 resorts, prefer any that expose true JSON, and keep
+  "assumed open" as the fallback where there's no data.
+
