@@ -4,8 +4,8 @@
     "name": "Gudauri",
     "country": "Georgia",
     "center": {
-      "lon": 44.47,
-      "lat": 42.47
+      "lon": 44.49,
+      "lat": 42.485
     },
     "bbox": {
       "minLon": 44.42,
@@ -14,9 +14,10 @@
       "maxLat": 42.53
     },
     "defaultZoom": 12.5,
-    "timezone": "Asia/Tbilisi"
+    "timezone": "Asia/Tbilisi",
+    "infoUrl": "https://gudauri.com/"
   },
-  "generatedAt": "2026-08-17T18:01:13.901Z",
+  "generatedAt": "2026-08-18T13:02:36.585Z",
   "stats": {
     "resortId": "gudauri",
     "nodeCount": 103,

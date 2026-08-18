@@ -24,6 +24,10 @@ import IosShareIcon from '@mui/icons-material/IosShare';
 import Tooltip from '@mui/material/Tooltip';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
+import Link from '@mui/material/Link';
+import AlertTitle from '@mui/material/AlertTitle';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Badge from '@mui/material/Badge';
@@ -49,6 +53,7 @@ import type {
 } from './types/domain';
 import type { GeoFeatureCollection, ResortIndexEntry } from './data/resortData';
 import { loadResortGeo, loadResortGraph, loadResortIndex } from './data/resortData';
+import { getResort } from './config/resorts';
 import { countryCode, flagDataUrl } from './utils/flags';
 import { loadPreferences, savePreferences } from './state/preferences';
 import { loadCustomEdges, saveCustomEdges } from './state/customEdges';
@@ -149,6 +154,15 @@ interface ResortOption {
   country: string;
 }
 
+/** A transient bottom notice: primary text, optional title, a trailing link, and a tip line. */
+interface PopupNotice {
+  text: string;
+  title?: string;
+  href?: string;
+  hrefLabel?: string;
+  tip?: string;
+}
+
 export default function App() {
   const [deepLink] = useState(parseDeepLink);
   const [index, setIndex] = useState<ResortIndexEntry[] | null>(null);
@@ -179,7 +193,7 @@ export default function App() {
   const [plan, setPlan] = useState<PlanResult | null>(null);
   const [selectedRoute, setSelectedRoute] = useState(0);
   const [selectedRange, setSelectedRange] = useState<[number, number] | null>(null);
-  const [popup, setPopup] = useState<string | null>(null);
+  const [popup, setPopup] = useState<string | PopupNotice | null>(null);
   const [status, setStatus] = useState<string>('Loading resorts…');
   const [focusGeometry, setFocusGeometry] = useState<[number, number][] | null>(null);
   const [longestRuns, setLongestRuns] = useState<(LongestRun & { startName: string; endName: string })[] | null>(null);
@@ -347,9 +361,13 @@ export default function App() {
   const selectResort = useCallback((id: string) => {
     setResortId(id);
     setDeepLinkActive(false);
-    setPopup(
-      'Lift & slope statuses are assumed OPEN. In early/late season many may be closed — check the resort, and mark any closed run/lift (⊘ on a route step) so routes avoid it.',
-    );
+    setPopup({
+      title: 'Lift & slope status',
+      text: 'Shown as OPEN by default — in early or late season some lifts and runs may actually be closed.',
+      href: getResort(id)?.infoUrl,
+      hrefLabel: 'Check the resort\u2019s live status \u2197',
+      tip: 'Tip: mark a closed lift or run (\u2298 on a route step) and Find Route will avoid it.',
+    });
   }, []);
   const center: LonLat =
     deepLinkActive && deepLink.lon != null && deepLink.lat != null
@@ -1438,29 +1456,63 @@ export default function App() {
         </Paper>
       )}
 
-      {popup && (
+      {popup && (() => {
+        const isNotice = typeof popup !== 'string';
+        const noticeText = typeof popup === 'string' ? popup : popup.text;
+        const noticeTitle = typeof popup === 'string' ? undefined : popup.title;
+        const noticeHref = typeof popup === 'string' ? undefined : popup.href;
+        const noticeHrefLabel = typeof popup === 'string' ? undefined : popup.hrefLabel;
+        const noticeTip = typeof popup === 'string' ? undefined : popup.tip;
+        const structured = isNotice && (!!noticeTitle || !!noticeTip);
+        return (
         <Snackbar
           open={!!popup}
-          autoHideDuration={7000}
+          autoHideDuration={structured ? 15000 : noticeHref ? 13000 : 7000}
           onClose={(_, reason) => { if (reason !== 'clickaway') setPopup(null); }}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
           <Alert
             onClose={() => setPopup(null)}
+            icon={structured ? false : undefined}
             severity={
-              /could not|couldn't|no route|not available|no lift-free|not enough|pick both|pick two|pick a|first\b/i.test(popup)
+              /could not|couldn't|no route|not available|no lift-free|not enough|pick both|pick two|pick a|first\b/i.test(noticeText)
                 ? 'warning'
-                : /applied|added|marked|✓/i.test(popup)
+                : /applied|added|marked|✓/i.test(noticeText)
                   ? 'success'
                   : 'info'
             }
             variant="filled"
             sx={{ whiteSpace: 'pre-line', maxWidth: 'min(480px, calc(100vw - 24px))', boxShadow: 6 }}
           >
-            {popup}
+            {noticeTitle && <AlertTitle sx={{ fontWeight: 700, mb: 0.5 }}>{noticeTitle}</AlertTitle>}
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+              {structured && <InfoOutlinedIcon fontSize="small" sx={{ mt: '2px', flexShrink: 0, opacity: 0.9 }} />}
+              <Box>
+                {noticeText}
+                {noticeHref && (
+                  <Box sx={{ mt: 0.25 }}>
+                    <Link
+                      href={noticeHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ color: 'inherit', fontWeight: 700, textDecorationColor: 'currentColor' }}
+                    >
+                      {noticeHrefLabel ?? 'Open \u2197'}
+                    </Link>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+            {noticeTip && (
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', mt: 1 }}>
+                <LightbulbOutlinedIcon fontSize="small" sx={{ mt: '2px', flexShrink: 0, opacity: 0.9 }} />
+                <Box>{noticeTip}</Box>
+              </Box>
+            )}
           </Alert>
         </Snackbar>
-      )}
+        );
+      })()}
 
       {sharePrompt && (
         <Snackbar

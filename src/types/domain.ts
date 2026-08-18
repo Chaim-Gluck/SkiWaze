@@ -117,6 +117,8 @@ export interface Resort {
   defaultZoom: number;
   /** IANA timezone for interpreting lift opening hours. */
   timezone: string;
+  /** Official resort site (best-effort) for live lift/slope status — surfaced in the load notice. */
+  infoUrl?: string;
 }
 
 /** Type of a selectable A/B endpoint shown to the user. */

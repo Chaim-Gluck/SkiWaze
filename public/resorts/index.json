@@ -1,11 +1,11 @@
 [
   {
-    "id": "les-deux-alpes",
-    "name": "Les 2 Alpes",
-    "country": "France",
+    "id": "gudauri",
+    "name": "Gudauri",
+    "country": "Georgia",
     "center": {
-      "lon": 6.16,
-      "lat": 45
+      "lon": 44.49,
+      "lat": 42.485
     }
   },
   {
@@ -22,8 +22,8 @@
     "name": "Cervinia–Zermatt",
     "country": "Italy / Switzerland",
     "center": {
-      "lon": 7.69,
-      "lat": 45.97
+      "lon": 7.71,
+      "lat": 45.958
     }
   },
   {
@@ -31,8 +31,8 @@
     "name": "Sella Ronda (Canazei)",
     "country": "Italy",
     "center": {
-      "lon": 11.79,
-      "lat": 46.5
+      "lon": 11.808,
+      "lat": 46.518
     }
   },
   {
@@ -72,15 +72,6 @@
     }
   },
   {
-    "id": "gudauri",
-    "name": "Gudauri",
-    "country": "Georgia",
-    "center": {
-      "lon": 44.47,
-      "lat": 42.47
-    }
-  },
-  {
     "id": "mayrhofen",
     "name": "Mayrhofen",
     "country": "Austria",
@@ -114,6 +105,15 @@
     "center": {
       "lon": 6.08,
       "lat": 45.1
+    }
+  },
+  {
+    "id": "les-deux-alpes",
+    "name": "Les 2 Alpes",
+    "country": "France",
+    "center": {
+      "lon": 6.16,
+      "lat": 45
     }
   }
 ]
