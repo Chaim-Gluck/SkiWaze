@@ -5,11 +5,18 @@
     { "node": "n438", "ele": 1956 },
     { "node": "n101", "ele": 1903 },
     { "node": "n42", "ele": 2097 },
+    { "node": "n412", "ele": 2097 },
     { "node": "n155", "ele": 2079 },
     { "node": "n175", "ele": 1735 },
     { "node": "n176", "ele": 1719 }
   ],
   "addConnectors": [
+    {
+      "from": "n42",
+      "to": "n412",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
     {
       "from": "n234",
       "to": "n95",
@@ -23,8 +30,14 @@
       "bidirectional": true
     },
     {
-      "from": "n438",
-      "to": "n430",
+      "from": "n332",
+      "to": "n438",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "from": "n331",
+      "to": "n438",
       "kind": "flat_traverse",
       "bidirectional": true
     },

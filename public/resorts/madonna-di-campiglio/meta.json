@@ -17,17 +17,17 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.campigliodolomiti.it/en/"
   },
-  "generatedAt": "2026-08-19T14:25:27.766Z",
+  "generatedAt": "2026-08-19T16:09:46.661Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
     "nodeCount": 449,
-    "edgeCount": 1192,
-    "pisteEdges": 335,
+    "edgeCount": 1195,
+    "pisteEdges": 336,
     "liftEdges": 96,
-    "connectorEdges": 761,
+    "connectorEdges": 763,
     "meaningfulPoints": 235,
-    "reachableFromLifts": 447,
-    "unreachableNodes": 2,
+    "reachableFromLifts": 446,
+    "unreachableNodes": 3,
     "warningsByCode": {
       "pothole_repaired": 1,
       "missing_opening_hours": 76,
@@ -362,10 +362,11 @@
     },
     {
       "code": "unreachable_component",
-      "message": "2 node(s) unreachable from the main lift network.",
+      "message": "3 node(s) unreachable from the main lift network.",
       "refs": [
         "n42",
-        "n251"
+        "n251",
+        "n412"
       ]
     }
   ]

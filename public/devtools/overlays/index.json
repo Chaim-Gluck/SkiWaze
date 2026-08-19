@@ -10,5 +10,11 @@
     "label": "Elevation reversal candidates",
     "file": "elevation-reversals.json",
     "description": "Piste edges that flip direction once mis-sampled elevations are corrected against the Terrarium DEM. Green = suggested top, orange = current (too-high) top; red line = strong, orange line = marginal."
+  },
+  {
+    "id": "route-detour",
+    "label": "Madonna absurd detour (n334->n233)",
+    "file": "route-detour.json",
+    "description": "The only route the router finds from the Pinzolo Campiglio Express to Malga Grual - Doss del Sabion, because the Monte Grual plateau crossing is severed. Green=start, red=end, purple=lifts, orange=pistes; numbers = step order."
   }
 ]

@@ -11,7 +11,12 @@
   #map{position:absolute;inset:0}
   #ui{position:absolute;z-index:2;top:10px;left:10px;background:rgba(255,255,255,.95);
       padding:11px 13px;border-radius:11px;box-shadow:0 2px 12px rgba(0,0,0,.28);max-width:330px;font-size:13px}
-  #ui h1{font-size:14px;margin:0 0 8px}
+  #ui h1{font-size:14px;margin:0 0 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;user-select:none}
+  #fold{font-size:13px;color:#555;transition:transform .15s}
+  #ui.collapsed{max-width:none}
+  #ui.collapsed h1{margin:0}
+  #ui.collapsed #uibody{display:none}
+  #ui.collapsed #fold{transform:rotate(-90deg)}
   #ui label{display:block;font-weight:600;margin:8px 0 3px;font-size:12px;color:#333}
   #ui select{font-size:13px;padding:4px 6px;width:100%}
   .toggles{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px}
@@ -26,7 +31,8 @@
 </head>
 <body>
 <div id="ui">
-  <h1>🗺️ SkiWaze map debug</h1>
+  <h1 id="uihead">🗺️ SkiWaze map debug <span id="fold" title="collapse/expand">▾</span></h1>
+  <div id="uibody">
   <label>Resort</label>
   <select id="resort"></select>
   <label>Investigation overlay</label>
@@ -60,6 +66,7 @@
     <div class="lg"><span class="dot" style="background:#1560ff"></span> overlay point</div>
   </details>
   <div class="notes" id="notes"></div>
+  </div>
 </div>
 <div id="map"></div>
 <script>
@@ -190,10 +197,10 @@ async function selectOverlay(overlayId){
   if(!overlayId){ curOverlayData=null; await drawOverlay(); applyToggles(); return; }
   const meta=OVERLAYS.find(o=>o.id===overlayId);
   curOverlayData=await fetch(`/devtools/overlays/${meta.file}`).then(r=>r.json());
-  // restrict the resort dropdown to resorts present in this overlay, and jump to the first
+  // keep every resort selectable; just jump to the first one this overlay has data for
   const ids=Object.keys(curOverlayData);
   const sel=el('resort');
-  [...sel.options].forEach(o=>{ o.hidden = ids.length>0 && !ids.includes(o.value); });
+  [...sel.options].forEach(o=>{ o.hidden=false; o.textContent=o.textContent.replace(/ \u25CF$/,'') + (ids.includes(o.value)?' \u25CF':''); });
   if(ids.length && !ids.includes(curResort)){ sel.value=ids[0]; await loadResort(ids[0]); }
   else { await drawOverlay(); }
   applyToggles();
@@ -215,6 +222,7 @@ async function selectOverlay(overlayId){
   el('findnode').onkeydown=(e)=>{ if(e.key==='Enter') gotoNode(e.target.value); };
   el('base').onchange=()=>{ map.setStyle(baseStyle(el('base').value)); map.once('styledata',async()=>{ if(curResort){ await loadResort(curResort); } }); };
   el('toggles').onchange=applyToggles;
+  el('uihead').onclick=()=>document.getElementById('ui').classList.toggle('collapsed');
 
   await new Promise(res=>map.loaded()?res():map.on('load',res));
   // default: open the first overlay so the tool is immediately useful
