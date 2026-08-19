@@ -2523,64 +2523,6 @@
     ],
     "notes": "<b>7 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
   },
-  "cervinia-zermatt": {
-    "focus": {
-      "bounds": [
-        [
-          7.7079574,
-          45.9343805
-        ],
-        [
-          7.708481684684721,
-          45.93451197161382
-        ]
-      ]
-    },
-    "lines": [
-      {
-        "coords": [
-          [
-            7.7079574,
-            45.9343805
-          ],
-          [
-            7.7082718,
-            45.9344319
-          ],
-          [
-            7.708481684684721,
-            45.93451197161382
-          ]
-        ],
-        "color": "#e11d1d",
-        "width": 4,
-        "label": "n856->n868 reverses (margin 16 m; fix n856 our3441~terr3424  n868 our3442~terr3439)"
-      }
-    ],
-    "points": [
-      {
-        "at": [
-          7.708481684684721,
-          45.93451197161382
-        ],
-        "color": "#22a06b",
-        "r": 16,
-        "tag": "n868",
-        "label": "SUGGESTED TOP (descend from here) · n868 · corrected 3439 m"
-      },
-      {
-        "at": [
-          7.7079574,
-          45.9343805
-        ],
-        "color": "#f59e0b",
-        "r": 14,
-        "tag": "n856",
-        "label": "current top (looks too high) · n856 · our 3441->3424 m"
-      }
-    ],
-    "notes": "<b>1 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
-  },
   "alpe-dhuez": {
     "focus": {
       "bounds": [

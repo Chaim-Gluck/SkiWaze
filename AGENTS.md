@@ -106,6 +106,9 @@ npm run check:trapped <id>   # nodes that can't reach a lift / are isolated
 npm run check:audit <id>     # false-elevation reversals + non-skiable long connections
 npm run check:elevation <id|all> [thresh]  # cross-check node elevations vs Terrarium DEM; lists
                              #   piste "reversal candidates" + clusters; writes a map-debug overlay
+                             #   (verified-good spots are silenced via `ignoreReversals` in the override)
+npm run probe:elevation <id> <node...>  # dump a node's edge neighbourhood: our elevation vs DEM at
+                             #   both ends of every edge — for a suspicious arrow the audit missed
 npm run check:overrides <id|all>  # validate id-based override entries (addConnectors /
                              #   setNodeElevation / mergeNodes) — catches stale ids after a refresh
 npm run routetest <id>       # routing smoke test from the summit

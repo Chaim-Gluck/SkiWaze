@@ -7,5 +7,8 @@
   ],
   "addConnectors": [
     { "from": "n856", "to": "n868", "kind": "flat_traverse", "bidirectional": true }
+  ],
+  "ignoreReversals": [
+    { "from": "n856", "to": "n868", "why": "Checked on the map: the two ends really are ~1 m apart on the glacier plateau, so our near-level orientation is right and the DEM's 15 m drop is wrong." }
   ]
 }

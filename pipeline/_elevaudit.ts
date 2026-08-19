@@ -14,9 +14,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
 import type { ResortGraph } from '../src/types/domain';
+import { loadOverrides } from './lib/overrides';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
+const OVERRIDE_DIR = path.join(ROOT, 'pipeline', 'overrides');
 const CACHE = path.join(ROOT, 'pipeline', '.cache', 'terrarium');
 const Z = 13; // ~13 m/pixel at 47°N — fine enough to localise a node, coarse enough to be stable
 const TILE_URL = (z: number, x: number, y: number) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`;
@@ -114,7 +116,7 @@ async function auditResort(id: string, thresh: number): Promise<OverlayEntry | n
   // whole cluster is corrected together is still caught — the failure mode that hides single spikes.
   const FLAT_EDGE = 60; // only skip clearly-steep pistes; a smaller fake gradient can still be a flip
   const DIR = 10;       // second source must disagree on flow direction by at least this many m
-  const flips: Array<{ from: string; to: string; ao: number; bo: number; ac: number; bc: number; margin: number; strong: boolean; changed: string; geom: Array<[number, number]> }> = [];
+  let flips: Array<{ from: string; to: string; ao: number; bo: number; ac: number; bc: number; margin: number; strong: boolean; changed: string; geom: Array<[number, number]> }> = [];
   const seenFlip = new Set<string>();
   for (const e of g.edges) {
     if (e.kind !== 'piste' || e.area) continue; // area (bowl) boundaries have no meaningful direction
@@ -136,6 +138,14 @@ async function auditResort(id: string, thresh: number): Promise<OverlayEntry | n
     }
   }
   flips.sort((a, b) => (Number(b.strong) - Number(a.strong)) || (b.margin - a.margin));
+
+  // Drop candidates a human already checked on the map and confirmed we have right (the DEM is
+  // wrong there, not us). Without this every future audit re-reports the same known-good spots and
+  // the real signal drowns. Matched on the unordered pair, since which way it points is the point.
+  const pairKey = (a: string, b: string) => [a, b].sort().join('~');
+  const ignored = new Set((loadOverrides(id, OVERRIDE_DIR)?.ignoreReversals ?? []).map((r) => pairKey(r.from, r.to)));
+  const suppressed = flips.filter((f) => ignored.has(pairKey(f.from, f.to)));
+  flips = flips.filter((f) => !ignored.has(pairKey(f.from, f.to)));
 
   // Build a map-tool overlay entry for the reversal candidates (green = suggested top per corrected
   // elevations; orange = current/too-high top). Confidence by reversal margin: >=20 m strong (red).
@@ -175,6 +185,9 @@ async function auditResort(id: string, thresh: number): Promise<OverlayEntry | n
     console.log(`  ${f.from}->${f.to}  now ${f.ao}->${f.bo}  corrected ${f.ac}->${f.bc}  margin ${f.margin}m [${conf}]  (fix: ${f.changed})`);
   }
   if (flips.length > 40) console.log(`  … and ${flips.length - 40} more`);
+  if (suppressed.length) {
+    console.log(`  (${suppressed.length} verified-good candidate(s) suppressed via ignoreReversals in overrides/${id}.json: ${suppressed.map((f) => `${f.from}->${f.to}`).join(', ')})`);
+  }
 
   console.log(`\n[CLUSTERS] groups of disagreeing nodes (fix together in overrides/${id}.json):`);
   for (const c of clusters.slice(0, 25)) {

@@ -44,6 +44,13 @@ export interface Overrides {
   }[];
   /** Force a lift's download capability on/off by lift name. */
   setLiftDownload?: { liftName: string; canDownload: boolean }[];
+  /**
+   * Reversal candidates that `npm run check:elevation` should stop reporting because a human
+   * checked them on the map and our orientation is right (the DEM is wrong, not us). Matched
+   * on the two endpoints in either direction. This is purely an audit filter — it never
+   * touches the graph — so the remaining audit output stays signal rather than known noise.
+   */
+  ignoreReversals?: { from: string; to: string; why?: string }[];
 }
 
 export function loadOverrides(resortId: string, dir: string): Overrides | null {
