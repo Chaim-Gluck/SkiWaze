@@ -1,7 +1,13 @@
 {
   "setNodeElevation": [
     { "node": "n386", "ele": 1952 },
-    { "node": "n226", "ele": 1635 }
+    { "node": "n226", "ele": 1635 },
+    { "node": "n438", "ele": 1956 },
+    { "node": "n101", "ele": 1903 },
+    { "node": "n42", "ele": 2097 },
+    { "node": "n155", "ele": 2079 },
+    { "node": "n175", "ele": 1735 },
+    { "node": "n176", "ele": 1719 }
   ],
   "addConnectors": [
     {

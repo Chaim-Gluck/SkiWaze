@@ -1,14 +1,5 @@
 [
   {
-    "id": "val-thorens-3vallees",
-    "name": "Val Thorens – Les 3 Vallées",
-    "country": "France",
-    "center": {
-      "lon": 6.58,
-      "lat": 45.36
-    }
-  },
-  {
     "id": "madonna-di-campiglio",
     "name": "Madonna di Campiglio",
     "country": "Italy",
@@ -33,6 +24,15 @@
     "center": {
       "lon": 11.808,
       "lat": 46.518
+    }
+  },
+  {
+    "id": "val-thorens-3vallees",
+    "name": "Val Thorens – Les 3 Vallées",
+    "country": "France",
+    "center": {
+      "lon": 6.58,
+      "lat": 45.36
     }
   },
   {
