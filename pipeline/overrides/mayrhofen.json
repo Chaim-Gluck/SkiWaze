@@ -1,28 +1,28 @@
 {
-  "_comment_elevation_reversals": "DEM under-sample fixes found via `npm run check:elevation` and confirmed on the topo map via the map debug tool's flow arrows. IDs are from the current `npm run data` build; `data:refresh` renumbers nodes and breaks these. Each pair was a piste reversed because our SRTM sample read one endpoint too low; corrected to the Terrarium DEM values (which matched the topo reads). Several were near-flat mis-samples that showed spurious both-way arrows and become clean one-way descents once corrected. n34 is a special case: it sits at a hut/restaurant entrance that is artificially flattened for pedestrian access, so it is set ~level with n276 (2073, within flat tolerance) to KEEP the n276<->n34 traverse bidirectional, deliberately overriding the DEM (which reads ~2083).",
+  "_comment_elevation_reversals": "DEM under-sample fixes found via `npm run check:elevation` and confirmed on the topo map via the map debug tool's flow arrows. Each pair was a piste reversed because our SRTM sample read one endpoint too low; corrected to the Terrarium DEM values (which matched the topo reads). Several were near-flat mis-samples that showed spurious both-way arrows and become clean one-way descents once corrected. n321004740 is a special case: it sits at a hut/restaurant entrance that is artificially flattened for pedestrian access, so it is set ~level with n7256146736 (2073, within flat tolerance) to KEEP the n7256146736<->n321004740 traverse bidirectional, deliberately overriding the DEM (which reads ~2083).",
   "setNodeElevation": [
-    { "node": "n24", "ele": 1983 },
-    { "node": "n161", "ele": 1946 },
-    { "node": "n89", "ele": 1952 },
-    { "node": "n183", "ele": 1916 },
-    { "node": "n219", "ele": 2033 },
-    { "node": "n220", "ele": 1999 },
-    { "node": "n429", "ele": 2389 },
-    { "node": "n128", "ele": 2366 },
-    { "node": "n340", "ele": 2050 },
-    { "node": "n341", "ele": 2031 },
-    { "node": "n430", "ele": 1897 },
-    { "node": "n41", "ele": 1879 },
-    { "node": "n447", "ele": 1720 },
-    { "node": "n351", "ele": 1701 },
-    { "node": "n276", "ele": 2072 },
-    { "node": "n227", "ele": 2058 },
-    { "node": "n117", "ele": 2140 },
-    { "node": "n13", "ele": 2128 },
-    { "node": "n34", "ele": 2073 },
-    { "node": "n6", "ele": 2400 }
+    { "node": "n321002946", "ele": 1983 },
+    { "node": "n321002959", "ele": 1946 },
+    { "node": "n3504064122", "ele": 1952 },
+    { "node": "n357164662", "ele": 1916 },
+    { "node": "n2183940176", "ele": 2033 },
+    { "node": "n2183964098", "ele": 1999 },
+    { "node": "n474792418", "ele": 2389 },
+    { "node": "n321002506", "ele": 2366 },
+    { "node": "n11694536224", "ele": 2050 },
+    { "node": "n333963576", "ele": 2031 },
+    { "node": "n321002745", "ele": 1897 },
+    { "node": "n321002746", "ele": 1879 },
+    { "node": "n12567381733", "ele": 1720 },
+    { "node": "n360066081", "ele": 1701 },
+    { "node": "n7256146736", "ele": 2072 },
+    { "node": "n2183940209", "ele": 2058 },
+    { "node": "n360067737", "ele": 2140 },
+    { "node": "n1130068925", "ele": 2128 },
+    { "node": "n321004740", "ele": 2073 },
+    { "node": "n281873162", "ele": 2400 }
   ],
   "addConnectors": [
-    { "from": "n34", "to": "n276", "kind": "flat_traverse", "bidirectional": true }
+    { "from": "n321004740", "to": "n7256146736", "kind": "flat_traverse", "bidirectional": true }
   ]
 }

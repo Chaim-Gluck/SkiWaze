@@ -14,9 +14,10 @@
       "maxLat": 47.21
     },
     "defaultZoom": 12,
-    "timezone": "Europe/Vienna"
+    "timezone": "Europe/Vienna",
+    "infoUrl": "https://www.stantonamarlberg.com/en/"
   },
-  "generatedAt": "2026-08-17T18:01:13.496Z",
+  "generatedAt": "2026-08-19T21:59:11.607Z",
   "stats": {
     "resortId": "st-anton-arlberg",
     "nodeCount": 823,
@@ -443,26 +444,26 @@
       "code": "unreachable_component",
       "message": "31 node(s) unreachable from the main lift network.",
       "refs": [
-        "n35",
-        "n49",
-        "n78",
-        "n116",
-        "n200",
-        "n210",
-        "n281",
-        "n306",
-        "n307",
-        "n309",
-        "n378",
-        "n380",
-        "n402",
-        "n403",
-        "n443",
-        "n444",
-        "n477",
-        "n544",
-        "n647",
-        "n648"
+        "n12826193329",
+        "n1516492436",
+        "n1419003068",
+        "n330035321",
+        "n12825370311",
+        "n1516492325",
+        "n279609287",
+        "n2616633254",
+        "n1165519841",
+        "n2616633264",
+        "n5568487914",
+        "n5568487920",
+        "n2616633344",
+        "n1075532537",
+        "n2406677016",
+        "n9366080665",
+        "n12823691506",
+        "n2587291684",
+        "n1516492392",
+        "n1516492390"
       ]
     }
   ]

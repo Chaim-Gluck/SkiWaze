@@ -14,9 +14,10 @@
       "maxLat": 45.17
     },
     "defaultZoom": 11.5,
-    "timezone": "Europe/Paris"
+    "timezone": "Europe/Paris",
+    "infoUrl": "https://www.alpedhuez.com/en/"
   },
-  "generatedAt": "2026-08-18T09:38:57.588Z",
+  "generatedAt": "2026-08-19T21:59:16.269Z",
   "stats": {
     "resortId": "alpe-dhuez",
     "nodeCount": 816,
@@ -411,24 +412,24 @@
       "code": "unreachable_component",
       "message": "18 node(s) unreachable from the main lift network.",
       "refs": [
-        "n475",
-        "n505",
-        "n506",
-        "n507",
-        "n508",
-        "n509",
-        "n510",
-        "n511",
-        "n512",
-        "n513",
-        "n514",
-        "n515",
-        "n516",
-        "n517",
-        "n518",
-        "n519",
-        "n544",
-        "n545"
+        "n11302085907",
+        "n11724195353",
+        "n11724195357",
+        "n11724195361",
+        "n11724215777",
+        "n11724215781",
+        "n11724215785",
+        "n11724215789",
+        "n11724215793",
+        "n11724215797",
+        "n11724215803",
+        "n11724215820",
+        "n11724215824",
+        "n11724215828",
+        "n11724215832",
+        "n3407639612",
+        "n11191667260",
+        "n13144682960"
       ]
     }
   ]

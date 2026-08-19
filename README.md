@@ -124,8 +124,11 @@ Verify any candidate on the map with the deep-link `?resort=<id>&at=<lat>,<lon>&
 | **Two runs that touch aren't joined**, or a hut splits into duplicates | Missing T-junction / over-eager merge | `mergeNodes` (join) or `removeEdges` / `addConnectors` as needed. |
 
 **Gotchas that bite every time:**
-- **`npm run data:refresh` renumbers all node ids**, so any id-based override entry breaks — after
-  a refresh, re-find and update the node ids in `overrides/<id>.json`.
+- **Node ids are stable**: a node is named after the smallest OSM node id in its merged cluster
+  (`n<osmId>`, plus `s<id>`/`k<id>` for the two synthetic passes), so `data:refresh` no longer
+  renumbers anything and id-based override entries survive a re-sync. Run
+  **`npm run check:overrides`** anyway after a refresh — if OSM deletes the exact node a cluster was
+  named after, that one id changes. **Edge ids are still order-dependent.**
 - The OSM cache is keyed by **resort id, not bbox** — after you change a resort's `bbox` you must
   `data:refresh` (not plain `data`) to actually re-fetch.
 - **Never add per-resort routing code.** All corrections are data (`RESORTS` entry + override

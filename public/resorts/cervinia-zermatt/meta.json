@@ -17,7 +17,7 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-08-19T21:22:42.441Z",
+  "generatedAt": "2026-08-19T21:58:54.518Z",
   "stats": {
     "resortId": "cervinia-zermatt",
     "nodeCount": 937,
@@ -460,18 +460,18 @@
       "code": "unreachable_component",
       "message": "12 node(s) unreachable from the main lift network.",
       "refs": [
-        "n41",
-        "n42",
-        "n126",
-        "n128",
-        "n250",
-        "n270",
-        "n420",
-        "n426",
-        "n429",
-        "n437",
-        "n439",
-        "n440"
+        "n253323902",
+        "n253323904",
+        "n7847562228",
+        "n342764945",
+        "n690807925",
+        "n726588724",
+        "n2999922199",
+        "n6480313308",
+        "n7206042373",
+        "n12944659729",
+        "n3165652504",
+        "n7206060823"
       ]
     }
   ]

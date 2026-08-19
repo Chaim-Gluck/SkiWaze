@@ -101,9 +101,12 @@ npm run lint           # oxlint
 # Data pipeline
 npm run data <id>      # build one resort (uses 30-day disk cache)
 npm run data:all       # build all resorts
-npm run data:refresh   # force re-fetch OSM (ignores cache; renumbers node ids)
+npm run data:refresh   # force re-fetch OSM (ignores cache)
 npm run check:trapped <id>   # nodes that can't reach a lift / are isolated
 npm run check:audit <id>     # false-elevation reversals + non-skiable long connections
+npm run check:graphdiff <id|all>  # structural diff of the built graph vs the committed one:
+                             #   matches nodes by position and compares edges as a multiset, so a
+                             #   pure id change reports "IDENTICAL (relabelled only)"
 npm run check:elevation <id|all> [thresh]  # cross-check node elevations vs Terrarium DEM; lists
                              #   piste "reversal candidates" + clusters; writes a map-debug overlay
                              #   (verified-good spots are silenced via `ignoreReversals` in the override)
@@ -143,17 +146,26 @@ npm run routetest <id>       # routing smoke test from the summit
   mode catches errors the root `--noEmit` misses (a TS2367 once passed `--noEmit` but failed CI).
 - **Triple/parallel piste lines** were OSM `area=yes` polygons rendered as perimeters. Fix:
   keep areas in the graph, exclude from render lines, emit as polygon fills (see invariants).
-- **`data:refresh` renumbers all node ids**, which breaks id-based `overrides/<id>.json`
-  entries — re-find and update override node ids after a refresh. This has bitten us: past
-  `addConnectors` became multi-km "teleport" links (e.g. a 12 km flat traverse in Madonna) that
-  silently corrupt routing. Run **`npm run check:overrides`** to catch them — it flags long
-  connectors and classifies them **stale** (redundant: removing changes reachability nothing → the
-  ids now point at already-connected nodes) vs **load-bearing** (removing strands nodes → probably a
-  real long link like a skiroute or pedestrian gondola — verify, don't auto-remove). To recover a
-  connector's *original* intent, read its endpoints' coordinates from the `graph.json` at the commit
-  that added it (`git show <commit>:public/resorts/<id>/graph.json`) and map those coordinates back
-  to today's node ids. `setNodeElevation` entries are also id-based but the check found none stale
-  (each stayed consistent with its node's neighbours). The real cure is stable node ids (planned).
+- **Node ids are stable, derived from OSM.** A merged cluster is named `n<smallest OSM node id in
+  the cluster>`; the two synthetic passes name their node after the node it serves (`s<id>` for a
+  dead-end snap, `k<id>` for a lift-top ski-out). Ids therefore do **not** depend on iteration order,
+  so `data:refresh` no longer renumbers anything and id-based `overrides/<id>.json` entries survive.
+  A refresh can still change *one* id if OSM deletes the specific node a cluster was named after —
+  the damage is now local and `npm run check:overrides` names it, instead of every id shifting at once.
+  Verified by rebuilding all 13 resorts (`check:graphdiff` → identical) and by reshuffling a resort's
+  Overpass input order and confirming every id and edge came out the same.
+  - *Historical note (why this matters):* ids used to be a global counter, so any refresh silently
+    repointed override entries. Past `addConnectors` became multi-km "teleport" links (e.g. a 12 km
+    flat traverse in Madonna) that quietly corrupted routing. **`npm run check:overrides`** still
+    exists as the safety net: it flags long connectors and classifies them **stale** (redundant:
+    removing changes reachability nothing → the ids point at already-connected nodes) vs
+    **load-bearing** (removing strands nodes → probably a real long link like a skiroute or
+    pedestrian gondola — verify, don't auto-remove). To recover a connector's *original* intent, read
+    its endpoints' coordinates from the `graph.json` at the commit that added it
+    (`git show <commit>:public/resorts/<id>/graph.json`) and map those coordinates back to today's ids.
+  - **Edge ids (`e<idx>`) are still order-dependent** — a follow-up. They leak into user localStorage
+    (`edge:<id>` closure keys, `customNodes.attachEdgeId`), so those entries can still be orphaned by
+    a rebuild. Closures keyed by name (`lift:<name>`, `piste:<ref>~<name>`) are already stable.
 - **Longest-run "doubling-back"** was winding piste edges (descend-then-climb) over-rewarded by
   raw length; fixed by scoring straight-line progress and penalizing internal uphill.
 - **Islands / one-way sub-areas**: find via strongly-connected-component analysis, not just

@@ -14,9 +14,10 @@
       "maxLat": 46.99
     },
     "defaultZoom": 12,
-    "timezone": "Europe/Vienna"
+    "timezone": "Europe/Vienna",
+    "infoUrl": "https://www.soelden.com/en/"
   },
-  "generatedAt": "2026-08-18T09:14:34.432Z",
+  "generatedAt": "2026-08-19T21:59:13.129Z",
   "stats": {
     "resortId": "soelden",
     "nodeCount": 549,
@@ -195,16 +196,16 @@
       "code": "unreachable_component",
       "message": "10 node(s) unreachable from the main lift network.",
       "refs": [
-        "n22",
-        "n62",
-        "n134",
-        "n153",
-        "n236",
-        "n237",
-        "n297",
-        "n346",
-        "n391",
-        "n499"
+        "n333227642",
+        "n1613091796",
+        "n3240692336",
+        "n314638719",
+        "n10957721631",
+        "n10957721644",
+        "n5007594064",
+        "n3236225861",
+        "n4486811279",
+        "sn10957721631"
       ]
     }
   ]

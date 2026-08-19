@@ -1,11 +1,11 @@
 {
-  "_comment": "St. Anton am Arlberg (Ski Arlberg) corrections. IDS ARE FROM THE CURRENT `npm run data` BUILD; `data:refresh` renumbers nodes and will break these. Main fix: reconnect the Zurs->Lech Madloch descent (OSM gap) so the Flexenbahn interconnection routes end-to-end; plus a few stray-endpoint snaps.",
+  "_comment": "St. Anton am Arlberg (Ski Arlberg) corrections. Main fix: reconnect the Zurs->Lech Madloch descent (OSM gap) so the Flexenbahn interconnection routes end-to-end; plus a few stray-endpoint snaps.",
   "addConnectors": [
-    { "from": "n424", "to": "n299", "kind": "skiable_down" },
-    { "from": "n300", "to": "n441", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n471", "to": "n223", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n312", "to": "n446", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n623", "to": "n488", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n219", "to": "n491", "kind": "flat_traverse", "bidirectional": true }
+    { "from": "n1623687503", "to": "n279736879", "kind": "skiable_down" },
+    { "from": "n1437496212", "to": "n1436596085", "kind": "flat_traverse", "bidirectional": true },
+    { "from": "n12798747121", "to": "n487179638", "kind": "flat_traverse", "bidirectional": true },
+    { "from": "n612548368", "to": "n6682123969", "kind": "flat_traverse", "bidirectional": true },
+    { "from": "n327300760", "to": "n328068749", "kind": "flat_traverse", "bidirectional": true },
+    { "from": "n327358947", "to": "n6711103844", "kind": "flat_traverse", "bidirectional": true }
   ]
 }

@@ -17,7 +17,7 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.mayrhofner-bergbahnen.com/en/"
   },
-  "generatedAt": "2026-08-19T21:11:21.110Z",
+  "generatedAt": "2026-08-19T21:59:12.642Z",
   "stats": {
     "resortId": "mayrhofen",
     "nodeCount": 548,
@@ -328,10 +328,10 @@
       "code": "unreachable_component",
       "message": "4 node(s) unreachable from the main lift network.",
       "refs": [
-        "n83",
-        "n115",
-        "n454",
-        "n455"
+        "n1128771612",
+        "n1128771578",
+        "n12615968581",
+        "n3338008216"
       ]
     }
   ]

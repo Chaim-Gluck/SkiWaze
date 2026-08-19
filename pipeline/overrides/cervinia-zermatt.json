@@ -1,14 +1,14 @@
 {
-  "_comment": "n856<->n868: 44m near-flat link at ~3450m (glacier plateau). The DEM cross-check wants a 15m drop here, but on-map verification reads the two ends as ~1m apart, so the elevations are left alone and the link is made two-way instead of a one-way piste.",
+  "_comment": "sn3400152764<->sn240324408: 44m near-flat link at ~3450m (glacier plateau). The DEM cross-check wants a 15m drop here, but on-map verification reads the two ends as ~1m apart, so the elevations are left alone and the link is made two-way instead of a one-way piste.",
   "setNodeElevation": [
-    { "node": "n444", "ele": 1800 },
-    { "node": "n142", "ele": 3052 },
-    { "node": "n906", "ele": 3065 }
+    { "node": "n1906820697", "ele": 1800 },
+    { "node": "n342786568", "ele": 3052 },
+    { "node": "sn1004274415", "ele": 3065 }
   ],
   "addConnectors": [
-    { "from": "n856", "to": "n868", "kind": "flat_traverse", "bidirectional": true }
+    { "from": "sn3400152764", "to": "sn240324408", "kind": "flat_traverse", "bidirectional": true }
   ],
   "ignoreReversals": [
-    { "from": "n856", "to": "n868", "why": "Checked on the map: the two ends really are ~1 m apart on the glacier plateau, so our near-level orientation is right and the DEM's 15 m drop is wrong." }
+    { "from": "sn3400152764", "to": "sn240324408", "why": "Checked on the map: the two ends really are ~1 m apart on the glacier plateau, so our near-level orientation is right and the DEM's 15 m drop is wrong." }
   ]
 }

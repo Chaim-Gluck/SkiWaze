@@ -46,7 +46,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n85->n11 reverses (margin 55 m; fix n85 our3230~terr3191  n11 our3171~terr3245)"
+        "label": "n1540142878->n313310536 reverses (margin 55 m; fix n1540142878 our3230~terr3191  n313310536 our3171~terr3245)"
       },
       {
         "coords": [
@@ -73,7 +73,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n31->n308 reverses (margin 35 m; fix n31 our2513~terr2491  n308 our2491~terr2526)"
+        "label": "n597614331->n3241281746 reverses (margin 35 m; fix n597614331 our2513~terr2491  n3241281746 our2491~terr2526)"
       },
       {
         "coords": [
@@ -96,7 +96,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n25->n55 reverses (margin 32 m; fix n25 our2388~terr2360  n55 our2372~terr2392)"
+        "label": "n3241308016->n3241308028 reverses (margin 32 m; fix n3241308016 our2388~terr2360  n3241308028 our2372~terr2392)"
       },
       {
         "coords": [
@@ -127,7 +127,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n108->n215 reverses (margin 24 m; fix n108 our2497~terr2480  n215 our2488~terr2504)"
+        "label": "n4486811266->n4486811287 reverses (margin 24 m; fix n4486811266 our2497~terr2480  n4486811287 our2488~terr2504)"
       },
       {
         "coords": [
@@ -182,7 +182,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n355->n83 reverses (margin 24 m; fix n355 our2957~terr2963  n83 our2953~terr2987)"
+        "label": "n4380516946->n3229720256 reverses (margin 24 m; fix n4380516946 our2957~terr2963  n3229720256 our2953~terr2987)"
       },
       {
         "coords": [
@@ -237,7 +237,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n348->n60 reverses (margin 21 m; fix n348 our2643~terr2634  n60 our2626~terr2655)"
+        "label": "n4394538290->n261983126 reverses (margin 21 m; fix n4394538290 our2643~terr2634  n261983126 our2626~terr2655)"
       },
       {
         "coords": [
@@ -264,7 +264,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n322->n327 reverses (margin 20 m; fix n322 our1706~terr1693  n327 our1692~terr1713)"
+        "label": "n13061370844->n13061360717 reverses (margin 20 m; fix n13061370844 our1706~terr1693  n13061360717 our1692~terr1713)"
       },
       {
         "coords": [
@@ -299,7 +299,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n171->n245 reverses (margin 17 m; fix n171 our2306~terr2265  n245 our2269~terr2282)"
+        "label": "n3220184832->n3230259411 reverses (margin 17 m; fix n3220184832 our2306~terr2265  n3230259411 our2269~terr2282)"
       },
       {
         "coords": [
@@ -366,7 +366,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n111->n63 reverses (margin 11 m; fix n111 our2748~terr2739  n63 our2744~terr2751)"
+        "label": "n3229639521->n1613091793 reverses (margin 11 m; fix n3229639521 our2748~terr2739  n1613091793 our2744~terr2751)"
       },
       {
         "coords": [
@@ -393,7 +393,7 @@
         ],
         "color": "#f59e0b",
         "width": 4,
-        "label": "n209->n394 reverses (margin 12 m; fix n209 our2358~terr2311  n394 our2307~terr2323)"
+        "label": "n6873417842->n4394797326 reverses (margin 12 m; fix n6873417842 our2358~terr2311  n4394797326 our2307~terr2323)"
       }
     ],
     "points": [
@@ -404,8 +404,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n11",
-        "label": "SUGGESTED TOP (descend from here) · n11 · corrected 3245 m"
+        "tag": "n313310536",
+        "label": "SUGGESTED TOP (descend from here) · n313310536 · corrected 3245 m"
       },
       {
         "at": [
@@ -414,8 +414,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n85",
-        "label": "current top (looks too high) · n85 · our 3230->3191 m"
+        "tag": "n1540142878",
+        "label": "current top (looks too high) · n1540142878 · our 3230->3191 m"
       },
       {
         "at": [
@@ -424,8 +424,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n308",
-        "label": "SUGGESTED TOP (descend from here) · n308 · corrected 2526 m"
+        "tag": "n3241281746",
+        "label": "SUGGESTED TOP (descend from here) · n3241281746 · corrected 2526 m"
       },
       {
         "at": [
@@ -434,8 +434,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n31",
-        "label": "current top (looks too high) · n31 · our 2513->2491 m"
+        "tag": "n597614331",
+        "label": "current top (looks too high) · n597614331 · our 2513->2491 m"
       },
       {
         "at": [
@@ -444,8 +444,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n55",
-        "label": "SUGGESTED TOP (descend from here) · n55 · corrected 2392 m"
+        "tag": "n3241308028",
+        "label": "SUGGESTED TOP (descend from here) · n3241308028 · corrected 2392 m"
       },
       {
         "at": [
@@ -454,8 +454,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n25",
-        "label": "current top (looks too high) · n25 · our 2388->2360 m"
+        "tag": "n3241308016",
+        "label": "current top (looks too high) · n3241308016 · our 2388->2360 m"
       },
       {
         "at": [
@@ -464,8 +464,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n215",
-        "label": "SUGGESTED TOP (descend from here) · n215 · corrected 2504 m"
+        "tag": "n4486811287",
+        "label": "SUGGESTED TOP (descend from here) · n4486811287 · corrected 2504 m"
       },
       {
         "at": [
@@ -474,8 +474,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n108",
-        "label": "current top (looks too high) · n108 · our 2497->2480 m"
+        "tag": "n4486811266",
+        "label": "current top (looks too high) · n4486811266 · our 2497->2480 m"
       },
       {
         "at": [
@@ -484,8 +484,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n83",
-        "label": "SUGGESTED TOP (descend from here) · n83 · corrected 2987 m"
+        "tag": "n3229720256",
+        "label": "SUGGESTED TOP (descend from here) · n3229720256 · corrected 2987 m"
       },
       {
         "at": [
@@ -494,8 +494,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n355",
-        "label": "current top (looks too high) · n355 · our 2957->2963 m"
+        "tag": "n4380516946",
+        "label": "current top (looks too high) · n4380516946 · our 2957->2963 m"
       },
       {
         "at": [
@@ -504,8 +504,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n60",
-        "label": "SUGGESTED TOP (descend from here) · n60 · corrected 2655 m"
+        "tag": "n261983126",
+        "label": "SUGGESTED TOP (descend from here) · n261983126 · corrected 2655 m"
       },
       {
         "at": [
@@ -514,8 +514,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n348",
-        "label": "current top (looks too high) · n348 · our 2643->2634 m"
+        "tag": "n4394538290",
+        "label": "current top (looks too high) · n4394538290 · our 2643->2634 m"
       },
       {
         "at": [
@@ -524,8 +524,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n327",
-        "label": "SUGGESTED TOP (descend from here) · n327 · corrected 1713 m"
+        "tag": "n13061360717",
+        "label": "SUGGESTED TOP (descend from here) · n13061360717 · corrected 1713 m"
       },
       {
         "at": [
@@ -534,8 +534,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n322",
-        "label": "current top (looks too high) · n322 · our 1706->1693 m"
+        "tag": "n13061370844",
+        "label": "current top (looks too high) · n13061370844 · our 1706->1693 m"
       },
       {
         "at": [
@@ -544,8 +544,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n245",
-        "label": "SUGGESTED TOP (descend from here) · n245 · corrected 2282 m"
+        "tag": "n3230259411",
+        "label": "SUGGESTED TOP (descend from here) · n3230259411 · corrected 2282 m"
       },
       {
         "at": [
@@ -554,8 +554,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n171",
-        "label": "current top (looks too high) · n171 · our 2306->2265 m"
+        "tag": "n3220184832",
+        "label": "current top (looks too high) · n3220184832 · our 2306->2265 m"
       },
       {
         "at": [
@@ -564,8 +564,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n63",
-        "label": "SUGGESTED TOP (descend from here) · n63 · corrected 2751 m"
+        "tag": "n1613091793",
+        "label": "SUGGESTED TOP (descend from here) · n1613091793 · corrected 2751 m"
       },
       {
         "at": [
@@ -574,8 +574,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n111",
-        "label": "current top (looks too high) · n111 · our 2748->2739 m"
+        "tag": "n3229639521",
+        "label": "current top (looks too high) · n3229639521 · our 2748->2739 m"
       },
       {
         "at": [
@@ -584,8 +584,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n394",
-        "label": "SUGGESTED TOP (descend from here) · n394 · corrected 2323 m"
+        "tag": "n4394797326",
+        "label": "SUGGESTED TOP (descend from here) · n4394797326 · corrected 2323 m"
       },
       {
         "at": [
@@ -594,8 +594,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n209",
-        "label": "current top (looks too high) · n209 · our 2358->2311 m"
+        "tag": "n6873417842",
+        "label": "current top (looks too high) · n6873417842 · our 2358->2311 m"
       }
     ],
     "notes": "<b>10 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
@@ -643,7 +643,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n279->n272 reverses (margin 31 m; fix n279 our3298~terr3285  n272 our3275~terr3316)"
+        "label": "n12573326646->n12573326639 reverses (margin 31 m; fix n12573326646 our3298~terr3285  n12573326639 our3275~terr3316)"
       },
       {
         "coords": [
@@ -666,7 +666,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n34->n32 reverses (margin 23 m; fix n34 our2700~terr2671  n32 our2696~terr2694)"
+        "label": "n253705386->n566502440 reverses (margin 23 m; fix n253705386 our2700~terr2671  n566502440 our2696~terr2694)"
       },
       {
         "coords": [
@@ -733,7 +733,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n171->n425 reverses (margin 15 m; fix n171 our2081~terr2047  n425 our2062~terr2062)"
+        "label": "n6055347767->n4165119411 reverses (margin 15 m; fix n6055347767 our2081~terr2047  n4165119411 our2062~terr2062)"
       },
       {
         "coords": [
@@ -756,7 +756,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n26->n230 reverses (margin 15 m; fix n26 our3275~terr3246  n230 our3260~terr3262)"
+        "label": "n336366315->n336366293 reverses (margin 15 m; fix n336366315 our3275~terr3246  n336366293 our3260~terr3262)"
       },
       {
         "coords": [
@@ -791,7 +791,7 @@
         ],
         "color": "#f59e0b",
         "width": 4,
-        "label": "n29->n28 reverses (margin 11 m; fix n29 our2616~terr2609  n28 our2596~terr2620)"
+        "label": "n336366375->n6187947571 reverses (margin 11 m; fix n336366375 our2616~terr2609  n6187947571 our2596~terr2620)"
       }
     ],
     "points": [
@@ -802,8 +802,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n272",
-        "label": "SUGGESTED TOP (descend from here) · n272 · corrected 3316 m"
+        "tag": "n12573326639",
+        "label": "SUGGESTED TOP (descend from here) · n12573326639 · corrected 3316 m"
       },
       {
         "at": [
@@ -812,8 +812,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n279",
-        "label": "current top (looks too high) · n279 · our 3298->3285 m"
+        "tag": "n12573326646",
+        "label": "current top (looks too high) · n12573326646 · our 3298->3285 m"
       },
       {
         "at": [
@@ -822,8 +822,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n32",
-        "label": "SUGGESTED TOP (descend from here) · n32 · corrected 2694 m"
+        "tag": "n566502440",
+        "label": "SUGGESTED TOP (descend from here) · n566502440 · corrected 2694 m"
       },
       {
         "at": [
@@ -832,8 +832,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n34",
-        "label": "current top (looks too high) · n34 · our 2700->2671 m"
+        "tag": "n253705386",
+        "label": "current top (looks too high) · n253705386 · our 2700->2671 m"
       },
       {
         "at": [
@@ -842,8 +842,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n425",
-        "label": "SUGGESTED TOP (descend from here) · n425 · corrected 2062 m"
+        "tag": "n4165119411",
+        "label": "SUGGESTED TOP (descend from here) · n4165119411 · corrected 2062 m"
       },
       {
         "at": [
@@ -852,8 +852,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n171",
-        "label": "current top (looks too high) · n171 · our 2081->2047 m"
+        "tag": "n6055347767",
+        "label": "current top (looks too high) · n6055347767 · our 2081->2047 m"
       },
       {
         "at": [
@@ -862,8 +862,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n230",
-        "label": "SUGGESTED TOP (descend from here) · n230 · corrected 3262 m"
+        "tag": "n336366293",
+        "label": "SUGGESTED TOP (descend from here) · n336366293 · corrected 3262 m"
       },
       {
         "at": [
@@ -872,8 +872,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n26",
-        "label": "current top (looks too high) · n26 · our 3275->3246 m"
+        "tag": "n336366315",
+        "label": "current top (looks too high) · n336366315 · our 3275->3246 m"
       },
       {
         "at": [
@@ -882,8 +882,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n28",
-        "label": "SUGGESTED TOP (descend from here) · n28 · corrected 2620 m"
+        "tag": "n6187947571",
+        "label": "SUGGESTED TOP (descend from here) · n6187947571 · corrected 2620 m"
       },
       {
         "at": [
@@ -892,8 +892,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n29",
-        "label": "current top (looks too high) · n29 · our 2616->2609 m"
+        "tag": "n336366375",
+        "label": "current top (looks too high) · n336366375 · our 2616->2609 m"
       }
     ],
     "notes": "<b>5 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
@@ -949,7 +949,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n180->n106 reverses (margin 31 m; fix n180 our2592~terr2549  n106 our2549~terr2580)"
+        "label": "n670299461->n364314441 reverses (margin 31 m; fix n670299461 our2592~terr2549  n364314441 our2549~terr2580)"
       },
       {
         "coords": [
@@ -976,7 +976,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n447->n558 reverses (margin 16 m; fix n447 our2191~terr2153  n558 our2141~terr2170)"
+        "label": "n2528123393->n2528123389 reverses (margin 16 m; fix n2528123393 our2191~terr2153  n2528123389 our2141~terr2170)"
       },
       {
         "coords": [
@@ -999,7 +999,7 @@
         ],
         "color": "#f59e0b",
         "width": 4,
-        "label": "n913->n96 reverses (margin 12 m; fix n913 our2314~terr2295  n96 our2284~terr2307)"
+        "label": "sn339242907->n240915162 reverses (margin 12 m; fix sn339242907 our2314~terr2295  n240915162 our2284~terr2307)"
       },
       {
         "coords": [
@@ -1022,7 +1022,7 @@
         ],
         "color": "#f59e0b",
         "width": 4,
-        "label": "n355->n356 reverses (margin 11 m; fix n355 our1604~terr1621  n356 our1592~terr1632)"
+        "label": "n2337251866->n2445906522 reverses (margin 11 m; fix n2337251866 our1604~terr1621  n2445906522 our1592~terr1632)"
       }
     ],
     "points": [
@@ -1033,8 +1033,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n106",
-        "label": "SUGGESTED TOP (descend from here) · n106 · corrected 2580 m"
+        "tag": "n364314441",
+        "label": "SUGGESTED TOP (descend from here) · n364314441 · corrected 2580 m"
       },
       {
         "at": [
@@ -1043,8 +1043,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n180",
-        "label": "current top (looks too high) · n180 · our 2592->2549 m"
+        "tag": "n670299461",
+        "label": "current top (looks too high) · n670299461 · our 2592->2549 m"
       },
       {
         "at": [
@@ -1053,8 +1053,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n558",
-        "label": "SUGGESTED TOP (descend from here) · n558 · corrected 2170 m"
+        "tag": "n2528123389",
+        "label": "SUGGESTED TOP (descend from here) · n2528123389 · corrected 2170 m"
       },
       {
         "at": [
@@ -1063,8 +1063,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n447",
-        "label": "current top (looks too high) · n447 · our 2191->2153 m"
+        "tag": "n2528123393",
+        "label": "current top (looks too high) · n2528123393 · our 2191->2153 m"
       },
       {
         "at": [
@@ -1073,8 +1073,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n96",
-        "label": "SUGGESTED TOP (descend from here) · n96 · corrected 2307 m"
+        "tag": "n240915162",
+        "label": "SUGGESTED TOP (descend from here) · n240915162 · corrected 2307 m"
       },
       {
         "at": [
@@ -1083,8 +1083,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n913",
-        "label": "current top (looks too high) · n913 · our 2314->2295 m"
+        "tag": "sn339242907",
+        "label": "current top (looks too high) · sn339242907 · our 2314->2295 m"
       },
       {
         "at": [
@@ -1093,8 +1093,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n356",
-        "label": "SUGGESTED TOP (descend from here) · n356 · corrected 1632 m"
+        "tag": "n2445906522",
+        "label": "SUGGESTED TOP (descend from here) · n2445906522 · corrected 1632 m"
       },
       {
         "at": [
@@ -1103,8 +1103,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n355",
-        "label": "current top (looks too high) · n355 · our 1604->1621 m"
+        "tag": "n2337251866",
+        "label": "current top (looks too high) · n2337251866 · our 1604->1621 m"
       }
     ],
     "notes": "<b>4 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
@@ -1148,7 +1148,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n633->n816 reverses (margin 39 m; fix n633 our1814~terr1807  n816 our1807~terr1845)"
+        "label": "n279745368->sn1073869051 reverses (margin 39 m; fix n279745368 our1814~terr1807  sn1073869051 our1807~terr1845)"
       },
       {
         "coords": [
@@ -1247,7 +1247,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n453->n214 reverses (margin 26 m; fix n453 our2097~terr2076  n214 our2076~terr2102)"
+        "label": "n12794014900->n1073869079 reverses (margin 26 m; fix n12794014900 our2097~terr2076  n1073869079 our2076~terr2102)"
       },
       {
         "coords": [
@@ -1274,7 +1274,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n15->n16 reverses (margin 19 m; fix n15 our2114~terr2096  n16 our2103~terr2114)"
+        "label": "n327291123->n327293573 reverses (margin 19 m; fix n327291123 our2114~terr2096  n327293573 our2103~terr2114)"
       },
       {
         "coords": [
@@ -1341,7 +1341,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n373->n374 reverses (margin 19 m; fix n373 our1590~terr1554  n374 our1585~terr1573)"
+        "label": "n5567486522->n5567486537 reverses (margin 19 m; fix n5567486522 our1590~terr1554  n5567486537 our1585~terr1573)"
       },
       {
         "coords": [
@@ -1376,7 +1376,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n181->n4 reverses (margin 15 m; fix n181 our2267~terr2249  n4 our2245~terr2264)"
+        "label": "n12804053842->n279609178 reverses (margin 15 m; fix n12804053842 our2267~terr2249  n279609178 our2245~terr2264)"
       },
       {
         "coords": [
@@ -1507,7 +1507,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n35->n34 reverses (margin 14 m; fix n35 our1861~terr1841  n34 our1824~terr1855)"
+        "label": "n12826193329->n1075531655 reverses (margin 14 m; fix n12826193329 our1861~terr1841  n1075531655 our1824~terr1855)"
       },
       {
         "coords": [
@@ -1534,7 +1534,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n175->n351 reverses (margin 11 m; fix n175 our1369~terr1334  n351 our1322~terr1345)"
+        "label": "n2073957832->n2073957844 reverses (margin 11 m; fix n2073957832 our1369~terr1334  n2073957844 our1322~terr1345)"
       }
     ],
     "points": [
@@ -1545,8 +1545,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n816",
-        "label": "SUGGESTED TOP (descend from here) · n816 · corrected 1845 m"
+        "tag": "sn1073869051",
+        "label": "SUGGESTED TOP (descend from here) · sn1073869051 · corrected 1845 m"
       },
       {
         "at": [
@@ -1555,8 +1555,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n633",
-        "label": "current top (looks too high) · n633 · our 1814->1807 m"
+        "tag": "n279745368",
+        "label": "current top (looks too high) · n279745368 · our 1814->1807 m"
       },
       {
         "at": [
@@ -1565,8 +1565,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n214",
-        "label": "SUGGESTED TOP (descend from here) · n214 · corrected 2102 m"
+        "tag": "n1073869079",
+        "label": "SUGGESTED TOP (descend from here) · n1073869079 · corrected 2102 m"
       },
       {
         "at": [
@@ -1575,8 +1575,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n453",
-        "label": "current top (looks too high) · n453 · our 2097->2076 m"
+        "tag": "n12794014900",
+        "label": "current top (looks too high) · n12794014900 · our 2097->2076 m"
       },
       {
         "at": [
@@ -1585,8 +1585,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n16",
-        "label": "SUGGESTED TOP (descend from here) · n16 · corrected 2114 m"
+        "tag": "n327293573",
+        "label": "SUGGESTED TOP (descend from here) · n327293573 · corrected 2114 m"
       },
       {
         "at": [
@@ -1595,8 +1595,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n15",
-        "label": "current top (looks too high) · n15 · our 2114->2096 m"
+        "tag": "n327291123",
+        "label": "current top (looks too high) · n327291123 · our 2114->2096 m"
       },
       {
         "at": [
@@ -1605,8 +1605,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n374",
-        "label": "SUGGESTED TOP (descend from here) · n374 · corrected 1573 m"
+        "tag": "n5567486537",
+        "label": "SUGGESTED TOP (descend from here) · n5567486537 · corrected 1573 m"
       },
       {
         "at": [
@@ -1615,8 +1615,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n373",
-        "label": "current top (looks too high) · n373 · our 1590->1554 m"
+        "tag": "n5567486522",
+        "label": "current top (looks too high) · n5567486522 · our 1590->1554 m"
       },
       {
         "at": [
@@ -1625,8 +1625,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n4",
-        "label": "SUGGESTED TOP (descend from here) · n4 · corrected 2264 m"
+        "tag": "n279609178",
+        "label": "SUGGESTED TOP (descend from here) · n279609178 · corrected 2264 m"
       },
       {
         "at": [
@@ -1635,8 +1635,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n181",
-        "label": "current top (looks too high) · n181 · our 2267->2249 m"
+        "tag": "n12804053842",
+        "label": "current top (looks too high) · n12804053842 · our 2267->2249 m"
       },
       {
         "at": [
@@ -1645,8 +1645,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n34",
-        "label": "SUGGESTED TOP (descend from here) · n34 · corrected 1855 m"
+        "tag": "n1075531655",
+        "label": "SUGGESTED TOP (descend from here) · n1075531655 · corrected 1855 m"
       },
       {
         "at": [
@@ -1655,8 +1655,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n35",
-        "label": "current top (looks too high) · n35 · our 1861->1841 m"
+        "tag": "n12826193329",
+        "label": "current top (looks too high) · n12826193329 · our 1861->1841 m"
       },
       {
         "at": [
@@ -1665,8 +1665,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n351",
-        "label": "SUGGESTED TOP (descend from here) · n351 · corrected 1345 m"
+        "tag": "n2073957844",
+        "label": "SUGGESTED TOP (descend from here) · n2073957844 · corrected 1345 m"
       },
       {
         "at": [
@@ -1675,8 +1675,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n175",
-        "label": "current top (looks too high) · n175 · our 1369->1334 m"
+        "tag": "n2073957832",
+        "label": "current top (looks too high) · n2073957832 · our 1369->1334 m"
       }
     ],
     "notes": "<b>7 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
@@ -1732,7 +1732,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n130->n658 reverses (margin 28 m; fix n130 our1690~terr1674  n658 our1682~terr1702)"
+        "label": "n11619982845->n357433602 reverses (margin 28 m; fix n11619982845 our1690~terr1674  n357433602 our1682~terr1702)"
       },
       {
         "coords": [
@@ -1807,7 +1807,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n273->n271 reverses (margin 27 m; fix n273 our1797~terr1762  n271 our1752~terr1788)"
+        "label": "n6067525020->n6067525004 reverses (margin 27 m; fix n6067525020 our1797~terr1762  n6067525004 our1752~terr1788)"
       },
       {
         "coords": [
@@ -1842,7 +1842,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n88->n35 reverses (margin 25 m; fix n88 our2832~terr2817  n35 our2811~terr2842)"
+        "label": "n357432066->n357432048 reverses (margin 25 m; fix n357432066 our2832~terr2817  n357432048 our2811~terr2842)"
       },
       {
         "coords": [
@@ -1861,7 +1861,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n454->n155 reverses (margin 21 m; fix n454 our2468~terr2462  n155 our2456~terr2483)"
+        "label": "n364123464->n364123462 reverses (margin 21 m; fix n364123464 our2468~terr2462  n364123462 our2456~terr2483)"
       },
       {
         "coords": [
@@ -1908,7 +1908,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n356->n1110 reverses (margin 16 m; fix n356 our1648~terr1609  n1110 our1628~terr1625)"
+        "label": "n3087862352->sn247908234 reverses (margin 16 m; fix n3087862352 our1648~terr1609  sn247908234 our1628~terr1625)"
       }
     ],
     "points": [
@@ -1919,8 +1919,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n658",
-        "label": "SUGGESTED TOP (descend from here) · n658 · corrected 1702 m"
+        "tag": "n357433602",
+        "label": "SUGGESTED TOP (descend from here) · n357433602 · corrected 1702 m"
       },
       {
         "at": [
@@ -1929,8 +1929,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n130",
-        "label": "current top (looks too high) · n130 · our 1690->1674 m"
+        "tag": "n11619982845",
+        "label": "current top (looks too high) · n11619982845 · our 1690->1674 m"
       },
       {
         "at": [
@@ -1939,8 +1939,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n271",
-        "label": "SUGGESTED TOP (descend from here) · n271 · corrected 1788 m"
+        "tag": "n6067525004",
+        "label": "SUGGESTED TOP (descend from here) · n6067525004 · corrected 1788 m"
       },
       {
         "at": [
@@ -1949,8 +1949,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n273",
-        "label": "current top (looks too high) · n273 · our 1797->1762 m"
+        "tag": "n6067525020",
+        "label": "current top (looks too high) · n6067525020 · our 1797->1762 m"
       },
       {
         "at": [
@@ -1959,8 +1959,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n35",
-        "label": "SUGGESTED TOP (descend from here) · n35 · corrected 2842 m"
+        "tag": "n357432048",
+        "label": "SUGGESTED TOP (descend from here) · n357432048 · corrected 2842 m"
       },
       {
         "at": [
@@ -1969,8 +1969,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n88",
-        "label": "current top (looks too high) · n88 · our 2832->2817 m"
+        "tag": "n357432066",
+        "label": "current top (looks too high) · n357432066 · our 2832->2817 m"
       },
       {
         "at": [
@@ -1979,8 +1979,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n155",
-        "label": "SUGGESTED TOP (descend from here) · n155 · corrected 2483 m"
+        "tag": "n364123462",
+        "label": "SUGGESTED TOP (descend from here) · n364123462 · corrected 2483 m"
       },
       {
         "at": [
@@ -1989,8 +1989,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n454",
-        "label": "current top (looks too high) · n454 · our 2468->2462 m"
+        "tag": "n364123464",
+        "label": "current top (looks too high) · n364123464 · our 2468->2462 m"
       },
       {
         "at": [
@@ -1999,8 +1999,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n1110",
-        "label": "SUGGESTED TOP (descend from here) · n1110 · corrected 1625 m"
+        "tag": "sn247908234",
+        "label": "SUGGESTED TOP (descend from here) · sn247908234 · corrected 1625 m"
       },
       {
         "at": [
@@ -2009,8 +2009,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n356",
-        "label": "current top (looks too high) · n356 · our 1648->1609 m"
+        "tag": "n3087862352",
+        "label": "current top (looks too high) · n3087862352 · our 1648->1609 m"
       }
     ],
     "notes": "<b>5 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
@@ -2098,7 +2098,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n162->n1377 reverses (margin 54 m; fix n162 our1820~terr1816  n1377 our1865~terr1869)"
+        "label": "n331269371->sn10297955895 reverses (margin 54 m; fix n331269371 our1820~terr1816  sn10297955895 our1865~terr1869)"
       },
       {
         "coords": [
@@ -2169,7 +2169,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n840->n839 reverses (margin 25 m; fix n840 our1632~terr1615  n839 our1625~terr1640)"
+        "label": "n12609990437->n12609990422 reverses (margin 25 m; fix n12609990437 our1632~terr1615  n12609990422 our1625~terr1640)"
       },
       {
         "coords": [
@@ -2204,7 +2204,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n274->n1431 reverses (margin 20 m; fix n274 our1935~terr1917  n1431 our1932~terr1937)"
+        "label": "n2094765598->sn11693703720 reverses (margin 20 m; fix n2094765598 our1935~terr1917  sn11693703720 our1932~terr1937)"
       },
       {
         "coords": [
@@ -2263,7 +2263,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n1403->n134 reverses (margin 18 m; fix n1403 our1791~terr1783  n134 our1799~terr1801)"
+        "label": "sn11313740078->n360588580 reverses (margin 18 m; fix sn11313740078 our1791~terr1783  n360588580 our1799~terr1801)"
       },
       {
         "coords": [
@@ -2318,7 +2318,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n84->n908 reverses (margin 14 m; fix n84 our1916~terr1893  n908 our1902~terr1907)"
+        "label": "n331252540->n331252573 reverses (margin 14 m; fix n331252540 our1916~terr1893  n331252573 our1902~terr1907)"
       },
       {
         "coords": [
@@ -2349,7 +2349,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n522->n521 reverses (margin 12 m; fix n522 our1557~terr1524  n521 our1521~terr1536)"
+        "label": "n4421941708->n6349187806 reverses (margin 12 m; fix n4421941708 our1557~terr1524  n6349187806 our1521~terr1536)"
       },
       {
         "coords": [
@@ -2376,7 +2376,7 @@
         ],
         "color": "#f59e0b",
         "width": 4,
-        "label": "n689->n191 reverses (margin 14 m; fix n689 our2401~terr2387  n191 our2395~terr2401)"
+        "label": "n2609436407->n263479377 reverses (margin 14 m; fix n2609436407 our2401~terr2387  n263479377 our2395~terr2401)"
       }
     ],
     "points": [
@@ -2387,8 +2387,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n1377",
-        "label": "SUGGESTED TOP (descend from here) · n1377 · corrected 1869 m"
+        "tag": "sn10297955895",
+        "label": "SUGGESTED TOP (descend from here) · sn10297955895 · corrected 1869 m"
       },
       {
         "at": [
@@ -2397,8 +2397,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n162",
-        "label": "current top (looks too high) · n162 · our 1820->1816 m"
+        "tag": "n331269371",
+        "label": "current top (looks too high) · n331269371 · our 1820->1816 m"
       },
       {
         "at": [
@@ -2407,8 +2407,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n839",
-        "label": "SUGGESTED TOP (descend from here) · n839 · corrected 1640 m"
+        "tag": "n12609990422",
+        "label": "SUGGESTED TOP (descend from here) · n12609990422 · corrected 1640 m"
       },
       {
         "at": [
@@ -2417,8 +2417,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n840",
-        "label": "current top (looks too high) · n840 · our 1632->1615 m"
+        "tag": "n12609990437",
+        "label": "current top (looks too high) · n12609990437 · our 1632->1615 m"
       },
       {
         "at": [
@@ -2427,8 +2427,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n1431",
-        "label": "SUGGESTED TOP (descend from here) · n1431 · corrected 1937 m"
+        "tag": "sn11693703720",
+        "label": "SUGGESTED TOP (descend from here) · sn11693703720 · corrected 1937 m"
       },
       {
         "at": [
@@ -2437,8 +2437,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n274",
-        "label": "current top (looks too high) · n274 · our 1935->1917 m"
+        "tag": "n2094765598",
+        "label": "current top (looks too high) · n2094765598 · our 1935->1917 m"
       },
       {
         "at": [
@@ -2447,8 +2447,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n134",
-        "label": "SUGGESTED TOP (descend from here) · n134 · corrected 1801 m"
+        "tag": "n360588580",
+        "label": "SUGGESTED TOP (descend from here) · n360588580 · corrected 1801 m"
       },
       {
         "at": [
@@ -2457,8 +2457,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n1403",
-        "label": "current top (looks too high) · n1403 · our 1791->1783 m"
+        "tag": "sn11313740078",
+        "label": "current top (looks too high) · sn11313740078 · our 1791->1783 m"
       },
       {
         "at": [
@@ -2467,8 +2467,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n908",
-        "label": "SUGGESTED TOP (descend from here) · n908 · corrected 1907 m"
+        "tag": "n331252573",
+        "label": "SUGGESTED TOP (descend from here) · n331252573 · corrected 1907 m"
       },
       {
         "at": [
@@ -2477,8 +2477,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n84",
-        "label": "current top (looks too high) · n84 · our 1916->1893 m"
+        "tag": "n331252540",
+        "label": "current top (looks too high) · n331252540 · our 1916->1893 m"
       },
       {
         "at": [
@@ -2487,8 +2487,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n521",
-        "label": "SUGGESTED TOP (descend from here) · n521 · corrected 1536 m"
+        "tag": "n6349187806",
+        "label": "SUGGESTED TOP (descend from here) · n6349187806 · corrected 1536 m"
       },
       {
         "at": [
@@ -2497,8 +2497,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n522",
-        "label": "current top (looks too high) · n522 · our 1557->1524 m"
+        "tag": "n4421941708",
+        "label": "current top (looks too high) · n4421941708 · our 1557->1524 m"
       },
       {
         "at": [
@@ -2507,8 +2507,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n191",
-        "label": "SUGGESTED TOP (descend from here) · n191 · corrected 2401 m"
+        "tag": "n263479377",
+        "label": "SUGGESTED TOP (descend from here) · n263479377 · corrected 2401 m"
       },
       {
         "at": [
@@ -2517,8 +2517,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n689",
-        "label": "current top (looks too high) · n689 · our 2401->2387 m"
+        "tag": "n2609436407",
+        "label": "current top (looks too high) · n2609436407 · our 2401->2387 m"
       }
     ],
     "notes": "<b>7 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
@@ -2578,7 +2578,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n189->n186 reverses (margin 32 m; fix n189 our1805~terr1780  n186 our1788~terr1812)"
+        "label": "n2547276459->n4075556841 reverses (margin 32 m; fix n2547276459 our1805~terr1780  n4075556841 our1788~terr1812)"
       },
       {
         "coords": [
@@ -2605,7 +2605,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n175->n96 reverses (margin 21 m; fix n175 our1741~terr1735  n96 our1722~terr1756)"
+        "label": "n362750087->n362671901 reverses (margin 21 m; fix n362750087 our1741~terr1735  n362671901 our1722~terr1756)"
       },
       {
         "coords": [
@@ -2632,7 +2632,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n7->n810 reverses (margin 18 m; fix n7 our2600~terr2595  n810 our2590~terr2613)"
+        "label": "n251688178->sn11534899731 reverses (margin 18 m; fix n251688178 our2600~terr2595  sn11534899731 our2590~terr2613)"
       },
       {
         "coords": [
@@ -2651,7 +2651,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n238->n177 reverses (margin 17 m; fix n238 our1994~terr1979  n177 our1976~terr1996)"
+        "label": "n3414620902->n11300319148 reverses (margin 17 m; fix n3414620902 our1994~terr1979  n11300319148 our1976~terr1996)"
       },
       {
         "coords": [
@@ -2670,7 +2670,7 @@
         ],
         "color": "#e11d1d",
         "width": 4,
-        "label": "n537->n243 reverses (margin 12 m; fix n537 our2961~terr2935  n243 our2949~terr2948)"
+        "label": "n12573191083->n1952610219 reverses (margin 12 m; fix n12573191083 our2961~terr2935  n1952610219 our2949~terr2948)"
       }
     ],
     "points": [
@@ -2681,8 +2681,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n186",
-        "label": "SUGGESTED TOP (descend from here) · n186 · corrected 1812 m"
+        "tag": "n4075556841",
+        "label": "SUGGESTED TOP (descend from here) · n4075556841 · corrected 1812 m"
       },
       {
         "at": [
@@ -2691,8 +2691,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n189",
-        "label": "current top (looks too high) · n189 · our 1805->1780 m"
+        "tag": "n2547276459",
+        "label": "current top (looks too high) · n2547276459 · our 1805->1780 m"
       },
       {
         "at": [
@@ -2701,8 +2701,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n96",
-        "label": "SUGGESTED TOP (descend from here) · n96 · corrected 1756 m"
+        "tag": "n362671901",
+        "label": "SUGGESTED TOP (descend from here) · n362671901 · corrected 1756 m"
       },
       {
         "at": [
@@ -2711,8 +2711,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n175",
-        "label": "current top (looks too high) · n175 · our 1741->1735 m"
+        "tag": "n362750087",
+        "label": "current top (looks too high) · n362750087 · our 1741->1735 m"
       },
       {
         "at": [
@@ -2721,8 +2721,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n810",
-        "label": "SUGGESTED TOP (descend from here) · n810 · corrected 2613 m"
+        "tag": "sn11534899731",
+        "label": "SUGGESTED TOP (descend from here) · sn11534899731 · corrected 2613 m"
       },
       {
         "at": [
@@ -2731,8 +2731,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n7",
-        "label": "current top (looks too high) · n7 · our 2600->2595 m"
+        "tag": "n251688178",
+        "label": "current top (looks too high) · n251688178 · our 2600->2595 m"
       },
       {
         "at": [
@@ -2741,8 +2741,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n177",
-        "label": "SUGGESTED TOP (descend from here) · n177 · corrected 1996 m"
+        "tag": "n11300319148",
+        "label": "SUGGESTED TOP (descend from here) · n11300319148 · corrected 1996 m"
       },
       {
         "at": [
@@ -2751,8 +2751,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n238",
-        "label": "current top (looks too high) · n238 · our 1994->1979 m"
+        "tag": "n3414620902",
+        "label": "current top (looks too high) · n3414620902 · our 1994->1979 m"
       },
       {
         "at": [
@@ -2761,8 +2761,8 @@
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "n243",
-        "label": "SUGGESTED TOP (descend from here) · n243 · corrected 2948 m"
+        "tag": "n1952610219",
+        "label": "SUGGESTED TOP (descend from here) · n1952610219 · corrected 2948 m"
       },
       {
         "at": [
@@ -2771,8 +2771,8 @@
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n537",
-        "label": "current top (looks too high) · n537 · our 2961->2935 m"
+        "tag": "n12573191083",
+        "label": "current top (looks too high) · n12573191083 · our 2961->2935 m"
       }
     ],
     "notes": "<b>5 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"

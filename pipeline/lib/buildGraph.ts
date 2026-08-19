@@ -76,6 +76,12 @@ interface Provisional {
   lat: number;
   ele: number | null;
   isLiftStation: boolean;
+  /**
+   * Set when the grid is holding already-built graph nodes rather than raw OSM points, so the
+   * owning node can be looked up by its real id. Graph ids are not numeric, so they cannot be
+   * smuggled through `osmId`.
+   */
+  nodeId?: string;
 }
 
 interface CanonNode {
@@ -198,9 +204,17 @@ function buildCanonicalNodes(
 
   const canonicalOf = new Map<number, string>();
   const nodes = new Map<string, CanonNode>();
-  let idx = 0;
   for (const members of clusters.values()) {
-    const id = `n${idx++}`;
+    // Name the node after the smallest OSM node id it merges. OSM ids are permanent, so this is
+    // independent of processing order: re-fetching the resort cannot renumber the graph out from
+    // under the id-based entries in overrides/<id>.json (the failure mode that produced multi-km
+    // "teleport" connectors). Adding or removing OSM nodes only ever changes the ids of the
+    // clusters they belong to, never everything after them. It also makes any canonical node
+    // directly greppable in OSM, which is how these elevation problems get verified.
+    const id = `n${members.reduce((min, m) => (m.osmId < min ? m.osmId : min), members[0].osmId)}`;
+    // Clusters partition the points, so two clusters cannot share a minimum. Guard anyway: a
+    // silent id collision would merge unrelated nodes and corrupt routing.
+    if (nodes.has(id)) throw new Error(`node id collision: ${id} — clusters are not disjoint`);
     const lon = members.reduce((s, m) => s + m.lon, 0) / members.length;
     const lat = members.reduce((s, m) => s + m.lat, 0) / members.length;
     const eles = members.map((m) => m.ele).filter((e): e is number => e != null);
@@ -551,7 +565,6 @@ export function buildResortGraph(
       }
     }
     const deadEnds = [...nodes.values()].filter((n) => descInSnap.has(n.id) && !descOutSnap.has(n.id) && n.ele != null);
-    let nextNodeNum = nodes.size;
     let snapped = 0;
     for (const E of deadEnds) {
       const ep: GeoPoint = { lon: E.lon, lat: E.lat, ele: E.ele };
@@ -568,7 +581,10 @@ export function buildResortGraph(
       if (!best) continue;
       const X = best.edge;
       const P = best.point;
-      const N = `n${nextNodeNum++}`;
+      // One snap node per dead-end, so name it after the dead-end it serves: deterministic and
+      // stable across refreshes, unlike a running counter.
+      const N = `s${E.id}`;
+      if (nodes.has(N)) continue;
       nodes.set(N, { id: N, lon: P.lon, lat: P.lat, ele: P.ele, isLiftStation: false, members: [] });
       // Split X at P (preserving its downhill direction and attributes).
       const g1 = [...X.geometry.slice(0, best.segIdx), P];
@@ -613,7 +629,7 @@ export function buildResortGraph(
   }
   const cgrid = new Grid(c.bridgeRadius);
   for (const n of nodeList) {
-    cgrid.add({ osmId: Number(n.id.slice(1)), lon: n.lon, lat: n.lat, ele: n.ele, isLiftStation: n.isLiftStation });
+    cgrid.add({ osmId: 0, nodeId: n.id, lon: n.lon, lat: n.lat, ele: n.ele, isLiftStation: n.isLiftStation });
   }
   const existingPair = new Set<string>();
   for (const e of edges) existingPair.add(`${e.from}->${e.to}`);
@@ -627,7 +643,7 @@ export function buildResortGraph(
 
     const candidates: { b: CanonNode; h: number; dz: number; flat: boolean }[] = [];
     for (const nb of cgrid.neighbors(a.lon, a.lat)) {
-      const b = nodes.get(`n${nb.osmId}`);
+      const b = nb.nodeId ? nodes.get(nb.nodeId) : undefined;
       if (!b || b.id === a.id || b.ele == null) continue;
       const h = haversineM({ lon: a.lon, lat: a.lat, ele: a.ele }, { lon: b.lon, lat: b.lat, ele: b.ele });
       if (h <= c.Hmerge || h > c.bridgeRadius) continue;
@@ -709,7 +725,7 @@ export function buildResortGraph(
   }
   const fjGrid = new Grid(c.flatJunctionRadius);
   for (const n of nodeList) {
-    fjGrid.add({ osmId: Number(n.id.slice(1)), lon: n.lon, lat: n.lat, ele: n.ele, isLiftStation: n.isLiftStation });
+    fjGrid.add({ osmId: 0, nodeId: n.id, lon: n.lon, lat: n.lat, ele: n.ele, isLiftStation: n.isLiftStation });
   }
   let flatLinks = 0;
   for (const a of nodeList) {
@@ -720,7 +736,7 @@ export function buildResortGraph(
 
     const near: { b: CanonNode; h: number }[] = [];
     for (const nb of fjGrid.neighbors(a.lon, a.lat)) {
-      const b = nodes.get(`n${nb.osmId}`);
+      const b = nb.nodeId ? nodes.get(nb.nodeId) : undefined;
       if (!b || b.id === a.id || b.ele == null) continue;
       if (Math.abs(b.ele - a.ele) > c.flatJunctionDV) continue; // not the same flat area
       const h = haversineM({ lon: a.lon, lat: a.lat, ele: a.ele }, { lon: b.lon, lat: b.lat, ele: b.ele });
@@ -772,7 +788,7 @@ export function buildResortGraph(
   const liftStationIds = nodeList.filter((n) => n.isLiftStation).map((n) => n.id);
   const rgrid = new Grid(c.rescueRadius);
   for (const n of nodeList) {
-    rgrid.add({ osmId: Number(n.id.slice(1)), lon: n.lon, lat: n.lat, ele: n.ele, isLiftStation: n.isLiftStation });
+    rgrid.add({ osmId: 0, nodeId: n.id, lon: n.lon, lat: n.lat, ele: n.ele, isLiftStation: n.isLiftStation });
   }
   let rescued = 0;
   for (let pass = 0; pass < 3; pass++) {
@@ -786,7 +802,7 @@ export function buildResortGraph(
       let bestScore = Infinity;
       let bestH = 0;
       for (const nb of rgrid.neighbors(a.lon, a.lat)) {
-        const b = nodes.get(`n${nb.osmId}`);
+        const b = nb.nodeId ? nodes.get(nb.nodeId) : undefined;
         if (!b || b.id === a.id || b.ele == null || !canReach.has(b.id)) continue;
         const h = haversineM({ lon: a.lon, lat: a.lat, ele: a.ele }, { lon: b.lon, lat: b.lat, ele: b.ele });
         if (h <= c.Hmerge || h > c.rescueRadius) continue;
@@ -846,7 +862,6 @@ export function buildResortGraph(
     for (const e of edges) if (e.kind === 'lift' && !e.isDownload) liftTops.add(e.to);
     const hasNonLiftOut = new Set<string>();
     for (const e of edges) if (e.kind !== 'lift') hasNonLiftOut.add(e.from);
-    let nextNodeNum = nodes.size;
     let linked = 0;
     for (const topId of liftTops) {
       if (hasNonLiftOut.has(topId)) continue; // already has a ski-out
@@ -880,7 +895,10 @@ export function buildResortGraph(
       } else if (dTo <= 3) {
         N = X.to;
       } else {
-        N = `n${nextNodeNum++}`;
+        // One ski-out node per lift top, named after that top for the same reason as the snap
+        // nodes above: a counter would renumber on every refresh.
+        N = `k${topId}`;
+        if (nodes.has(N)) continue;
         nodes.set(N, { id: N, lon: P.lon, lat: P.lat, ele: P.ele, isLiftStation: false, members: [] });
         const g1 = [...X.geometry.slice(0, best.segIdx), P];
         const g2 = [P, ...X.geometry.slice(best.segIdx)];

@@ -1,11 +1,11 @@
 [
   {
-    "id": "mount-hermon",
-    "name": "Mount Hermon",
-    "country": "Israel",
+    "id": "gudauri",
+    "name": "Gudauri",
+    "country": "Georgia",
     "center": {
-      "lon": 35.785,
-      "lat": 33.302
+      "lon": 44.49,
+      "lat": 42.485
     }
   },
   {
@@ -63,12 +63,12 @@
     }
   },
   {
-    "id": "gudauri",
-    "name": "Gudauri",
-    "country": "Georgia",
+    "id": "mount-hermon",
+    "name": "Mount Hermon",
+    "country": "Israel",
     "center": {
-      "lon": 44.49,
-      "lat": 42.485
+      "lon": 35.785,
+      "lat": 33.302
     }
   },
   {

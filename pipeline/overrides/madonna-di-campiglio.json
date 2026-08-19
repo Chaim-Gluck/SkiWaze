@@ -1,61 +1,61 @@
 {
   "setNodeElevation": [
-    { "node": "n386", "ele": 1952 },
-    { "node": "n226", "ele": 1635 },
-    { "node": "n438", "ele": 1956 },
-    { "node": "n101", "ele": 1903 },
-    { "node": "n42", "ele": 2097 },
-    { "node": "n412", "ele": 2097 },
-    { "node": "n155", "ele": 2079 },
-    { "node": "n175", "ele": 1735 },
-    { "node": "n176", "ele": 1719 }
+    { "node": "n298987361", "ele": 1952 },
+    { "node": "n5420317398", "ele": 1635 },
+    { "node": "sn1798688844", "ele": 1956 },
+    { "node": "n4575135898", "ele": 1903 },
+    { "node": "n603385508", "ele": 2097 },
+    { "node": "sn297449294", "ele": 2097 },
+    { "node": "n3986850382", "ele": 2079 },
+    { "node": "n4575900382", "ele": 1735 },
+    { "node": "n4090685615", "ele": 1719 }
   ],
   "addConnectors": [
     {
-      "from": "n42",
-      "to": "n412",
+      "from": "n603385508",
+      "to": "sn297449294",
       "kind": "flat_traverse",
       "bidirectional": true
     },
     {
-      "from": "n234",
-      "to": "n95",
+      "from": "n6200882916",
+      "to": "n2499552133",
       "kind": "flat_traverse",
       "bidirectional": true
     },
     {
-      "from": "n95",
-      "to": "n235",
+      "from": "n2499552133",
+      "to": "n2499552153",
       "kind": "flat_traverse",
       "bidirectional": true
     },
     {
-      "from": "n332",
-      "to": "n438",
+      "from": "n1798688856",
+      "to": "sn1798688844",
       "kind": "flat_traverse",
       "bidirectional": true
     },
     {
-      "from": "n331",
-      "to": "n438",
+      "from": "n1798688844",
+      "to": "sn1798688844",
       "kind": "flat_traverse",
       "bidirectional": true
     },
     {
-      "from": "n374",
-      "to": "n334",
+      "from": "n4580836481",
+      "to": "n2325504678",
       "kind": "flat_traverse",
       "bidirectional": true
     },
     {
-      "from": "n208",
-      "to": "n382",
+      "from": "n432459395",
+      "to": "n3268996462",
       "kind": "flat_traverse",
       "bidirectional": true
     },
     {
-      "from": "n119",
-      "to": "n382",
+      "from": "n529896208",
+      "to": "n3268996462",
       "kind": "flat_traverse",
       "bidirectional": true
     }

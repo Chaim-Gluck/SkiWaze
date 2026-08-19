@@ -14,9 +14,10 @@
       "maxLat": 45.04
     },
     "defaultZoom": 12,
-    "timezone": "Europe/Paris"
+    "timezone": "Europe/Paris",
+    "infoUrl": "https://www.les2alpes.com/en/"
   },
-  "generatedAt": "2026-08-18T09:54:24.535Z",
+  "generatedAt": "2026-08-19T21:59:17.450Z",
   "stats": {
     "resortId": "les-deux-alpes",
     "nodeCount": 522,
@@ -251,16 +252,16 @@
       "code": "unreachable_component",
       "message": "10 node(s) unreachable from the main lift network.",
       "refs": [
-        "n108",
-        "n189",
-        "n190",
-        "n214",
-        "n254",
-        "n255",
-        "n256",
-        "n365",
-        "n366",
-        "n370"
+        "n615068431",
+        "n6064094414",
+        "n7702900003",
+        "n6064094410",
+        "n10592445352",
+        "n10592510055",
+        "n11280322274",
+        "n13448102891",
+        "n13448160043",
+        "n13448160122"
       ]
     }
   ]

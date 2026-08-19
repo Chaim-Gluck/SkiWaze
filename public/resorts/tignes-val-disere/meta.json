@@ -14,19 +14,20 @@
       "maxLat": 45.52
     },
     "defaultZoom": 12,
-    "timezone": "Europe/Paris"
+    "timezone": "Europe/Paris",
+    "infoUrl": "https://www.tignes.net/en/"
   },
-  "generatedAt": "2026-08-17T18:01:12.403Z",
+  "generatedAt": "2026-08-19T22:02:51.865Z",
   "stats": {
     "resortId": "tignes-val-disere",
-    "nodeCount": 953,
-    "edgeCount": 3015,
-    "pisteEdges": 789,
+    "nodeCount": 958,
+    "edgeCount": 3031,
+    "pisteEdges": 802,
     "liftEdges": 93,
-    "connectorEdges": 2133,
+    "connectorEdges": 2136,
     "meaningfulPoints": 380,
-    "reachableFromLifts": 933,
-    "unreachableNodes": 20,
+    "reachableFromLifts": 941,
+    "unreachableNodes": 17,
     "warningsByCode": {
       "pothole_repaired": 1,
       "missing_opening_hours": 84,
@@ -37,7 +38,7 @@
   "warnings": [
     {
       "code": "pothole_repaired",
-      "message": "Repaired 30 DEM false local-min/peak node(s) to keep runs descending monotonically."
+      "message": "Repaired 29 DEM false local-min/peak node(s) to keep runs descending monotonically."
     },
     {
       "code": "missing_opening_hours",
@@ -381,11 +382,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 541 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 537 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 490 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 485 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
@@ -393,28 +394,25 @@
     },
     {
       "code": "unreachable_component",
-      "message": "20 node(s) unreachable from the main lift network.",
+      "message": "17 node(s) unreachable from the main lift network.",
       "refs": [
-        "n33",
-        "n227",
-        "n327",
-        "n347",
-        "n349",
-        "n396",
-        "n397",
-        "n400",
-        "n439",
-        "n458",
-        "n459",
-        "n460",
-        "n582",
-        "n584",
-        "n585",
-        "n586",
-        "n587",
-        "n620",
-        "n696",
-        "n697"
+        "n339346911",
+        "n1096420482",
+        "n2308224489",
+        "n2374893280",
+        "n2374893332",
+        "n2558375996",
+        "n2559684191",
+        "n2571550240",
+        "n339346757",
+        "n11257222783",
+        "n12797186395",
+        "n12797254711",
+        "n12797254712",
+        "n12797254701",
+        "n13462514012",
+        "n1037587379",
+        "n1040017757"
       ]
     }
   ]

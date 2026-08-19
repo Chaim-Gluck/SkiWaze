@@ -17,7 +17,7 @@
     "timezone": "Asia/Tbilisi",
     "infoUrl": "https://gudauri.com/"
   },
-  "generatedAt": "2026-08-19T21:33:33.144Z",
+  "generatedAt": "2026-08-19T22:06:33.534Z",
   "stats": {
     "resortId": "gudauri",
     "nodeCount": 103,
@@ -116,9 +116,9 @@
       "code": "unreachable_component",
       "message": "3 node(s) unreachable from the main lift network.",
       "refs": [
-        "n29",
-        "n32",
-        "n37"
+        "n4674246803",
+        "n4674246866",
+        "n6225190102"
       ]
     }
   ]

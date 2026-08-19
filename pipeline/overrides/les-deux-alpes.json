@@ -1,9 +1,9 @@
 {
-  "_comment": "Les 2 Alpes corrections. IDS ARE FROM THE CURRENT `npm run data` BUILD; `data:refresh` renumbers nodes. (1) OSM tags a disused run 'ancienne piste intermédiaire \"Bons\"' (ancienne = former) NW near Mont-de-Lans; it is not an operational piste and imports as a disconnected island, so remove it. (2) The Venosc village gondola ('Venosc', 991 m -> 1632 m) tops out ~410 m from the resort base with no piste/path tagged from its top station, leaving it a 2-node island. Add a pedestrian-transfer connector from its top (n384) to the Super Venosc gondola base (n266, 1692 m) so skiers arriving from Venosc can continue up.",
+  "_comment": "Les 2 Alpes corrections. (1) OSM tags a disused run 'ancienne piste intermédiaire \"Bons\"' (ancienne = former) NW near Mont-de-Lans; it is not an operational piste and imports as a disconnected island, so remove it. (2) The Venosc village gondola ('Venosc', 991 m -> 1632 m) tops out ~410 m from the resort base with no piste/path tagged from its top station, leaving it a 2-node island. Add a pedestrian-transfer connector from its top (n2296628004) to the Super Venosc gondola base (n13991766869, 1692 m) so skiers arriving from Venosc can continue up.",
   "removePistes": [
     { "name": "ancienne piste intermédiare \"Bons\"" }
   ],
   "addConnectors": [
-    { "from": "n384", "to": "n266", "kind": "flat_traverse", "bidirectional": true }
+    { "from": "n2296628004", "to": "n13991766869", "kind": "flat_traverse", "bidirectional": true }
   ]
 }

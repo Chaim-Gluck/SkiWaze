@@ -15,6 +15,7 @@
     "check:trapped": "tsx pipeline/_trapped.ts",
     "check:elevation": "tsx pipeline/_elevaudit.ts",
     "probe:elevation": "tsx pipeline/_elevprobe.ts",
+    "check:graphdiff": "tsx pipeline/_graphdiff.ts",
     "check:overrides": "tsx pipeline/_overridecheck.ts",
     "check:audit": "tsx pipeline/_phantoms.ts"
   },
