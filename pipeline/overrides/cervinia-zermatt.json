@@ -1,13 +1,5 @@
 {
   "setNodeElevation": [
     { "node": "n444", "ele": 1800 }
-  ],
-  "addConnectors": [
-    {
-      "from": "n542",
-      "to": "n540",
-      "kind": "flat_traverse",
-      "bidirectional": true
-    }
   ]
 }

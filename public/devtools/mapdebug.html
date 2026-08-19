@@ -64,6 +64,7 @@
     <div class="lg"><span class="sw" style="border-top-style:dashed;border-color:#111"></span> lift</div>
     <div class="lg"><span class="sw"></span> overlay line</div>
     <div class="lg"><span class="dot" style="background:#1560ff"></span> overlay point</div>
+    <div class="lg">➤ one-way flow · ⟺ bidirectional (double-headed, green)</div>
   </details>
   <div class="notes" id="notes"></div>
   </div>
@@ -102,27 +103,44 @@ function addResortLayers(geo){
   if(!map.getLayer('r-pistes')) map.addLayer({id:'r-pistes',type:'line',source:'r-pistes',paint:{'line-color':colExpr,'line-width':2.4}});
   if(!map.getLayer('r-lifts'))  map.addLayer({id:'r-lifts',type:'line',source:'r-lifts',paint:{'line-color':'#111','line-width':2,'line-dasharray':[1,1.6]}});
   ensureArrowImage();
-  if(!map.getLayer('r-pistes-arrows')) map.addLayer({id:'r-pistes-arrows',type:'symbol',source:'r-pistes',layout:{'symbol-placement':'line','icon-image':'flow-arrow','icon-size':0.85,'symbol-spacing':85,'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':'none'}});
-  if(!map.getLayer('r-conns-arrows')) map.addLayer({id:'r-conns-arrows',type:'symbol',source:'r-conns',layout:{'symbol-placement':'line','icon-image':'flow-arrow','icon-size':0.7,'symbol-spacing':85,'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':'none'}});
   if(!map.getLayer('r-pistes-labels')) map.addLayer({id:'r-pistes-labels',type:'symbol',source:'r-pistes',layout:{'symbol-placement':'line','text-field':['coalesce',['get','ref'],['get','name'],''],'text-size':11,'text-font':['Open Sans Regular'],'symbol-spacing':350,'text-rotation-alignment':'map','text-keep-upright':true,'visibility':'none'},paint:{'text-color':'#12203a','text-halo-color':'#fff','text-halo-width':1.7}});
 }
-let arrowAdded=false;
-function ensureArrowImage(){
-  if(map.hasImage && map.hasImage('flow-arrow')){ arrowAdded=true; return; }
-  const s=22, c=document.createElement('canvas'); c.width=s; c.height=s;
-  const x=c.getContext('2d'); x.lineCap='round'; x.lineJoin='round';
-  for(const [col,w] of [['#ffffff',5],['#0b3d91',2.6]]){ // white halo then blue chevron pointing right (east)
-    x.strokeStyle=col; x.lineWidth=w; x.beginPath(); x.moveTo(7,5); x.lineTo(16,11); x.lineTo(7,17); x.stroke();
+// Flow arrows are drawn from graph.json (true per-edge directions) so bidirectional links show a
+// double-headed arrow; geo.json can't express this because it dedupes bidirectional connectors.
+function buildFlow(graph){
+  const has=new Set();
+  for(const e of graph.edges||[]) if(e.kind==='piste'||e.kind==='connector') has.add(e.from+'>'+e.to);
+  const feats=[], drawn=new Set();
+  for(const e of graph.edges||[]){
+    if(e.kind!=='piste'&&e.kind!=='connector') continue;
+    const bidir=has.has(e.to+'>'+e.from);
+    if(bidir){ const k=[e.from,e.to].sort().join('|'); if(drawn.has(k)) continue; drawn.add(k); }
+    const coords=(e.geometry&&e.geometry.length>1)?e.geometry.map(p=>[p.lon,p.lat]):null;
+    if(!coords) continue;
+    feats.push({type:'Feature',properties:{kind:e.kind,bidir},geometry:{type:'LineString',coordinates:coords}});
   }
-  map.addImage('flow-arrow', x.getImageData(0,0,s,s));
-  arrowAdded=true;
+  return {type:'FeatureCollection',features:feats};
+}
+function addFlowArrows(graph){
+  ensureArrowImage();
+  const flow=buildFlow(graph);
+  if(map.getSource('flow')) map.getSource('flow').setData(flow); else map.addSource('flow',{type:'geojson',data:flow});
+  const icon=['case',['get','bidir'],'flow-arrow2','flow-arrow'];
+  if(!map.getLayer('flow-arrows-p')) map.addLayer({id:'flow-arrows-p',type:'symbol',source:'flow',filter:['==',['get','kind'],'piste'],layout:{'symbol-placement':'line','icon-image':icon,'icon-size':0.85,'symbol-spacing':85,'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':'none'}});
+  if(!map.getLayer('flow-arrows-c')) map.addLayer({id:'flow-arrows-c',type:'symbol',source:'flow',filter:['==',['get','kind'],'connector'],layout:{'symbol-placement':'line','icon-image':icon,'icon-size':0.72,'symbol-spacing':85,'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':'none'}});
+}
+function ensureArrowImage(){
+  if(map.hasImage && map.hasImage('flow-arrow') && map.hasImage('flow-arrow2')) return;
+  const mk=(draw)=>{ const s=24,c=document.createElement('canvas'); c.width=s;c.height=s; const x=c.getContext('2d'); x.lineCap='round'; x.lineJoin='round'; draw(x); return x.getImageData(0,0,s,s); };
+  if(!map.hasImage('flow-arrow')) map.addImage('flow-arrow', mk((x)=>{ for(const [col,w] of [['#ffffff',5],['#0b3d91',2.8]]){ x.strokeStyle=col;x.lineWidth=w; x.beginPath(); x.moveTo(8,5); x.lineTo(17,12); x.lineTo(8,19); x.stroke(); } }));
+  if(!map.hasImage('flow-arrow2')) map.addImage('flow-arrow2', mk((x)=>{ for(const [col,w] of [['#ffffff',5],['#0a7d43',2.8]]){ x.strokeStyle=col;x.lineWidth=w; x.beginPath(); x.moveTo(14,5); x.lineTo(21,12); x.lineTo(14,19); x.stroke(); x.beginPath(); x.moveTo(10,5); x.lineTo(3,12); x.lineTo(10,19); x.stroke(); } }));
 }
 function applyToggles(){
   const vis=(id,on)=>{ if(map.getLayer(id)) map.setLayoutProperty(id,'visibility',on?'visible':'none'); };
   vis('r-areas-fill',el('t-areas').checked); vis('r-areas-line',el('t-areas').checked);
   vis('r-pistes',el('t-pistes').checked); vis('r-conns',el('t-connectors').checked);
   vis('r-lifts',el('t-lifts').checked);
-  vis('r-pistes-arrows',el('t-arrows').checked); vis('r-conns-arrows',el('t-arrows').checked && el('t-connectors').checked);
+  vis('flow-arrows-p',el('t-arrows').checked); vis('flow-arrows-c',el('t-arrows').checked && el('t-connectors').checked);
   vis('r-pistes-labels',el('t-names').checked);
   vis('ov-glow',el('t-overlay').checked); vis('ov-line',el('t-overlay').checked);
   markers.forEach(m=>{ m.getElement().style.display = el('t-overlay').checked?'':'none'; });
@@ -139,6 +157,7 @@ async function loadResort(id){
   const dl=el('nodelist'); dl.innerHTML='';
   graph.nodes.forEach(n=>{ const o=document.createElement('option'); o.value=n.id; dl.appendChild(o); });
   addResortLayers(geo);
+  addFlowArrows(graph);
   await drawOverlay();
   applyToggles();
   if(!curOverlayData || !curOverlayData[id]){
