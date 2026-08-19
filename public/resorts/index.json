@@ -1,11 +1,11 @@
 [
   {
-    "id": "sella-ronda",
-    "name": "Sella Ronda (Canazei)",
-    "country": "Italy",
+    "id": "mayrhofen",
+    "name": "Mayrhofen",
+    "country": "Austria",
     "center": {
-      "lon": 11.808,
-      "lat": 46.518
+      "lon": 11.81,
+      "lat": 47.16
     }
   },
   {
@@ -24,6 +24,15 @@
     "center": {
       "lon": 7.71,
       "lat": 45.958
+    }
+  },
+  {
+    "id": "sella-ronda",
+    "name": "Sella Ronda (Canazei)",
+    "country": "Italy",
+    "center": {
+      "lon": 11.808,
+      "lat": 46.518
     }
   },
   {
@@ -69,15 +78,6 @@
     "center": {
       "lon": 44.49,
       "lat": 42.485
-    }
-  },
-  {
-    "id": "mayrhofen",
-    "name": "Mayrhofen",
-    "country": "Austria",
-    "center": {
-      "lon": 11.81,
-      "lat": 47.16
     }
   },
   {

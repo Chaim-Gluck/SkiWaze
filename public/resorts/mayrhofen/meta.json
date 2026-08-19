@@ -14,19 +14,20 @@
       "maxLat": 47.205
     },
     "defaultZoom": 11.5,
-    "timezone": "Europe/Vienna"
+    "timezone": "Europe/Vienna",
+    "infoUrl": "https://www.mayrhofner-bergbahnen.com/en/"
   },
-  "generatedAt": "2026-08-17T18:01:14.714Z",
+  "generatedAt": "2026-08-19T21:11:21.110Z",
   "stats": {
     "resortId": "mayrhofen",
     "nodeCount": 548,
-    "edgeCount": 1626,
-    "pisteEdges": 393,
+    "edgeCount": 1600,
+    "pisteEdges": 423,
     "liftEdges": 93,
-    "connectorEdges": 1140,
+    "connectorEdges": 1084,
     "meaningfulPoints": 200,
-    "reachableFromLifts": 543,
-    "unreachableNodes": 5,
+    "reachableFromLifts": 544,
+    "unreachableNodes": 4,
     "warningsByCode": {
       "pothole_repaired": 1,
       "missing_opening_hours": 67,
@@ -325,11 +326,10 @@
     },
     {
       "code": "unreachable_component",
-      "message": "5 node(s) unreachable from the main lift network.",
+      "message": "4 node(s) unreachable from the main lift network.",
       "refs": [
         "n83",
         "n115",
-        "n356",
         "n454",
         "n455"
       ]
