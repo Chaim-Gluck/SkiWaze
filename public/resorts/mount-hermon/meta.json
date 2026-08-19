@@ -17,14 +17,14 @@
     "timezone": "Asia/Jerusalem",
     "infoUrl": "https://www.skihermon.co.il/"
   },
-  "generatedAt": "2026-08-19T21:32:19.612Z",
+  "generatedAt": "2026-08-19T21:37:22.898Z",
   "stats": {
     "resortId": "mount-hermon",
     "nodeCount": 67,
-    "edgeCount": 168,
-    "pisteEdges": 51,
+    "edgeCount": 166,
+    "pisteEdges": 53,
     "liftEdges": 9,
-    "connectorEdges": 108,
+    "connectorEdges": 104,
     "meaningfulPoints": 36,
     "reachableFromLifts": 67,
     "unreachableNodes": 0,
