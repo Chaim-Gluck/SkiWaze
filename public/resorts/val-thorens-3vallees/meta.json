@@ -14,19 +14,20 @@
       "maxLat": 45.44
     },
     "defaultZoom": 12,
-    "timezone": "Europe/Paris"
+    "timezone": "Europe/Paris",
+    "infoUrl": "https://www.valthorens.com/en/"
   },
-  "generatedAt": "2026-08-17T18:01:10.997Z",
+  "generatedAt": "2026-08-19T13:08:00.361Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
     "nodeCount": 4015,
-    "edgeCount": 15590,
-    "pisteEdges": 3652,
+    "edgeCount": 15578,
+    "pisteEdges": 3664,
     "liftEdges": 244,
-    "connectorEdges": 11694,
+    "connectorEdges": 11670,
     "meaningfulPoints": 896,
-    "reachableFromLifts": 3961,
-    "unreachableNodes": 54,
+    "reachableFromLifts": 3960,
+    "unreachableNodes": 55,
     "warningsByCode": {
       "pothole_repaired": 1,
       "missing_opening_hours": 189,
@@ -817,7 +818,7 @@
     },
     {
       "code": "unreachable_component",
-      "message": "54 node(s) unreachable from the main lift network.",
+      "message": "55 node(s) unreachable from the main lift network.",
       "refs": [
         "n5",
         "n312",

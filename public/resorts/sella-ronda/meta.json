@@ -4,8 +4,8 @@
     "name": "Sella Ronda (Canazei)",
     "country": "Italy",
     "center": {
-      "lon": 11.79,
-      "lat": 46.5
+      "lon": 11.808,
+      "lat": 46.518
     },
     "bbox": {
       "minLon": 11.68,
@@ -14,22 +14,23 @@
       "maxLat": 46.58
     },
     "defaultZoom": 12,
-    "timezone": "Europe/Rome"
+    "timezone": "Europe/Rome",
+    "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-08-17T18:01:03.592Z",
+  "generatedAt": "2026-08-19T12:21:19.482Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1443,
-    "edgeCount": 4278,
-    "pisteEdges": 1220,
+    "nodeCount": 1444,
+    "edgeCount": 4274,
+    "pisteEdges": 1226,
     "liftEdges": 217,
-    "connectorEdges": 2841,
+    "connectorEdges": 2831,
     "meaningfulPoints": 621,
-    "reachableFromLifts": 1389,
+    "reachableFromLifts": 1390,
     "unreachableNodes": 54,
     "warningsByCode": {
       "pothole_repaired": 1,
-      "missing_opening_hours": 176,
+      "missing_opening_hours": 175,
       "inferred_connector": 4,
       "unreachable_component": 1
     }
@@ -730,10 +731,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Tappeto scuola sci\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Col Rodella\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",

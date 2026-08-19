@@ -1,6 +1,15 @@
 {
+  "_comment_elevation_reversals": "DEM under-sample fixes found via `npm run check:elevation` (cross-check vs Terrarium DEM) and confirmed on the topo map. IDs from the current `npm run data` build; `data:refresh` renumbers nodes and breaks these. Each pair was a piste reversed because our SRTM sample read one endpoint too high/low: n2047/n3724 (~2440/2470, skis n3724->n2047); n696/n3588 (~2095/2125, skis n3588->n696); n1213/n2087 (~2399/2433, skis n2087->n1213); n643/n853 (~1838/1865, skis n853->n643).",
   "setNodeElevation": [
-    { "node": "n1008", "ele": 1965 }
+    { "node": "n1008", "ele": 1965 },
+    { "node": "n2047", "ele": 2440 },
+    { "node": "n3724", "ele": 2470 },
+    { "node": "n696", "ele": 2095 },
+    { "node": "n3588", "ele": 2125 },
+    { "node": "n1213", "ele": 2399 },
+    { "node": "n2087", "ele": 2433 },
+    { "node": "n643", "ele": 1838 },
+    { "node": "n853", "ele": 1865 }
   ],
   "addConnectors": [
     {

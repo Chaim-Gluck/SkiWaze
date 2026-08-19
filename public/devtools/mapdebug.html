@@ -1,0 +1,226 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SkiWaze · Map debug</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  html,body{margin:0;height:100%;font-family:system-ui,sans-serif}
+  #map{position:absolute;inset:0}
+  #ui{position:absolute;z-index:2;top:10px;left:10px;background:rgba(255,255,255,.95);
+      padding:11px 13px;border-radius:11px;box-shadow:0 2px 12px rgba(0,0,0,.28);max-width:330px;font-size:13px}
+  #ui h1{font-size:14px;margin:0 0 8px}
+  #ui label{display:block;font-weight:600;margin:8px 0 3px;font-size:12px;color:#333}
+  #ui select{font-size:13px;padding:4px 6px;width:100%}
+  .toggles{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px}
+  .toggles label{display:flex;align-items:center;gap:5px;font-weight:500;margin:0}
+  .lg{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:12px}
+  .sw{width:20px;height:0;border-top:5px solid #e11;border-radius:3px}
+  .dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #999}
+  .fill{width:16px;height:12px;border-radius:3px;opacity:.5}
+  .notes{margin-top:9px;font-size:12px;color:#222;line-height:1.4;border-top:1px solid #ddd;padding-top:7px}
+  details summary{cursor:pointer;font-size:12px;color:#555;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="ui">
+  <h1>🗺️ SkiWaze map debug</h1>
+  <label>Resort</label>
+  <select id="resort"></select>
+  <label>Investigation overlay</label>
+  <select id="overlay"></select>
+  <label>Base map</label>
+  <select id="base">
+    <option value="topo">OpenTopoMap (contours)</option>
+    <option value="osm">OpenStreetMap</option>
+    <option value="sat">Satellite</option>
+  </select>
+  <label>Find node (jump to any nX)</label>
+  <input id="findnode" list="nodelist" placeholder="e.g. n498" autocomplete="off"
+    style="font-size:13px;padding:4px 6px;width:100%;box-sizing:border-box" />
+  <datalist id="nodelist"></datalist>
+  <div class="toggles" id="toggles">
+    <label><input type="checkbox" id="t-areas" checked> areas</label>
+    <label><input type="checkbox" id="t-pistes" checked> pistes</label>
+    <label><input type="checkbox" id="t-connectors"> connectors</label>
+    <label><input type="checkbox" id="t-lifts" checked> lifts</label>
+    <label><input type="checkbox" id="t-arrows" checked> arrows</label>
+    <label><input type="checkbox" id="t-names"> names</label>
+    <label><input type="checkbox" id="t-overlay" checked> overlay</label>
+  </div>
+  <details>
+    <summary>legend</summary>
+    <div class="lg"><span class="fill" style="background:#e11"></span> area (open bowl) fill</div>
+    <div class="lg"><span class="sw" style="border-color:#1560ff"></span> piste (by colour)</div>
+    <div class="lg"><span class="sw" style="border-top-style:dashed;border-color:#666"></span> connector</div>
+    <div class="lg"><span class="sw" style="border-top-style:dashed;border-color:#111"></span> lift</div>
+    <div class="lg"><span class="sw"></span> overlay line</div>
+    <div class="lg"><span class="dot" style="background:#1560ff"></span> overlay point</div>
+  </details>
+  <div class="notes" id="notes"></div>
+</div>
+<div id="map"></div>
+<script>
+const COL = { green:'#2a9d3a', blue:'#1560ff', red:'#e11d1d', black:'#111', unknown:'#e88b00', null:'#e88b00' };
+const RASTER = {
+  topo: ['https://a.tile.opentopomap.org/{z}/{x}/{y}.png','https://b.tile.opentopomap.org/{z}/{x}/{y}.png','https://c.tile.opentopomap.org/{z}/{x}/{y}.png'],
+  osm:  ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+  sat:  ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+};
+function baseStyle(kind){
+  return { version:8, glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources:{ base:{ type:'raster', tileSize:256, tiles:RASTER[kind] } },
+    layers:[{ id:'base', type:'raster', source:'base' }] };
+}
+const map = new maplibregl.Map({ container:'map', style:baseStyle('topo'), center:[10.28,46.95], zoom:12 });
+map.addControl(new maplibregl.NavigationControl());
+
+let RESORTS=[], OVERLAYS=[], curResort=null, curOverlayData=null, markers=[], curNodes=new Map(), nodePin=null;
+const el = (id)=>document.getElementById(id);
+const clearMarkers=()=>{ markers.forEach(m=>m.remove()); markers.length=0; };
+
+function addResortLayers(geo){
+  const polys={type:'FeatureCollection',features:geo.features.filter(f=>f.properties.kind==='area')};
+  const pistes={type:'FeatureCollection',features:geo.features.filter(f=>f.properties.kind==='piste')};
+  const conns={type:'FeatureCollection',features:geo.features.filter(f=>f.properties.kind==='connector')};
+  const lifts={type:'FeatureCollection',features:geo.features.filter(f=>f.properties.kind==='lift')};
+  const src=(id,data)=>{ if(map.getSource(id)) map.getSource(id).setData(data); else map.addSource(id,{type:'geojson',data}); };
+  src('r-areas',polys); src('r-pistes',pistes); src('r-conns',conns); src('r-lifts',lifts);
+  const colExpr=['match',['get','color'],'green',COL.green,'blue',COL.blue,'red',COL.red,'black',COL.black, COL.unknown];
+  if(!map.getLayer('r-areas-fill')) map.addLayer({id:'r-areas-fill',type:'fill',source:'r-areas',paint:{'fill-color':colExpr,'fill-opacity':0.22}});
+  if(!map.getLayer('r-areas-line')) map.addLayer({id:'r-areas-line',type:'line',source:'r-areas',paint:{'line-color':colExpr,'line-width':1,'line-opacity':0.6}});
+  if(!map.getLayer('r-conns'))  map.addLayer({id:'r-conns',type:'line',source:'r-conns',paint:{'line-color':'#777','line-width':1.3,'line-dasharray':[2,2],'line-opacity':0.8}});
+  if(!map.getLayer('r-pistes')) map.addLayer({id:'r-pistes',type:'line',source:'r-pistes',paint:{'line-color':colExpr,'line-width':2.4}});
+  if(!map.getLayer('r-lifts'))  map.addLayer({id:'r-lifts',type:'line',source:'r-lifts',paint:{'line-color':'#111','line-width':2,'line-dasharray':[1,1.6]}});
+  ensureArrowImage();
+  if(!map.getLayer('r-pistes-arrows')) map.addLayer({id:'r-pistes-arrows',type:'symbol',source:'r-pistes',layout:{'symbol-placement':'line','icon-image':'flow-arrow','icon-size':0.85,'symbol-spacing':85,'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':'none'}});
+  if(!map.getLayer('r-conns-arrows')) map.addLayer({id:'r-conns-arrows',type:'symbol',source:'r-conns',layout:{'symbol-placement':'line','icon-image':'flow-arrow','icon-size':0.7,'symbol-spacing':85,'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':'none'}});
+  if(!map.getLayer('r-pistes-labels')) map.addLayer({id:'r-pistes-labels',type:'symbol',source:'r-pistes',layout:{'symbol-placement':'line','text-field':['coalesce',['get','ref'],['get','name'],''],'text-size':11,'text-font':['Open Sans Regular'],'symbol-spacing':350,'text-rotation-alignment':'map','text-keep-upright':true,'visibility':'none'},paint:{'text-color':'#12203a','text-halo-color':'#fff','text-halo-width':1.7}});
+}
+let arrowAdded=false;
+function ensureArrowImage(){
+  if(map.hasImage && map.hasImage('flow-arrow')){ arrowAdded=true; return; }
+  const s=22, c=document.createElement('canvas'); c.width=s; c.height=s;
+  const x=c.getContext('2d'); x.lineCap='round'; x.lineJoin='round';
+  for(const [col,w] of [['#ffffff',5],['#0b3d91',2.6]]){ // white halo then blue chevron pointing right (east)
+    x.strokeStyle=col; x.lineWidth=w; x.beginPath(); x.moveTo(7,5); x.lineTo(16,11); x.lineTo(7,17); x.stroke();
+  }
+  map.addImage('flow-arrow', x.getImageData(0,0,s,s));
+  arrowAdded=true;
+}
+function applyToggles(){
+  const vis=(id,on)=>{ if(map.getLayer(id)) map.setLayoutProperty(id,'visibility',on?'visible':'none'); };
+  vis('r-areas-fill',el('t-areas').checked); vis('r-areas-line',el('t-areas').checked);
+  vis('r-pistes',el('t-pistes').checked); vis('r-conns',el('t-connectors').checked);
+  vis('r-lifts',el('t-lifts').checked);
+  vis('r-pistes-arrows',el('t-arrows').checked); vis('r-conns-arrows',el('t-arrows').checked && el('t-connectors').checked);
+  vis('r-pistes-labels',el('t-names').checked);
+  vis('ov-glow',el('t-overlay').checked); vis('ov-line',el('t-overlay').checked);
+  markers.forEach(m=>{ m.getElement().style.display = el('t-overlay').checked?'':'none'; });
+}
+async function loadResort(id){
+  curResort=id;
+  if(nodePin){ nodePin.remove(); nodePin=null; }
+  el('findnode').value='';
+  const [geo, graph]=await Promise.all([
+    fetch(`/resorts/${id}/geo.json`).then(r=>r.json()),
+    fetch(`/resorts/${id}/graph.json`).then(r=>r.json()).catch(()=>({nodes:[]})),
+  ]);
+  curNodes=new Map(graph.nodes.map(n=>[n.id,n]));
+  const dl=el('nodelist'); dl.innerHTML='';
+  graph.nodes.forEach(n=>{ const o=document.createElement('option'); o.value=n.id; dl.appendChild(o); });
+  addResortLayers(geo);
+  await drawOverlay();
+  applyToggles();
+  if(!curOverlayData || !curOverlayData[id]){
+    const b=new maplibregl.LngLatBounds();
+    geo.features.forEach(f=>{ const g=f.geometry; const cc=g.type==='Polygon'?g.coordinates[0]:g.coordinates; cc.forEach(c=>b.extend(c)); });
+    if(!b.isEmpty()) map.fitBounds(b,{padding:60,duration:0});
+  }
+}
+function gotoNode(raw){
+  const id=(raw||'').trim();
+  const n=curNodes.get(id);
+  if(!n){ if(id) el('notes').innerHTML=`<i>node "${id}" not found in ${curResort}</i>`; return; }
+  const at=[n.point.lon,n.point.lat];
+  if(nodePin) nodePin.remove();
+  const d=document.createElement('div');
+  d.style.cssText='width:16px;height:16px;background:#c026d3;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.6);cursor:pointer';
+  nodePin=new maplibregl.Marker({element:d,anchor:'bottom'}).setLngLat(at)
+    .setPopup(new maplibregl.Popup({offset:14}).setHTML(`<b>${id}</b><br>${Math.round(n.point.ele)} m · ${n.kind}`))
+    .addTo(map);
+  nodePin.togglePopup();
+  map.flyTo({center:at,zoom:Math.max(map.getZoom(),15.5)});
+}
+async function drawOverlay(){
+  clearMarkers();
+  const empty={type:'FeatureCollection',features:[]};
+  const set=(id,d)=>{ if(map.getSource(id)) map.getSource(id).setData(d); else map.addSource(id,{type:'geojson',data:d}); };
+  set('ov',empty);
+  if(!map.getLayer('ov-glow')) map.addLayer({id:'ov-glow',type:'line',source:'ov',paint:{'line-color':'#fff','line-width':9,'line-opacity':0.75}});
+  if(!map.getLayer('ov-line')) map.addLayer({id:'ov-line',type:'line',source:'ov',paint:{'line-color':['get','color'],'line-width':['get','width']}});
+  el('notes').innerHTML='';
+  if(!curOverlayData) return;
+  const entry=curOverlayData[curResort];
+  if(!entry){ el('notes').innerHTML=`<i>(no overlay data for ${curResort})</i>`; return; }
+  set('ov',{type:'FeatureCollection',features:(entry.lines||[]).map(l=>({type:'Feature',properties:{color:l.color||'#e11',width:l.width||4},geometry:{type:'LineString',coordinates:l.coords}}))});
+  // Draw larger markers first so smaller ones stack on top (coincident points stay visible).
+  [...(entry.points||[])].map((p,i)=>({p,i})).sort((a,b)=>(b.p.r||15)-(a.p.r||15)).forEach(({p})=>{
+    const s=p.r||15;
+    const dot=document.createElement('div');
+    dot.style.cssText=`width:${s}px;height:${s}px;border-radius:50%;background:${p.color||'#1560ff'};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer`;
+    if(p.tag){
+      const t=document.createElement('span');
+      t.textContent=p.tag;
+      t.style.cssText=`position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:4px;white-space:nowrap;font:600 11px system-ui;color:#111;background:rgba(255,255,255,.82);padding:0 3px;border-radius:3px;pointer-events:none`;
+      dot.appendChild(t);
+    }
+    const m=new maplibregl.Marker({element:dot}).setLngLat(p.at);
+    if(p.label) m.setPopup(new maplibregl.Popup({offset:12}).setHTML(p.label));
+    m.addTo(map); markers.push(m);
+  });
+  if(entry.notes) el('notes').innerHTML=entry.notes;
+  const f=entry.focus;
+  if(f&&f.bounds) map.fitBounds(f.bounds,{padding:80,maxZoom:16,duration:0});
+  else if(f&&f.center) map.jumpTo({center:f.center,zoom:f.zoom||15});
+}
+async function selectOverlay(overlayId){
+  if(!overlayId){ curOverlayData=null; await drawOverlay(); applyToggles(); return; }
+  const meta=OVERLAYS.find(o=>o.id===overlayId);
+  curOverlayData=await fetch(`/devtools/overlays/${meta.file}`).then(r=>r.json());
+  // restrict the resort dropdown to resorts present in this overlay, and jump to the first
+  const ids=Object.keys(curOverlayData);
+  const sel=el('resort');
+  [...sel.options].forEach(o=>{ o.hidden = ids.length>0 && !ids.includes(o.value); });
+  if(ids.length && !ids.includes(curResort)){ sel.value=ids[0]; await loadResort(ids[0]); }
+  else { await drawOverlay(); }
+  applyToggles();
+}
+
+(async()=>{
+  const idx=await fetch('/resorts/index.json').then(r=>r.json());
+  RESORTS=Array.isArray(idx)?idx:(idx.resorts||[]);
+  const rs=el('resort');
+  RESORTS.forEach(r=>{ const o=document.createElement('option'); o.value=r.id; o.textContent=`${r.name} (${r.id})`; rs.appendChild(o); });
+  OVERLAYS=await fetch('/devtools/overlays/index.json').then(r=>r.json()).catch(()=>[]);
+  const os=el('overlay');
+  const none=document.createElement('option'); none.value=''; none.textContent='— none —'; os.appendChild(none);
+  OVERLAYS.forEach(o=>{ const op=document.createElement('option'); op.value=o.id; op.textContent=o.label; os.appendChild(op); });
+
+  rs.onchange=()=>loadResort(rs.value);
+  os.onchange=()=>selectOverlay(os.value);
+  el('findnode').onchange=(e)=>gotoNode(e.target.value);
+  el('findnode').onkeydown=(e)=>{ if(e.key==='Enter') gotoNode(e.target.value); };
+  el('base').onchange=()=>{ map.setStyle(baseStyle(el('base').value)); map.once('styledata',async()=>{ if(curResort){ await loadResort(curResort); } }); };
+  el('toggles').onchange=applyToggles;
+
+  await new Promise(res=>map.loaded()?res():map.on('load',res));
+  // default: open the first overlay so the tool is immediately useful
+  if(OVERLAYS.length){ os.value=OVERLAYS[0].id; await selectOverlay(OVERLAYS[0].id); }
+  else { rs.value=RESORTS[0].id; await loadResort(RESORTS[0].id); }
+})();
+</script>
+</body>
+</html>

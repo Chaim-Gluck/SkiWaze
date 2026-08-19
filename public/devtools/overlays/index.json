@@ -1,0 +1,14 @@
+[
+  {
+    "id": "over-rim-arcs",
+    "label": "Over-rim critical arcs",
+    "file": "over-rim-arcs.json",
+    "description": "Area (open-bowl) perimeter arcs that hide a rim climb yet are the only lift-escape for a node — deleting them strands the orange node."
+  },
+  {
+    "id": "elevation-reversals",
+    "label": "Elevation reversal candidates",
+    "file": "elevation-reversals.json",
+    "description": "Piste edges that flip direction once mis-sampled elevations are corrected against the Terrarium DEM. Green = suggested top, orange = current (too-high) top; red line = strong, orange line = marginal."
+  }
+]

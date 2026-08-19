@@ -22,5 +22,14 @@
       "kind": "flat_traverse",
       "bidirectional": true
     }
+  ],
+  "_comment_elevation": "DEM under-sample fixes found via `npm run check:elevation` (cross-check vs Terrarium DEM) and confirmed on the topo map. IDs are from the current `npm run data` build; `data:refresh` renumbers nodes and breaks these. Each pair was a piste reversed because our SRTM sample read the true top too low: (1) n620/n621 near 2900 m — n621 (~2925) is the top, run skis n621->n620; (2) n660/n661 near 2360 m — n660 (~2370) is the top, run skis n660->n661; (3) n456/n457 near 1510 m — n456 (~1523) is the top, run skis n456->n457.",
+  "setNodeElevation": [
+    { "node": "n621", "ele": 2925 },
+    { "node": "n620", "ele": 2908 },
+    { "node": "n660", "ele": 2370 },
+    { "node": "n661", "ele": 2355 },
+    { "node": "n456", "ele": 1523 },
+    { "node": "n457", "ele": 1500 }
   ]
 }

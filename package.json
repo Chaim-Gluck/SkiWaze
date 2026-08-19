@@ -13,6 +13,7 @@
     "data:refresh": "tsx pipeline/build.ts all --refresh",
     "routetest": "tsx pipeline/_routetest.ts",
     "check:trapped": "tsx pipeline/_trapped.ts",
+    "check:elevation": "tsx pipeline/_elevaudit.ts",
     "check:audit": "tsx pipeline/_phantoms.ts"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "pngjs": "^7.0.0",
     "tsx": "^4.23.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
