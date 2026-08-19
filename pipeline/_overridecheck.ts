@@ -33,10 +33,10 @@ interface Overrides {
   removeEdges?: string[];
 }
 
-function checkResort(id: string): number {
+function checkResort(id: string): { stale: number; verify: number } {
   const ovPath = path.join(OVDIR, `${id}.json`);
   const gPath = path.join(ROOT, 'public', 'resorts', id, 'graph.json');
-  if (!fs.existsSync(ovPath) || !fs.existsSync(gPath)) return 0;
+  if (!fs.existsSync(ovPath) || !fs.existsSync(gPath)) return { stale: 0, verify: 0 };
   const ov = JSON.parse(fs.readFileSync(ovPath, 'utf8')) as Overrides;
   const g = JSON.parse(fs.readFileSync(gPath, 'utf8')) as ResortGraph;
   const nb = new Map(g.nodes.map((n) => [n.id, n]));
@@ -48,36 +48,61 @@ function checkResort(id: string): number {
     if (be != null) (nbrEle.get(e.from) ?? nbrEle.set(e.from, []).get(e.from)!).push(be);
     if (ae != null) (nbrEle.get(e.to) ?? nbrEle.set(e.to, []).get(e.to)!).push(ae);
   }
-  const issues: string[] = [];
+  // forward adjacency for the redundancy test (does removing the connector strand anything?)
+  const fwd = new Map<string, string[]>();
+  for (const e of g.edges) (fwd.get(e.from) ?? fwd.set(e.from, []).get(e.from)!).push(e.to);
+  const reachCount = (start: string, skip?: [string, string]): number => {
+    const seen = new Set([start]); const q = [start];
+    while (q.length) {
+      const c = q.shift()!;
+      for (const n of fwd.get(c) ?? []) {
+        if (skip && ((c === skip[0] && n === skip[1]) || (c === skip[1] && n === skip[0]))) continue;
+        if (!seen.has(n)) { seen.add(n); q.push(n); }
+      }
+    }
+    return seen.size;
+  };
+  const issues: { text: string; stale: boolean }[] = [];
 
   for (const c of ov.addConnectors ?? []) {
     const a = nb.get(c.from), b = nb.get(c.to);
-    if (!a || !b) { issues.push(`  addConnector ${c.from}<->${c.to}: MISSING NODE (id gone)`); continue; }
+    if (!a || !b) { issues.push({ text: `  addConnector ${c.from}<->${c.to}: MISSING NODE (id gone) — STALE`, stale: true }); continue; }
     const d = Math.round(haversineM(a.point, b.point));
-    if (d > CONNECTOR_MAX) issues.push(`  addConnector ${c.from}<->${c.to}: ${d} m apart (>${CONNECTOR_MAX}) — STALE?`);
+    if (d <= CONNECTOR_MAX) continue;
+    // Classify a long connector: redundant (removing it changes reachability nothing → the ids now
+    // point at already-connected nodes → stale teleport) vs load-bearing (removing it strands nodes
+    // → almost certainly a real long link such as a skiroute or pedestrian gondola).
+    const withIt = reachCount(c.from);
+    const without = reachCount(c.from, [c.from, c.to]);
+    if (withIt === without) {
+      issues.push({ text: `  addConnector ${c.from}<->${c.to}: ${d} m, REDUNDANT (reachability unchanged) — STALE teleport, safe to remove`, stale: true });
+    } else {
+      issues.push({ text: `  addConnector ${c.from}<->${c.to}: ${d} m, load-bearing (removing strands ${withIt - without} nodes) — likely a REAL long link (skiroute/gondola); verify, don't auto-remove`, stale: false });
+    }
   }
 
   for (const s of ov.setNodeElevation ?? []) {
     const n = nb.get(s.node);
-    if (!n) { issues.push(`  setNodeElevation ${s.node}=${s.ele}: MISSING NODE (id gone)`); continue; }
+    if (!n) { issues.push({ text: `  setNodeElevation ${s.node}=${s.ele}: MISSING NODE (id gone) — STALE`, stale: true }); continue; }
     const nbrs = nbrEle.get(s.node) ?? [];
     if (!nbrs.length) continue; // isolated node — nothing to compare
     const minDiff = Math.min(...nbrs.map((e) => Math.abs(e - s.ele)));
-    if (minDiff > NEIGHBOUR_MAX) issues.push(`  setNodeElevation ${s.node}=${s.ele}${nm(s.node)}: ${Math.round(minDiff)} m from its nearest neighbour elevation (>${NEIGHBOUR_MAX}) — WRONG NODE?`);
+    if (minDiff > NEIGHBOUR_MAX) issues.push({ text: `  setNodeElevation ${s.node}=${s.ele}${nm(s.node)}: ${Math.round(minDiff)} m from its nearest neighbour elevation (>${NEIGHBOUR_MAX}) — WRONG NODE?`, stale: true });
   }
   for (const grp of ov.mergeNodes ?? []) {
     const pts = grp.map((x) => nb.get(x)).filter(Boolean);
     if (pts.length < 2) continue;
     let max = 0;
     for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) max = Math.max(max, haversineM(pts[i]!.point, pts[j]!.point));
-    if (max > CONNECTOR_MAX) issues.push(`  mergeNodes [${grp.join(',')}]: spans ${Math.round(max)} m — STALE?`);
+    if (max > CONNECTOR_MAX) issues.push({ text: `  mergeNodes [${grp.join(',')}]: spans ${Math.round(max)} m — STALE?`, stale: true });
   }
 
   if (issues.length) {
-    console.log(`\n=== ${id}: ${issues.length} suspicious override entr(y/ies) ===`);
-    issues.forEach((i) => console.log(i));
+    const staleN = issues.filter((i) => i.stale).length;
+    console.log(`\n=== ${id}: ${staleN} likely-stale, ${issues.length - staleN} to-verify ===`);
+    issues.forEach((i) => console.log(i.text));
   }
-  return issues.length;
+  return { stale: issues.filter((i) => i.stale).length, verify: issues.filter((i) => !i.stale).length };
 }
 
 function main(): void {
@@ -85,10 +110,11 @@ function main(): void {
   let ids: string[];
   if (arg === 'all') ids = fs.readdirSync(OVDIR).filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''));
   else ids = [arg];
-  let total = 0;
-  for (const id of ids) total += checkResort(id);
-  console.log(`\noverride-integrity: ${total} suspicious entr${total === 1 ? 'y' : 'ies'} across ${ids.length} resort(s).`);
-  if (!total) console.log('OK: all id-based override entries look valid (connectors short, elevations consistent).');
+  let stale = 0, verify = 0;
+  for (const id of ids) { const r = checkResort(id); stale += r.stale; verify += r.verify; }
+  console.log(`\noverride-integrity: ${stale} likely-stale, ${verify} to-verify (real long link?) across ${ids.length} resort(s).`);
+  if (!stale && !verify) console.log('OK: all id-based override entries look valid (connectors short, elevations consistent).');
+  else if (!stale) console.log('No stale entries — the flagged ones are load-bearing long links to eyeball.');
 }
 
 main();
