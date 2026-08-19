@@ -17,7 +17,7 @@
     "timezone": "Asia/Tbilisi",
     "infoUrl": "https://gudauri.com/"
   },
-  "generatedAt": "2026-08-18T13:02:36.585Z",
+  "generatedAt": "2026-08-19T04:34:35.353Z",
   "stats": {
     "resortId": "gudauri",
     "nodeCount": 103,
@@ -26,8 +26,8 @@
     "liftEdges": 18,
     "connectorEdges": 115,
     "meaningfulPoints": 54,
-    "reachableFromLifts": 101,
-    "unreachableNodes": 2,
+    "reachableFromLifts": 100,
+    "unreachableNodes": 3,
     "warningsByCode": {
       "pothole_repaired": 1,
       "missing_opening_hours": 15,
@@ -114,10 +114,11 @@
     },
     {
       "code": "unreachable_component",
-      "message": "2 node(s) unreachable from the main lift network.",
+      "message": "3 node(s) unreachable from the main lift network.",
       "refs": [
         "n29",
-        "n32"
+        "n32",
+        "n37"
       ]
     }
   ]

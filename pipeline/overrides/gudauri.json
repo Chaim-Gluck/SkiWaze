@@ -1,0 +1,6 @@
+{
+  "_comment": "Gudauri corrections. IDS ARE FROM THE CURRENT `npm run data` BUILD; `data:refresh` renumbers nodes and will break these. (1) 'Frini' blue piste reversal: the top/north endpoint n37 (42.5111, 44.4929), which is really the ~2951 m summit hub next to n100 (13 m away, correctly 2951 m) and where the Frini run's own polyline peaks at 2951 m, was DEM-sampled at 2698 m. That false low made the 2.4 km Frini piste orient south->north (uphill) and pushed the short Kobi top link n37->n100 uphill too. It slipped past the global pothole repair because n37 is a piste_endpoint whose only piste-way neighbour is the low n99 (the n37->n100 Kobi link is an inferred 8 m connector), so it read as a genuine run end. Set n37 to 2951 m so Frini descends north->south and Kobi's top stays level.",
+  "setNodeElevation": [
+    { "node": "n37", "ele": 2951 }
+  ]
+}
