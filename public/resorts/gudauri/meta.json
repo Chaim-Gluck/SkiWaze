@@ -17,14 +17,14 @@
     "timezone": "Asia/Tbilisi",
     "infoUrl": "https://gudauri.com/"
   },
-  "generatedAt": "2026-08-19T04:34:35.353Z",
+  "generatedAt": "2026-08-19T21:33:33.144Z",
   "stats": {
     "resortId": "gudauri",
     "nodeCount": 103,
-    "edgeCount": 225,
+    "edgeCount": 226,
     "pisteEdges": 92,
     "liftEdges": 18,
-    "connectorEdges": 115,
+    "connectorEdges": 116,
     "meaningfulPoints": 54,
     "reachableFromLifts": 100,
     "unreachableNodes": 3,

@@ -2527,8 +2527,8 @@
     "focus": {
       "bounds": [
         [
-          7.6908631,
-          45.9205076
+          7.7079574,
+          45.9343805
         ],
         [
           7.708481684684721,
@@ -2555,29 +2555,6 @@
         "color": "#e11d1d",
         "width": 4,
         "label": "n856->n868 reverses (margin 16 m; fix n856 our3441~terr3424  n868 our3442~terr3439)"
-      },
-      {
-        "coords": [
-          [
-            7.6908631,
-            45.9205076
-          ],
-          [
-            7.6912226,
-            45.9205726
-          ],
-          [
-            7.6917844,
-            45.9208275
-          ],
-          [
-            7.6925176,
-            45.9212676
-          ]
-        ],
-        "color": "#e11d1d",
-        "width": 4,
-        "label": "n142->n906 reverses (margin 13 m; fix n142 our3071~terr3052  n906 our3063~terr3065)"
       }
     ],
     "points": [
@@ -2600,29 +2577,9 @@
         "r": 14,
         "tag": "n856",
         "label": "current top (looks too high) · n856 · our 3441->3424 m"
-      },
-      {
-        "at": [
-          7.6925176,
-          45.9212676
-        ],
-        "color": "#22a06b",
-        "r": 16,
-        "tag": "n906",
-        "label": "SUGGESTED TOP (descend from here) · n906 · corrected 3065 m"
-      },
-      {
-        "at": [
-          7.6908631,
-          45.9205076
-        ],
-        "color": "#f59e0b",
-        "r": 14,
-        "tag": "n142",
-        "label": "current top (looks too high) · n142 · our 3071->3052 m"
       }
     ],
-    "notes": "<b>2 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
+    "notes": "<b>1 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
   },
   "alpe-dhuez": {
     "focus": {
@@ -2877,164 +2834,5 @@
       }
     ],
     "notes": "<b>5 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
-  },
-  "mount-hermon": {
-    "focus": {
-      "bounds": [
-        [
-          35.7757924,
-          33.3084928
-        ],
-        [
-          35.7765541,
-          33.3090066
-        ]
-      ]
-    },
-    "lines": [
-      {
-        "coords": [
-          [
-            35.7757924,
-            33.3084928
-          ],
-          [
-            35.7765541,
-            33.3090066
-          ]
-        ],
-        "color": "#e11d1d",
-        "width": 4,
-        "label": "n53->n51 reverses (margin 19 m; fix n53 our1736~terr1695  n51 our1702~terr1714)"
-      },
-      {
-        "coords": [
-          [
-            35.776534,
-            33.3085804
-          ],
-          [
-            35.7765541,
-            33.3090066
-          ]
-        ],
-        "color": "#f59e0b",
-        "width": 4,
-        "label": "n55->n51 reverses (margin 11 m; fix n55 our1706~terr1702  n51 our1702~terr1714)"
-      }
-    ],
-    "points": [
-      {
-        "at": [
-          35.7765541,
-          33.3090066
-        ],
-        "color": "#22a06b",
-        "r": 16,
-        "tag": "n51",
-        "label": "SUGGESTED TOP (descend from here) · n51 · corrected 1714 m"
-      },
-      {
-        "at": [
-          35.7757924,
-          33.3084928
-        ],
-        "color": "#f59e0b",
-        "r": 14,
-        "tag": "n53",
-        "label": "current top (looks too high) · n53 · our 1736->1695 m"
-      },
-      {
-        "at": [
-          35.7765541,
-          33.3090066
-        ],
-        "color": "#22a06b",
-        "r": 16,
-        "tag": "n51",
-        "label": "SUGGESTED TOP (descend from here) · n51 · corrected 1714 m"
-      },
-      {
-        "at": [
-          35.776534,
-          33.3085804
-        ],
-        "color": "#f59e0b",
-        "r": 14,
-        "tag": "n55",
-        "label": "current top (looks too high) · n55 · our 1706->1702 m"
-      }
-    ],
-    "notes": "<b>2 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
-  },
-  "gudauri": {
-    "focus": {
-      "bounds": [
-        [
-          44.5015613,
-          42.4975512
-        ],
-        [
-          44.503479,
-          42.4980974
-        ]
-      ]
-    },
-    "lines": [
-      {
-        "coords": [
-          [
-            44.5015613,
-            42.4975512
-          ],
-          [
-            44.5020435,
-            42.4976041
-          ],
-          [
-            44.5026045,
-            42.497742
-          ],
-          [
-            44.5027589,
-            42.4978028
-          ],
-          [
-            44.5032496,
-            42.497996
-          ],
-          [
-            44.503479,
-            42.4980974
-          ]
-        ],
-        "color": "#e11d1d",
-        "width": 4,
-        "label": "n23->n46 reverses (margin 14 m; fix n23 our2865~terr2826  n46 our2854~terr2840)"
-      }
-    ],
-    "points": [
-      {
-        "at": [
-          44.503479,
-          42.4980974
-        ],
-        "color": "#22a06b",
-        "r": 16,
-        "tag": "n46",
-        "label": "SUGGESTED TOP (descend from here) · n46 · corrected 2840 m"
-      },
-      {
-        "at": [
-          44.5015613,
-          42.4975512
-        ],
-        "color": "#f59e0b",
-        "r": 14,
-        "tag": "n23",
-        "label": "current top (looks too high) · n23 · our 2865->2826 m"
-      }
-    ],
-    "notes": "<b>1 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
   }
 }

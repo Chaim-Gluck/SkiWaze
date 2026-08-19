@@ -17,14 +17,14 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-08-19T18:56:05.374Z",
+  "generatedAt": "2026-08-19T21:22:42.441Z",
   "stats": {
     "resortId": "cervinia-zermatt",
     "nodeCount": 937,
-    "edgeCount": 2771,
-    "pisteEdges": 809,
+    "edgeCount": 2772,
+    "pisteEdges": 811,
     "liftEdges": 123,
-    "connectorEdges": 1839,
+    "connectorEdges": 1838,
     "meaningfulPoints": 348,
     "reachableFromLifts": 925,
     "unreachableNodes": 12,

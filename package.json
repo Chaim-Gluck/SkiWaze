@@ -14,6 +14,7 @@
     "routetest": "tsx pipeline/_routetest.ts",
     "check:trapped": "tsx pipeline/_trapped.ts",
     "check:elevation": "tsx pipeline/_elevaudit.ts",
+    "probe:elevation": "tsx pipeline/_elevprobe.ts",
     "check:overrides": "tsx pipeline/_overridecheck.ts",
     "check:audit": "tsx pipeline/_phantoms.ts"
   },

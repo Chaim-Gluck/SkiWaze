@@ -70,7 +70,7 @@ async function elevAtPixel(px: number, py: number, z: number): Promise<number | 
 }
 
 // Bilinear elevation at a node, plus a smoothed neighbourhood median (5x5 at ~1px spacing).
-async function sampleNode(lat: number, lon: number): Promise<{ point: number | null; smooth: number | null }> {
+export async function sampleNode(lat: number, lon: number): Promise<{ point: number | null; smooth: number | null }> {
   const gx = lonToXpix(lon, Z), gy = latToYpix(lat, Z);
   const x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0;
   const p00 = await elevAtPixel(x0, y0, Z), p10 = await elevAtPixel(x0 + 1, y0, Z);
@@ -211,4 +211,5 @@ async function main(): Promise<void> {
   console.log(`\nwrote overlay: public/devtools/overlays/elevation-reversals.json (${Object.keys(overlay).length} resort(s) with candidates)`);
 }
 
-main();
+// Only run the audit when invoked as a script — _elevprobe.ts imports sampleNode from here.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

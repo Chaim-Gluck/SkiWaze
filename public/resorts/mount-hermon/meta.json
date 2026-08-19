@@ -14,23 +14,23 @@
       "maxLat": 33.32
     },
     "defaultZoom": 13.5,
-    "timezone": "Asia/Jerusalem"
+    "timezone": "Asia/Jerusalem",
+    "infoUrl": "https://www.skihermon.co.il/"
   },
-  "generatedAt": "2026-08-17T18:22:03.690Z",
+  "generatedAt": "2026-08-19T21:32:19.612Z",
   "stats": {
     "resortId": "mount-hermon",
     "nodeCount": 67,
-    "edgeCount": 169,
-    "pisteEdges": 50,
+    "edgeCount": 168,
+    "pisteEdges": 51,
     "liftEdges": 9,
-    "connectorEdges": 110,
+    "connectorEdges": 108,
     "meaningfulPoints": 36,
-    "reachableFromLifts": 66,
-    "unreachableNodes": 1,
+    "reachableFromLifts": 67,
+    "unreachableNodes": 0,
     "warningsByCode": {
       "missing_opening_hours": 10,
-      "inferred_connector": 3,
-      "unreachable_component": 1
+      "inferred_connector": 3
     }
   },
   "warnings": [
@@ -85,13 +85,6 @@
     {
       "code": "inferred_connector",
       "message": "Added 34 flat-junction traverse(s) bridging dangling run ends across level areas."
-    },
-    {
-      "code": "unreachable_component",
-      "message": "1 node(s) unreachable from the main lift network.",
-      "refs": [
-        "n53"
-      ]
     }
   ]
 }

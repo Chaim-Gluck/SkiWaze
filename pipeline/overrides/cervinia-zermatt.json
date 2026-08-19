@@ -1,5 +1,11 @@
 {
+  "_comment": "n856<->n868: 44m near-flat link at ~3450m (glacier plateau). The DEM cross-check wants a 15m drop here, but on-map verification reads the two ends as ~1m apart, so the elevations are left alone and the link is made two-way instead of a one-way piste.",
   "setNodeElevation": [
-    { "node": "n444", "ele": 1800 }
+    { "node": "n444", "ele": 1800 },
+    { "node": "n142", "ele": 3052 },
+    { "node": "n906", "ele": 3065 }
+  ],
+  "addConnectors": [
+    { "from": "n856", "to": "n868", "kind": "flat_traverse", "bidirectional": true }
   ]
 }
