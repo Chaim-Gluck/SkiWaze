@@ -17,14 +17,14 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.soelden.com/en/"
   },
-  "generatedAt": "2026-08-23T06:24:09.679Z",
+  "generatedAt": "2026-08-23T09:40:54.113Z",
   "stats": {
     "resortId": "soelden",
     "nodeCount": 500,
-    "edgeCount": 1303,
-    "pisteEdges": 701,
+    "edgeCount": 1295,
+    "pisteEdges": 709,
     "liftEdges": 54,
-    "connectorEdges": 548,
+    "connectorEdges": 532,
     "meaningfulPoints": 164,
     "reachableFromLifts": 498,
     "unreachableNodes": 2,

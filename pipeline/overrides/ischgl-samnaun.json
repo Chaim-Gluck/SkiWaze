@@ -1,0 +1,15 @@
+{
+  "_comment": "Ischgl / Samnaun. Both entries below are verified-good elevation-audit candidates, kept only to silence npm run check:elevation.",
+  "ignoreReversals": [
+    {
+      "from": "n247908235",
+      "to": "n364112206",
+      "why": "Piste 1a at the Ischgl valley station (~1375 m). The ±10 m neighbour sweep shows 8 of 17 nodes within 300 m sitting a uniform +12..+16 m above Terrarium — a systematic basin-wide DEM offset, not a per-node spike — so the candidate is merely less offset than its neighbours. The run descends monotonically (1378 1377 1376 1374 1374); our orientation is right."
+    },
+    {
+      "from": "n363864848",
+      "to": "n364122417",
+      "why": "Piste 20 near 2510 m. Margin is only 12 m [marginal] and the neighbour sweep is pure noise (-14, +10, -14, +10, -13 across 12 nodes, all at the 10 m threshold) with no consistent story. The 108 m segment already descends monotonically (2518 2510 2509), a normal black-run pitch. Nothing to fix."
+    }
+  ]
+}

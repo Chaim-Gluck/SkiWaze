@@ -16,5 +16,11 @@
     "label": "Plateau traverses (app-added)",
     "file": "plateau-links.json",
     "description": "Bidirectional flat traverses the plateau pass added to reconnect points that sit on the same shelf (<=45 m apart, <=8 m height) but were severed because every mapped link out was one-way downhill. Numbered most-questionable first; pink = marginal."
+  },
+  {
+    "id": "uphill-pistes",
+    "label": "Uphill piste edges (bug)",
+    "file": "uphill-pistes.json",
+    "description": "Piste edges that point uphill because a T-junction split was never re-oriented. The router can use them as a free lift. Red = climbs, blue = the correctly-descending other half, orange = the app-added split node."
   }
 ]

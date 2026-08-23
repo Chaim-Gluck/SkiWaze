@@ -20,8 +20,10 @@
     { "node": "n360067737", "ele": 2140 },
     { "node": "n1130068925", "ele": 2128 },
     { "node": "n321004740", "ele": 2073 },
-    { "node": "n281873162", "ele": 2400 }
+    { "node": "n281873162", "ele": 2400 },
+    { "node": "n357164716", "ele": 1893 }
   ],
+  "_comment2": "n357164716 (blue 11 Gerent, ~1890 m): we read 1870 while Terrarium reads 1893, and the +-10 m neighbour sweep shows the neighbours only at the -10 m noise floor, so this is a genuine single-node spike. Topology confirms it: at 1870 the node was a pothole — both blue Gerent edges (from n357164713 and from n10717652947) drained INTO it and the only exit was e1060, an unnamed 129 m app-added connector rather than a real run. At 1893 Gerent becomes the clean descending chain n357164713 1908 -> n357164716 1893 -> n10717652947 1877 -> n7231387779 1875, matching the on-the-ground direction (the slope runs n357164716 -> n10717652947).",
   "addConnectors": [
     { "from": "n321004740", "to": "n7256146736", "kind": "flat_traverse", "bidirectional": true }
   ]

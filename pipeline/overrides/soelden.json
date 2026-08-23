@@ -2,5 +2,15 @@
   "_comment": "Sölden corrections. (1) OSM maps the not-yet-built Pitztal<->Sölden connector '(Projekt) Fernerkogelbahn III' as an aerialway; its top sits just inside the west bbox edge right next to the real Tiefenbachbahn, so it can't be dropped by bbox without clipping Sölden's glacier lift. Remove it so routes never board a phantom (unbuilt) lift.",
   "removeLifts": [
     { "liftName": "(Projekt) Fernerkogelbahn III" }
+  ],
+  "_comment2": "False-elevation reversals confirmed by eyeball (check:elevation). Two piste ends near the Giggijoch-area lift stations (~2640 m) and one on the glacier (~3230 m) sampled too low/high, flipping the ski direction uphill. Values are the EU-DEM terrain samples reported by npm run check:elevation soelden.",
+  "setNodeElevation": [
+    { "node": "n4394538290", "ele": 2634 },
+    { "node": "n261983126", "ele": 2655 },
+    { "node": "n4394538265", "ele": 2642 },
+    { "node": "n1613091887", "ele": 2659 },
+    { "node": "n514207288", "ele": 3222 },
+    { "node": "n333226784", "ele": 3242 },
+    { "node": "n313310543", "ele": 3243 }
   ]
 }

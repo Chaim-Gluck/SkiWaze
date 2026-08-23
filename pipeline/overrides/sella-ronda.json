@@ -25,5 +25,12 @@
     { "node": "n269039752", "ele": 2355 },
     { "node": "n1011618218", "ele": 1523 },
     { "node": "n269039125", "ele": 1500 }
+  ],
+  "ignoreReversals": [
+    {
+      "from": "n13031955177",
+      "to": "n13039689977",
+      "why": "Malga Ciapela valley floor (~1440 m). Terrarium reads the east end 25 m higher (a tight 3-node pothole: n13039689977, n12009588137, sn13039689977 all -21..-25 m; every other node within 300 m agrees). Checked on the map: the run really does fall west->east. 'Correcting' it would flip the piste east->west and strand n13039689977/n12009588137, whose only other links are a 22 m flat pair, inside an already-orphaned valley component. Our orientation is right; the DEM is wrong."
+    }
   ]
 }

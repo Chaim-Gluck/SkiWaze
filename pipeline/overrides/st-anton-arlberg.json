@@ -6,6 +6,23 @@
     { "from": "n12798747121", "to": "n487179638", "kind": "flat_traverse", "bidirectional": true },
     { "from": "n612548368", "to": "n6682123969", "kind": "flat_traverse", "bidirectional": true },
     { "from": "n327300760", "to": "n328068749", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n327358947", "to": "n6711103844", "kind": "flat_traverse", "bidirectional": true }
+    { "from": "n327358947", "to": "n6711103844", "kind": "flat_traverse", "bidirectional": true },
+    { "from": "n327317441", "to": "n279609294", "kind": "flat_traverse", "bidirectional": true }
+  ],
+  "_comment2": "False-elevation cluster at the Muggengrat junction (~47.164, 10.135). A DEM spike put n325116111 (144 Muggengrat - Taeli top) 62 m too high while the surrounding knoll sampled ~25-30 m too low, so every piste there drained INTO n325116082 instead of out of it, orphaning the two Muggengrat tops. Values are the corrected terrain samples from npm run check:elevation st-anton-arlberg; n325116019 (lift station on the same knoll) was 29 m low but under the 40 m audit threshold.",
+  "_comment3": "n327317441<->n279609294 (~47.152, 10.222) is a flat saddle where skiers off either neighbouring lift top choose to descend east or west. The whole basin samples ~30 m low on the reference DEM, so the audit flagged the 61 m link as a reversal; the real answer is that it is two-way, not backwards. A bidirectional flat_traverse expresses that (setNodeElevation can only demote a flat traverse to a one-way piste, never promote one).",
+  "setNodeElevation": [
+    { "node": "n325116111", "ele": 2384 },
+    { "node": "n325116101", "ele": 2415 },
+    { "node": "n325116082", "ele": 2429 },
+    { "node": "n705524894", "ele": 2416 },
+    { "node": "n325116019", "ele": 2436 }
+  ],
+  "ignoreReversals": [
+    {
+      "from": "n327317441",
+      "to": "n279609294",
+      "why": "See _comment3: this is a two-way flat saddle, expressed via the bidirectional addConnectors entry above. The piste edge's own orientation is deliberately left alone, so the audit would otherwise flag it forever."
+    }
   ]
 }
