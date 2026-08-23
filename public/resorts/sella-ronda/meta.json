@@ -17,16 +17,16 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-08-23T06:23:55.061Z",
+  "generatedAt": "2026-08-23T12:37:26.983Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1389,
-    "edgeCount": 3719,
-    "pisteEdges": 1466,
+    "nodeCount": 1388,
+    "edgeCount": 3720,
+    "pisteEdges": 1465,
     "liftEdges": 217,
-    "connectorEdges": 2036,
+    "connectorEdges": 2038,
     "meaningfulPoints": 626,
-    "reachableFromLifts": 1329,
+    "reachableFromLifts": 1328,
     "unreachableNodes": 60,
     "warningsByCode": {
       "suspicious_merge": 1,
@@ -749,19 +749,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 535 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 536 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 515 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 516 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 85 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 86 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 4 trapped node(s) with a forced traverse to the nearest reachable point (4 onto a piste line)."
+      "message": "Rescued 3 trapped node(s) with a forced traverse to the nearest reachable point (3 onto a piste line)."
     },
     {
       "code": "inferred_connector",

@@ -17,14 +17,14 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.soelden.com/en/"
   },
-  "generatedAt": "2026-08-23T09:40:54.113Z",
+  "generatedAt": "2026-08-23T12:37:36.212Z",
   "stats": {
     "resortId": "soelden",
     "nodeCount": 500,
-    "edgeCount": 1295,
+    "edgeCount": 1297,
     "pisteEdges": 709,
     "liftEdges": 54,
-    "connectorEdges": 532,
+    "connectorEdges": 534,
     "meaningfulPoints": 164,
     "reachableFromLifts": 498,
     "unreachableNodes": 2,
@@ -192,11 +192,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 106 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 107 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 106 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 107 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

@@ -76,6 +76,14 @@ and apply identically to **every** resort — there is no per-resort graph code.
 - **Slopes are one-way (descending only)**, except near-flat cat-tracks (gradient ≤ `flatGradeMax`)
   which also get a reverse traverse — but never a rise over `maxTraverseClimb`.
 - **Uphill is never inferred.** Skiable connectors are downhill-only or flat/bidirectional.
+- **A split may not invent an uphill piste.** A piste's direction comes from its two endpoint
+  elevations, so a non-monotonic way (classically an `area=yes` ring arcing over a rim: down into
+  the bowl, back out, ending near its start height) passes as "descending". Splitting it at an
+  interior point yields halves that inherit `kind:'piste'` while one genuinely climbs — and
+  `cost.ts` charges nothing to ascend a piste, making it a free lift. Any split half that climbs
+  more than `maxTraverseClimb` is emitted **reversed** (`pushSplitHalf` in `buildGraph.ts`), so the
+  real descent survives and the bogus ascent goes. Smaller rises are left alone: that's DEM noise,
+  and flipping a run over it would be worse than the rise.
 - **Lifts are up-only**, except gondolas/cable-cars/funiculars which also carry skiers **down**.
 - **Rescue pass**: any node that can't reach a lift is linked to the nearest reachable node
   within `rescueRadius`; large drops become one-way so they can't be abused to climb.

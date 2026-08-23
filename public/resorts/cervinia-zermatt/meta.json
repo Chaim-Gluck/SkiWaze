@@ -17,14 +17,14 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-08-23T06:23:51.828Z",
+  "generatedAt": "2026-08-23T12:37:24.178Z",
   "stats": {
     "resortId": "cervinia-zermatt",
     "nodeCount": 889,
-    "edgeCount": 2299,
+    "edgeCount": 2310,
     "pisteEdges": 962,
     "liftEdges": 123,
-    "connectorEdges": 1214,
+    "connectorEdges": 1225,
     "meaningfulPoints": 331,
     "reachableFromLifts": 875,
     "unreachableNodes": 14,
@@ -441,11 +441,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 244 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 251 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 73 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 74 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

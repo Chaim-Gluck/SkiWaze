@@ -454,6 +454,36 @@ export function buildResortGraph(
   const geomDrop = (g: GeoPoint[]): number =>
     g.length >= 2 ? (g[g.length - 1].ele ?? 0) - (g[0].ele ?? 0) : 0;
 
+  // Emits one half of a split edge, repairing a direction the split has just falsified.
+  //
+  // A piste is oriented from its two ENDPOINT elevations alone (`dropM: -Math.abs(drop)` below),
+  // so a way whose geometry is not monotonic passes as "descending" as long as it ends lower
+  // than it starts. That is routine for an `area=yes` ring, which arcs over a rim: it drops into
+  // a bowl and climbs back out, yet its two ends sit at nearly the same height. Split such a way
+  // at an interior point and the halves inherit `kind: 'piste'` while one of them genuinely
+  // CLIMBS — Sölden's e1031 rose 287 m as a one-way black run. cost.ts charges nothing to ascend
+  // a piste, so that half is a free lift: it let a skier climb out of the glacier bowl instead of
+  // riding the gondola beside it.
+  //
+  // Emit the offending half reversed, so the real descent it represents survives and only the
+  // bogus ascent disappears. Rises within maxTraverseClimb are left alone: at that scale the
+  // signal is DEM noise, and flipping a run because of it would be worse than the rise.
+  const pushSplitHalf = (half: GraphEdge): void => {
+    if (half.kind === 'piste' && half.dropM > c.maxTraverseClimb) {
+      const geometry = [...half.geometry].reverse();
+      edges.push({
+        ...half,
+        from: half.to,
+        to: half.from,
+        geometry,
+        dropM: -half.dropM,
+        gradient: half.gradient == null ? undefined : -half.gradient,
+      });
+      return;
+    }
+    edges.push(half);
+  };
+
   // --- Piste + flat edges -------------------------------------------------
   const pisteEndpointNames: { nodeId: string; name: string; role: 'top' | 'bottom' }[] = [];
   for (const piste of pistes) {
@@ -648,8 +678,8 @@ export function buildResortGraph(
       const toEle = nodes.get(X.to)?.ele ?? 0;
       const idx = edges.indexOf(X);
       if (idx >= 0) edges.splice(idx, 1);
-      edges.push({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: (P.ele ?? 0) - fromEle });
-      edges.push({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: toEle - (P.ele ?? 0) });
+      pushSplitHalf({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: (P.ele ?? 0) - fromEle });
+      pushSplitHalf({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: toEle - (P.ele ?? 0) });
       // Link the dead-end onto the run at N. A very close touch (<= Hmerge) is a real
       // junction (not flagged); a larger gap is an app guess (flagged synthetic).
       const dz = (P.ele ?? 0) - E.ele;
@@ -1052,8 +1082,8 @@ export function buildResortGraph(
             const g2 = [P, ...X.geometry.slice(bestLine.segIdx)];
             const idx = edges.indexOf(X);
             if (idx >= 0) edges.splice(idx, 1);
-            edges.push({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: geomDrop(g1) });
-            edges.push({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: geomDrop(g2) });
+            pushSplitHalf({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: geomDrop(g1) });
+            pushSplitHalf({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: geomDrop(g2) });
             lineTargetId = N;
           }
         }
@@ -1156,8 +1186,8 @@ export function buildResortGraph(
         const toEle = toN.ele ?? 0;
         const idx = edges.indexOf(X);
         if (idx >= 0) edges.splice(idx, 1);
-        edges.push({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: (P.ele ?? 0) - fromEle });
-        edges.push({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: toEle - (P.ele ?? 0) });
+        pushSplitHalf({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: (P.ele ?? 0) - fromEle });
+        pushSplitHalf({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: toEle - (P.ele ?? 0) });
       }
 
       const dz = (P.ele ?? 0) - T.ele; // typically <= 0 (ski down onto the run)

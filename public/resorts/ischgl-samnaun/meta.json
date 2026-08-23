@@ -17,14 +17,14 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.ischgl.com/en/"
   },
-  "generatedAt": "2026-08-23T06:24:42.712Z",
+  "generatedAt": "2026-08-23T12:37:37.164Z",
   "stats": {
     "resortId": "ischgl-samnaun",
     "nodeCount": 1174,
-    "edgeCount": 3886,
+    "edgeCount": 3884,
     "pisteEdges": 1709,
     "liftEdges": 68,
-    "connectorEdges": 2109,
+    "connectorEdges": 2107,
     "meaningfulPoints": 252,
     "reachableFromLifts": 1168,
     "unreachableNodes": 6,
@@ -299,7 +299,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 313 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 311 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",

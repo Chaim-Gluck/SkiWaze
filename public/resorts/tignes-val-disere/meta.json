@@ -17,17 +17,17 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.tignes.net/en/"
   },
-  "generatedAt": "2026-08-23T06:24:39.231Z",
+  "generatedAt": "2026-08-23T12:37:33.889Z",
   "stats": {
     "resortId": "tignes-val-disere",
-    "nodeCount": 899,
-    "edgeCount": 2488,
-    "pisteEdges": 987,
+    "nodeCount": 900,
+    "edgeCount": 2497,
+    "pisteEdges": 988,
     "liftEdges": 93,
-    "connectorEdges": 1408,
+    "connectorEdges": 1416,
     "meaningfulPoints": 384,
-    "reachableFromLifts": 868,
-    "unreachableNodes": 31,
+    "reachableFromLifts": 867,
+    "unreachableNodes": 33,
     "warningsByCode": {
       "missing_opening_hours": 84,
       "inferred_connector": 5,
@@ -377,27 +377,28 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 358 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 362 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 293 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 296 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 83 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 82 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point (0 onto a piste line)."
+      "message": "Rescued 3 trapped node(s) with a forced traverse to the nearest reachable point (1 onto a piste line)."
     },
     {
       "code": "unreachable_component",
-      "message": "31 node(s) unreachable from the main lift network.",
+      "message": "33 node(s) unreachable from the main lift network.",
       "refs": [
         "n249848223",
         "n339346911",
         "n1037586198",
+        "n1040017550",
         "n603582361",
         "n1096420482",
         "n1049031053",
@@ -413,8 +414,7 @@
         "n249848235",
         "n11257222783",
         "n12797186395",
-        "n12797254711",
-        "n12797254712"
+        "n12797254711"
       ]
     }
   ]

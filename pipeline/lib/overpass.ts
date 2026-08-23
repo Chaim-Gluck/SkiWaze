@@ -27,9 +27,11 @@ export interface OverpassResult {
 /**
  * True when a piste way is an AREA polygon (OSM `area=yes` or a closed ring) rather
  * than a centreline. Rendering an area's perimeter as a line draws two parallel lines
- * down each side of the run, and its perimeter makes bogus routing edges — so these are
- * excluded from the graph. Runs mapped as areas are, by OSM convention, also mapped as
- * centreline ways, which are kept.
+ * down each side of the run, so these are excluded from the RENDER and emitted as polygon
+ * fills instead — but they are kept in the routing graph, because there is no reliable
+ * centreline twin: dropping every area edge strands ~1 276 nodes across the fleet (Val
+ * Thorens alone has more area edges than it has nodes). Their perimeters do make awkward
+ * routing edges; see the split-direction invariant in AGENTS.md for the one that bit us.
  */
 export function isPisteArea(w: RawWay): boolean {
   if (w.tags['area'] === 'yes') return true;
