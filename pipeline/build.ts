@@ -101,12 +101,14 @@ async function main(): Promise<void> {
   }
 
   const built: Resort[] = [];
+  const failed: { id: string; err: string }[] = [];
   for (const resort of targets) {
     try {
       await buildResort(resort, { refresh, ttlDays });
       built.push(resort);
     } catch (err) {
       console.error(`  FAILED ${resort.id}: ${String(err)}`);
+      failed.push({ id: resort.id, err: String(err) });
     }
   }
   // Merge with any previously built resorts so the index stays complete.
@@ -118,6 +120,16 @@ async function main(): Promise<void> {
   }
   writeIndex(built);
   console.log(`\nDone. Built ${existingIds.size} resort(s).`);
+  if (failed.length > 0) {
+    // Exit non-zero so a partial `data:all` can't look like a success. A per-resort failure used
+    // to be buried mid-log while the run still exited 0, which made a locked file (Windows keeps
+    // graph.json open while the dev server serves it) look like the resort had been skipped.
+    console.error(`\n${failed.length} resort(s) FAILED and were NOT written:`);
+    for (const f of failed) console.error(`  - ${f.id}: ${f.err}`);
+    console.error('\nStale data is still on disk for these. Re-run them individually; if the error');
+    console.error("is an UNKNOWN/EPERM open, stop the dev server first — it's holding the file.");
+    process.exit(1);
+  }
 }
 
 main();
