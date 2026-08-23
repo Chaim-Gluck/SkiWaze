@@ -18,6 +18,12 @@ export interface GraphConstants {
   maxGrade: number;
   /** Max vertical rise (m) tolerated on a piste segment before it's dropped as "uphill". */
   pisteFlatTolerance: number;
+  /**
+   * Minimum rise/run to call a local elevation extremum a DEM sampling spike rather than real
+   * terrain. 1.2 is ~50°, steeper than any groomed piste (a black run is ~0.7), so genuine summits
+   * and basins survive while a cell standing impossibly proud of nearby ground is repaired.
+   */
+  spikeGradeMax: number;
   /** Max horizontal distance (m) to bridge a dead-end ("stuck") node to a descent continuation. */
   bridgeRadius: number;
   /** Max horizontal distance (m) for a bidirectional flat bridge across a stuck node. */
@@ -26,6 +32,8 @@ export interface GraphConstants {
   snapToLineRadius: number;
   /** Rescue pass: max distance (m) to force-connect a trapped node to a reachable one. */
   rescueRadius: number;
+  /** Rescue pass: max distance (m) to project a trapped node onto a reachable piste *line*. */
+  rescueLineRadius: number;
   /** Max gradient (rise/run) for a piste segment to also be traversable in reverse (cat-track). */
   flatGradeMax: number;
   /** Max absolute rise (m) allowed on any flat traverse (reverse cat-track / rescue) — you can skate a small rise, not climb. */
@@ -38,6 +46,19 @@ export interface GraphConstants {
   flatJunctionK: number;
   /** Lift-top ski-out pass: max distance (m) to snap a no-ski-out lift top onto a nearby piste line. */
   liftSkiOutRadius: number;
+  /**
+   * Plateau pass: max horizontal distance (m) over which two hub nodes count as "the same
+   * place". Over such a short link the DEM gradient is noise, not terrain — a summit station
+   * apron reads as a 25% slope simply because two cells differ by a few metres.
+   */
+  plateauRadius: number;
+  /** Plateau pass: max bidirectional traverses to add per node (keeps the graph sparse). */
+  plateauK: number;
+  /**
+   * Plateau pass: how far (m) a skier may already travel along mapped runs to get between the two
+   * points before the link is judged unnecessary. Only genuinely severed pairs are bridged.
+   */
+  plateauReachBudget: number;
 }
 
 export const DEFAULT_GRAPH_CONSTANTS: GraphConstants = {
@@ -48,14 +69,19 @@ export const DEFAULT_GRAPH_CONSTANTS: GraphConstants = {
   minGrade: 0.03,
   maxGrade: 0.8,
   pisteFlatTolerance: 3,
+  spikeGradeMax: 1.2,
   snapToLineRadius: 45,
   bridgeRadius: 150,
   flatBridgeMax: 120,
   rescueRadius: 200,
+  rescueLineRadius: 130,
   flatGradeMax: 0.06,
   maxTraverseClimb: 8,
   flatJunctionRadius: 120,
   flatJunctionDV: 8,
   flatJunctionK: 2,
   liftSkiOutRadius: 130,
+  plateauRadius: 45,
+  plateauK: 3,
+  plateauReachBudget: 400,
 };

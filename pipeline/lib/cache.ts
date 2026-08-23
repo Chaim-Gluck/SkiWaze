@@ -46,8 +46,11 @@ export function writeCache<T>(key: string, data: T): void {
 const ELE_FILE = path.join(CACHE_DIR, 'elevation-cache.json');
 let eleCache: Record<string, number> | null = null;
 
-function eleKey(lat: number, lon: number): string {
-  return `${lat.toFixed(5)},${lon.toFixed(5)}`;
+// Entries are namespaced by the DEM they came from. Switching elevation source must not
+// silently reuse the old source's samples, and keeping both lets a revert stay cheap.
+function eleKey(lat: number, lon: number, ns: string): string {
+  const coord = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+  return ns ? `${ns}|${coord}` : coord;
 }
 
 export function loadElevationCache(): Record<string, number> {
@@ -64,12 +67,12 @@ export function loadElevationCache(): Record<string, number> {
   return eleCache;
 }
 
-export function getCachedElevation(lat: number, lon: number): number | undefined {
-  return loadElevationCache()[eleKey(lat, lon)];
+export function getCachedElevation(lat: number, lon: number, ns = ''): number | undefined {
+  return loadElevationCache()[eleKey(lat, lon, ns)];
 }
 
-export function setCachedElevation(lat: number, lon: number, ele: number): void {
-  loadElevationCache()[eleKey(lat, lon)] = ele;
+export function setCachedElevation(lat: number, lon: number, ele: number, ns = ''): void {
+  loadElevationCache()[eleKey(lat, lon, ns)] = ele;
 }
 
 export function saveElevationCache(): void {

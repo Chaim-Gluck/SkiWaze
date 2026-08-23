@@ -17,20 +17,20 @@
     "timezone": "Asia/Jerusalem",
     "infoUrl": "https://www.skihermon.co.il/"
   },
-  "generatedAt": "2026-08-19T21:59:11.946Z",
+  "generatedAt": "2026-08-23T06:24:07.655Z",
   "stats": {
     "resortId": "mount-hermon",
-    "nodeCount": 67,
-    "edgeCount": 166,
-    "pisteEdges": 53,
+    "nodeCount": 69,
+    "edgeCount": 143,
+    "pisteEdges": 63,
     "liftEdges": 9,
-    "connectorEdges": 104,
-    "meaningfulPoints": 36,
-    "reachableFromLifts": 67,
+    "connectorEdges": 71,
+    "meaningfulPoints": 40,
+    "reachableFromLifts": 69,
     "unreachableNodes": 0,
     "warningsByCode": {
       "missing_opening_hours": 10,
-      "inferred_connector": 3
+      "inferred_connector": 4
     }
   },
   "warnings": [
@@ -76,15 +76,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 9 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 11 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 39 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 26 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 34 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 15 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 3 plateau traverse(s) linking hub nodes on the same level apron."
     }
   ]
 }

@@ -1,11 +1,11 @@
 [
   {
-    "id": "gudauri",
-    "name": "Gudauri",
-    "country": "Georgia",
+    "id": "alpe-dhuez",
+    "name": "Alpe d'Huez",
+    "country": "France",
     "center": {
-      "lon": 44.49,
-      "lat": 42.485
+      "lon": 6.08,
+      "lat": 45.1
     }
   },
   {
@@ -72,6 +72,15 @@
     }
   },
   {
+    "id": "gudauri",
+    "name": "Gudauri",
+    "country": "Georgia",
+    "center": {
+      "lon": 44.49,
+      "lat": 42.485
+    }
+  },
+  {
     "id": "mayrhofen",
     "name": "Mayrhofen",
     "country": "Austria",
@@ -96,15 +105,6 @@
     "center": {
       "lon": 10.34,
       "lat": 46.97
-    }
-  },
-  {
-    "id": "alpe-dhuez",
-    "name": "Alpe d'Huez",
-    "country": "France",
-    "center": {
-      "lon": 6.08,
-      "lat": 45.1
     }
   },
   {

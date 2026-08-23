@@ -17,29 +17,24 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-08-19T21:58:54.518Z",
+  "generatedAt": "2026-08-23T06:23:51.828Z",
   "stats": {
     "resortId": "cervinia-zermatt",
-    "nodeCount": 937,
-    "edgeCount": 2772,
-    "pisteEdges": 811,
+    "nodeCount": 889,
+    "edgeCount": 2299,
+    "pisteEdges": 962,
     "liftEdges": 123,
-    "connectorEdges": 1838,
-    "meaningfulPoints": 348,
-    "reachableFromLifts": 925,
-    "unreachableNodes": 12,
+    "connectorEdges": 1214,
+    "meaningfulPoints": 331,
+    "reachableFromLifts": 875,
+    "unreachableNodes": 14,
     "warningsByCode": {
-      "pothole_repaired": 1,
       "missing_opening_hours": 99,
       "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
   "warnings": [
-    {
-      "code": "pothole_repaired",
-      "message": "Repaired 18 DEM false local-min/peak node(s) to keep runs descending monotonically."
-    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Zermatt–Sunnegga funicular\" has no opening_hours in OSM."
@@ -438,32 +433,33 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 157 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 115 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 470 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 274 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 457 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 244 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point."
+      "message": "Added 73 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
+      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point (0 onto a piste line)."
     },
     {
       "code": "unreachable_component",
-      "message": "12 node(s) unreachable from the main lift network.",
+      "message": "14 node(s) unreachable from the main lift network.",
       "refs": [
-        "n253323902",
-        "n253323904",
+        "n253330327",
         "n7847562228",
         "n342764945",
+        "n253330317",
+        "n1175674844",
         "n690807925",
         "n726588724",
         "n2999922199",
@@ -471,7 +467,8 @@
         "n7206042373",
         "n12944659729",
         "n3165652504",
-        "n7206060823"
+        "n7206060823",
+        "n1906820697"
       ]
     }
   ]

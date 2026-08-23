@@ -17,29 +17,24 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.les2alpes.com/en/"
   },
-  "generatedAt": "2026-08-19T21:59:17.450Z",
+  "generatedAt": "2026-08-23T06:24:12.992Z",
   "stats": {
     "resortId": "les-deux-alpes",
-    "nodeCount": 522,
-    "edgeCount": 1518,
-    "pisteEdges": 447,
+    "nodeCount": 499,
+    "edgeCount": 1306,
+    "pisteEdges": 558,
     "liftEdges": 55,
-    "connectorEdges": 1016,
-    "meaningfulPoints": 207,
-    "reachableFromLifts": 512,
-    "unreachableNodes": 10,
+    "connectorEdges": 693,
+    "meaningfulPoints": 212,
+    "reachableFromLifts": 486,
+    "unreachableNodes": 13,
     "warningsByCode": {
-      "pothole_repaired": 1,
       "missing_opening_hours": 47,
-      "inferred_connector": 5,
+      "inferred_connector": 4,
       "unreachable_component": 1
     }
   },
   "warnings": [
-    {
-      "code": "pothole_repaired",
-      "message": "Repaired 14 DEM false local-min/peak node(s) to keep runs descending monotonically."
-    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Signal\" has no opening_hours in OSM."
@@ -230,28 +225,26 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 82 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 60 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 229 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 163 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 253 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 166 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 2 trapped node(s) with a forced traverse to the nearest reachable point."
-    },
-    {
-      "code": "inferred_connector",
-      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
+      "message": "Added 39 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "unreachable_component",
-      "message": "10 node(s) unreachable from the main lift network.",
+      "message": "13 node(s) unreachable from the main lift network.",
       "refs": [
+        "n6187947571",
+        "n615068643",
         "n615068431",
         "n6064094414",
         "n7702900003",
@@ -261,6 +254,7 @@
         "n11280322274",
         "n13448102891",
         "n13448160043",
+        "n13448160083",
         "n13448160122"
       ]
     }

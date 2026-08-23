@@ -17,19 +17,19 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.soelden.com/en/"
   },
-  "generatedAt": "2026-08-19T21:59:13.129Z",
+  "generatedAt": "2026-08-23T06:24:09.679Z",
   "stats": {
     "resortId": "soelden",
-    "nodeCount": 549,
-    "edgeCount": 1864,
-    "pisteEdges": 527,
+    "nodeCount": 500,
+    "edgeCount": 1303,
+    "pisteEdges": 701,
     "liftEdges": 54,
-    "connectorEdges": 1283,
-    "meaningfulPoints": 175,
-    "reachableFromLifts": 539,
-    "unreachableNodes": 10,
+    "connectorEdges": 548,
+    "meaningfulPoints": 164,
+    "reachableFromLifts": 498,
+    "unreachableNodes": 2,
     "warningsByCode": {
-      "pothole_repaired": 1,
+      "suspicious_merge": 2,
       "missing_opening_hours": 34,
       "inferred_connector": 4,
       "unreachable_component": 1
@@ -37,8 +37,18 @@
   },
   "warnings": [
     {
-      "code": "pothole_repaired",
-      "message": "Repaired 7 DEM false local-min/peak node(s) to keep runs descending monotonically."
+      "code": "suspicious_merge",
+      "message": "Node n1613091915 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1613091915"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n3241305056 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n3241305056"
+      ]
     },
     {
       "code": "missing_opening_hours",
@@ -178,34 +188,26 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 87 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 42 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 281 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 106 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 316 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 106 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
+      "message": "Added 49 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "unreachable_component",
-      "message": "10 node(s) unreachable from the main lift network.",
+      "message": "2 node(s) unreachable from the main lift network.",
       "refs": [
-        "n333227642",
-        "n1613091796",
-        "n3240692336",
         "n314638719",
-        "n10957721631",
-        "n10957721644",
-        "n5007594064",
-        "n3236225861",
-        "n4486811279",
-        "sn10957721631"
+        "n11369007185"
       ]
     }
   ]

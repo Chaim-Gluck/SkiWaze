@@ -17,28 +17,31 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.stantonamarlberg.com/en/"
   },
-  "generatedAt": "2026-08-19T21:59:11.607Z",
+  "generatedAt": "2026-08-23T06:24:06.873Z",
   "stats": {
     "resortId": "st-anton-arlberg",
-    "nodeCount": 823,
-    "edgeCount": 2461,
-    "pisteEdges": 673,
+    "nodeCount": 796,
+    "edgeCount": 2042,
+    "pisteEdges": 851,
     "liftEdges": 111,
-    "connectorEdges": 1677,
-    "meaningfulPoints": 381,
-    "reachableFromLifts": 792,
-    "unreachableNodes": 31,
+    "connectorEdges": 1080,
+    "meaningfulPoints": 379,
+    "reachableFromLifts": 782,
+    "unreachableNodes": 14,
     "warningsByCode": {
-      "pothole_repaired": 1,
+      "suspicious_merge": 1,
       "missing_opening_hours": 96,
-      "inferred_connector": 4,
+      "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
   "warnings": [
     {
-      "code": "pothole_repaired",
-      "message": "Repaired 15 DEM false local-min/peak node(s) to keep runs descending monotonically."
+      "code": "suspicious_merge",
+      "message": "Node n1620393089 merges points spanning 13.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1620393089"
+      ]
     },
     {
       "code": "missing_opening_hours",
@@ -426,44 +429,42 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 117 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 93 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 450 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 283 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 432 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 233 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
+      "message": "Added 51 plateau traverse(s) linking hub nodes on the same level apron."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Rescued 4 trapped node(s) with a forced traverse to the nearest reachable point (1 onto a piste line)."
     },
     {
       "code": "unreachable_component",
-      "message": "31 node(s) unreachable from the main lift network.",
+      "message": "14 node(s) unreachable from the main lift network.",
       "refs": [
-        "n12826193329",
-        "n1516492436",
         "n1419003068",
         "n330035321",
-        "n12825370311",
-        "n1516492325",
-        "n279609287",
-        "n2616633254",
-        "n1165519841",
-        "n2616633264",
-        "n5568487914",
-        "n5568487920",
-        "n2616633344",
-        "n1075532537",
+        "n1075531663",
+        "n12829092531",
+        "n705524894",
+        "n1620393012",
+        "n325116111",
+        "n12817334475",
+        "n13680580424",
+        "n5571608945",
         "n2406677016",
         "n9366080665",
-        "n12823691506",
-        "n2587291684",
-        "n1516492392",
-        "n1516492390"
+        "n12791989529",
+        "n2254775507"
       ]
     }
   ]

@@ -17,6 +17,15 @@ const SYNTHETIC_PENALTY = 2.5;
 const PREFERRED_OFF_COLOR_PENALTY = 1e4; // per metre skied on a non-preferred colour
 const FEWEST_LIFTS_PENALTY = 1e6; // per lift boarded — generates a "fewest lifts" candidate
 
+/**
+ * Extra seconds charged per vertical metre gained on a traverse.
+ *
+ * A connector that rises is never free: on skis you skate, pole or sidestep it, at something
+ * like 300 vertical metres an hour. Charging only its horizontal length made short climbs look
+ * like flat gliding, which the longest-run search exploited as cheap extra distance.
+ */
+const CLIMB_SECONDS_PER_M = 12;
+
 export interface EdgeCost {
   allowed: boolean;
   seconds: number;
@@ -125,11 +134,12 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
   // connector
   const penalty = edge.synthetic && !edge.custom ? SYNTHETIC_PENALTY : 1;
   const skiMult = paceMultiplier(prefs.skillLevel);
+  const climbSeconds = ascentM * CLIMB_SECONDS_PER_M;
   if (edge.connectorKind === 'flat_traverse') {
-    const seconds = distanceM / (prefs.speeds.flatTraverseSpeed * skiMult);
+    const seconds = distanceM / (prefs.speeds.flatTraverseSpeed * skiMult) + climbSeconds;
     return { allowed: true, seconds, distanceM, descentM, ascentM, weight: seconds * penalty, warnings };
   }
   // skiable_down connector: treat like an unknown-color short run.
-  const seconds = distanceM / (prefs.speeds.fallbackSkiSpeed * skiMult);
+  const seconds = distanceM / (prefs.speeds.fallbackSkiSpeed * skiMult) + climbSeconds;
   return { allowed: true, seconds, distanceM, descentM, ascentM, weight: seconds * penalty, warnings };
 }

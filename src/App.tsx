@@ -917,6 +917,7 @@ export default function App() {
       ...r,
       startName: nodeLabelFor(r.startNodeId),
       endName: nodeLabelFor(r.endNodeId),
+      usesInferred: r.edges.some((e) => e.synthetic && !e.custom),
     }));
     setLongestRuns(named);
     setLongestIdx(0);

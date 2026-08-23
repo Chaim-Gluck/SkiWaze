@@ -1,40 +1,121 @@
 import type { NormPoint } from './normalize';
 import { getCachedElevation, setCachedElevation, saveElevationCache } from './cache';
 
-const ELEVATION_ENDPOINTS = [
-  'https://api.open-elevation.com/api/v1/lookup',
-  'https://api.opentopodata.org/v1/srtm30m',
+/**
+ * Namespace for cached samples. Bump this whenever the provider chain below changes
+ * so a rebuild re-samples instead of reusing the previous DEM's values.
+ */
+export const ELEVATION_SOURCE = 'eudem25m+srtm30m';
+
+type Provider =
+  | { id: string; kind: 'opentopodata'; dataset: string; delayMs: number }
+  | { id: string; kind: 'open-elevation'; url: string; delayMs: number };
+
+/**
+ * Elevation providers in priority order.
+ *
+ * open-elevation was the original primary and is now the last resort: across the Alps it
+ * returns long runs of one repeated value, which flattens real relief into shelves and
+ * concentrates the whole drop into single vertices. Downstream that reads as a piste which
+ * is level for 300 m, plunges at -100%, then *climbs* back — phantom bumps that make the
+ * routing and longest-run scorers reject perfectly good runs.
+ *
+ * EU-DEM 25 m is markedly more faithful over Europe; SRTM 30 m covers what falls outside
+ * its footprint (Gudauri, Mount Hermon) and backstops nodata holes.
+ */
+const PROVIDERS: Provider[] = [
+  { id: 'eudem25m', kind: 'opentopodata', dataset: 'eudem25m', delayMs: 1100 },
+  { id: 'srtm30m', kind: 'opentopodata', dataset: 'srtm30m', delayMs: 1100 },
+  {
+    id: 'open-elevation',
+    kind: 'open-elevation',
+    url: 'https://api.open-elevation.com/api/v1/lookup',
+    delayMs: 250,
+  },
 ];
 
-const BATCH = 100;
+const BATCH = 100; // opentopodata's public cap is 100 locations per request
 
 interface LookupResult {
-  results?: { latitude: number; longitude: number; elevation: number | null }[];
+  status?: string;
+  error?: string;
+  results?: { elevation: number | null }[];
 }
 
-async function lookupBatch(
-  locations: { latitude: number; longitude: number }[],
-): Promise<(number | null)[]> {
+type Loc = { latitude: number; longitude: number };
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchFrom(p: Provider, locs: Loc[]): Promise<(number | null)[]> {
+  const url = p.kind === 'opentopodata' ? `https://api.opentopodata.org/v1/${p.dataset}` : p.url;
+  const body =
+    p.kind === 'opentopodata'
+      ? JSON.stringify({ locations: locs.map((l) => `${l.latitude},${l.longitude}`).join('|') })
+      : JSON.stringify({ locations: locs });
+
   let lastErr: unknown;
-  for (const endpoint of ELEVATION_ENDPOINTS) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ locations }),
+        body,
       });
+      // 429 is the public rate limiter, 5xx is transient — both are worth backing off for.
+      if (res.status === 429 || res.status >= 500) throw new Error(`HTTP ${res.status}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as LookupResult;
-      if (!json.results || json.results.length !== locations.length) {
+      if (json.status && json.status !== 'OK') throw new Error(json.error ?? json.status);
+      if (!json.results || json.results.length !== locs.length) {
         throw new Error('elevation result count mismatch');
       }
+      await sleep(p.delayMs);
       return json.results.map((r) => (typeof r.elevation === 'number' ? r.elevation : null));
     } catch (err) {
       lastErr = err;
+      await sleep(p.delayMs * (attempt + 2));
     }
   }
-  console.warn(`  elevation batch failed on all endpoints: ${String(lastErr)}`);
-  return locations.map(() => null);
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
+/**
+ * Resolve a batch, falling through the provider chain for any location the previous
+ * provider could not answer (nodata holes and out-of-footprint points).
+ */
+async function lookupBatch(locations: Loc[]): Promise<(number | null)[]> {
+  const out: (number | null)[] = locations.map(() => null);
+  let pending = locations.map((_, i) => i);
+  let lastErr: unknown;
+
+  for (const p of PROVIDERS) {
+    if (pending.length === 0) break;
+    let got: (number | null)[];
+    try {
+      got = await fetchFrom(
+        p,
+        pending.map((i) => locations[i]),
+      );
+    } catch (err) {
+      lastErr = err;
+      continue;
+    }
+    const next: number[] = [];
+    pending.forEach((srcIdx, k) => {
+      const v = got[k];
+      if (v == null) next.push(srcIdx);
+      else out[srcIdx] = v;
+    });
+    pending = next;
+  }
+  if (pending.length > 0) {
+    console.warn(
+      `  elevation: ${pending.length} point(s) unresolved by all providers${
+        lastErr ? ` (last error: ${String(lastErr)})` : ''
+      }`,
+    );
+  }
+  return out;
 }
 
 /**
@@ -60,7 +141,7 @@ export async function enrichElevations(allPoints: NormPoint[][]): Promise<number
   let cachedCount = 0;
   for (const entry of unique) {
     const pts = entry[1];
-    const hit = getCachedElevation(pts[0].lat, pts[0].lon);
+    const hit = getCachedElevation(pts[0].lat, pts[0].lon, ELEVATION_SOURCE);
     if (hit != null) {
       for (const p of pts) p.ele = hit;
       cachedCount += 1;
@@ -80,19 +161,24 @@ export async function enrichElevations(allPoints: NormPoint[][]): Promise<number
     }));
     const elevations = await lookupBatch(locations);
     slice.forEach(([, pts], idx) => {
-      const ele = elevations[idx];
+      const raw = elevations[idx];
+      // opentopodata returns sub-metre floats; the graph and all tuned thresholds
+      // (pisteFlatTolerance, maxTraverseClimb, …) are metre-scale, so normalise here.
+      const ele = raw == null ? null : Math.round(raw);
       if (ele == null) {
         missing += 1;
       } else {
-        setCachedElevation(pts[0].lat, pts[0].lon, ele);
+        setCachedElevation(pts[0].lat, pts[0].lon, ele, ELEVATION_SOURCE);
       }
       for (const p of pts) p.ele = ele;
     });
     process.stdout.write(
       `\r  elevation: ${Math.min(i + BATCH, toLookup.length)}/${toLookup.length} looked up`,
     );
-    // Be polite to the public API.
-    await new Promise((r) => setTimeout(r, 250));
+    // Providers self-throttle in fetchFrom, so no extra delay here.
+    // Persist incrementally: a public-API rate limit part-way through a large resort
+    // should not throw away everything already fetched.
+    if (i % (BATCH * 20) === 0) saveElevationCache();
   }
   if (toLookup.length > 0) process.stdout.write('\n');
   saveElevationCache();

@@ -10,7 +10,21 @@
     { "node": "n4575900382", "ele": 1735 },
     { "node": "n4090685615", "ele": 1719 }
   ],
+  "splitPisteAt": [
+    {
+      "at": [10.79796, 46.17281],
+      "pisteRef": "109",
+      "node": "x109apex",
+      "radius": 20
+    }
+  ],
   "addConnectors": [
+    {
+      "from": "n4575134569",
+      "to": "x109apex",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
     {
       "from": "n603385508",
       "to": "sn297449294",

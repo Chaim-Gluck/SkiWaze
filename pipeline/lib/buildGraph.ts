@@ -320,23 +320,41 @@ function liftRideSeconds(lt: LiftType, lengthM: number, durationSec?: number): n
  * through/junction node (degree >= 2) that is a strict local extremum is almost always DEM noise.
  * Pull each such node back between its two nearest neighbours so the run stays monotonic THROUGH it
  * (one downhill exit, inflow from the rest). Iterated a few passes so cascaded dips settle.
- * Returns the number of nodes repaired.
+ *
+ * The extremum test is gated on GRADIENT, not on the raw height difference. Neighbours here are
+ * canonical *junction* nodes, which can be a kilometre apart — so "more than tol above every
+ * neighbour" is also true of every genuine summit where two runs split and both descend. Comparing
+ * rise/run instead separates the two cases: a real mountain top reaches its neighbours at piste
+ * gradients (a black run is ~0.7), while a mis-sampled DEM cell stands impossibly proud of ground
+ * a few tens of metres away. Without this gate an Ischgl ridge at 2789 m whose nearest junction was
+ * 2 km away and 432 m lower was "repaired" down to 2357 m, inventing a 433 m uphill traverse.
+ *
+ * Repairs are written back into the source polyline points as well as the node (see the returned
+ * `fixed` map). Node elevation and geometry elevation describe the same spot on the mountain, and
+ * edge drops are measured from the geometry, so patching only the node leaves every edge touching
+ * it reporting a drop that contradicts its own endpoints.
  */
 function repairPotholeElevations(
   nodes: Map<string, CanonNode>,
   pistes: NormPiste[],
   canonicalOf: Map<number, string>,
   c: GraphConstants,
-): number {
-  const adj = new Map<string, Set<string>>();
-  const link = (a: string, b: string): void => {
-    (adj.get(a) ?? adj.set(a, new Set<string>()).get(a)!).add(b);
+): { repaired: number; fixed: Map<number, number> } {
+  const adj = new Map<string, Map<string, number>>();
+  const link = (a: string, b: string, dist: number): void => {
+    const m = adj.get(a) ?? adj.set(a, new Map<string, number>()).get(a)!;
+    const prev = m.get(b);
+    if (prev == null || dist < prev) m.set(b, dist);
   };
   for (const piste of pistes) {
     for (const seg of segmentWay(piste.points, canonicalOf)) {
       if (seg.from === seg.to) continue;
-      link(seg.from, seg.to);
-      link(seg.to, seg.from);
+      const a = nodes.get(seg.from);
+      const b = nodes.get(seg.to);
+      if (!a || !b) continue;
+      const dist = haversineM({ lon: a.lon, lat: a.lat }, { lon: b.lon, lat: b.lat });
+      link(seg.from, seg.to, dist);
+      link(seg.to, seg.from, dist);
     }
   }
   const tol = Math.max(2, c.pisteFlatTolerance); // ignore sub-tolerance elevation noise
@@ -347,20 +365,25 @@ function repairPotholeElevations(
       if (nbrs.size < 2) continue; // degree 1 = genuine run endpoint (top/bottom) — leave alone
       const n = nodes.get(id);
       if (!n || n.isLiftStation || n.ele == null) continue;
-      const eles = [...nbrs]
-        .map((x) => nodes.get(x)?.ele)
-        .filter((e): e is number => e != null)
-        .sort((a, b) => a - b);
-      if (eles.length < 2) continue;
+      const near = [...nbrs]
+        .map(([x, dist]) => ({ ele: nodes.get(x)?.ele, dist }))
+        .filter((e): e is { ele: number; dist: number } => e.ele != null)
+        .sort((a, b) => a.ele - b.ele);
+      if (near.length < 2) continue;
+      const eles = near.map((e) => e.ele);
       const lowest = eles[0];
       const second = eles[1];
       const highest = eles[eles.length - 1];
       const secondHighest = eles[eles.length - 2];
-      if (n.ele < lowest - tol) {
+      // A spike must be implausibly steep relative to EVERY neighbour, not merely higher/lower
+      // than all of them — otherwise real summits and real basins get flattened.
+      const steepToAll = (sign: 1 | -1): boolean =>
+        near.every((e) => e.dist > 0 && (sign * (n.ele! - e.ele)) / e.dist > c.spikeGradeMax);
+      if (n.ele < lowest - tol && steepToAll(-1)) {
         n.ele = (lowest + second) / 2; // false min: sit just above the lowest neighbour
         repaired.add(id);
         changed = true;
-      } else if (n.ele > highest + tol) {
+      } else if (n.ele > highest + tol && steepToAll(1)) {
         n.ele = (highest + secondHighest) / 2; // false peak: sit just below the highest neighbour
         repaired.add(id);
         changed = true;
@@ -368,7 +391,24 @@ function repairPotholeElevations(
     }
     if (!changed) break;
   }
-  return repaired.size;
+  const fixed = new Map<number, number>();
+  for (const id of repaired) {
+    const n = nodes.get(id);
+    if (!n || n.ele == null) continue;
+    for (const osmId of n.members) fixed.set(osmId, n.ele);
+  }
+  return { repaired: repaired.size, fixed };
+}
+
+/** Apply repaired node elevations to the raw way points, so geometry agrees with the node table. */
+function applyElevationFixes(ways: { points: NormPoint[] }[], fixed: Map<number, number>): void {
+  if (fixed.size === 0) return;
+  for (const w of ways) {
+    for (const p of w.points) {
+      const ele = fixed.get(p.osmId);
+      if (ele != null) p.ele = ele;
+    }
+  }
 }
 
 /**
@@ -385,7 +425,8 @@ export function buildResortGraph(
   const { canonicalOf, nodes } = buildCanonicalNodes(pistes, lifts, c, warnings);
 
   // Correct DEM false local-minima/maxima before edges are oriented (see repairPotholeElevations).
-  const repairedPotholes = repairPotholeElevations(nodes, pistes, canonicalOf, c);
+  const { repaired: repairedPotholes, fixed } = repairPotholeElevations(nodes, pistes, canonicalOf, c);
+  applyElevationFixes([...pistes, ...lifts], fixed);
   if (repairedPotholes > 0) {
     warnings.push({
       code: 'pothole_repaired',
@@ -401,6 +442,17 @@ export function buildResortGraph(
     const n = node(id);
     return { lon: n.lon, lat: n.lat, ele: n.ele };
   };
+
+  // Signed vertical change along a polyline, in the direction it is stored.
+  //
+  // Connectors used to be emitted with `dropM: 0` whenever they were not an outright descent,
+  // which made every reverse cat-track and every inferred traverse look perfectly level even
+  // when its two ends differ. Across the compiled resorts that hid ~12 km of real climbing, and
+  // the longest-run search happily used it as free distance: a Madonna route skied 345 m down
+  // piste 71 purely so it could climb a 126 m / +5 m traverse back onto piste 73 higher up.
+  // Cost and score can only charge for a climb they can see, so record the truth here.
+  const geomDrop = (g: GeoPoint[]): number =>
+    g.length >= 2 ? (g[g.length - 1].ele ?? 0) - (g[0].ele ?? 0) : 0;
 
   // --- Piste + flat edges -------------------------------------------------
   const pisteEndpointNames: { nodeId: string; name: string; role: 'top' | 'bottom' }[] = [];
@@ -418,15 +470,16 @@ export function buildResortGraph(
           [seg.from, seg.to],
           [seg.to, seg.from],
         ] as const) {
+          const geometry = from === seg.from ? seg.geometry : [...seg.geometry].reverse();
           edges.push({
             id: nextEdgeId(),
             from,
             to,
             kind: 'connector',
             connectorKind: 'flat_traverse',
-            geometry: from === seg.from ? seg.geometry : [...seg.geometry].reverse(),
+            geometry,
             lengthM,
-            dropM: 0,
+            dropM: geomDrop(geometry),
             color: piste.color,
             pisteName: piste.name,
             pisteRef: piste.ref,
@@ -461,15 +514,17 @@ export function buildResortGraph(
         // but only when the actual rise is small — you can't climb toward a summit.
         const grade = Math.abs(drop) / lengthM;
         if (grade <= c.flatGradeMax && Math.abs(drop) <= c.maxTraverseClimb) {
+          const reverse = [...geometry].reverse();
           edges.push({
             id: nextEdgeId(),
             from: to,
             to: from,
             kind: 'connector',
             connectorKind: 'flat_traverse',
-            geometry: [...geometry].reverse(),
+            geometry: reverse,
             lengthM,
-            dropM: 0,
+            dropM: geomDrop(reverse),
+            gradient: lengthM > 0 ? geomDrop(reverse) / lengthM : 0,
             color: piste.color,
             pisteName: piste.name,
             pisteRef: piste.ref,
@@ -602,8 +657,8 @@ export function buildResortGraph(
       if (dz < -c.maxTraverseClimb) {
         edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'skiable_down', geometry: [ep, P], lengthM: best.dist, dropM: -Math.abs(dz), synthetic: flagged });
       } else {
-        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'flat_traverse', geometry: [ep, P], lengthM: best.dist, dropM: 0, synthetic: flagged });
-        edges.push({ id: nextEdgeId(), from: N, to: E.id, kind: 'connector', connectorKind: 'flat_traverse', geometry: [P, ep], lengthM: best.dist, dropM: 0, synthetic: flagged });
+        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'flat_traverse', geometry: [ep, P], lengthM: best.dist, dropM: geomDrop([ep, P]), synthetic: flagged });
+        edges.push({ id: nextEdgeId(), from: N, to: E.id, kind: 'connector', connectorKind: 'flat_traverse', geometry: [P, ep], lengthM: best.dist, dropM: geomDrop([P, ep]), synthetic: flagged });
       }
       snapped++;
     }
@@ -665,16 +720,17 @@ export function buildResortGraph(
         for (const [from, to] of [[a.id, b.id], [b.id, a.id]] as const) {
           if (existingPair.has(`${from}->${to}`)) continue;
           existingPair.add(`${from}->${to}`);
+          const geometry = [nodeGeo(from), nodeGeo(to)];
           edges.push({
             id: nextEdgeId(),
             from,
             to,
             kind: 'connector',
             connectorKind: 'flat_traverse',
-            geometry: [nodeGeo(from), nodeGeo(to)],
+            geometry,
             lengthM: h,
-            dropM: 0,
-            gradient: 0,
+            dropM: geomDrop(geometry),
+            gradient: h > 0 ? geomDrop(geometry) / h : 0,
             synthetic: true,
           });
         }
@@ -755,16 +811,17 @@ export function buildResortGraph(
       for (const [from, to] of [[a.id, b.id], [b.id, a.id]] as const) {
         if (existingPair.has(`${from}->${to}`)) continue;
         existingPair.add(`${from}->${to}`);
+        const geometry = [nodeGeo(from), nodeGeo(to)];
         edges.push({
           id: nextEdgeId(),
           from,
           to,
           kind: 'connector',
           connectorKind: 'flat_traverse',
-          geometry: [nodeGeo(from), nodeGeo(to)],
+          geometry,
           lengthM: h,
-          dropM: 0,
-          gradient: 0,
+          dropM: geomDrop(geometry),
+          gradient: h > 0 ? geomDrop(geometry) / h : 0,
           synthetic: true,
         });
       }
@@ -781,40 +838,232 @@ export function buildResortGraph(
     });
   }
 
+  // --- Plateau pass -------------------------------------------------------
+  // Summit and base plateaus (lift-station aprons, cols, restaurant terraces) are one place a
+  // skier can skate across in seconds, but OSM models them as several nodes a few metres apart
+  // and every mapped link off them is one-way downhill. Snapping a start pin to the "wrong" node
+  // of such a cluster then commits the skier to whichever couloir descends from it.
+  //
+  // Over a link this short the DEM gradient is noise rather than terrain (6 m between two cells
+  // 22 m apart reads as a 27% slope on a dead-flat summit), so the flat-traverse gradient gate
+  // can't be used here. Instead the pass is anchored on topology: at least one end must be a
+  // real HUB — a lift station, or a node where three or more distinct neighbours meet. A point
+  // in the middle of a piste has exactly two, so two parallel runs are never bridged.
+  const neighbourSets = new Map<string, Set<string>>();
+  const outAdj = new Map<string, { to: string; lengthM: number }[]>();
+  for (const e of edges) {
+    if (!neighbourSets.has(e.from)) neighbourSets.set(e.from, new Set());
+    if (!neighbourSets.has(e.to)) neighbourSets.set(e.to, new Set());
+    neighbourSets.get(e.from)!.add(e.to);
+    neighbourSets.get(e.to)!.add(e.from);
+    if (!outAdj.has(e.from)) outAdj.set(e.from, []);
+    outAdj.get(e.from)!.push({ to: e.to, lengthM: e.lengthM });
+  }
+  const isHub = (n: CanonNode): boolean =>
+    n.isLiftStation || (neighbourSets.get(n.id)?.size ?? 0) >= 3;
+
+  // Out-neighbours as they stand *before* this pass, used by the cul-de-sac guard below. Taking a
+  // snapshot (rather than reading the live `outAdj`) keeps the guard independent of the order the
+  // candidates happen to be visited in.
+  const realOut = new Map<string, Set<string>>();
+  for (const e of edges) {
+    if (!realOut.has(e.from)) realOut.set(e.from, new Set());
+    realOut.get(e.from)!.add(e.to);
+  }
+
+  /** Nodes reachable from `startId` without travelling more than `budgetM` along existing edges. */
+  const localReach = (startId: string, budgetM: number): Set<string> => {
+    const seen = new Set<string>([startId]);
+    const queue: { id: string; d: number }[] = [{ id: startId, d: 0 }];
+    while (queue.length) {
+      const cur = queue.shift()!;
+      for (const nx of outAdj.get(cur.id) ?? []) {
+        const d = cur.d + nx.lengthM;
+        if (d > budgetM || seen.has(nx.to)) continue;
+        seen.add(nx.to);
+        queue.push({ id: nx.to, d });
+      }
+    }
+    return seen;
+  };
+
+  const plGrid = new Grid(c.plateauRadius);
+  for (const n of nodeList) {
+    plGrid.add({ osmId: 0, nodeId: n.id, lon: n.lon, lat: n.lat, ele: n.ele, isLiftStation: n.isLiftStation });
+  }
+  const dbgPlateau = !!process.env.SKIWAZE_DBG;
+  let plateauLinks = 0;
+  for (const a of nodeList) {
+    if (a.ele == null) continue;
+
+    const near: { b: CanonNode; h: number; dz: number }[] = [];
+    for (const nb of plGrid.neighbors(a.lon, a.lat)) {
+      const b = nb.nodeId ? nodes.get(nb.nodeId) : undefined;
+      if (!b || b.id === a.id || b.ele == null) continue;
+      const dz = b.ele - a.ele;
+      if (Math.abs(dz) > c.maxTraverseClimb) continue; // more than a skate — that's a real slope
+      const h = haversineM({ lon: a.lon, lat: a.lat, ele: a.ele }, { lon: b.lon, lat: b.lat, ele: b.ele });
+      if (h <= c.Hmerge || h > c.plateauRadius) continue;
+      if (!isHub(a) && !isHub(b)) continue;
+      near.push({ b, h, dz });
+    }
+    if (!near.length) continue;
+    near.sort((x, y) => x.h - y.h);
+    const budget = Math.max(c.plateauReachBudget, c.plateauRadius * 4);
+
+    // Only worth adding when the pair is genuinely severed. If a skier can already get from a to
+    // b (or back) with a short detour along mapped runs, the plateau is already connected and a
+    // shortcut would just invent off-piste terrain — that's how parallel runs and switchbacks
+    // would get wrongly bridged.
+    for (const { b, h, dz } of near.slice(0, c.plateauK)) {
+      if (localReach(a.id, budget).has(b.id) && localReach(b.id, budget).has(a.id)) continue;
+      let added = false;
+      for (const [from, to] of [[a.id, b.id], [b.id, a.id]] as const) {
+        if (existingPair.has(`${from}->${to}`)) continue;
+        // Cul-de-sac guard: skating across the apron to `to` is only worth anything if the skier
+        // can then go somewhere new. If `to`'s only onward edge leads straight back to `from` it
+        // is a pass-through node — the link would just offer a climb to a dead end (and, with a
+        // plausible-looking detour saving, make the pass look more useful than it is).
+        const onward = realOut.get(to);
+        if (!onward || (onward.size === 1 && onward.has(from))) continue;
+        existingPair.add(`${from}->${to}`);
+        const geometry = [nodeGeo(from), nodeGeo(to)];
+        edges.push({
+          id: nextEdgeId(),
+          from,
+          to,
+          kind: 'connector',
+          connectorKind: 'flat_traverse',
+          geometry,
+          lengthM: h,
+          dropM: geomDrop(geometry),
+          gradient: h > 0 ? geomDrop(geometry) / h : 0,
+          synthetic: true,
+        });
+        (outAdj.get(from) ?? outAdj.set(from, []).get(from)!).push({ to, lengthM: h });
+        added = true;
+      }
+      if (!added) continue;
+      plateauLinks++;
+      if (dbgPlateau) {
+        console.log(
+          `plateau: ${a.id}@${Math.round(a.ele)} <-> ${b.id}@${Math.round(b.ele)}  ` +
+            `${h.toFixed(1)}m dz=${dz.toFixed(1)}m  ` +
+            `hub=${isHub(a) ? 'a' : ''}${isHub(b) ? 'b' : ''} ` +
+            `lon=${a.lon.toFixed(5)} lat=${a.lat.toFixed(5)}`,
+        );
+      }
+    }
+  }
+  if (plateauLinks > 0) {
+    warnings.push({
+      code: 'inferred_connector',
+      message: `Added ${plateauLinks} plateau traverse(s) linking hub nodes on the same level apron.`,
+    });
+  }
+
   // --- Rescue pass: guarantee no run is a dead route ----------------------
   // A node is "trapped" if a skier can reach it (incoming) but from it cannot reach ANY
-  // lift station via any edges. Force a flat connector to the best nearby reachable node,
-  // preferring lower/level escapers (short skate/traverse). Repeat for small chains.
+  // lift station via any edges. Link it to the best nearby escape, preferring lower/level
+  // exits (short skate/traverse). Repeat for small chains.
+  //
+  // The escape may be another *node*, or a point in the middle of a piste *line*. Considering
+  // only nodes is how this pass used to work, and it is wrong for the same reason the endpoint
+  // snap above exists: runs meet mid-line far more often than end-to-end. A Madonna dead end at
+  // 1653 m has piste 78 passing 49 m away, 84% of the way along one of its edges — invisible to
+  // a node search, which instead reached 194 m across the valley to a node that is not connected
+  // to it on the snow at all. Projecting onto the line finds the link a skier would actually use,
+  // and being 4x shorter it wins on distance alone, so no special-casing is needed.
   const liftStationIds = nodeList.filter((n) => n.isLiftStation).map((n) => n.id);
   const rgrid = new Grid(c.rescueRadius);
   for (const n of nodeList) {
     rgrid.add({ osmId: 0, nodeId: n.id, lon: n.lon, lat: n.lat, ele: n.ele, isLiftStation: n.isLiftStation });
   }
   let rescued = 0;
+  let rescuedOntoLine = 0;
   for (let pass = 0; pass < 3; pass++) {
     const canReach = reachLiftStations(edges, liftStationIds);
     let passRescued = 0;
     for (const a of nodeList) {
       if (a.isLiftStation || a.ele == null) continue;
       if (!hasIncoming.has(a.id) || canReach.has(a.id)) continue;
-      // Pick the reachable escaper with the best score (near + not much of a climb).
+      const ap: GeoPoint = { lon: a.lon, lat: a.lat, ele: a.ele };
+      // Score both kinds of escape on the same scale: distance, with a climb charged heavily.
+      const scoreOf = (h: number, targetEle: number) => h + Math.max(0, targetEle - a.ele!) * 6;
+
+      // (a) Nearest reachable node.
       let best: CanonNode | undefined;
       let bestScore = Infinity;
       let bestH = 0;
       for (const nb of rgrid.neighbors(a.lon, a.lat)) {
         const b = nb.nodeId ? nodes.get(nb.nodeId) : undefined;
         if (!b || b.id === a.id || b.ele == null || !canReach.has(b.id)) continue;
-        const h = haversineM({ lon: a.lon, lat: a.lat, ele: a.ele }, { lon: b.lon, lat: b.lat, ele: b.ele });
+        const h = haversineM(ap, { lon: b.lon, lat: b.lat, ele: b.ele });
         if (h <= c.Hmerge || h > c.rescueRadius) continue;
-        const climb = Math.max(0, b.ele - a.ele);
-        if (climb > c.maxTraverseClimb) continue; // never rescue via an impossible uphill link
-        const score = h + climb * 6; // strongly prefer descending/level exits
+        if (b.ele - a.ele > c.maxTraverseClimb) continue; // never rescue via an impossible uphill link
+        const score = scoreOf(h, b.ele);
         if (score < bestScore) {
           bestScore = score;
           best = b;
           bestH = h;
         }
       }
+
+      // (b) Nearest point on a reachable piste line. Only pistes: a projection onto an inferred
+      // connector would be a guess built on a guess.
+      let bestLine: { edge: GraphEdge; segIdx: number; point: GeoPoint; dist: number } | null = null;
+      let bestLineScore = Infinity;
+      for (const X of edges) {
+        if (X.kind !== 'piste' || X.from === a.id || X.to === a.id) continue;
+        if (!canReach.has(X.to)) continue; // joining here must actually lead somewhere
+        for (let i = 1; i < X.geometry.length; i++) {
+          const pr = projectOnSegment(ap, X.geometry[i - 1], X.geometry[i]);
+          if (pr.dist <= c.Hmerge || pr.dist > c.rescueLineRadius) continue;
+          const pe = pr.point.ele ?? 0;
+          if (pe - a.ele > c.maxTraverseClimb) continue;
+          const score = scoreOf(pr.dist, pe);
+          if (score < bestLineScore) {
+            bestLineScore = score;
+            bestLine = { edge: X, segIdx: i, point: pr.point, dist: pr.dist };
+          }
+        }
+      }
+
+      // Resolve the winning line projection to a node, splitting the piste if it lands mid-edge.
+      let lineTargetId: string | undefined;
+      if (bestLine && bestLineScore < bestScore) {
+        const X = bestLine.edge;
+        const P = bestLine.point;
+        const fromN = nodes.get(X.from)!;
+        const toN = nodes.get(X.to)!;
+        const dFrom = haversineM(P, { lon: fromN.lon, lat: fromN.lat, ele: fromN.ele });
+        const dTo = haversineM(P, { lon: toN.lon, lat: toN.lat, ele: toN.ele });
+        if (dFrom <= 3) {
+          lineTargetId = X.from;
+        } else if (dTo <= 3) {
+          lineTargetId = X.to;
+        } else {
+          // One rescue node per trapped node, named after it: stable across refreshes, unlike a
+          // running counter (see the snap and ski-out passes).
+          const N = `r${a.id}`;
+          if (!nodes.has(N)) {
+            nodes.set(N, { id: N, lon: P.lon, lat: P.lat, ele: P.ele, isLiftStation: false, members: [] });
+            const g1 = [...X.geometry.slice(0, bestLine.segIdx), P];
+            const g2 = [P, ...X.geometry.slice(bestLine.segIdx)];
+            const idx = edges.indexOf(X);
+            if (idx >= 0) edges.splice(idx, 1);
+            edges.push({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: geomDrop(g1) });
+            edges.push({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: geomDrop(g2) });
+            lineTargetId = N;
+          }
+        }
+        if (lineTargetId) {
+          best = nodes.get(lineTargetId);
+          bestH = bestLine.dist;
+          rescuedOntoLine++;
+        }
+      }
+
       if (best) {
         const dz = best.ele! - a.ele; // a = trapped node
         // If a descends significantly to its escaper, make it a ONE-WAY skiable link so the
@@ -826,16 +1075,17 @@ export function buildResortGraph(
         for (const [from, to] of dirs) {
           if (existingPair.has(`${from}->${to}`)) continue;
           existingPair.add(`${from}->${to}`);
+          const geometry = [nodeGeo(from), nodeGeo(to)];
           edges.push({
             id: nextEdgeId(),
             from,
             to,
             kind: 'connector',
             connectorKind: oneWayDown ? 'skiable_down' : 'flat_traverse',
-            geometry: [nodeGeo(from), nodeGeo(to)],
+            geometry,
             lengthM: bestH,
-            dropM: oneWayDown ? -Math.abs(dz) : 0,
-            gradient: oneWayDown ? -Math.abs(dz) / bestH : 0,
+            dropM: oneWayDown ? -Math.abs(dz) : geomDrop(geometry),
+            gradient: bestH > 0 ? (oneWayDown ? -Math.abs(dz) : geomDrop(geometry)) / bestH : 0,
             synthetic: true,
           });
         }
@@ -848,7 +1098,7 @@ export function buildResortGraph(
   if (rescued > 0) {
     warnings.push({
       code: 'inferred_connector',
-      message: `Rescued ${rescued} trapped node(s) with a forced traverse to the nearest reachable point.`,
+      message: `Rescued ${rescued} trapped node(s) with a forced traverse to the nearest reachable point (${rescuedOntoLine} onto a piste line).`,
     });
   }
 
@@ -912,15 +1162,16 @@ export function buildResortGraph(
 
       const dz = (P.ele ?? 0) - T.ele; // typically <= 0 (ski down onto the run)
       const oneWayDown = dz < -c.maxTraverseClimb;
+      const nGeo: GeoPoint = { lon: nodes.get(N)!.lon, lat: nodes.get(N)!.lat, ele: nodes.get(N)!.ele };
       edges.push({
         id: nextEdgeId(),
         from: topId,
         to: N,
         kind: 'connector',
         connectorKind: oneWayDown ? 'skiable_down' : 'flat_traverse',
-        geometry: [tp, { lon: nodes.get(N)!.lon, lat: nodes.get(N)!.lat, ele: nodes.get(N)!.ele }],
+        geometry: [tp, nGeo],
         lengthM: best.dist,
-        dropM: oneWayDown ? -Math.abs(dz) : 0,
+        dropM: oneWayDown ? -Math.abs(dz) : geomDrop([tp, nGeo]),
         gradient: best.dist > 0 ? dz / best.dist : 0,
         synthetic: true,
       });
@@ -931,9 +1182,10 @@ export function buildResortGraph(
           to: topId,
           kind: 'connector',
           connectorKind: 'flat_traverse',
-          geometry: [{ lon: nodes.get(N)!.lon, lat: nodes.get(N)!.lat, ele: nodes.get(N)!.ele }, tp],
+          geometry: [nGeo, tp],
           lengthM: best.dist,
-          dropM: 0,
+          dropM: geomDrop([nGeo, tp]),
+          gradient: best.dist > 0 ? geomDrop([nGeo, tp]) / best.dist : 0,
           synthetic: true,
         });
       }

@@ -2,7 +2,7 @@
 // Applied LAST so humans can fix wrong auto-decisions without changing code.
 import fs from 'node:fs';
 import path from 'node:path';
-import type { GraphEdge, LiftType, ResortGraph } from '../../src/types/domain';
+import type { GeoPoint, GraphEdge, LiftType, ResortGraph } from '../../src/types/domain';
 import { haversineM, polylineLength3dM } from '../../src/utils/geo';
 import { DEFAULT_GRAPH_CONSTANTS } from '../../src/config/graphConstants';
 
@@ -35,6 +35,24 @@ export interface Overrides {
    * lift of the given type. `bidirectional` (e.g. a funicular) keeps both travel directions.
    */
   reclassifyLift?: { pisteName: string; liftType: LiftType; bidirectional?: boolean }[];
+  /**
+   * Split a piste at an interior point so a connector can attach to the MIDDLE of a run.
+   * OSM only guarantees a node where two ways meet, but a real-world branch often leaves a run
+   * part-way along it — and then `addConnectors` has nothing to join to. Matches the nearest
+   * interior vertex of a piste with the given `pisteRef`/`pisteName` within `radius` metres
+   * (default 30) and splits every piste edge passing through it, so a run and any reverse
+   * traverse over the same ground stay consistent. The minted node id is derived from the
+   * coordinate rather than an OSM id, so it survives a `data:refresh` renumbering.
+   */
+  splitPisteAt?: {
+    /** [lon, lat] of the branch point. */
+    at: [number, number];
+    pisteRef?: string;
+    pisteName?: string;
+    radius?: number;
+    /** Optional readable id for the minted node; defaults to a coordinate-derived one. */
+    node?: string;
+  }[];
   /** Extra connectors to add. */
   addConnectors?: {
     from: string;
@@ -232,7 +250,50 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
     }
   }
 
-  // 4. Add connectors.
+  // 4. Split pistes at explicit branch points, so connectors can attach mid-run.
+  if (ov.splitPisteAt?.length) {
+    const cut = (e: GraphEdge, id: string, from: string, to: string, geometry: GeoPoint[]): GraphEdge => {
+      const dz = (geometry[geometry.length - 1].ele ?? 0) - (geometry[0].ele ?? 0);
+      const next: GraphEdge = { ...e, id, from, to, geometry, lengthM: polylineLength3dM(geometry), dropM: dz };
+      if (e.gradient != null) {
+        next.gradient = dz / Math.max(1, haversineM(geometry[0], geometry[geometry.length - 1]));
+      }
+      return next;
+    };
+    for (const s of ov.splitPisteAt) {
+      const target = { lon: s.at[0], lat: s.at[1] };
+      const radius = s.radius ?? 30;
+      let best: { d: number; p: GeoPoint } | null = null;
+      for (const e of edges) {
+        if (e.kind !== 'piste') continue;
+        if (s.pisteRef && e.pisteRef !== s.pisteRef) continue;
+        if (s.pisteName && e.pisteName !== s.pisteName) continue;
+        for (let i = 1; i < e.geometry.length - 1; i++) {
+          const d = haversineM(target, e.geometry[i]);
+          if (d <= radius && (!best || d < best.d)) best = { d, p: e.geometry[i] };
+        }
+      }
+      if (!best) continue;
+      const at = best.p;
+      const id = s.node ?? `xn${at.lon.toFixed(5)}_${at.lat.toFixed(5)}`.replace(/[.-]/g, '_');
+      if (!nodes.some((n) => n.id === id)) nodes = [...nodes, { id, point: at, kind: 'junction' }];
+      const out: GraphEdge[] = [];
+      for (const e of edges) {
+        const i = e.kind === 'piste' ? e.geometry.findIndex((p) => haversineM(p, at) < 0.5) : -1;
+        if (i <= 0 || i >= e.geometry.length - 1) {
+          out.push(e);
+          continue;
+        }
+        out.push(
+          cut(e, `${e.id}a`, e.from, id, e.geometry.slice(0, i + 1)),
+          cut(e, `${e.id}b`, id, e.to, e.geometry.slice(i)),
+        );
+      }
+      edges = out;
+    }
+  }
+
+  // 5. Add connectors.
   if (ov.addConnectors?.length) {
     const nodeById = new Map(nodes.map((n) => [n.id, n]));
     let idx = 0;

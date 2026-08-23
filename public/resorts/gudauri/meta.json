@@ -17,29 +17,24 @@
     "timezone": "Asia/Tbilisi",
     "infoUrl": "https://gudauri.com/"
   },
-  "generatedAt": "2026-08-19T22:06:33.534Z",
+  "generatedAt": "2026-08-23T06:24:07.998Z",
   "stats": {
     "resortId": "gudauri",
-    "nodeCount": 103,
-    "edgeCount": 226,
-    "pisteEdges": 92,
+    "nodeCount": 106,
+    "edgeCount": 234,
+    "pisteEdges": 109,
     "liftEdges": 18,
-    "connectorEdges": 116,
-    "meaningfulPoints": 54,
-    "reachableFromLifts": 100,
-    "unreachableNodes": 3,
+    "connectorEdges": 107,
+    "meaningfulPoints": 53,
+    "reachableFromLifts": 104,
+    "unreachableNodes": 2,
     "warningsByCode": {
-      "pothole_repaired": 1,
       "missing_opening_hours": 15,
-      "inferred_connector": 3,
+      "inferred_connector": 4,
       "unreachable_component": 1
     }
   },
   "warnings": [
-    {
-      "code": "pothole_repaired",
-      "message": "Repaired 5 DEM false local-min/peak node(s) to keep runs descending monotonically."
-    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Snow Park\" has no opening_hours in OSM."
@@ -102,23 +97,26 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 13 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 16 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 38 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 35 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 49 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 26 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 8 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "unreachable_component",
-      "message": "3 node(s) unreachable from the main lift network.",
+      "message": "2 node(s) unreachable from the main lift network.",
       "refs": [
         "n4674246803",
-        "n4674246866",
-        "n6225190102"
+        "n4674246866"
       ]
     }
   ]

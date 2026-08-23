@@ -10,5 +10,11 @@
     "label": "Elevation reversal candidates",
     "file": "elevation-reversals.json",
     "description": "Piste edges that flip direction once mis-sampled elevations are corrected against the Terrarium DEM. Green = suggested top, orange = current (too-high) top; red line = strong, orange line = marginal."
+  },
+  {
+    "id": "plateau-links",
+    "label": "Plateau traverses (app-added)",
+    "file": "plateau-links.json",
+    "description": "Bidirectional flat traverses the plateau pass added to reconnect points that sit on the same shelf (<=45 m apart, <=8 m height) but were severed because every mapped link out was one-way downhill. Numbered most-questionable first; pink = marginal."
   }
 ]

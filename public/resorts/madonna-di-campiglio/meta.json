@@ -17,29 +17,24 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.campigliodolomiti.it/en/"
   },
-  "generatedAt": "2026-08-19T21:58:52.291Z",
+  "generatedAt": "2026-08-23T06:23:50.686Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
-    "nodeCount": 449,
-    "edgeCount": 1195,
-    "pisteEdges": 336,
-    "liftEdges": 96,
-    "connectorEdges": 763,
-    "meaningfulPoints": 235,
-    "reachableFromLifts": 446,
-    "unreachableNodes": 3,
+    "nodeCount": 454,
+    "edgeCount": 1092,
+    "pisteEdges": 424,
+    "liftEdges": 94,
+    "connectorEdges": 574,
+    "meaningfulPoints": 236,
+    "reachableFromLifts": 453,
+    "unreachableNodes": 1,
     "warningsByCode": {
-      "pothole_repaired": 1,
-      "missing_opening_hours": 76,
-      "inferred_connector": 4,
+      "missing_opening_hours": 74,
+      "inferred_connector": 6,
       "unreachable_component": 1
     }
   },
   "warnings": [
-    {
-      "code": "pothole_repaired",
-      "message": "Repaired 5 DEM false local-min/peak node(s) to keep runs descending monotonically."
-    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Spinale Express\" has no opening_hours in OSM."
@@ -75,14 +70,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Biancaneve\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Panciana\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Panciana\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -346,15 +333,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 58 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 62 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 236 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 161 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 238 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 152 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 18 plateau traverse(s) linking hub nodes on the same level apron."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point (1 onto a piste line)."
     },
     {
       "code": "inferred_connector",
@@ -362,11 +357,9 @@
     },
     {
       "code": "unreachable_component",
-      "message": "3 node(s) unreachable from the main lift network.",
+      "message": "1 node(s) unreachable from the main lift network.",
       "refs": [
-        "n603385508",
-        "n8428553620",
-        "sn297449294"
+        "n8428553620"
       ]
     }
   ]

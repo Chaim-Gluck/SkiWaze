@@ -17,28 +17,45 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.ischgl.com/en/"
   },
-  "generatedAt": "2026-08-19T21:59:15.484Z",
+  "generatedAt": "2026-08-23T06:24:42.712Z",
   "stats": {
     "resortId": "ischgl-samnaun",
-    "nodeCount": 1302,
-    "edgeCount": 5201,
-    "pisteEdges": 1291,
+    "nodeCount": 1174,
+    "edgeCount": 3886,
+    "pisteEdges": 1709,
     "liftEdges": 68,
-    "connectorEdges": 3842,
-    "meaningfulPoints": 244,
-    "reachableFromLifts": 1276,
-    "unreachableNodes": 26,
+    "connectorEdges": 2109,
+    "meaningfulPoints": 252,
+    "reachableFromLifts": 1168,
+    "unreachableNodes": 6,
     "warningsByCode": {
-      "pothole_repaired": 1,
+      "suspicious_merge": 3,
       "missing_opening_hours": 59,
-      "inferred_connector": 4,
+      "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
   "warnings": [
     {
-      "code": "pothole_repaired",
-      "message": "Repaired 32 DEM false local-min/peak node(s) to keep runs descending monotonically."
+      "code": "suspicious_merge",
+      "message": "Node n320493949 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n320493949"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n364113428 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n364113428"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n11635814301 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n11635814301"
+      ]
     },
     {
       "code": "missing_opening_hours",
@@ -278,44 +295,34 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 252 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 125 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 672 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 313 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 816 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 284 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 5 trapped node(s) with a forced traverse to the nearest reachable point."
+      "message": "Added 253 plateau traverse(s) linking hub nodes on the same level apron."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point (0 onto a piste line)."
     },
     {
       "code": "unreachable_component",
-      "message": "26 node(s) unreachable from the main lift network.",
+      "message": "6 node(s) unreachable from the main lift network.",
       "refs": [
-        "n357452410",
         "n1647086882",
-        "n2415391693",
-        "n6067525021",
-        "n6067525020",
-        "n6067525023",
-        "n6067525027",
-        "n321589468",
-        "n2391466988",
-        "n5133541683",
-        "n11619982822",
-        "n11619982818",
-        "n11619982784",
-        "n3087862353",
-        "n3087862352",
-        "n11739157435",
-        "n364110917",
-        "n357452434",
-        "n11619982772",
-        "n11739157434"
+        "n11635068231",
+        "n11635633275",
+        "n11635755614",
+        "n11637801531",
+        "n13389356878"
       ]
     }
   ]
