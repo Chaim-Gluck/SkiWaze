@@ -514,6 +514,7 @@ export function buildResortGraph(
             pisteName: piste.name,
             pisteRef: piste.ref,
             area: piste.area || undefined,
+            srcWayId: piste.wayId,
           });
         }
       } else {
@@ -534,6 +535,7 @@ export function buildResortGraph(
           pisteName: piste.name,
           pisteRef: piste.ref,
           area: piste.area || undefined,
+          srcWayId: piste.wayId,
         });
         const label = piste.ref && piste.name ? `${piste.ref} ${piste.name}` : piste.ref ? `Piste ${piste.ref}` : piste.name;
         if (label) {
@@ -559,6 +561,7 @@ export function buildResortGraph(
             pisteName: piste.name,
             pisteRef: piste.ref,
             area: piste.area || undefined,
+            srcWayId: piste.wayId,
           });
         }
       }

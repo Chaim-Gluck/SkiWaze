@@ -80,6 +80,12 @@ export interface GraphEdge {
   pisteRef?: string;
   /** True when derived from an OSM area=yes polygon: kept for routing, hidden from the map render. */
   area?: boolean;
+  /**
+   * OSM way id this edge was cut from. Set for piste-derived edges (including the flat/reverse
+   * connectors a piste emits). Splitting a way keeps it, so every fragment of a polygon ring is
+   * traceable back to the one polygon — which per-edge geometry alone cannot tell you.
+   */
+  srcWayId?: number;
 
   // Lift-only
   liftType?: LiftType;

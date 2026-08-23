@@ -17,7 +17,8 @@
     "probe:elevation": "tsx pipeline/_elevprobe.ts",
     "check:graphdiff": "tsx pipeline/_graphdiff.ts",
     "check:overrides": "tsx pipeline/_overridecheck.ts",
-    "check:audit": "tsx pipeline/_phantoms.ts"
+    "check:audit": "tsx pipeline/_phantoms.ts",
+    "check:areaclass": "tsx pipeline/_areaclass.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
