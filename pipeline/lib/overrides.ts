@@ -181,6 +181,9 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
     });
     const eleOf = new Map(nodes.map((n) => [n.id, n.point.ele ?? 0]));
     const flatTol = DEFAULT_GRAPH_CONSTANTS.pisteFlatTolerance;
+    const prior = edges;
+    // Reverse partners created when a correction levels out a one-way link (see below).
+    const levelled: GraphEdge[] = [];
     edges = edges
       .map((e): GraphEdge | null => {
         if (!corr.has(e.from) && !corr.has(e.to)) return e;
@@ -206,13 +209,41 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
         // Lifts are directional by construction (up, or a marked download): keep their direction
         // and just refresh the signed drop, so correcting a station height can't invert/negate it.
         if (e.kind === 'lift') return { ...e, geometry: geom, dropM: drop };
+        // Mirror of the flat→slope demotion above: a one-way skiable connector that the correction
+        // reveals is really LEVEL becomes a two-way traverse. Without this, fixing a mis-sampled
+        // station leaves the link stuck one-way, so the terrain it serves stays enterable-but-not-
+        // exitable (or, as at the Alpe d'Huez cable-car top, exitable but unenterable) even though
+        // the elevations now say the two ends are level.
+        if (e.connectorKind === 'skiable_down' && Math.abs(drop) <= flatTol) {
+          const level: GraphEdge = {
+            ...e,
+            geometry: geom,
+            lengthM: polylineLength3dM(geom),
+            dropM: 0,
+            connectorKind: 'flat_traverse',
+          };
+          const hasReverse = prior.some(
+            (x) => x.from === e.to && x.to === e.from && x.kind === e.kind,
+          );
+          if (!hasReverse) {
+            levelled.push({
+              ...level,
+              id: `${e.id}rev`,
+              from: e.to,
+              to: e.from,
+              geometry: [...geom].reverse(),
+            });
+          }
+          return level;
+        }
         // A piste (or skiable_down connector) now pointing uphill is flipped to descend.
         if (drop > 0 && (e.kind === 'piste' || e.connectorKind === 'skiable_down')) {
           return { ...e, from: e.to, to: e.from, geometry: [...geom].reverse(), dropM: -Math.abs(drop) };
         }
         return { ...e, geometry: geom, dropM: -Math.abs(drop) };
       })
-      .filter((e): e is GraphEdge => e !== null);
+      .filter((e): e is GraphEdge => e !== null)
+      .concat(levelled);
   }
 
   // 3. Set lift download capability by name.

@@ -7,6 +7,9 @@ import type { ValidationReport } from './validate';
 export interface AreaPoly {
   color: string;
   name?: string;
+  /** Run number and OSM way id, carried so the debug overlay can label a polygon on the map. */
+  ref?: string;
+  wayId?: number;
   coordinates: [number, number][];
 }
 
@@ -46,7 +49,7 @@ function geoJson(graph: ResortGraph, areaPolys: AreaPoly[]) {
   for (const a of areaPolys) {
     features.push({
       type: 'Feature' as const,
-      properties: { kind: 'area', color: a.color, name: a.name ?? null },
+      properties: { kind: 'area', color: a.color, name: a.name ?? null, ref: a.ref ?? null, wayId: a.wayId ?? null },
       geometry: { type: 'Polygon' as const, coordinates: [a.coordinates] },
     });
   }

@@ -301,6 +301,32 @@ function reachLiftStations(edges: GraphEdge[], liftStationIds: string[]): Set<st
   return seen;
 }
 
+/**
+ * Nodes a skier can actually GET TO from a lift station (forward BFS along directed edges).
+ * The mirror image of reachLiftStations: that one finds "trapped" nodes (you arrive but can
+ * never leave), this one finds "orphan" nodes (perfectly good terrain that nothing leads into).
+ */
+function reachedFromLiftStations(edges: GraphEdge[], liftStationIds: string[]): Set<string> {
+  const fwd = new Map<string, string[]>();
+  for (const e of edges) {
+    const arr = fwd.get(e.from);
+    if (arr) arr.push(e.to);
+    else fwd.set(e.from, [e.to]);
+  }
+  const seen = new Set<string>(liftStationIds);
+  const queue = [...liftStationIds];
+  while (queue.length) {
+    const cur = queue.shift()!;
+    for (const next of fwd.get(cur) ?? []) {
+      if (!seen.has(next)) {
+        seen.add(next);
+        queue.push(next);
+      }
+    }
+  }
+  return seen;
+}
+
 function liftRideSeconds(lt: LiftType, lengthM: number, durationSec?: number): number {
   if (durationSec && durationSec > 0) return durationSec;
   const speed = DEFAULT_SPEEDS.liftSpeedByType[lt] ?? DEFAULT_SPEEDS.fallbackLiftSpeed;
@@ -487,6 +513,7 @@ export function buildResortGraph(
   // --- Piste + flat edges -------------------------------------------------
   const pisteEndpointNames: { nodeId: string; name: string; role: 'top' | 'bottom' }[] = [];
   for (const piste of pistes) {
+    const armEdgeStart = edges.length;
     for (const seg of segmentWay(piste.points, canonicalOf)) {
       const a = node(seg.from);
       const b = node(seg.to);
@@ -544,8 +571,18 @@ export function buildResortGraph(
         }
         // Near-flat cat-track: also traversable in reverse (skate/pole the gentle rise),
         // but only when the actual rise is small — you can't climb toward a summit.
+        //
+        // A synthesised polygon arm skips the *gradient* half of the test (never the climb cap).
+        // An arm is a 15-40 m app-invented stub joining a rim point to the polygon's centreline,
+        // and the rim usually sits a few metres above the centreline, so a perfectly skateable
+        // 3 m rise reads as a 10% grade and the arm silently becomes a one-way valve. Because the
+        // two polygons at a shared gateway pick their weld points independently, that halved
+        // lateral transfers across gateways. Synthetic endpoint-snap connectors below already use
+        // this "climb cap only" rule. The cap is what keeps it safe: it is the reason this cannot
+        // turn a long steep run into a free lift.
         const grade = Math.abs(drop) / lengthM;
-        if (grade <= c.flatGradeMax && Math.abs(drop) <= c.maxTraverseClimb) {
+        const gradeOk = grade <= c.flatGradeMax || (piste.skeletonArm === true && !process.env.SKEL_NOARMGRADE);
+        if (gradeOk && Math.abs(drop) <= c.maxTraverseClimb) {
           const reverse = [...geometry].reverse();
           edges.push({
             id: nextEdgeId(),
@@ -565,6 +602,13 @@ export function buildResortGraph(
           });
         }
       }
+    }
+    if (piste.skeletonArm === true && edges.length > armEdgeStart) {
+      // Tag every edge this arm emits with its rim end. The prune pass runs last — after
+      // overrides, which can still delete and re-issue edges — so it has to be able to rebuild
+      // "this is one arm" from the edge list alone. `emit.ts` strips the tag on the way out.
+      const portal = canonicalOf.get(piste.points[0].osmId);
+      if (portal) for (let i = armEdgeStart; i < edges.length; i++) edges[i].armPortal = portal;
     }
   }
 
@@ -1232,6 +1276,183 @@ export function buildResortGraph(
     }
   }
 
+  // --- Orphan pass: guarantee no run is unreachable -----------------------
+  // The mirror image of the rescue pass above. Rescue fixes nodes a skier can reach but never
+  // leave ("trapped"); this fixes nodes a skier can leave but never reach ("orphan") — real
+  // terrain with a perfectly good way DOWN that nothing on the mountain leads INTO. Both are
+  // the same OSM defect (runs meet mid-line, not end-to-end) seen from opposite directions.
+  //
+  // This became load-bearing with synthesised area centrelines. Deleting a polygon's rim can
+  // remove the only inbound edge a zone had, and the existing endpoint-snap can't restore it:
+  // that pass only fires on nodes which cannot ski ONWARD, and a node on a spine always can.
+  // Alpe d'Huez's 27-node Pic Blanc summit orphaned exactly this way — it kept all 10 of its
+  // exits and lost its single entrance.
+  //
+  // Safety is the same argument as everywhere else: entering may never climb more than
+  // maxTraverseClimb, and a link that descends into the zone is one-way so it can't be
+  // abused as a free ascent. One link per orphan component, best-scoring, so this adds the
+  // minimum number of edges rather than one per node.
+  if (!process.env.NO_ORPHAN_FIX) {
+    const ogrid = new Grid(c.rescueRadius);
+    for (const n of nodeList) {
+      ogrid.add({ osmId: 0, nodeId: n.id, lon: n.lon, lat: n.lat, ele: n.ele, isLiftStation: n.isLiftStation });
+    }
+    let adopted = 0;
+    let adoptedOntoLine = 0;
+    for (let pass = 0; pass < 3; pass++) {
+      const reached = reachedFromLiftStations(edges, liftStationIds);
+      // A zone is only worth an entrance if a skier can get back OUT of it to a lift.
+      const canReach = reachLiftStations(edges, liftStationIds);
+      // Group the unreachable nodes into connected components (undirected): one entrance
+      // makes an entire component reachable, so linking every node would be pure noise.
+      const orphanIds = nodeList.filter((n) => !reached.has(n.id) && n.ele != null && !n.isLiftStation).map((n) => n.id);
+      if (orphanIds.length === 0) break;
+      const orphanSet = new Set(orphanIds);
+      const undirected = new Map<string, string[]>();
+      for (const e of edges) {
+        if (!orphanSet.has(e.from) || !orphanSet.has(e.to)) continue;
+        (undirected.get(e.from) ?? undirected.set(e.from, []).get(e.from)!).push(e.to);
+        (undirected.get(e.to) ?? undirected.set(e.to, []).get(e.to)!).push(e.from);
+      }
+      const componentOf = new Map<string, number>();
+      const components: string[][] = [];
+      for (const id of orphanIds) {
+        if (componentOf.has(id)) continue;
+        const members: string[] = [];
+        const stack = [id];
+        componentOf.set(id, components.length);
+        while (stack.length) {
+          const cur = stack.pop()!;
+          members.push(cur);
+          for (const nb of undirected.get(cur) ?? []) {
+            if (!componentOf.has(nb)) {
+              componentOf.set(nb, components.length);
+              stack.push(nb);
+            }
+          }
+        }
+        components.push(members);
+      }
+
+      let passAdopted = 0;
+      for (const members of components) {
+        // Best entrance over the WHOLE component, not per node.
+        let win: { a: CanonNode; node?: CanonNode; line?: { edge: GraphEdge; segIdx: number; point: GeoPoint; dist: number }; score: number; h: number } | null = null;
+        for (const id of members) {
+          const a = nodes.get(id);
+          if (!a || a.ele == null) continue;
+          const ap: GeoPoint = { lon: a.lon, lat: a.lat, ele: a.ele };
+          // Climb is charged heavily, exactly as the rescue pass scores its escapes.
+          const scoreOf = (h: number, sourceEle: number) => h + Math.max(0, a.ele! - sourceEle) * 6;
+
+          for (const nb of ogrid.neighbors(a.lon, a.lat)) {
+            const b = nb.nodeId ? nodes.get(nb.nodeId) : undefined;
+            if (!b || b.id === a.id || b.ele == null || !reached.has(b.id)) continue;
+            const h = haversineM(ap, { lon: b.lon, lat: b.lat, ele: b.ele });
+            if (h <= c.Hmerge || h > c.rescueRadius) continue;
+            if (a.ele - b.ele > c.maxTraverseClimb) continue; // entering may never be a real climb
+            const score = scoreOf(h, b.ele);
+            if (score < (win?.score ?? Infinity)) win = { a, node: b, score, h };
+          }
+
+          // A point mid-way along a piste that is itself reachable. Pistes only: projecting
+          // onto an inferred connector would be a guess built on a guess.
+          for (const X of edges) {
+            if (X.kind !== 'piste' || X.from === a.id || X.to === a.id) continue;
+            if (!reached.has(X.from)) continue; // you must be able to GET to the joining point
+            for (let i = 1; i < X.geometry.length; i++) {
+              const pr = projectOnSegment(ap, X.geometry[i - 1], X.geometry[i]);
+              if (pr.dist <= c.Hmerge || pr.dist > c.rescueLineRadius) continue;
+              const pe = pr.point.ele ?? 0;
+              if (a.ele - pe > c.maxTraverseClimb) continue;
+              const score = scoreOf(pr.dist, pe);
+              if (score < (win?.score ?? Infinity)) {
+                win = { a, line: { edge: X, segIdx: i, point: pr.point, dist: pr.dist }, score, h: pr.dist };
+              }
+            }
+          }
+        }
+        if (!win) continue;
+
+        // A one-way entrance is the only case that can create a trap: the skier drops in and
+        // the link cannot carry them back out. Unless the zone can already reach a lift under
+        // its own steam, leave it sealed — an unreachable zone is bad, a zone you can enter and
+        // never leave is worse. A two-way entrance is always safe: it IS the way out.
+        // Decided here, before any piste is split, so a rejected zone leaves no stray node.
+        const winSourceEle = win.line ? (win.line.point.ele ?? 0) : win.node!.ele!;
+        if (win.a.ele! - winSourceEle < -c.maxTraverseClimb && !members.some((id) => canReach.has(id))) continue;
+
+        // Resolve a winning line projection to a node, splitting the piste if it lands mid-edge.
+        let source = win.node;
+        if (win.line) {
+          const X = win.line.edge;
+          const P = win.line.point;
+          const fromN = nodes.get(X.from)!;
+          const toN = nodes.get(X.to)!;
+          if (haversineM(P, { lon: fromN.lon, lat: fromN.lat, ele: fromN.ele }) <= 3) {
+            source = fromN;
+          } else if (haversineM(P, { lon: toN.lon, lat: toN.lat, ele: toN.ele }) <= 3) {
+            source = toN;
+          } else {
+            // One entrance node per adopted orphan, named after it: stable across refreshes,
+            // unlike a running counter (see the snap, rescue and ski-out passes).
+            const N = `o${win.a.id}`;
+            if (!nodes.has(N)) {
+              nodes.set(N, { id: N, lon: P.lon, lat: P.lat, ele: P.ele, isLiftStation: false, members: [] });
+              const g1 = [...X.geometry.slice(0, win.line.segIdx), P];
+              const g2 = [P, ...X.geometry.slice(win.line.segIdx)];
+              const idx = edges.indexOf(X);
+              if (idx >= 0) edges.splice(idx, 1);
+              pushSplitHalf({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: geomDrop(g1) });
+              pushSplitHalf({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: geomDrop(g2) });
+            }
+            source = nodes.get(N);
+          }
+          if (source) adoptedOntoLine++;
+        }
+        if (!source || source.ele == null) continue;
+
+        const a = win.a;
+        const dz = a.ele! - source.ele; // negative => the zone sits below its entrance
+        // A real descent into the zone is ONE-WAY, so the reverse can't be abused to climb.
+        const oneWayDown = dz < -c.maxTraverseClimb;
+        const dirs: [string, string][] = oneWayDown
+          ? [[source.id, a.id]]
+          : [[source.id, a.id], [a.id, source.id]];
+        let added = false;
+        for (const [from, to] of dirs) {
+          if (existingPair.has(`${from}->${to}`)) continue;
+          existingPair.add(`${from}->${to}`);
+          const geometry = [nodeGeo(from), nodeGeo(to)];
+          edges.push({
+            id: nextEdgeId(),
+            from,
+            to,
+            kind: 'connector',
+            connectorKind: oneWayDown ? 'skiable_down' : 'flat_traverse',
+            geometry,
+            lengthM: win.h,
+            dropM: oneWayDown ? -Math.abs(dz) : geomDrop(geometry),
+            gradient: win.h > 0 ? (oneWayDown ? -Math.abs(dz) : geomDrop(geometry)) / win.h : 0,
+            synthetic: true,
+          });
+          added = true;
+        }
+        if (added) {
+          adopted++;
+          passAdopted++;
+        }
+      }
+      if (passAdopted === 0) break;
+    }
+    if (adopted > 0) {
+      warnings.push({
+        code: 'inferred_connector',
+        message: `Linked ${adopted} unreachable zone(s) to the nearest point a skier can already get to (${adoptedOntoLine} onto a piste line).`,
+      });
+    }
+  }
+
   // --- Infer difficulty for unrated pistes (global rule) -----------------
   // Untagged downhill runs import as color `unknown`, which the router treats as harder than
   // black and filters out — orphaning any section only reachable through one. Give them their
@@ -1248,6 +1469,19 @@ export function buildResortGraph(
     degree.set(e.from, (degree.get(e.from) ?? 0) + 1);
     degree.set(e.to, (degree.get(e.to) ?? 0) + 1);
   }
+  // Drop nodes no edge touches. A node with no edges is not terrain — it is left over from a
+  // way that lost all its segments (too short, pruned as a redundant arm, or dropped by an
+  // override). Keeping them costs nothing at runtime but they are permanently both "trapped"
+  // and "orphan", so they inflate every connectivity report with dust that can never be fixed.
+  // Lift stations are exempt: one with no edges is a real defect and should stay visible.
+  let dropped = 0;
+  for (const [id, n] of nodes) {
+    if ((degree.get(id) ?? 0) === 0 && !n.isLiftStation) {
+      nodes.delete(id);
+      dropped++;
+    }
+  }
+  if (dropped > 0) console.log(`  dropped ${dropped} edgeless node(s)`);
   // Iterate the live node map (not the earlier `nodeList` snapshot) so nodes created by
   // late passes (e.g. lift-top ski-out splits) are included — otherwise their edges dangle.
   const graphNodes: GraphNode[] = [...nodes.values()].map((n) => ({

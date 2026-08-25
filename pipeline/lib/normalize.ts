@@ -18,6 +18,12 @@ export interface NormPiste {
   ref?: string;
   /** True when this piste is an OSM area=yes polygon (kept for routing, hidden from render). */
   area: boolean;
+  /**
+   * True for a synthesised polygon *arm* (portal/gateway stub linking a rim point to the spine).
+   * An arm is a few tens of metres of app-invented link, not a real run, so it is exempt from the
+   * near-flat gradient test that governs a real piste's reverse traverse. See buildGraph.
+   */
+  skeletonArm?: boolean;
   points: NormPoint[];
 }
 

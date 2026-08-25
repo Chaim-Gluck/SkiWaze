@@ -17,21 +17,20 @@
     "timezone": "Asia/Tbilisi",
     "infoUrl": "https://gudauri.com/"
   },
-  "generatedAt": "2026-08-23T16:13:47.335Z",
+  "generatedAt": "2026-08-25T21:24:41.533Z",
   "stats": {
     "resortId": "gudauri",
-    "nodeCount": 106,
-    "edgeCount": 234,
-    "pisteEdges": 109,
+    "nodeCount": 108,
+    "edgeCount": 240,
+    "pisteEdges": 111,
     "liftEdges": 18,
-    "connectorEdges": 107,
+    "connectorEdges": 111,
     "meaningfulPoints": 53,
-    "reachableFromLifts": 104,
-    "unreachableNodes": 2,
+    "reachableFromLifts": 108,
+    "unreachableNodes": 0,
     "warningsByCode": {
       "missing_opening_hours": 15,
-      "inferred_connector": 4,
-      "unreachable_component": 1
+      "inferred_connector": 5
     }
   },
   "warnings": [
@@ -112,12 +111,8 @@
       "message": "Added 8 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
-      "code": "unreachable_component",
-      "message": "2 node(s) unreachable from the main lift network.",
-      "refs": [
-        "n4674246803",
-        "n4674246866"
-      ]
+      "code": "inferred_connector",
+      "message": "Linked 2 unreachable zone(s) to the nearest point a skier can already get to (2 onto a piste line)."
     }
   ]
 }

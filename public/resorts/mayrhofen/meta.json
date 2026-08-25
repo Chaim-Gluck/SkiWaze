@@ -17,24 +17,32 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.mayrhofner-bergbahnen.com/en/"
   },
-  "generatedAt": "2026-08-23T16:13:47.864Z",
+  "generatedAt": "2026-08-25T21:24:44.413Z",
   "stats": {
     "resortId": "mayrhofen",
-    "nodeCount": 528,
-    "edgeCount": 1393,
-    "pisteEdges": 491,
+    "nodeCount": 569,
+    "edgeCount": 1478,
+    "pisteEdges": 503,
     "liftEdges": 92,
-    "connectorEdges": 810,
-    "meaningfulPoints": 189,
-    "reachableFromLifts": 524,
-    "unreachableNodes": 4,
+    "connectorEdges": 883,
+    "meaningfulPoints": 187,
+    "reachableFromLifts": 567,
+    "unreachableNodes": 2,
     "warningsByCode": {
+      "suspicious_merge": 1,
       "missing_opening_hours": 66,
-      "inferred_connector": 4,
+      "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "suspicious_merge",
+      "message": "Node n619309071 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n619309071"
+      ]
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"6er Knorren\" has no opening_hours in OSM."
@@ -301,28 +309,30 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 61 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 70 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 231 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 246 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 200 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 219 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
       "message": "Added 34 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
+      "code": "inferred_connector",
+      "message": "Linked 3 unreachable zone(s) to the nearest point a skier can already get to (1 onto a piste line)."
+    },
+    {
       "code": "unreachable_component",
-      "message": "4 node(s) unreachable from the main lift network.",
+      "message": "2 node(s) unreachable from the main lift network.",
       "refs": [
         "n1128771612",
-        "n820682191",
-        "n1128771578",
-        "n12615968595"
+        "n474792418"
       ]
     }
   ]

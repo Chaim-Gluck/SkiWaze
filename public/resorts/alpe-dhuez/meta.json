@@ -17,22 +17,21 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.alpedhuez.com/en/"
   },
-  "generatedAt": "2026-08-23T16:13:49.872Z",
+  "generatedAt": "2026-08-25T21:25:11.405Z",
   "stats": {
     "resortId": "alpe-dhuez",
-    "nodeCount": 794,
-    "edgeCount": 2249,
-    "pisteEdges": 777,
+    "nodeCount": 872,
+    "edgeCount": 2504,
+    "pisteEdges": 821,
     "liftEdges": 120,
-    "connectorEdges": 1352,
-    "meaningfulPoints": 323,
-    "reachableFromLifts": 770,
-    "unreachableNodes": 24,
+    "connectorEdges": 1563,
+    "meaningfulPoints": 327,
+    "reachableFromLifts": 872,
+    "unreachableNodes": 0,
     "warningsByCode": {
-      "suspicious_merge": 4,
+      "suspicious_merge": 9,
       "missing_opening_hours": 88,
-      "inferred_connector": 5,
-      "unreachable_component": 1
+      "inferred_connector": 6
     }
   },
   "warnings": [
@@ -45,6 +44,20 @@
     },
     {
       "code": "suspicious_merge",
+      "message": "Node n1951549888 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1951549888"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1949980794 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1949980794"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
       "message": "Node n253684569 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n253684569"
@@ -52,16 +65,37 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n11543661262 merges points spanning 13.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n11543764935 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n11543661262"
+        "n11543764935"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n11534730828 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000000246 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n11534730828"
+        "n1000000000246"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n11534768085 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n11534768085"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n11534720906 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n11534720906"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n11599562438 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n11599562438"
       ]
     },
     {
@@ -418,49 +452,27 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 118 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 132 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 371 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 434 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 267 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 324 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 52 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 48 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
       "message": "Rescued 5 trapped node(s) with a forced traverse to the nearest reachable point (1 onto a piste line)."
     },
     {
-      "code": "unreachable_component",
-      "message": "24 node(s) unreachable from the main lift network.",
-      "refs": [
-        "n251688069",
-        "n2619655043",
-        "n11624864698",
-        "n7779237420",
-        "n11302085907",
-        "n6370019725",
-        "n11724195353",
-        "n11724195357",
-        "n11724195361",
-        "n11724215777",
-        "n11724215781",
-        "n11724215785",
-        "n11724215789",
-        "n11724215793",
-        "n11724215797",
-        "n11724215803",
-        "n11724215820",
-        "n11724215824",
-        "n11724215828",
-        "n11724215832"
-      ]
+      "code": "inferred_connector",
+      "message": "Linked 14 unreachable zone(s) to the nearest point a skier can already get to (9 onto a piste line)."
     }
   ]
 }

@@ -17,86 +17,471 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.valthorens.com/en/"
   },
-  "generatedAt": "2026-08-23T16:13:44.249Z",
+  "generatedAt": "2026-08-25T21:23:37.374Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
-    "nodeCount": 3687,
-    "edgeCount": 11751,
-    "pisteEdges": 5029,
+    "nodeCount": 5314,
+    "edgeCount": 16295,
+    "pisteEdges": 5621,
     "liftEdges": 242,
-    "connectorEdges": 6480,
-    "meaningfulPoints": 898,
-    "reachableFromLifts": 3645,
-    "unreachableNodes": 42,
+    "connectorEdges": 10432,
+    "meaningfulPoints": 921,
+    "reachableFromLifts": 5304,
+    "unreachableNodes": 10,
     "warningsByCode": {
-      "suspicious_merge": 9,
+      "suspicious_merge": 64,
       "missing_opening_hours": 187,
-      "inferred_connector": 6,
+      "inferred_connector": 7,
       "unreachable_component": 1
     }
   },
   "warnings": [
     {
       "code": "suspicious_merge",
-      "message": "Node n262903177 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n597275273 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n262903177"
+        "n597275273"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n241628882 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n254015630 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n254015630"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n241628882 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n241628882"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n345575784 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n563007250 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n345575784"
+        "n563007250"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1585801622 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n270510152 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1585801622"
+        "n270510152"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1571250408 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n345525114 merges points spanning 13.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n345525114"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n331873479 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n331873479"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n333624177 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n333624177"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n7177841865 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n7177841865"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n254014207 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n254014207"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n270328838 merges points spanning 15.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n270328838"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n597311778 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n597311778"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n270332243 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n270332243"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1146243589 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1146243589"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n270510124 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n270510124"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n324266817 merges points spanning 16.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n324266817"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n870365118 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n870365118"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1207810496 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1207810496"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1212528110 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1212528110"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n605505003 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n605505003"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1095030024 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1095030024"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n597288464 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n597288464"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n254017616 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n254017616"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n324236910 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n324236910"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1585801624 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1585801624"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1178056020 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1178056020"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1571250408 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n1571250408"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n7243370743 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n2750978680 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n7243370743"
+        "n2750978680"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n573385989 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n245785321 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n573385989"
+        "n245785321"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n13423584689 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n9631197454 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n13423584689"
+        "n9631197454"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n11364187558 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1086101992 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n11364187558"
+        "n1086101992"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n9631147901 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n9631147901"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n13175021331 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n13175021331"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n597262266 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n597262266"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n571172071 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n571172071"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1000000001958 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1000000001958"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n573410361 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n573410361"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n13190791439 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n13190791439"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n597311873 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n597311873"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n6389489359 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n6389489359"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n614909901 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n614909901"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n614909829 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n614909829"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n614910009 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n614910009"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1000000002957 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1000000002957"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n345525197 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n345525197"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1146243632 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1146243632"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n13188381976 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n13188381976"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n9472124753 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n9472124753"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n9472124671 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n9472124671"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n610341385 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n610341385"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n10005185405 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n10005185405"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n9657933776 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n9657933776"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1000000006224 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1000000006224"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n9722179149 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n9722179149"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1000000006524 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1000000006524"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n13226517915 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n13226517915"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n870352686 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n870352686"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n11205512447 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n11205512447"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n11205512489 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n11205512489"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n11362293723 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n11362293723"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n2376472144 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n2376472144"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n11368228682 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n11368228682"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n13197346017 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n13197346017"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n4013578294 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n4013578294"
       ]
     },
     {
@@ -849,52 +1234,46 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 423 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 722 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 1032 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 2381 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 959 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 2051 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 772 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 450 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 11 trapped node(s) with a forced traverse to the nearest reachable point (9 onto a piste line)."
+      "message": "Rescued 10 trapped node(s) with a forced traverse to the nearest reachable point (7 onto a piste line)."
     },
     {
       "code": "inferred_connector",
       "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
+      "code": "inferred_connector",
+      "message": "Linked 22 unreachable zone(s) to the nearest point a skier can already get to (14 onto a piste line)."
+    },
+    {
       "code": "unreachable_component",
-      "message": "42 node(s) unreachable from the main lift network.",
+      "message": "10 node(s) unreachable from the main lift network.",
       "refs": [
         "n678964724",
         "n678964733",
-        "n678964756",
-        "n13482037338",
-        "n324262796",
         "n678964727",
-        "n14038924071",
         "n2754232379",
-        "n7243370102",
         "n9853753103",
-        "n7243370936",
-        "n1940663714",
-        "n6407647579",
-        "n9631555094",
-        "n9631555107",
-        "n9758860650",
-        "n10580412019",
-        "n11027390156",
-        "n11027390160",
-        "n11027390164"
+        "n1000000008288",
+        "n7243370102",
+        "n1000000003206",
+        "n1000000003263",
+        "sn3281771216"
       ]
     }
   ]

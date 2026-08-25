@@ -1,5 +1,14 @@
 [
   {
+    "id": "tignes-val-disere",
+    "name": "Tignes – Val d'Isère (Espace Killy)",
+    "country": "France",
+    "center": {
+      "lon": 6.93,
+      "lat": 45.46
+    }
+  },
+  {
     "id": "madonna-di-campiglio",
     "name": "Madonna di Campiglio",
     "country": "Italy",
@@ -33,15 +42,6 @@
     "center": {
       "lon": 6.58,
       "lat": 45.36
-    }
-  },
-  {
-    "id": "tignes-val-disere",
-    "name": "Tignes – Val d'Isère (Espace Killy)",
-    "country": "France",
-    "center": {
-      "lon": 6.93,
-      "lat": 45.46
     }
   },
   {

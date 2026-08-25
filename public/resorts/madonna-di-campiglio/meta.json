@@ -17,21 +17,20 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.campigliodolomiti.it/en/"
   },
-  "generatedAt": "2026-08-23T16:13:35.425Z",
+  "generatedAt": "2026-08-25T21:22:13.002Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
-    "nodeCount": 454,
-    "edgeCount": 1092,
-    "pisteEdges": 424,
+    "nodeCount": 455,
+    "edgeCount": 1095,
+    "pisteEdges": 425,
     "liftEdges": 94,
-    "connectorEdges": 574,
+    "connectorEdges": 576,
     "meaningfulPoints": 236,
-    "reachableFromLifts": 453,
-    "unreachableNodes": 1,
+    "reachableFromLifts": 455,
+    "unreachableNodes": 0,
     "warningsByCode": {
       "missing_opening_hours": 74,
-      "inferred_connector": 6,
-      "unreachable_component": 1
+      "inferred_connector": 7
     }
   },
   "warnings": [
@@ -356,11 +355,8 @@
       "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
-      "code": "unreachable_component",
-      "message": "1 node(s) unreachable from the main lift network.",
-      "refs": [
-        "n8428553620"
-      ]
+      "code": "inferred_connector",
+      "message": "Linked 1 unreachable zone(s) to the nearest point a skier can already get to (1 onto a piste line)."
     }
   ]
 }

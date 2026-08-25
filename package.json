@@ -18,7 +18,13 @@
     "check:graphdiff": "tsx pipeline/_graphdiff.ts",
     "check:overrides": "tsx pipeline/_overridecheck.ts",
     "check:audit": "tsx pipeline/_phantoms.ts",
-    "check:areaclass": "tsx pipeline/_areaclass.ts"
+    "check:areaclass": "tsx pipeline/_areaclass.ts",
+    "check:areaskel": "tsx pipeline/_areaskel.ts",
+    "check:spines": "tsx pipeline/_spinecheck.ts",
+    "probe:spineparts": "tsx pipeline/_spineparts.ts",
+    "probe:trappeddiff": "tsx pipeline/_trappeddiff.ts",
+    "probe:reach": "tsx pipeline/_reachprobe.ts",
+    "probe:plan": "tsx pipeline/_planprobe.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

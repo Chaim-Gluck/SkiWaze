@@ -92,8 +92,58 @@ and apply identically to **every** resort — there is no per-resort graph code.
 - **Areas** (OSM `area=yes` pistes): **kept in the routing graph** (open bowls need them for
   connectivity) but **excluded from the render lines** and emitted separately as polygon fills.
   Never drop areas from the graph — it disconnects bowls.
+- **Polygon spines are adopted by geometry, never by run name.** A polygon's centreline candidates
+  are the piste lines that physically lie **inside** the ring (`insideLenM` ≥ max(15 m, 10% of the
+  polygon's length)), not the ways sharing the polygon's `ref`/`name`. Name matching failed two ways:
+  76% of area polygons are unnamed, so they got **zero** candidates and fell back to synthesising a
+  spine between the farthest **portals** — which, on a ribbon whose portals all cluster mid-way, gave
+  a spine covering 1–23% of the polygon; and a *named* polygon still only ever adopted one name, so a
+  run split across ways under different names was truncated. Geometry subsumes both cases.
+- **A polygon's spine must span the polygon, not merely descend it.** Three rules enforce this, each
+  fixing a different way a spine ended up covering half a shape: candidates are scored **per source
+  way, not per edge** (a run is split at every junction, so a centreline that crosses the whole
+  polygon arrives as fragments that each fall under a whole-polygon threshold and get rejected one by
+  one); a centreline spanning under `SPAN_MIN` (0.6) gets a **synthesised spine added alongside** it,
+  because a run that crosses the polygon and then simply stops inside it leaves one end with no
+  centreline; and a synthesised spine terminates at the polygon's **extremity** rather than its
+  farthest portal when the extremity is >`EXTEND_TO_EXTREMITY` (1.25×) farther, since a ribbon whose
+  neighbours touch it only in the middle otherwise gets a spine only as long as that portal cluster.
 - **Synthetic** links (inferred/rescue/snap + user custom) are drawn dotted, flagged in routes,
   and excludable via "Avoid app-added bridges."
+- **Polygon gateways split at corners.** Two polygons can meet along two *separate* stretches of
+  rim that happen to share the corner node between them (a corridor wedged into a notch of a bigger
+  polygon touches it left and right). Walking that as one chain drops a single gateway at the arc
+  midpoint, which lands *on the corner* — a point that was already a portal — while both real
+  mid-boundary crossings get none. `sharedRim.ts` therefore cuts a chain wherever it deflects by
+  ≥ `CORNER_DEG` (60°). Fleet-wide 88 % of chain corners are under 30°, so this touches ~3 % of chains.
+- **Squat polygons are spined gateway-to-gateway.** A synthesised (class B) spine normally runs
+  between the geodesically most distant portals, which is right for a ribbon. For a polygon that is
+  merely the *join* between its neighbours, maximising length ends the spine at rim corners and
+  demotes the gateways to arms, so crossing it means detouring to a corner and back. When
+  `chord² / (2·area) ≤ 2` **and** `chord ≤ 250 m`, the termini come from the two farthest-apart
+  gateways instead. The gate is **shape, not size** — the two known corridors differ by ~10× in area,
+  and one ribbon that must never qualify is smaller than one corridor that must. Ribbons measure
+  3.3–16 on that ratio; nothing observed sits between 2 and 3.3. 46 of ~1076 polygons qualify.
+- **Spine fragments are stitched, and the stitch is routed, smoothed and anchored.** A polygon's
+  spine often arrives in disconnected pieces. The stitch pass is a **minimum spanning forest** over
+  those pieces: a short chord (`STITCH_MAX_M` 30 m) when one fits inside the ring, otherwise a
+  Dijkstra route over the interior sampling lattice up to `STITCH_ROUTE_MAX_M` (250 m) with a
+  `STITCH_DETOUR_MAX` (1.6) cap on route-length ÷ straight-line. Two mandatory post-steps: the raw
+  lattice path can only step between neighbouring grid cells, so it **must** go through the shared
+  `smoothPath()` or it paints a visible staircase; and it must be **anchored** onto the true piece
+  endpoints, trimming any vertex that does not make progress toward the anchor first — the lattice
+  node can *overshoot*, which showed up as a 7 m double-back. Because it is a spanning forest, a
+  hole between two pieces that are *already* connected is deliberately never stitched.
+- **A run leaving its polygon and returning is not a coverage hole.** Where two spine pieces come
+  from the same OSM way (`src[i] === src[j]`) they are united with **no link drawn**: the piste is a
+  single continuous edge in the routing graph, so nothing is disconnected and inventing a link would
+  duplicate an existing run across terrain outside the ring. Verified on `les-deux-alpes`
+  `w1217422010`, where 20 of 21 samples along the "gap" fall outside the polygon. Fleet-wide there
+  are 113 such unions, 59 over 30 m, max 531 m. The span is recorded in `SkelGeom.wayBridges` —
+  **measurement only**, consumed by `check:spines`/`_spineparts` so the metric stops reporting a
+  defect, never emitted as geometry. User review of the six largest found the rims are genuinely
+  under-drawn in OSM; the right fix is upstream, and widening a ring in the pipeline is rejected
+  because the ring is our only evidence of where terrain is actually skiable.
 - **Longest-run finder** rewards **straight-line descent progress** and **penalizes internal
   uphill** — winding pistes that descend then climb back are what cause visible "doubling-back",
   so they must not be over-rewarded by raw skied length. Genuinely curving-but-descending
@@ -122,7 +172,40 @@ npm run probe:elevation <id> <node...>  # dump a node's edge neighbourhood: our 
                              #   both ends of every edge — for a suspicious arrow the audit missed
 npm run check:overrides <id|all>  # validate id-based override entries (addConnectors /
                              #   setNodeElevation / mergeNodes) — catches stale ids after a refresh
-npm run routetest <id>       # routing smoke test from the summit
+npm run routetest <id>       # routing smoke test from the summit. NOTE: it plans with timing
+                             #   'now', so lift opening hours gate the result and the score is
+                             #   time-of-day dependent. Only ever compare A/B at the SAME moment
+                             #   (swap in the other graph.json, run, restore) — a recorded baseline
+                             #   from another hour is meaningless.
+npm run check:spines <id|all>  # per-polygon spine health, two independent complaints:
+                             #   drop  — spine descends over the polygon's own top-to-bottom drop
+                             #   cover — the UNION of the spine pieces (plus stitches and way
+                             #           bridges) over the polygon extent, both projected onto the
+                             #           polygon's long axis. Catches a spine that is healthy but
+                             #           *short* (descends fine, only spans half the polygon), which
+                             #           the drop test cannot see. A good spine is interior, so it
+                             #           scores ~0.8–0.95, never 1.0. It must be a union: measuring
+                             #           the extent (min..max) instead was structurally blind to
+                             #           fragmentation — the very defect stitching exists to fix.
+                             #   Still blind to twisting polygons: a spine can score 99% while
+                             #           visibly missing a lobe, so never guard or validate on the
+                             #           axis projection alone.
+
+# Diagnostics (report-only; none of them write data)
+npm run probe:spineparts <id> <wayId...>  # answers "*where* is the gap": the polygon's spine pieces
+                             #   projected on its long axis, marked SYNTH / STITCH / WAY-BRIDGE,
+                             #   plus the merged union. The union here is the trustworthy figure.
+npm run probe:trappeddiff <baseline.json> <current.json> [label]  # the ONLY correct way to judge a
+                             #   connectivity change. A count moving by five says nothing about
+                             #   whether five real places got worse; this names them, and prints a
+                             #   REGRESSED section only when real terrain actually got worse.
+npm run probe:reach <graph.json> [label]  # raw BFS reachability from the highest node over all
+                             #   out-edges, ignoring preferences — separates "the graph broke" from
+                             #   "the planner rejected the routes", which routetest cannot.
+npm run probe:plan <id> [pairs]  # routing quality: option 1's distance vs the shortest *feasible*
+                             #   path (never straight-line — one-way pistes make a 40 m gap
+                             #   legitimately cost kilometres), plus mean option count and connector
+                             #   share. Run before and after a ranking change and diff.
 ```
 
 > Debug map tool: `public/devtools/mapdebug.html` (served at `/devtools/mapdebug.html` by the dev
@@ -150,6 +233,13 @@ npm run routetest <id>       # routing smoke test from the summit
   **`NOTES.local.md`** (git-ignored) — not committed.
 
 ## Gotchas / lessons learned
+- **A parameter sweep that moves nothing is a bug signal, not a plateau.** Twice now, sweeping a
+  constant produced byte-identical fleet numbers because the test it fed never actually fired: a
+  structurally-dead `TAIL_CLEAR_RATIO`, and `STITCH_ROUTE_MAX_M` whose effect was invisible because
+  `check:spines` measured spine *extent* instead of the *union* of its pieces — so fragmentation,
+  the defect stitching exists to fix, could not register. With an honest metric the same sweep
+  responded immediately (`<0.9`: 150 → 175, 250 → 170, 400 → 169; knee at 250). If a knob does
+  nothing, verify the measurement before concluding the knob does not matter.
 - **Validate with `npm run build` (`tsc -b`), not `tsc --noEmit`** — project-reference build
   mode catches errors the root `--noEmit` misses (a TS2367 once passed `--noEmit` but failed CI).
 - **Triple/parallel piste lines** were OSM `area=yes` polygons rendered as perimeters. Fix:
@@ -174,6 +264,12 @@ npm run routetest <id>       # routing smoke test from the summit
   - **Edge ids (`e<idx>`) are still order-dependent** — a follow-up. They leak into user localStorage
     (`edge:<id>` closure keys, `customNodes.attachEdgeId`), so those entries can still be orphaned by
     a rebuild. Closures keyed by name (`lift:<name>`, `piste:<ref>~<name>`) are already stable.
+- **Long lines running parallel to a polygon spine are gateway *forks*, not stray arms.** A gateway
+  arm is replaced by two forks jumping to points ±`FORK_M` (40 m) along the spine, so on a narrow
+  polygon they necessarily lie almost on top of it. Measured at Ischgl they are 38% of all arm length
+  and 55% of everything drawn within 5 m of a spine. They are load-bearing (they make gateway
+  crossings work in both directions), so do **not** "fix" them by widening `ARM_CLIP_M` — that was
+  tried and moved the number the wrong way (29.4% → 32.1%).
 - **Longest-run "doubling-back"** was winding piste edges (descend-then-climb) over-rewarded by
   raw length; fixed by scoring straight-line progress and penalizing internal uphill.
 - **Islands / one-way sub-areas**: find via strongly-connected-component analysis, not just
@@ -204,6 +300,19 @@ npm run routetest <id>       # routing smoke test from the summit
   is a lexicographic-with-tolerance comparator over a single **base order — Preference → Lifts →
   Skiing → Time** — with the active objective's key promoted to the front (`src/routing/ranking.ts`).
   Time is the *least* important key by default (skiing isn't driving).
+- **Only piste metres count as "skiing".** The `skiing` rank key sums `kind === 'piste'` legs only.
+  Counting connectors made a chain of app-inferred gap-fills look like extra skiing, so a 200 m
+  twisty connector route outranked the 40 m direct line on the key meant to reward real terrain.
+- **`distance` is an exact final tie-break** appended after all four keys. Every other key compares
+  within a tolerance, so without it two "effectively tied" routes were ordered arbitrarily — which
+  is the other half of how a needless detour won.
+- **Two options are distinct only if they use different named terrain.** `terrainKey()` in `plan.ts`
+  keys a route by its ordered sequence of named pistes and lifts, skipping connectors and collapsing
+  consecutive legs of one run. Differing solely in which bridge or gap-fill is crossed is not a
+  choice a skier can act on, so those options dedupe to one.
+- **An objective badge is suppressed when its margin is noise.** Balanced only offers the `longest`
+  candidate when its piste metres beat the best pool route's by more than the ranking layer's own
+  skiing tolerance (`skiingTolerance`, 100 m or 5%) — otherwise a 40 m hop gets badged "Longest".
 - **Longest** = max-km **lift-free** descent A→B, exact via a DAG longest-path (`longestStreak.ts`);
   only falls back to a lift if B is otherwise unreachable. The resort-wide "Longest runs" card is the
   only feature that ignores A and B.

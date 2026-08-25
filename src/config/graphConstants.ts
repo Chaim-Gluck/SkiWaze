@@ -44,6 +44,14 @@ export interface GraphConstants {
   flatJunctionDV: number;
   /** Flat-junction pass: max partners to link per dangling end (keeps it sparse). */
   flatJunctionK: number;
+  /**
+   * Arm-prune pass: how much *extra* distance (m) a skier may be sent, per edge, to replace a
+   * deleted polygon arm. Budgeting the detour against the arm's own length rather than as an
+   * absolute radius is what bounds the cost: an arm is only cut when the way round is barely
+   * longer than the arm was, so a resort can lose a thousand arms and still lose only metres on
+   * any given route.
+   */
+  armPruneDetourM: number;
   /** Lift-top ski-out pass: max distance (m) to snap a no-ski-out lift top onto a nearby piste line. */
   liftSkiOutRadius: number;
   /**
@@ -80,8 +88,11 @@ export const DEFAULT_GRAPH_CONSTANTS: GraphConstants = {
   flatJunctionRadius: 120,
   flatJunctionDV: 8,
   flatJunctionK: 2,
+  armPruneDetourM: 25,
   liftSkiOutRadius: 130,
   plateauRadius: 45,
   plateauK: 3,
   plateauReachBudget: 400,
 };
+
+

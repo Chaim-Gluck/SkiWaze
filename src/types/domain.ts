@@ -86,6 +86,13 @@ export interface GraphEdge {
    * traceable back to the one polygon — which per-edge geometry alone cannot tell you.
    */
   srcWayId?: number;
+  /**
+   * Build-time only: the portal node a synthesised polygon arm springs from. Set on every edge an
+   * arm emits so the prune pass (which runs last, once overrides can no longer move edges around)
+   * can regroup an arm from a flat edge list. Stripped before the graph is written, so it never
+   * reaches the app.
+   */
+  armPortal?: string;
 
   // Lift-only
   liftType?: LiftType;

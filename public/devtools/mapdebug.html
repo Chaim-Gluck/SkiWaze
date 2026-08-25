@@ -37,6 +37,14 @@
   <select id="resort"></select>
   <label>Investigation overlay</label>
   <select id="overlay"></select>
+  <div id="reviewbox" style="display:none">
+    <label>Review list <span id="revpos" style="font-weight:400;color:#666"></span></label>
+    <select id="review"></select>
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <button id="revprev" style="flex:1;font-size:12px;padding:3px">◀ prev</button>
+      <button id="revnext" style="flex:1;font-size:12px;padding:3px">next ▶</button>
+    </div>
+  </div>
   <label>Base map</label>
   <select id="base">
     <option value="topo">OpenTopoMap (contours)</option>
@@ -47,6 +55,9 @@
   <input id="findnode" list="nodelist" placeholder="e.g. n498" autocomplete="off"
     style="font-size:13px;padding:4px 6px;width:100%;box-sizing:border-box" />
   <datalist id="nodelist"></datalist>
+  <label>Find area way (frames + highlights one polygon)</label>
+  <input id="findway" placeholder="e.g. 1240699922" autocomplete="off"
+    style="font-size:13px;padding:4px 6px;width:100%;box-sizing:border-box" />
   <div class="toggles" id="toggles">
     <label><input type="checkbox" id="t-areas" checked> areas</label>
     <label><input type="checkbox" id="t-pistes" checked> pistes</label>
@@ -82,10 +93,25 @@ function baseStyle(kind){
     sources:{ base:{ type:'raster', tileSize:256, tiles:RASTER[kind] } },
     layers:[{ id:'base', type:'raster', source:'base' }] };
 }
-const map = new maplibregl.Map({ container:'map', style:baseStyle('topo'), center:[10.28,46.95], zoom:12 });
+// Hash is "#lng,lat,zoom" plus optional ",resortId" and ",w<wayId>" so a pasted link restores the
+// camera, the dataset AND which polygon is being discussed -- without those a reload silently
+// reverts to the overlay's first resort and the camera then points at empty map.
+function parseHash(h){ const m=/^#([-\d.]+),([-\d.]+),([\d.]+)(?:,([\w-]+))?(?:,w(\d+))?$/.exec(h||''); return m?{center:[+m[1],+m[2]],zoom:+m[3],resort:m[4]||null,way:m[5]||null}:null; }
+const hashView = parseHash(location.hash);
+const map = new maplibregl.Map({ container:'map', style:baseStyle('topo'), center:hashView?hashView.center:[10.28,46.95], zoom:hashView?hashView.zoom:12 });
 map.addControl(new maplibregl.NavigationControl());
+// Debug handle + camera in the URL so a reload keeps the view you were inspecting.
+window.__map = map;
+function syncHash(){ const c=map.getCenter(); history.replaceState(null,'',`#${c.lng.toFixed(6)},${c.lat.toFixed(6)},${map.getZoom().toFixed(2)}${curResort?','+curResort:''}${curWay?',w'+curWay:''}`); }
+map.on('moveend', syncHash);
 
-let RESORTS=[], OVERLAYS=[], curResort=null, curOverlayData=null, markers=[], curNodes=new Map(), nodePin=null;
+let RESORTS=[], OVERLAYS=[], REVIEW=[], curResort=null, curOverlayData=null, markers=[], curNodes=new Map(), nodePin=null, curWay=null;
+// The hash camera is only authoritative while restoring the pasted link. Once the user starts
+// driving the tool, honouring it forever would freeze the camera over the previous resort and
+// make every later switch look like "nothing loaded".
+let honorHash = !!hashView;
+// Set while re-loading the same resort for a base-map change, where re-framing would be jarring.
+let keepView = false;
 const el = (id)=>document.getElementById(id);
 const clearMarkers=()=>{ markers.forEach(m=>m.remove()); markers.length=0; };
 
@@ -103,7 +129,12 @@ function addResortLayers(geo){
   if(!map.getLayer('r-pistes')) map.addLayer({id:'r-pistes',type:'line',source:'r-pistes',paint:{'line-color':colExpr,'line-width':2.4}});
   if(!map.getLayer('r-lifts'))  map.addLayer({id:'r-lifts',type:'line',source:'r-lifts',paint:{'line-color':'#111','line-width':2,'line-dasharray':[1,1.6]}});
   ensureArrowImage();
-  if(!map.getLayer('r-pistes-labels')) map.addLayer({id:'r-pistes-labels',type:'symbol',source:'r-pistes',layout:{'symbol-placement':'line','text-field':['coalesce',['get','ref'],['get','name'],''],'text-size':11,'text-font':['Open Sans Regular'],'symbol-spacing':350,'text-rotation-alignment':'map','text-keep-upright':true,'visibility':'none'},paint:{'text-color':'#12203a','text-halo-color':'#fff','text-halo-width':1.7}});
+  if(!map.getLayer('r-pistes-labels')) map.addLayer({id:'r-pistes-labels',type:'symbol',source:'r-pistes',layout:{'symbol-placement':'line','text-field':['coalesce',['get','ref'],['get','name'],''],'text-size':11,'text-font':['Noto Sans Regular'],'symbol-spacing':350,'text-rotation-alignment':'map','text-keep-upright':true,'visibility':'none'},paint:{'text-color':'#12203a','text-halo-color':'#fff','text-halo-width':1.7}});
+  // Lifts were the one unlabelled layer, which made "which lift is that" unanswerable on the map.
+  if(!map.getLayer('r-lifts-labels')) map.addLayer({id:'r-lifts-labels',type:'symbol',source:'r-lifts',layout:{'symbol-placement':'line','text-field':['coalesce',['get','name'],''],'text-size':11,'text-font':['Noto Sans Regular'],'symbol-spacing':400,'text-rotation-alignment':'map','text-keep-upright':true,'visibility':'none'},paint:{'text-color':'#111','text-halo-color':'#fff','text-halo-width':1.7}});
+  // Polygons carry no visible identity of their own, so reviewing "which bowl is this" meant
+  // guessing. Stamp each one with its run label and OSM way id, the same id the finder box takes.
+  if(!map.getLayer('r-areas-labels')) map.addLayer({id:'r-areas-labels',type:'symbol',source:'r-areas',layout:{'text-field':['concat',['coalesce',['get','ref'],['get','name'],'?'],'\n w',['to-string',['coalesce',['get','wayId'],'?']]],'text-size':13,'text-font':['Noto Sans Regular'],'text-allow-overlap':false,'visibility':'none'},paint:{'text-color':'#7a1fa2','text-halo-color':'#fff','text-halo-width':2}});
 }
 // Flow arrows are drawn from graph.json (true per-edge directions) so bidirectional links show a
 // double-headed arrow; geo.json can't express this because it dedupes bidirectional connectors.
@@ -142,8 +173,28 @@ function applyToggles(){
   vis('r-lifts',el('t-lifts').checked);
   vis('flow-arrows-p',el('t-arrows').checked); vis('flow-arrows-c',el('t-arrows').checked && el('t-connectors').checked);
   vis('r-pistes-labels',el('t-names').checked);
+  vis('r-areas-labels',el('t-names').checked && el('t-areas').checked);
+  vis('r-lifts-labels',el('t-names').checked && el('t-lifts').checked);
   vis('ov-glow',el('t-overlay').checked); vis('ov-line',el('t-overlay').checked);
   markers.forEach(m=>{ m.getElement().style.display = el('t-overlay').checked?'':'none'; });
+}
+// A curated list of polygons to eyeball, so a review round needs no hand-typed ids or pasted
+// URLs (link fragments do not survive every browser embedding).
+async function gotoReview(i){
+  const r=REVIEW[i]; if(!r) return;
+  el('review').selectedIndex=i;
+  el('revpos').textContent=`(${i+1}/${REVIEW.length})`;
+  honorHash=true;
+  try{
+    if(r.resort&&r.resort!==curResort){ el('resort').value=r.resort; await loadResort(r.resort); }
+    if(r.center) map.jumpTo({center:r.center,zoom:r.zoom||18});
+    el('findway').value=r.way?String(r.way):'';
+    gotoWay(r.way?String(r.way):'',!!r.way);
+    // A review entry can point at a node instead of (or as well as) a polygon: pin it so the thing
+    // being asked about is unambiguous. Done after gotoWay, which clears any existing pin.
+    if(r.node){ el('findnode').value=r.node; gotoNode(r.node); if(r.center) map.jumpTo({center:r.center,zoom:r.zoom||18}); }
+    if(r.note) el('notes').innerHTML=r.note;
+  } finally { honorHash=false; }
 }
 async function loadResort(id){
   curResort=id;
@@ -160,7 +211,11 @@ async function loadResort(id){
   addFlowArrows(graph);
   await drawOverlay();
   applyToggles();
-  if(!curOverlayData || !curOverlayData[id]){
+  if(keepView) return;
+  const entry=curOverlayData&&curOverlayData[id];
+  const focused=!!(entry&&entry.focus&&(entry.focus.bounds||entry.focus.center));
+  if(!focused){
+    if(honorHash) return;
     const b=new maplibregl.LngLatBounds();
     geo.features.forEach(f=>{ const g=f.geometry; const cc=g.type==='Polygon'?g.coordinates[0]:g.coordinates; cc.forEach(c=>b.extend(c)); });
     if(!b.isEmpty()) map.fitBounds(b,{padding:60,duration:0});
@@ -180,8 +235,26 @@ function gotoNode(raw){
   nodePin.togglePopup();
   map.flyTo({center:at,zoom:Math.max(map.getZoom(),15.5)});
 }
+// Frame and ring one polygon by OSM way id. At resort zoom the overlay is a thicket of similar
+// lines, so a coordinate alone does not tell you WHICH shape is under discussion.
+function gotoWay(raw,fit){
+  const id=String(raw||'').trim().replace(/^w/i,'');
+  curWay=id||null;
+  if(!map.getSource('ov')||!map.getLayer('ov-glow')) return;
+  if(!map.getLayer('ov-hl')){
+    map.addLayer({id:'ov-hl',type:'line',source:'ov',paint:{'line-color':'#ffdf20','line-width':16,'line-opacity':0.85,'line-blur':2}},'ov-glow');
+  }
+  map.setFilter('ov-hl',['==',['get','way'],id||'\u0000']);
+  syncHash();
+  if(!id||!fit) return;
+  const entry=curOverlayData&&curOverlayData[curResort];
+  const ls=((entry&&entry.lines)||[]).filter(l=>String(l.way)===id);
+  if(!ls.length){ el('notes').innerHTML=`<i>(way ${id} not in this overlay/resort)</i>`; return; }
+  const b=new maplibregl.LngLatBounds();
+  ls.forEach(l=>l.coords.forEach(c=>b.extend(c)));
+  map.fitBounds(b,{padding:70,maxZoom:17,duration:0});
+}
 async function drawOverlay(){
-  clearMarkers();
   const empty={type:'FeatureCollection',features:[]};
   const set=(id,d)=>{ if(map.getSource(id)) map.getSource(id).setData(d); else map.addSource(id,{type:'geojson',data:d}); };
   set('ov',empty);
@@ -191,7 +264,7 @@ async function drawOverlay(){
   if(!curOverlayData) return;
   const entry=curOverlayData[curResort];
   if(!entry){ el('notes').innerHTML=`<i>(no overlay data for ${curResort})</i>`; return; }
-  set('ov',{type:'FeatureCollection',features:(entry.lines||[]).map(l=>({type:'Feature',properties:{color:l.color||'#e11',width:l.width||4},geometry:{type:'LineString',coordinates:l.coords}}))});
+  set('ov',{type:'FeatureCollection',features:(entry.lines||[]).map(l=>({type:'Feature',properties:{color:l.color||'#e11',width:l.width||4,way:l.way==null?'':String(l.way)},geometry:{type:'LineString',coordinates:l.coords}}))});
   // Draw larger markers first so smaller ones stack on top (coincident points stay visible).
   [...(entry.points||[])].map((p,i)=>({p,i})).sort((a,b)=>(b.p.r||15)-(a.p.r||15)).forEach(({p})=>{
     const s=p.r||15;
@@ -209,7 +282,9 @@ async function drawOverlay(){
   });
   if(entry.notes) el('notes').innerHTML=entry.notes;
   const f=entry.focus;
-  if(f&&f.bounds) map.fitBounds(f.bounds,{padding:80,maxZoom:16,duration:0});
+  // A camera in the URL hash is an explicit request to stay put; do not auto-frame over it.
+  if(honorHash||keepView){ /* keep the user's view */ }
+  else if(f&&f.bounds) map.fitBounds(f.bounds,{padding:80,maxZoom:16,duration:0});
   else if(f&&f.center) map.jumpTo({center:f.center,zoom:f.zoom||15});
 }
 async function selectOverlay(overlayId){
@@ -235,11 +310,23 @@ async function selectOverlay(overlayId){
   const none=document.createElement('option'); none.value=''; none.textContent='— none —'; os.appendChild(none);
   OVERLAYS.forEach(o=>{ const op=document.createElement('option'); op.value=o.id; op.textContent=o.label; os.appendChild(op); });
 
+  REVIEW=await fetch('/devtools/overlays/review-list.json').then(r=>r.json()).catch(()=>[]);
+  if(REVIEW.length){
+    el('reviewbox').style.display='';
+    const vs=el('review');
+    REVIEW.forEach((r,i)=>{ const o=document.createElement('option'); o.value=String(i); o.textContent=r.label||`${r.resort} w${r.way}`; vs.appendChild(o); });
+    vs.onchange=()=>gotoReview(+vs.value);
+    el('revprev').onclick=()=>gotoReview((vs.selectedIndex-1+REVIEW.length)%REVIEW.length);
+    el('revnext').onclick=()=>gotoReview((vs.selectedIndex+1)%REVIEW.length);
+  }
+
   rs.onchange=()=>loadResort(rs.value);
   os.onchange=()=>selectOverlay(os.value);
   el('findnode').onchange=(e)=>gotoNode(e.target.value);
   el('findnode').onkeydown=(e)=>{ if(e.key==='Enter') gotoNode(e.target.value); };
-  el('base').onchange=()=>{ map.setStyle(baseStyle(el('base').value)); map.once('styledata',async()=>{ if(curResort){ await loadResort(curResort); } }); };
+  el('findway').onchange=(e)=>gotoWay(e.target.value,true);
+  el('findway').onkeydown=(e)=>{ if(e.key==='Enter') gotoWay(e.target.value,true); };
+  el('base').onchange=()=>{ map.setStyle(baseStyle(el('base').value)); map.once('styledata',async()=>{ if(curResort){ keepView=true; try{ await loadResort(curResort); } finally { keepView=false; } } }); };
   el('toggles').onchange=applyToggles;
   el('uihead').onclick=()=>document.getElementById('ui').classList.toggle('collapsed');
 
@@ -247,6 +334,40 @@ async function selectOverlay(overlayId){
   // default: open the first overlay so the tool is immediately useful
   if(OVERLAYS.length){ os.value=OVERLAYS[0].id; await selectOverlay(OVERLAYS[0].id); }
   else { rs.value=RESORTS[0].id; await loadResort(RESORTS[0].id); }
+  // A resort in the hash wins over the overlay's default pick, so a pasted link lands on the
+  // dataset it was captured from.
+  if(hashView&&hashView.resort&&hashView.resort!==curResort&&RESORTS.some(r=>r.id===hashView.resort)){
+    rs.value=hashView.resort;
+    await loadResort(hashView.resort);
+    // A hash can go stale (resort edited by hand, or an old link): if its camera is nowhere near
+    // the resort it names, honouring it parks you over blank map and the tool looks broken.
+    const rc=(RESORTS.find(r=>r.id===hashView.resort)||{}).center;
+    const near=!rc||(Math.abs(rc.lon-hashView.center[0])<0.6&&Math.abs(rc.lat-hashView.center[1])<0.4);
+    if(near) map.jumpTo({center:hashView.center,zoom:hashView.zoom});
+    else { honorHash=false; await loadResort(hashView.resort); }
+  }
+  // A way in the hash frames itself: the link should land on the polygon, not near it.
+  if(hashView&&hashView.way){ el('findway').value=hashView.way; gotoWay(hashView.way,true); }
+  // From here on the user drives: every resort switch must re-frame on the new resort.
+  honorHash=false;
+  syncHash();
+
+  // Pasting/clicking a link while the tool is already open only changes the fragment, so the
+  // browser never reloads the page and the new resort/camera would silently be ignored.
+  window.addEventListener('hashchange', async ()=>{
+    const h=parseHash(location.hash);
+    if(!h) return;
+    honorHash=true;
+    try{
+      if(h.resort&&h.resort!==curResort&&RESORTS.some(r=>r.id===h.resort)){
+        el('resort').value=h.resort;
+        await loadResort(h.resort);
+      }
+      map.jumpTo({center:h.center,zoom:h.zoom});
+      el('findway').value=h.way||'';
+      gotoWay(h.way||'',!!h.way);
+    } finally { honorHash=false; }
+  });
 })();
 </script>
 </body>
