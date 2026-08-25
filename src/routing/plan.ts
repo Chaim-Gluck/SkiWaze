@@ -5,7 +5,7 @@ import { alternativeRoutes } from './alternatives';
 import { longestDownhillRuns, longestDownhillPaths } from './longestStreak';
 import { buildRoute } from './buildRoute';
 import { resolveClosedEdgeIds } from './closures';
-import { makeRouteComparator } from './ranking';
+import { makeRouteComparator, pisteMetres, skiingTolerance } from './ranking';
 import { haversineM } from '../utils/geo';
 
 export interface PlanResult {
@@ -199,7 +199,41 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     }
     return out;
   };
-  const legKey = (r: Route): string => r.legs.map((l) => l.edgeId).join('>');
+  /**
+   * Identity of a route as a *skier* experiences it: the ordered sequence of named pistes and
+   * lifts it uses. Connectors are ignored on purpose — two options that differ only in which
+   * app-added bridge or gap-fill they cross are not a choice anyone can act on, so they must
+   * collapse to one option. Consecutive legs of the same named run collapse too, since a run
+   * split into several graph edges is still one run.
+   */
+  const terrainKey = (r: Route): string => {
+    const parts: string[] = [];
+    for (const leg of r.legs) {
+      if (leg.kind === 'connector') continue;
+      const e = index.edgeById.get(leg.edgeId);
+      const name =
+        leg.kind === 'lift'
+          ? e?.liftName
+          : e?.pisteRef || e?.pisteName
+            ? `${e?.pisteRef ?? ''}~${e?.pisteName ?? ''}`
+            : undefined;
+      // Unnamed terrain has no shareable identity, so fall back to the edge — distinct by design.
+      const token = `${leg.kind}:${name ?? leg.edgeId}`;
+      if (parts[parts.length - 1] !== token) parts.push(token);
+    }
+    return parts.join('>');
+  };
+  /** Keep only routes a skier would call different: first one wins per terrain signature. */
+  const distinctTerrain = (routes: Route[]): Route[] => {
+    const seen = new Set<string>();
+    return routes.filter((r) => {
+      const k = terrainKey(r);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
+
   const genAlts = (objective: RouteObjective, k: number): GraphEdge[][] =>
     alternativeRoutes(index, fromNodeId, toNodeId, prefs, provisionalStart, k, 0.7, closedEdgeIds, objective);
 
@@ -214,8 +248,7 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
       r.labels = ['Longest (needs a lift)'];
       return { routes: [r] };
     }
-    const routes = longRoutes
-      .sort(makeRouteComparator('longest_ab', prefs))
+    const routes = distinctTerrain(longRoutes.sort(makeRouteComparator('longest_ab', prefs)))
       .slice(0, 3)
       .map((r, i) => { r.id = `route-${i + 1}`; r.labels = [OBJECTIVE_LABEL.longest_ab]; return r; });
     return { routes };
@@ -237,7 +270,7 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     const byKey = new Map<string, { route: Route; objective: RouteObjective; labels: string[]; order: number }>();
     const consider = (route: Route | undefined, objective: RouteObjective, order: number) => {
       if (!route) return;
-      const key = legKey(route);
+      const key = terrainKey(route);
       const existing = byKey.get(key);
       if (existing) {
         if (!existing.labels.includes(OBJECTIVE_LABEL[objective])) existing.labels.push(OBJECTIVE_LABEL[objective]);
@@ -249,7 +282,15 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     consider(bestOf(pool, 'fastest'), 'fastest', 0);
     consider(bestOf(pool, 'fewest_lifts'), 'fewest_lifts', 1);
     if (hasColorPreference(prefs)) consider(bestOf(pool, 'preferred'), 'preferred', 2);
-    consider(bestOf(longRoutes, 'longest_ab'), 'longest_ab', 3);
+    // A "Longest" option only means something when it actually buys measurably more skiing than
+    // the others. Without this gate a 40 m hop with no real descent anywhere still got badged
+    // "Longest", which is noise dressed up as a choice.
+    const longBest = bestOf(longRoutes, 'longest_ab');
+    if (longBest) {
+      const longSki = pisteMetres(longBest);
+      const poolSki = pool.reduce((m, r) => Math.max(m, pisteMetres(r)), 0);
+      if (longSki - poolSki > skiingTolerance(longSki, poolSki)) consider(longBest, 'longest_ab', 3);
+    }
 
     if (byKey.size === 0) return noRouteResult(closedEdgeIds);
     const routes = [...byKey.values()]
@@ -263,11 +304,11 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     // the next-best distinct route (from the pool or a longest variant) as an alternative so the
     // user still gets a choice.
     if (routes.length < 2) {
-      const shown = new Set(routes.map(legKey));
+      const shown = new Set(routes.map(terrainKey));
       const alt = [...pool, ...longRoutes]
         .slice()
         .sort(makeRouteComparator('fastest', prefs))
-        .find((r) => !shown.has(legKey(r)));
+        .find((r) => !shown.has(terrainKey(r)));
       if (alt) {
         alt.objective = 'fastest';
         alt.labels = ['Alternative'];
@@ -280,9 +321,7 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
 
   // Individual fastest / fewest_lifts / preferred: rank the shared pool, take up to 3 distinct.
   const objective: RouteObjective = routeType;
-  const routes = pool
-    .slice()
-    .sort(makeRouteComparator(objective, prefs))
+  const routes = distinctTerrain(pool.slice().sort(makeRouteComparator(objective, prefs)))
     .slice(0, 3)
     .map((r, i) => { r.id = `route-${i + 1}`; r.objective = objective; r.labels = [OBJECTIVE_LABEL[objective]]; return r; });
   return withSkiNote(routes);
