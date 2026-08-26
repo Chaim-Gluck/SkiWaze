@@ -358,6 +358,23 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   junction flips a piste segment. `npm run check:audit` flags them as "reversal candidates"
   (a piste starts at a node reachable only via an *uphill* flat); fix with `setNodeElevation`
   in `overrides/<id>.json`. `npm run data` prints an `audit:` line when a resort has candidates.
+  Most of this is now **automatic**: the **elevation-consensus pass** (`pipeline/lib/elevationConsensus.ts`)
+  cross-checks every node against a second DEM (Terrarium, shared with `check:elevation` via
+  `pipeline/lib/terrarium.ts`) and repairs the nodes whose piste edges reverse under both the point
+  sample *and* a smoothed median. It runs **after** the overrides and **pins** every node a human
+  set, because a hand fix often cures a reversal by correcting the *neighbour* — judging the raw
+  field would make the pass re-solve a solved spot a second, different way. On a fresh Sölden with
+  its 8 hand fixes removed it reproduces 5 of them unaided. Disable with `--no-elevation-consensus`.
+  Two hard-won guards, each one a bug we shipped and measured:
+  - **Adoption is guarded by reachability, not by elevation plausibility.** A node *becoming* the
+    high end of its neighbourhood is legitimate (that's what a reversal repair looks like), so the
+    only safe invariant is that nothing gets stranded from the lift network. Corrections that
+    strand terrain are reverted, blaming the stranded node's own correction first and widening only
+    if none is corrected — blaming the whole neighbourhood once cost 6 good repairs for 1 bad node.
+  - **A monotonic reseat is a topology repair, not a measurement**, so it is capped at
+    `RESEAT_MAX_M`. Uncapped it once fabricated a 76 m error to satisfy the slope constraint.
+  Blind adoption of the second DEM is ~80% right and the other 20% is actively harmful, so the pass
+  declines rather than guesses; whatever it declines still shows up in `npm run check:resort`.
 - **Non-skiable / mis-tagged connections**: OSM `piste:type=connection` imports as an orange
   (unrated) piste with a forced direction. `check:audit` lists "long connections" (>250 m) to
   review — some are roads/ski-bus links (long + near-flat → `removePistes` by name/bbox), some

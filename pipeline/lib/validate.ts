@@ -15,7 +15,7 @@ export interface ValidationReport {
 }
 
 /** BFS reachability from all lift-station nodes over directed edges. */
-function reachableFromLiftStations(graph: ResortGraph): Set<string> {
+export function reachableFromLiftStations(graph: ResortGraph): Set<string> {
   const adj = new Map<string, string[]>();
   for (const e of graph.edges) {
     const arr = adj.get(e.from);

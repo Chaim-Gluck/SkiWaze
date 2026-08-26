@@ -93,6 +93,10 @@ per-resort code**. To add one:
    the OpenStreetMap extraction area, so make it cover the whole ski area (not too tight).
 2. **Build its data** — `npm run data <id>`. Fetches OSM + elevation and writes
    `public/resorts/<id>/{graph,geo,meta}.json` and updates `resorts/index.json`.
+   This also runs the **elevation-consensus pass**, which cross-checks every node against a second
+   DEM and automatically repairs piste segments pointing the wrong way — the correction that used
+   to be the bulk of the hand-written `setNodeElevation` work. It only adopts a value when doing so
+   doesn't strand terrain from the lift network, and prints what it repaired and what it declined.
 3. **Audit it — one command** —
    ```bash
    npm run check:resort <id>              # runs the whole battery, prints one verdict table
