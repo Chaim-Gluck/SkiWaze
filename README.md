@@ -93,15 +93,35 @@ per-resort code**. To add one:
    the OpenStreetMap extraction area, so make it cover the whole ski area (not too tight).
 2. **Build its data** — `npm run data <id>`. Fetches OSM + elevation and writes
    `public/resorts/<id>/{graph,geo,meta}.json` and updates `resorts/index.json`.
-3. **Audit connectivity** —
+3. **Audit it — one command** —
    ```bash
-   npm run check:trapped <id>   # nodes that can't reach a lift / are isolated
-   npm run routetest <id>       # smoke-test real routing from the summit
+   npm run check:resort <id>              # runs the whole battery, prints one verdict table
+   npm run check:resort <id> --skip-elevation   # skip the (slower) second-DEM cross-check
    ```
+   This is the acceptance gate. It runs connectivity (`check:trapped`), the reversal/pothole audit
+   (`check:audit`), the second-DEM elevation cross-check (`check:elevation`), polygon spine health
+   (`check:spines`), override integrity (`check:overrides`), a routing smoke test (`routetest`) and
+   route quality (`probe:plan`) — the checks that used to be seven separate commands you had to
+   remember. Each line reports `ok` / `REVIEW` / `FAIL`.
+
+   **`REVIEW` is not failure.** These tools report *candidates*, not certainties — a valley run
+   ending at a road is a legitimate "trapped" node. Verify every candidate on the map
+   (`/devtools/mapdebug.html`, or the deep-link `?resort=<id>&at=<lat>,<lon>&z=18`) before writing
+   an override. `FAIL` means the check itself errored — fix the tooling first.
+
    Fix genuine data gaps with a `pipeline/overrides/<id>.json` file. Real-world dead-ends
    (e.g. a valley run ending at a road with no lift) are fine to leave.
-4. **Preview** — `npm run dev`, pick the resort, try a few A→B routes and the longest-run widget.
-5. **Ship** — commit the `public/resorts/<id>/*` files and `src/config/resorts.ts` (plus any
+
+   **`check:spines` matters most for a resort with open bowls.** OSM `area=yes` polygons are kept
+   in the routing graph (dropping them disconnects bowls) but routed via a synthesised interior
+   *spine* rather than their rim. A polygon whose spine covers only part of its shape will route
+   you around the edge of the bowl instead of down it. Eyeball anything it complains about on
+   `/devtools/mapdebug.html` with the area-skeletons overlay before overriding.
+4. **Sanity-check the lift model** — `npm run probe:liftmix` (does the lift type mix look right?)
+   and `npm run probe:liftspeed` (do the measured medians still match `DEFAULT_SPEEDS`? a new
+   region can shift them). Lifts with no `aerialway:duration` fall back to those per-type speeds.
+5. **Preview** — `npm run dev`, pick the resort, try a few A→B routes and the longest-run widget.
+6. **Ship** — commit the `public/resorts/<id>/*` files and `src/config/resorts.ts` (plus any
    override), push, then deploy (below).
 
 ### Pitfall checklist & override recipes

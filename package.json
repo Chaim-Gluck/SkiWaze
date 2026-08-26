@@ -21,6 +21,7 @@
     "check:areaclass": "tsx pipeline/_areaclass.ts",
     "check:areaskel": "tsx pipeline/_areaskel.ts",
     "check:spines": "tsx pipeline/_spinecheck.ts",
+    "check:resort": "tsx pipeline/_checkresort.ts",
     "probe:spineparts": "tsx pipeline/_spineparts.ts",
     "probe:trappeddiff": "tsx pipeline/_trappeddiff.ts",
     "probe:reach": "tsx pipeline/_reachprobe.ts",
@@ -33,7 +34,9 @@
     "probe:armsweep": "tsx pipeline/_armsweep.ts",
     "probe:planpair": "tsx pipeline/_planpair.ts",
     "probe:liftspeed": "tsx pipeline/_liftspeed.ts",
-    "probe:liftmix": "tsx pipeline/_liftmix.ts"
+    "probe:liftmix": "tsx pipeline/_liftmix.ts",
+    "probe:goldenroutes": "tsx pipeline/_goldenroutes.ts",
+    "probe:elevoverrides": "tsx pipeline/_elevoverrides.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

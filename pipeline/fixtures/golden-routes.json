@@ -1,0 +1,13 @@
+[
+  {
+    "label": "Madonna: Pinzolo Campiglio express III (top) -> 101 Rododendro (bottom)",
+    "resort": "madonna-di-campiglio",
+    "from": "n2325504678",
+    "to": "n298988045",
+    "closedKeys": ["lift:Grual - Zapel"],
+    "skillLevel": "average",
+    "expectedMinutes": 48,
+    "toleranceMinutes": 6,
+    "source": "Strava ELAPSED time, real descent by the repo owner. Grual - Zapel is closed to reproduce that day's conditions. 11.9 km, 5 lifts. Elapsed (not moving) time is the right comparison because it includes the real lift queues our wait model estimates."
+  }
+]

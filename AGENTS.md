@@ -183,6 +183,15 @@ npm run lint           # oxlint
 npm run data <id>      # build one resort (uses 30-day disk cache)
 npm run data:all       # build all resorts
 npm run data:refresh   # force re-fetch OSM (ignores cache)
+npm run check:resort <id> [--skip-elevation]  # THE acceptance gate for a resort. Runs the whole
+                             #   battery below (trapped / audit / elevation / spines / overrides /
+                             #   routetest / plan) and prints one ok|REVIEW|FAIL table. Use this when
+                             #   adding or refreshing a resort instead of remembering seven commands.
+                             #   REVIEW = a human must eyeball it on the map (these tools report
+                             #   candidates, not certainties); FAIL = the check itself errored.
+                             #   Each reader parses a specific summary line and FAILs if absent —
+                             #   keep it that way, a regex that silently matches nothing reports a
+                             #   false 'ok' (this bit us twice while building it).
 npm run check:trapped <id>   # nodes that can't reach a lift / are isolated
 npm run check:audit <id>     # false-elevation reversals + non-skiable long connections
 npm run check:graphdiff <id|all>  # structural diff of the built graph vs the committed one:
@@ -240,6 +249,14 @@ npm run probe:hood <id> <latMin> <latMax> <lonMin> <lonMax>  # every node and ed
                              #   direction, way and flags — use it to check whether a line the router
                              #   skipped is actually traversable before blaming the router.
 npm run probe:longsum <id>   # the three resort-wide "Longest runs" figures, as a regression guard.
+npm run probe:goldenroutes   # THE ONLY GATE ON TIME. Replays real recorded runs (Strava elapsed) from
+                             #   pipeline/fixtures/golden-routes.json and compares our estimate against
+                             #   the clock. Add a fixture whenever a real run is available — the speed
+                             #   and queue-wait numbers otherwise have nothing holding them honest.
+npm run probe:elevoverrides [--details]  # are our setNodeElevation overrides still doing anything?
+                             #   Compares each entry against what the CURRENT provider chain samples
+                             #   at that node. Most were written against an older DEM: at last run,
+                             #   43/117 were redundant and 36 pointed at nodes that no longer exist.
 npm run probe:plumb <id>     # how much app-invented plumbing ends up inside longest-descent options.
 npm run probe:armsweep <id>  # sweeps ARM_PENALTY, reporting plumbing share AND detour rate together
                              #   (a penalty that cuts plumbing but sends routes the long way is a
