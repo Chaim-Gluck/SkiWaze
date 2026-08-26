@@ -17,16 +17,16 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.campigliodolomiti.it/en/"
   },
-  "generatedAt": "2026-08-25T21:22:13.002Z",
+  "generatedAt": "2026-08-26T13:32:19.256Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
-    "nodeCount": 455,
-    "edgeCount": 1095,
-    "pisteEdges": 425,
+    "nodeCount": 425,
+    "edgeCount": 1063,
+    "pisteEdges": 395,
     "liftEdges": 94,
-    "connectorEdges": 576,
+    "connectorEdges": 574,
     "meaningfulPoints": 236,
-    "reachableFromLifts": 455,
+    "reachableFromLifts": 425,
     "unreachableNodes": 0,
     "warningsByCode": {
       "missing_opening_hours": 74,

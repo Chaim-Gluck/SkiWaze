@@ -17,16 +17,16 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.soelden.com/en/"
   },
-  "generatedAt": "2026-08-25T21:24:50.195Z",
+  "generatedAt": "2026-08-26T13:34:31.097Z",
   "stats": {
     "resortId": "soelden",
-    "nodeCount": 747,
-    "edgeCount": 1971,
-    "pisteEdges": 838,
+    "nodeCount": 711,
+    "edgeCount": 1902,
+    "pisteEdges": 796,
     "liftEdges": 54,
-    "connectorEdges": 1079,
+    "connectorEdges": 1052,
     "meaningfulPoints": 161,
-    "reachableFromLifts": 746,
+    "reachableFromLifts": 710,
     "unreachableNodes": 1,
     "warningsByCode": {
       "suspicious_merge": 6,

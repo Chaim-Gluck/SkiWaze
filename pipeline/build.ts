@@ -14,6 +14,8 @@ import { buildSkeletons } from './lib/areaSkeleton';
 import { skeletonPistes } from './lib/areaSkeletonPistes';
 import { applyOverrides, loadOverrides } from './lib/overrides';
 import { pruneRedundantArms } from './lib/pruneArms';
+import { weldCoincidentNodes } from './lib/weldCoincident';
+import { markSpineDuplicates } from './lib/spineDuplicates';
 import { printReport, validateGraph } from './lib/validate';
 import { emitResort } from './lib/emit';
 import { auditGraph, auditSummary } from './_phantoms';
@@ -95,6 +97,26 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
   if (ov) {
     console.log('  applying overrides...');
     graph = applyOverrides(graph, ov);
+  }
+
+  // Before pruning, fuse nodes that share a spot. The snap and skeleton passes invent nodes after
+  // `buildResortGraph` has already merged, so a split point can land on an existing node; the
+  // resulting zero-length edge is a rung the longest-run search climbs to fake distance.
+  const weld = weldCoincidentNodes(graph);
+  if (weld.welded > 0) {
+    graph = weld.graph;
+    console.log(`  welded ${weld.welded} coincident node(s), dropping ${weld.droppedEdges} zero-length edge(s)`);
+  }
+
+  // A polygon that adopted a real centreline as its spine still emits its own skeleton lines, and
+  // those often retrace the adopted line. Price the copies so the real run wins. See
+  // spineDuplicates.ts.
+  const dup = markSpineDuplicates(graph, skels);
+  if (dup.edges > 0) {
+    console.log(
+      `  spine duplicates: ${dup.edges} edge(s) / ${(dup.lengthM / 1000).toFixed(1)} km ` +
+        `retracing an adopted spine across ${dup.polygons} polygon(s)`,
+    );
   }
 
   // Last of all, and deliberately so: pruning proves an arm redundant against the graph around it,

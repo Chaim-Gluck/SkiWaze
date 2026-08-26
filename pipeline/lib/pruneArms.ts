@@ -44,7 +44,13 @@ export function pruneRedundantArms(graph: ResortGraph, c: GraphConstants): Resor
     else groups.set(key, [e]);
   }
   const strip = (g: ResortGraph): ResortGraph => {
-    for (const e of g.edges) delete e.armPortal;
+    for (const e of g.edges) {
+      // `armPortal` is prune-pass bookkeeping and does not survive, but *being an arm* is a fact
+      // the app needs: an arm is invented plumbing joining a rim portal to the spine, not terrain,
+      // so the longest-run scorer must not pay distance credit for skiing one.
+      if (e.armPortal) e.skeletonArm = true;
+      delete e.armPortal;
+    }
     return g;
   };
   if (!groups.size || process.env.NO_ARM_PRUNE) return strip(graph);

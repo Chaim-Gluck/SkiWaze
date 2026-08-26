@@ -17,16 +17,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.valthorens.com/en/"
   },
-  "generatedAt": "2026-08-25T21:23:37.374Z",
+  "generatedAt": "2026-08-26T13:33:38.620Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
-    "nodeCount": 5314,
-    "edgeCount": 16295,
-    "pisteEdges": 5621,
+    "nodeCount": 5118,
+    "edgeCount": 15942,
+    "pisteEdges": 5425,
     "liftEdges": 242,
-    "connectorEdges": 10432,
+    "connectorEdges": 10275,
     "meaningfulPoints": 921,
-    "reachableFromLifts": 5304,
+    "reachableFromLifts": 5108,
     "unreachableNodes": 10,
     "warningsByCode": {
       "suspicious_merge": 64,

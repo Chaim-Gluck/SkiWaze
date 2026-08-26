@@ -17,16 +17,16 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.ischgl.com/en/"
   },
-  "generatedAt": "2026-08-25T21:25:02.260Z",
+  "generatedAt": "2026-08-26T13:34:38.565Z",
   "stats": {
     "resortId": "ischgl-samnaun",
-    "nodeCount": 1855,
-    "edgeCount": 5654,
-    "pisteEdges": 1897,
+    "nodeCount": 1776,
+    "edgeCount": 5493,
+    "pisteEdges": 1817,
     "liftEdges": 68,
-    "connectorEdges": 3689,
+    "connectorEdges": 3608,
     "meaningfulPoints": 265,
-    "reachableFromLifts": 1854,
+    "reachableFromLifts": 1775,
     "unreachableNodes": 1,
     "warningsByCode": {
       "suspicious_merge": 46,

@@ -18,6 +18,15 @@ export function loadPreferences(): Preferences {
     // stored skiSpeedByColor override when the user has opted into measured speeds — otherwise
     // drop it so old/stale cached speeds can't override the current model.
     if (!merged.useMeasuredSpeeds) merged.speeds = { ...merged.speeds, skiSpeedByColor: {} };
+    // Self-heal: lift ride speeds and queue waits are app constants, not user settings — nothing in
+    // the UI edits them. The spread above is shallow, so a stored copy would replace the whole map
+    // and pin a returning user to whatever the defaults were on their first visit (that is how
+    // chairs would have stayed at the old, far-too-slow 2.5 m/s). Always re-derive them.
+    merged.speeds = {
+      ...merged.speeds,
+      liftSpeedByType: DEFAULT_PREFERENCES.speeds.liftSpeedByType,
+      liftWaitByType: DEFAULT_PREFERENCES.speeds.liftWaitByType,
+    };
     return merged;
   } catch {
     return DEFAULT_PREFERENCES;

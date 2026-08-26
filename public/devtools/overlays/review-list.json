@@ -1,0 +1,68 @@
+[
+  {
+    "label": "W1 way-exit 531m",
+    "resort": "ischgl-samnaun",
+    "way": 1250559969,
+    "zoom": 15,
+    "center": [
+      10.30703,
+      47.00512
+    ],
+    "note": "The spine has a 531m unpainted gap here. The two pieces either side are THE SAME OSM piste, which leaves the yellow polygon and comes back, so the run is already continuous in the routing graph. QUESTION: is the rim right to exclude this stretch (the gap sits on terrain that is NOT part of this open slope - a neck, a road, trees, or a different area), or is the polygon drawn too small (the gap sits in the middle of one obviously continuous open slope and the rim clips across it for no visible reason)?"
+  },
+  {
+    "label": "W2 way-exit 393m",
+    "resort": "ischgl-samnaun",
+    "way": 1250559969,
+    "zoom": 15,
+    "center": [
+      10.30768,
+      47.00562
+    ],
+    "note": "The spine has a 393m unpainted gap here. The two pieces either side are THE SAME OSM piste, which leaves the yellow polygon and comes back, so the run is already continuous in the routing graph. QUESTION: is the rim right to exclude this stretch (the gap sits on terrain that is NOT part of this open slope - a neck, a road, trees, or a different area), or is the polygon drawn too small (the gap sits in the middle of one obviously continuous open slope and the rim clips across it for no visible reason)?"
+  },
+  {
+    "label": "W3 way-exit 380m",
+    "resort": "soelden",
+    "way": 441747775,
+    "zoom": 15,
+    "center": [
+      10.96313,
+      46.97279
+    ],
+    "note": "The spine has a 380m unpainted gap here. The two pieces either side are THE SAME OSM piste, which leaves the yellow polygon and comes back, so the run is already continuous in the routing graph. QUESTION: is the rim right to exclude this stretch (the gap sits on terrain that is NOT part of this open slope - a neck, a road, trees, or a different area), or is the polygon drawn too small (the gap sits in the middle of one obviously continuous open slope and the rim clips across it for no visible reason)?"
+  },
+  {
+    "label": "W4 way-exit 375m",
+    "resort": "ischgl-samnaun",
+    "way": 681570502,
+    "zoom": 15,
+    "center": [
+      10.29761,
+      47.00887
+    ],
+    "note": "The spine has a 375m unpainted gap here. The two pieces either side are THE SAME OSM piste, which leaves the yellow polygon and comes back, so the run is already continuous in the routing graph. QUESTION: is the rim right to exclude this stretch (the gap sits on terrain that is NOT part of this open slope - a neck, a road, trees, or a different area), or is the polygon drawn too small (the gap sits in the middle of one obviously continuous open slope and the rim clips across it for no visible reason)?"
+  },
+  {
+    "label": "W5 way-exit 333m",
+    "resort": "ischgl-samnaun",
+    "way": 1250559969,
+    "zoom": 15,
+    "center": [
+      10.30584,
+      47.00473
+    ],
+    "note": "The spine has a 333m unpainted gap here. The two pieces either side are THE SAME OSM piste, which leaves the yellow polygon and comes back, so the run is already continuous in the routing graph. QUESTION: is the rim right to exclude this stretch (the gap sits on terrain that is NOT part of this open slope - a neck, a road, trees, or a different area), or is the polygon drawn too small (the gap sits in the middle of one obviously continuous open slope and the rim clips across it for no visible reason)?"
+  },
+  {
+    "label": "W6 way-exit 320m",
+    "resort": "ischgl-samnaun",
+    "way": 1251764933,
+    "zoom": 15,
+    "center": [
+      10.39437,
+      46.96784
+    ],
+    "note": "The spine has a 320m unpainted gap here. The two pieces either side are THE SAME OSM piste, which leaves the yellow polygon and comes back, so the run is already continuous in the routing graph. QUESTION: is the rim right to exclude this stretch (the gap sits on terrain that is NOT part of this open slope - a neck, a road, trees, or a different area), or is the polygon drawn too small (the gap sits in the middle of one obviously continuous open slope and the rim clips across it for no visible reason)?"
+  }
+]

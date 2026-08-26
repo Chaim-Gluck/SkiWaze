@@ -186,6 +186,18 @@ async function main(): Promise<void> {
   );
 
   const dir = path.join(ROOT, 'public', 'devtools', 'overlays');
+  // Refuse to overwrite a good overlay with nothing. This tool re-derives polygons straight from
+  // OSM via buildResortGraph, so it never sees the synthesis passes build.ts runs afterwards; once
+  // those landed it classifies every polygon as 'D' (contributes no rim edges) and produces an
+  // empty overlay. Writing that out silently replaced the committed 10 MB overlay with `{}` and
+  // the spines simply vanished from the map-debug tool with no error anywhere.
+  if (!Object.keys(overlay).length) {
+    console.log(
+      '\noverlay NOT written: this run produced no polygons, which would have wiped the existing ' +
+        'overlay. Use `npm run check:spines` for the live gate.',
+    );
+    return;
+  }
   fs.writeFileSync(path.join(dir, 'area-skeletons.json'), JSON.stringify(overlay));
   const idxPath = path.join(dir, 'index.json');
   const idx = JSON.parse(fs.readFileSync(idxPath, 'utf8')) as { id: string }[];

@@ -83,6 +83,7 @@ export function buildRoute(
       isDownload: edge.isDownload,
       synthetic: edge.synthetic,
       custom: edge.custom,
+      plumbing: edge.skeletonArm || edge.spineDuplicate,
       warnings: cost.warnings,
     });
     for (const w of cost.warnings) routeWarnings.push(w);

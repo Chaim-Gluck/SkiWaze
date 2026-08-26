@@ -17,16 +17,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.alpedhuez.com/en/"
   },
-  "generatedAt": "2026-08-25T21:25:11.405Z",
+  "generatedAt": "2026-08-26T13:34:45.520Z",
   "stats": {
     "resortId": "alpe-dhuez",
-    "nodeCount": 872,
-    "edgeCount": 2504,
-    "pisteEdges": 821,
+    "nodeCount": 825,
+    "edgeCount": 2441,
+    "pisteEdges": 777,
     "liftEdges": 120,
-    "connectorEdges": 1563,
+    "connectorEdges": 1544,
     "meaningfulPoints": 327,
-    "reachableFromLifts": 872,
+    "reachableFromLifts": 825,
     "unreachableNodes": 0,
     "warningsByCode": {
       "suspicious_merge": 9,

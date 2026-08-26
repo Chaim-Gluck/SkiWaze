@@ -2,12 +2,53 @@ import type { GraphEdge, Preferences, PisteColor, RouteWarning, RouteObjective }
 import { PISTE_COLOR_ORDER } from '../types/domain';
 import { progressSpeedMps, paceMultiplier, isSpeedColor } from '../config/speedModel';
 import { parseDailyWindows, isOpenAt, minutesUntilClose } from './openingHours';
+import { DEFAULT_GRAPH_CONSTANTS } from '../config/graphConstants';
 
 /** Minutes-before-close under which we warn the user to hurry. */
 export const CLOSING_SOON_MIN = 20;
 
 /** Penalty multiplier so routing prefers real terrain over auto-added / custom links. */
 const SYNTHETIC_PENALTY = 2.5;
+
+/**
+ * Penalty multiplier for a polygon line that merely retraces the centreline its own polygon adopted
+ * as a spine (`spineDuplicate`). Two copies of one run, cross-linked by arms, otherwise let the
+ * router hop between them — the visible "broken lines" weave.
+ *
+ * Kept mild on purpose: a duplicate is genuinely skiable and may be the only thing an arm hangs
+ * off, so it must stay usable and simply lose every tie against the real named run underneath it.
+ *
+ * Deliberately NOT extended to `skeletonArm`. Arms were tried here and reverted: an arm is often the
+ * only link through a rim portal, so pricing one makes the router go the long way round instead —
+ * measured on Sella Ronda, where options containing a local detour went 9.3% -> 17.1%. Arms are
+ * handled where they actually cause trouble, in the longest-run scorer, by earning no distance
+ * credit rather than by costing more.
+ */
+const SPINE_DUPLICATE_PENALTY = 1.5;
+
+/**
+ * Arms are priced too, but only just.
+ *
+ * This was tried once before and reverted on a measurement that turned out to be wrong: the old
+ * `_wiggle` probe sampled node pairs by id, so adding or removing nodes silently changed the test
+ * set, and it counted `longest_ab` options as detours by construction. It reported arms taking
+ * Sella from 9.3% to 17.1% local detours. Re-measured with the corrected probe, a 1.25x charge
+ * *improves* every metric on every resort tested — Sella 36.2% -> 34.3% detours (mean 453 m ->
+ * 384 m) while plumbing use drops 0.62% -> 0.42% of route metres; Val Thorens 2.19% -> 1.52%
+ * plumbing with detours flat (23.3% -> 23.0%); Soelden 1.33% -> 0.74% with detours 19.8% -> 16.0%.
+ *
+ * Kept at 1.25 rather than higher because an arm is often the only link through a rim portal, and
+ * above ~1.5 the router starts going the long way round instead (Val Thorens detours rise to 26.7%
+ * at 1.5 and 28.9% at 2). This is enough to lose a tie against the real line beside it, which is
+ * all we want: the spine should win whenever it is genuinely an option.
+ */
+const ARM_PENALTY = 1.25;
+
+function plumbingPenalty(edge: GraphEdge): number {
+  if (edge.spineDuplicate) return SPINE_DUPLICATE_PENALTY;
+  if (edge.skeletonArm) return ARM_PENALTY;
+  return 1;
+}
 
 /**
  * Lexicographic penalty used only to *generate* a "preferred" candidate: it dwarfs any realistic
@@ -73,8 +114,14 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
       return { allowed: false, seconds: 0, distanceM, descentM, ascentM, weight: Infinity, warnings };
     }
     const { speed, usedDefault } = skiSpeedFor(edge.color, prefs);
-    const seconds = distanceM / speed;
+    // Climbing costs the same on a piste as anywhere else. This used to be charged only on
+    // connectors, which let a *rising* piste act as a free lift: arriving 9 m from Deux Lacs
+    // (Val Thorens) the direct 9.5 m link climbs 1.1 m and so paid 13 s, while a 45 m dogleg that
+    // climbed the same 1.1 m on a piste paid nothing — 18.6 s against 11.1 s, so the route took
+    // the dogleg and drew a hairpin on the map right at the destination.
+    const seconds = distanceM / speed + ascentM * CLIMB_SECONDS_PER_M;
     let weight = seconds;
+    weight *= plumbingPenalty(edge);
     if (edge.color && edge.color !== 'unknown' && !prefs.preferredColors.includes(edge.color)) {
       // Route *selection* handles colour preference lexicographically (see ranking.ts); here we
       // only add the strong term for the `preferred` objective so its candidate search actually
@@ -119,7 +166,12 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
     if (waitCfg == null) {
       warnings.push({ code: 'using_default_wait', message: `Using a default wait time for ${edge.liftName ?? 'this lift'}.` });
     }
-    const seconds = distanceM / speed + wait;
+    // Prefer the operator's published ride time (OSM `aerialway:duration`) over our per-type speed
+    // estimate: it is a measured fact and already includes the terminal acceleration/deceleration
+    // that a flat line-speed misses. 86% of the chairs and gondolas in our resorts carry it, so the
+    // per-type speeds below are really only a fallback for the remaining ~14%.
+    const rideSeconds = edge.rideSeconds && edge.rideSeconds > 0 ? edge.rideSeconds : distanceM / speed;
+    const seconds = rideSeconds + wait;
     // Prefer-skiing: make riding a lift downhill a last resort, and nudge away from
     // unnecessary up-lifts, so a ski-only route wins whenever one exists.
     let weight = seconds;
@@ -132,14 +184,28 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
   }
 
   // connector
-  const penalty = edge.synthetic && !edge.custom ? SYNTHETIC_PENALTY : 1;
+  const penalty =
+    (edge.synthetic && !edge.custom ? SYNTHETIC_PENALTY : 1) * plumbingPenalty(edge);
   const skiMult = paceMultiplier(prefs.skillLevel);
   const climbSeconds = ascentM * CLIMB_SECONDS_PER_M;
-  if (edge.connectorKind === 'flat_traverse') {
-    const seconds = distanceM / (prefs.speeds.flatTraverseSpeed * skiMult) + climbSeconds;
-    return { allowed: true, seconds, distanceM, descentM, ascentM, weight: seconds * penalty, warnings };
-  }
-  // skiable_down connector: treat like an unknown-color short run.
-  const seconds = distanceM / (prefs.speeds.fallbackSkiSpeed * skiMult) + climbSeconds;
+  // Price a connector by the gradient it actually has, not by the label it was given.
+  //
+  // The pipeline picks `connectorKind` from *direction* alone (`oneWayDown ? 'skiable_down' :
+  // 'flat_traverse'`), so any segment it keeps bidirectional is tagged a flat traverse however
+  // steep it is. Flat-traverse pace is 1.875 m/s against 8.75 for skiing, so a mislabel makes a
+  // stretch ~4.7x more expensive — and it lands hardest on exactly the lines we most want routes
+  // to follow. Val Thorens' Combe de Thorens spine has a 12.3 m segment dropping 2.0 m (16%)
+  // tagged flat: at 6.54 s it lost to a 14.7 m detour onto the parallel polygon copy at 4.71 s,
+  // which is the "why won't it stay on the spine" weave.
+  //
+  // Anything descending at or beyond `flatGradeMax` — the pipeline's own definition of "too steep
+  // to be flat" — is therefore costed as skiing. Direction semantics are untouched: a bidirectional
+  // link stays bidirectional, and going up it still pays `climbSeconds`.
+  const grade = distanceM > 0 ? -edge.dropM / distanceM : 0; // > 0 descending
+  const skiable = edge.connectorKind === 'skiable_down' || grade >= DEFAULT_GRAPH_CONSTANTS.flatGradeMax;
+  const pace = skiable ? prefs.speeds.fallbackSkiSpeed : prefs.speeds.flatTraverseSpeed;
+  const seconds = distanceM / (pace * skiMult) + climbSeconds;
   return { allowed: true, seconds, distanceM, descentM, ascentM, weight: seconds * penalty, warnings };
 }
+
+

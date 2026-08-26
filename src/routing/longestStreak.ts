@@ -110,6 +110,18 @@ function makeDescentScorer(index: GraphIndex): (e: GraphEdge) => number {
     // (no bridge padding) — but a run that must cross one to reach real terrain is still viable.
     // The user's own custom links are exempt: those are deliberately drawn, i.e. real terrain.
     if (e.synthetic && !e.custom) s -= e.lengthM;
+    // Same deal for a synthesised polygon arm. An arm is invented plumbing joining a rim portal to
+    // the polygon's spine, not a run anyone chooses to ski, but it is emitted as ordinary piste and
+    // typically descends steeply enough to earn full credit. That let the search weave
+    // spine -> arm -> neighbouring arm -> spine, banking ~70-100 m of invented distance a lap
+    // (Val Thorens' Combe de Thorens polygon, whose 68 arms total 2.4 km). Charging an arm its own
+    // length keeps it usable for reaching real terrain while making it worthless as padding.
+    if (e.skeletonArm) s -= e.lengthM;
+    // And for a polygon line that only retraces the centreline its own polygon already adopted.
+    // Two copies of one run, cross-linked by arms, form a ladder the search climbs sideways to bank
+    // the same terrain twice. Charging the copy its own length leaves the real named run underneath
+    // it as the only way to earn those metres.
+    if (e.spineDuplicate) s -= e.lengthM;
     return s;
   };
 }
@@ -770,6 +782,52 @@ function descentPath(
 }
 
 /**
+ * Straighten plumbing doglegs the diversity penalty introduces.
+ *
+ * This is the descent-search twin of `smoothDetours` in alternatives.ts, and it exists for the
+ * same reason: penalising an accepted run's edges pushes the next search off terrain that may have
+ * been the sensible line, and the search then buys its way around it.
+ *
+ * What makes it acute here is that the penalty only ever touches edges a previous run *used*.
+ * Polygon arms and spine duplicates are scored at ~0 by `makeDescentScorer`, so no run picks them
+ * and they are never penalised — while the real line beside them is marked down by 0.55 each time.
+ * After two runs the real spine is at 0.30 of its score and the untouched plumbing finally wins,
+ * which is how Val Thorens' Deux Lacs descent ended up weaving spine → arm → arm → spine over its
+ * last 130 m (n1485: arm totalled 198.8 against the spine's 187.0, purely from the penalty).
+ *
+ * So for each maximal run of consecutive plumbing edges we re-solve just that stretch with an
+ * *unpenalised* search and splice the result in when it scores better. Restricting the windows to
+ * plumbing keeps this to a couple of extra searches per run, and every edge descends, so a spliced
+ * sub-path can never collide with the rest of the chain.
+ */
+function smoothPlumbing(index: GraphIndex, chain: GraphEdge[], maxColorRank: number): GraphEdge[] {
+  const isPlumbing = (e: GraphEdge) => !!(e.skeletonArm || e.spineDuplicate);
+  if (!chain.some(isPlumbing)) return chain;
+
+  const scoreOf = makeDescentScorer(index);
+  const total = (es: GraphEdge[]) => es.reduce((s, e) => s + scoreOf(e), 0);
+
+  const out = [...chain];
+  // Right-to-left so a splice never shifts an index we have not visited yet.
+  let end = out.length;
+  while (end > 0) {
+    if (!isPlumbing(out[end - 1])) {
+      end--;
+      continue;
+    }
+    let start = end - 1;
+    while (start > 0 && isPlumbing(out[start - 1])) start--;
+
+    const seg = out.slice(start, end);
+    const alt = descentPath(index, seg[0].from, seg[seg.length - 1].to, maxColorRank, undefined, false);
+    if (alt.length && total(alt) > total(seg) + 1e-6) out.splice(start, seg.length, ...alt);
+
+    end = start;
+  }
+  return out;
+}
+
+/**
  * Up to `k` diverse longest lift-free Aâ†’B descents. After each found run, its edges are
  * penalised so the next longest search is pushed onto different terrain; runs overlapping an
  * accepted one by more than `maxOverlap` (by distance) are rejected. Returns [] if B isn't
@@ -788,8 +846,12 @@ export function longestDownhillPaths(
   const maxAttempts = k * 4;
 
   for (let attempt = 0; attempt < maxAttempts && accepted.length < k; attempt++) {
-    const chain = longestDownhillPath(index, fromId, toId, maxColorRank, penalties);
-    if (chain.length === 0) break;
+    const found = longestDownhillPath(index, fromId, toId, maxColorRank, penalties);
+    if (found.length === 0) break;
+
+    // Keep the straightened run, but penalise what the search actually walked — penalties exist to
+    // push the *next* search onto new terrain, and the dogleg is terrain it should not retry.
+    const chain = smoothPlumbing(index, found, maxColorRank);
 
     const isDup = accepted.some(
       (r) => r.length === chain.length && r.every((e, i) => e.id === chain[i].id),
@@ -806,7 +868,7 @@ export function longestDownhillPaths(
     // Shrink this run's edges so the next search diverges — but only partly, so a variant that
     // shares a common top trunk then splits off (e.g. a different bottom via another piste) can
     // still reuse the trunk and surface instead of being forced onto unrelated terrain.
-    for (const e of chain) penalties.set(e.id, (penalties.get(e.id) ?? 1) * 0.55);
+    for (const e of found) penalties.set(e.id, (penalties.get(e.id) ?? 1) * 0.55);
   }
   return accepted;
 }

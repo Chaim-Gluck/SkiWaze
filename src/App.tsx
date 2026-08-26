@@ -197,6 +197,8 @@ export default function App() {
   const [popup, setPopup] = useState<string | PopupNotice | null>(null);
   const [status, setStatus] = useState<string>('Loading resorts…');
   const [focusGeometry, setFocusGeometry] = useState<[number, number][] | null>(null);
+  const [fitRequest, setFitRequest] = useState<{ coords: [number, number][]; seq: number } | null>(null);
+  const fitSeq = useRef(0);
   const [longestRuns, setLongestRuns] = useState<(LongestRun & { startName: string; endName: string })[] | null>(null);
   const [longestIdx, setLongestIdx] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -680,6 +682,20 @@ export default function App() {
     if (result.error) {
       setPopup(result.error);
       return;
+    }
+    // Frame the route we're about to show, the way the longest-run finder does. Without this the
+    // camera stays wherever the user last left it, which after picking A and B is often nowhere
+    // near the route.
+    const first = result.routes[0];
+    if (first) {
+      const coords = first.legs.flatMap((l) => {
+        const edge = edgeMap.get(l.edgeId);
+        return edge ? edge.geometry.map((p) => [p.lon, p.lat] as [number, number]) : [];
+      });
+      if (coords.length >= 2) {
+        fitSeq.current += 1;
+        setFitRequest({ coords, seq: fitSeq.current });
+      }
     }
     const codes = new Set(result.routes.flatMap((r) => r.warnings.map((w) => w.code)));
     const notes: string[] = [];
@@ -1362,6 +1378,7 @@ export default function App() {
             linkFrom={linkEndPos(linkFrom)}
             linkTo={linkEndPos(linkTo)}
             focusGeometry={focusGeometry}
+            fitRequest={fitRequest}
             onMapClick={handleMapClick}
             userPosition={userPos}
             following={following}

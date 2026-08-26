@@ -43,6 +43,14 @@ interface RouteMetrics {
    * Connectors are deliberately excluded. They are app-inferred gap-fills, not runs, so counting
    * them made a chain of bridges look like extra skiing and let a long twisty connector route
    * outrank a short direct one on the "Skiing" key — which sits above Time in the base order.
+   *
+   * `plumbing` legs are excluded for exactly the same reason, one level deeper: polygon skeleton
+   * arms and spine duplicates are app-invented too, but they are *emitted as piste*, so they slip
+   * past the connector test. That let the Longest search's own judgement be undone at the last
+   * step — its DAG scores an arm at ~0 (see makeDescentScorer) and duly returned the clean spine
+   * line, but this comparator then re-ranked its three candidates on raw piste metres and picked
+   * the one that zig-zagged spine → arm → arm → spine to bank the invented distance
+   * (Val Thorens, Deux Lacs top → bottom: 3393 m of weave beat a 3332 m clean run).
    */
   skiM: number;
   /** Total ground covered, lifts included — exact final tie-break only. */
@@ -55,7 +63,7 @@ function metricsOf(route: Route, prefs: Preferences): RouteMetrics {
     if (color !== 'unknown' && !prefs.preferredColors.includes(color as PisteColor)) offPrefM += m ?? 0;
   }
   let skiM = 0;
-  for (const leg of route.legs) if (leg.kind === 'piste') skiM += leg.distanceM;
+  for (const leg of route.legs) if (leg.kind === 'piste' && !leg.plumbing) skiM += leg.distanceM;
   return {
     timeS: route.stats.totalDurationS,
     lifts: route.stats.liftCount,

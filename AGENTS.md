@@ -144,6 +144,29 @@ and apply identically to **every** resort — there is no per-resort graph code.
   defect, never emitted as geometry. User review of the six largest found the rims are genuinely
   under-drawn in OSM; the right fix is upstream, and widening a ring in the pipeline is rejected
   because the ring is our only evidence of where terrain is actually skiable.
+- **App-invented plumbing (arms, spine duplicates, synthetic links) is a last resort, not a shortcut.**
+  Skeleton **arms** and **spine duplicates** exist for connectivity — an arm is often the only way
+  through a rim portal — but they are not real pistes and routes should not prefer them. Three
+  separate mechanisms had to be fixed before routes stopped weaving onto them, and each failed in a
+  different layer, so check all three when plumbing reappears in a route:
+  1. **Cost** — `ARM_PENALTY` (1.25) and `SPINE_DUPLICATE_PENALTY` (1.5) in `cost.ts`.
+  2. **Ranking** — `ranking.ts` excludes `leg.plumbing` from `skiM`, otherwise invented links count
+     as "skiing" and win the skiing objective outright.
+  3. **The longest-descent search** — see the diversity-penalty asymmetry below.
+- **A diversity penalty punishes only what was chosen, so it can hand victory to what never was.**
+  `longestDownhillPaths` multiplies each *used* edge by 0.55 per accepted variant. Plumbing scores
+  ~0 in `makeDescentScorer`, so it is never chosen and therefore **never penalised**, while the real
+  line beside it decays 1 → 0.55 → 0.30; by the third variant the invented link wins. No per-edge
+  score change can fix this, because the *penalty* is deciding, not the score. The fix is
+  `smoothPlumbing()` — for each maximal run of consecutive plumbing edges, re-solve that stretch
+  **unpenalised** and splice it in when it scores better. Penalise what the search found, keep the
+  smoothed result. This mirrors `smoothDetours` in `alternatives.ts`, which solves the identical
+  pathology for the alternatives search; if you add a third penalised search, it needs the same pass.
+- **Coincident lines are welded, and near-duplicate spines are marked.** Two passes run in
+  `build.ts`: `weldCoincident.ts` merges lines that occupy the same ground, and
+  `spineDuplicates.ts` flags an edge that merely parallels an adopted spine (`spineDuplicate`), so
+  cost can prefer the real centreline. Neither deletes terrain — both only relabel — because a
+  parallel line is sometimes a genuinely separate run.
 - **Longest-run finder** rewards **straight-line descent progress** and **penalizes internal
   uphill** — winding pistes that descend then climb back are what cause visible "doubling-back",
   so they must not be over-rewarded by raw skied length. Genuinely curving-but-descending
@@ -206,12 +229,49 @@ npm run probe:plan <id> [pairs]  # routing quality: option 1's distance vs the s
                              #   path (never straight-line — one-way pistes make a 40 m gap
                              #   legitimately cost kilometres), plus mean option count and connector
                              #   share. Run before and after a ranking change and diff.
+npm run probe:wiggle <id>    # how often option 1 detours off a spine onto a parallel duplicate, and
+                             #   by how far. Report the RATE, MEAN and WORST together — a pass that
+                             #   turns one 1246 m detour into several 50 m ones raises the rate while
+                             #   plainly improving the map. (See the two traps in its header comment.)
+npm run probe:legturns <id> <from> <to> [option]  # per-leg dump of one route: edge, kind, way id,
+                             #   coords and the turn angle at each boundary (`<<<` at >=75deg). THE
+                             #   diagnostic for "why is this route zigzagging".
+npm run probe:hood <id> <latMin> <latMax> <lonMin> <lonMax>  # every node and edge in a bbox with
+                             #   direction, way and flags — use it to check whether a line the router
+                             #   skipped is actually traversable before blaming the router.
+npm run probe:longsum <id>   # the three resort-wide "Longest runs" figures, as a regression guard.
+npm run probe:plumb <id>     # how much app-invented plumbing ends up inside longest-descent options.
+npm run probe:armsweep <id>  # sweeps ARM_PENALTY, reporting plumbing share AND detour rate together
+                             #   (a penalty that cuts plumbing but sends routes the long way is a
+                             #   loss, and only the pair of numbers shows that).
+npm run probe:liftspeed      # re-derives the per-type lift speed table from OSM `aerialway:duration`
+                             #   across the cached resorts. Run it after adding resorts, and sanity-
+                             #   check DEFAULT_SPEEDS.liftSpeedByType against the medians.
+npm run probe:liftmix        # lift counts by type per resort — a quick read on how much any per-type
+                             #   constant actually matters (cable cars are 3.6% of the fleet).
 ```
+
+> **Validate the probe before you believe the probe.** Four separate wrong conclusions in this repo
+> came from a broken measurement, not broken code: geometry points are `{lon,lat,ele}` **objects**,
+> so a probe doing `p[0]-q[0]` gets `NaN` and cheerfully reports "0 problems"; sampling node pairs in
+> **id order** silently changes the test set whenever a pass adds or removes nodes, manufacturing a
+> phantom regression; and pricing every option with the `fastest` cost makes a `longest_ab` option a
+> "detour" by construction. When a probe result is surprising, instrument the **real** code path.
 
 > Debug map tool: `public/devtools/mapdebug.html` (served at `/devtools/mapdebug.html` by the dev
 > server). Resort + investigation-overlay dropdowns, OpenTopoMap/OSM/satellite base, area fills,
 > flow-direction arrows (double-headed ⟺ = bidirectional), piste-name labels, and a node finder —
-> the main way to eyeball routing/elevation questions.
+> the main way to eyeball routing/elevation questions. It also has a **review list** (dropdown +
+> prev/next) driven by `public/devtools/overlays/review-list.json`: a **hand-written**, committed
+> file that nothing generates, so it must be kept in git or the reviewer silently disappears (the
+> box only renders when that file loads non-empty). Replace its contents for a new review round,
+> but keep one entry as a schema example.
+>
+> **`check:areaskel` and `check:areaclass` are retired.** They re-derive polygons straight from OSM
+> via `buildResortGraph` and so never see `build.ts`'s synthesis passes — today they classify every
+> polygon class `D` and produce nothing. `check:spines` is the live gate. `_areaskel.ts` now refuses
+> to write an empty overlay, because running it once silently truncated the committed 10.6 MB
+> `area-skeletons.json` and took the spine overlay off the debug map.
 > If your machine needs a private npm registry, put it in a **git-ignored `.npmrc`**.
 > External contributors just use public npm; the CI build resolves from public npm.
 
@@ -320,6 +380,42 @@ npm run probe:plan <id> [pairs]  # routing quality: option 1's distance vs the s
   routing uses **progress speed** (down the centerline), the UI shows **true move speed**
   (`progress × snakeFactor`), and measured GPS speeds are true speeds divided back to progress. Base
   per-colour speeds are derived (never persisted) so stale localStorage can't override them.
+- **A lift's ride time comes from OSM when OSM knows it.** `aerialway:duration` is a published fact
+  that already includes terminal acceleration/deceleration, and **60% of our lifts carry it**, so
+  the pipeline emits it as `GraphEdge.rideSeconds` and `cost.ts` prefers it over length÷speed. Only
+  the *tagged* value is ever emitted — never a derived one, because baking our own estimate into
+  `graph.json` would freeze it and silently override the speed settings. Our estimates were worth
+  replacing: real÷estimated ride time ran median 0.82×, p10 0.50×, p90 2.16×.
+- **Per-type lift speeds are measured, not guessed; per-type waits are the opposite.** The speeds in
+  `DEFAULT_SPEEDS.liftSpeedByType` are medians derived from those duration tags — re-derive them any
+  time with `npm run probe:liftspeed`. Chairs were long set to 2.5 m/s, which is the **fixed-grip**
+  speed applied to every chair and 73% too slow for a fleet that is mostly detachable; the
+  distribution is bimodal and `aerialway:detachable` cannot split it (only 11% carry the tag). The
+  **queue waits** have no data behind them at all — they are deliberately *typical, not peak*,
+  because guessing high would make every route pessimistic all day. Peak queues are a live-status
+  problem, not a constants problem.
+- **Lift speeds and waits are constants, not preferences — so they must be re-derived on load.**
+  Nothing in the UI edits them, but `loadPreferences` spreads `speeds` shallowly, so a stored copy
+  would replace the whole map and pin a returning user to the defaults from their first visit. Both
+  maps are therefore force-reset in `state/preferences.ts`. Any future app-constant added under
+  `speeds` needs the same treatment.
+  `buildGraph.ts` assigns `connectorKind` by *direction* alone (`oneWayDown ? 'skiable_down' :
+  'flat_traverse'`), so every bidirectional link is tagged a flat traverse however steep it is —
+  and flat pace (1.875 m/s) against skiing pace (8.75 m/s) means a mislabel costs **4.7×**. That
+  single mislabel was the main reason routes refused to stay on the polygon spines: a 12.3 m Val
+  Thorens spine segment dropping 2.0 m (**16%**) cost 6.54 s and lost to a 14.7 m sidestep onto the
+  parallel polygon copy at 4.71 s. `cost.ts` therefore treats a connector as skiing when
+  `connectorKind === 'skiable_down'` **or** its measured grade reaches `flatGradeMax`. Direction
+  semantics are untouched — a bidirectional link stays bidirectional, and going up it still pays
+  `CLIMB_SECONDS_PER_M`.
+- **Climbing costs the same on a piste as on a connector.** The climb charge used to apply only to
+  connectors, so a route could gain height along a piste for free and a hairpin (up a piste, back
+  down) beat the direct link into a destination. Both branches now charge `ascentM *
+  CLIMB_SECONDS_PER_M`. Any new edge kind must charge it too.
+- **The fix for a bad route is usually in the cost model, not in a new preference.** Both defects
+  above looked like "the router prefers the wrong line" and were really one bug: a discrete label
+  standing in for a physical quantity. Measure the competing options' actual seconds before adding a
+  penalty or a toggle.
 
 ## UI / styling (see docs/STYLE_GUIDE.md)
 - **UI = Material UI (MUI) + a shared light/dark theme.** Source of truth: `src/theme.tsx`

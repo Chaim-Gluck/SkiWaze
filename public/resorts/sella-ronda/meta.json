@@ -17,17 +17,17 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-08-25T21:22:52.135Z",
+  "generatedAt": "2026-08-26T13:33:01.793Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1759,
-    "edgeCount": 4794,
-    "pisteEdges": 1604,
+    "nodeCount": 1652,
+    "edgeCount": 4643,
+    "pisteEdges": 1501,
     "liftEdges": 218,
-    "connectorEdges": 2972,
+    "connectorEdges": 2924,
     "meaningfulPoints": 620,
-    "reachableFromLifts": 1723,
-    "unreachableNodes": 36,
+    "reachableFromLifts": 1620,
+    "unreachableNodes": 32,
     "warningsByCode": {
       "suspicious_merge": 2,
       "missing_opening_hours": 175,
@@ -780,7 +780,7 @@
     },
     {
       "code": "unreachable_component",
-      "message": "36 node(s) unreachable from the main lift network.",
+      "message": "32 node(s) unreachable from the main lift network.",
       "refs": [
         "n608511303",
         "n1584897499",

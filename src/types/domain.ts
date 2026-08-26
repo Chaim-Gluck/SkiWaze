@@ -93,6 +93,31 @@ export interface GraphEdge {
    * reaches the app.
    */
   armPortal?: string;
+  /**
+   * True for a synthesised polygon **arm**: an invented stub carrying a rim portal in to the
+   * polygon's spine. An arm is plumbing, not terrain — it exists so a skier can enter or leave the
+   * polygon at that portal, and nobody chooses to ski one. It stays fully routable (arms are
+   * load-bearing for connectivity, which is why they are deliberately *not* flagged `synthetic` —
+   * that flag is wired to "avoid app-added bridges" and would let a user disconnect a polygon), but
+   * the longest-run scorer pays it no distance credit. Without that, the longest search weaves
+   * spine → arm → neighbouring arm → spine to bank invented metres.
+   */
+  skeletonArm?: boolean;
+
+  /**
+   * True for polygon-derived geometry that merely **retraces the spine the same polygon already
+   * adopted**. A class A/B′ polygon reuses a real OSM centreline as its spine, but still emits its
+   * own skeleton lines, and those frequently land within a few metres of — sometimes exactly on —
+   * that adopted centreline. The result is two parallel copies of one run, cross-linked by short
+   * arms, and the router hops between them: measured on Val Thorens `w22868803` (a novice polygon
+   * whose spine is Combe de Thorens `w99075767`), whose last 500 m alternated between the two
+   * copies five times with 80–95° turns and 2–9 m fragments.
+   *
+   * These stay routable — a duplicate can still be the only thing carrying a portal — but routing
+   * charges them a multiplier so the real adopted centreline wins, and the longest-run scorer pays
+   * them no distance credit, exactly like an arm.
+   */
+  spineDuplicate?: boolean;
 
   // Lift-only
   liftType?: LiftType;
@@ -101,6 +126,12 @@ export interface GraphEdge {
   isDownload?: boolean;
   /** Raw OSM opening_hours string when present. */
   openingHours?: string;
+  /**
+   * Published ride time in seconds, from OSM `aerialway:duration`. Present ONLY when the tag
+   * exists — never a value we derived — so the router can tell a measured fact from its own
+   * estimate and fall back to length/speed when it's absent.
+   */
+  rideSeconds?: number;
 
   // Connector-only
   connectorKind?: ConnectorKind;
@@ -263,6 +294,12 @@ export interface RouteLeg {
   isDownload?: boolean;
   synthetic?: boolean;
   custom?: boolean;
+  /**
+   * App-invented plumbing emitted as ordinary piste: a polygon skeleton arm, or a polygon line
+   * that only retraces the centreline its own polygon adopted as a spine. Not terrain anyone
+   * chooses to ski, so it must not count as "skiing" when ranking routes (see ranking.ts).
+   */
+  plumbing?: boolean;
   warnings: RouteWarning[];
 }
 

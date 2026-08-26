@@ -24,7 +24,16 @@
     "probe:spineparts": "tsx pipeline/_spineparts.ts",
     "probe:trappeddiff": "tsx pipeline/_trappeddiff.ts",
     "probe:reach": "tsx pipeline/_reachprobe.ts",
-    "probe:plan": "tsx pipeline/_planprobe.ts"
+    "probe:plan": "tsx pipeline/_planprobe.ts",
+    "probe:wiggle": "tsx pipeline/_wiggle.ts",
+    "probe:legturns": "tsx pipeline/_legturns.ts",
+    "probe:hood": "tsx pipeline/_hood.ts",
+    "probe:longsum": "tsx pipeline/_longsum.ts",
+    "probe:plumb": "tsx pipeline/_plumb.ts",
+    "probe:armsweep": "tsx pipeline/_armsweep.ts",
+    "probe:planpair": "tsx pipeline/_planpair.ts",
+    "probe:liftspeed": "tsx pipeline/_liftspeed.ts",
+    "probe:liftmix": "tsx pipeline/_liftmix.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

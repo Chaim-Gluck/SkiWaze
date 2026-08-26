@@ -17,16 +17,16 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.stantonamarlberg.com/en/"
   },
-  "generatedAt": "2026-08-25T21:24:40.592Z",
+  "generatedAt": "2026-08-26T13:34:24.577Z",
   "stats": {
     "resortId": "st-anton-arlberg",
-    "nodeCount": 811,
-    "edgeCount": 2062,
-    "pisteEdges": 849,
+    "nodeCount": 765,
+    "edgeCount": 2003,
+    "pisteEdges": 804,
     "liftEdges": 110,
-    "connectorEdges": 1103,
+    "connectorEdges": 1089,
     "meaningfulPoints": 379,
-    "reachableFromLifts": 806,
+    "reachableFromLifts": 760,
     "unreachableNodes": 5,
     "warningsByCode": {
       "suspicious_merge": 1,

@@ -1,11 +1,11 @@
 [
   {
-    "id": "tignes-val-disere",
-    "name": "Tignes – Val d'Isère (Espace Killy)",
-    "country": "France",
+    "id": "mayrhofen",
+    "name": "Mayrhofen",
+    "country": "Austria",
     "center": {
-      "lon": 6.93,
-      "lat": 45.46
+      "lon": 11.81,
+      "lat": 47.16
     }
   },
   {
@@ -45,6 +45,15 @@
     }
   },
   {
+    "id": "tignes-val-disere",
+    "name": "Tignes – Val d'Isère (Espace Killy)",
+    "country": "France",
+    "center": {
+      "lon": 6.93,
+      "lat": 45.46
+    }
+  },
+  {
     "id": "st-anton-arlberg",
     "name": "St. Anton am Arlberg",
     "country": "Austria",
@@ -69,15 +78,6 @@
     "center": {
       "lon": 44.49,
       "lat": 42.485
-    }
-  },
-  {
-    "id": "mayrhofen",
-    "name": "Mayrhofen",
-    "country": "Austria",
-    "center": {
-      "lon": 11.81,
-      "lat": 47.16
     }
   },
   {

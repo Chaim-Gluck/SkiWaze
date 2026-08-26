@@ -286,6 +286,13 @@ interface MapViewProps {
   linkFrom: LonLat | null;
   linkTo: LonLat | null;
   focusGeometry: [number, number][] | null;
+  /**
+   * One-shot "frame this geometry" request. Unlike `focusGeometry` this only moves the camera —
+   * it draws nothing and hides no markers — so a planned route can be framed while its own line
+   * and the A/B pins stay as they are. `seq` makes each request distinct, so asking to frame the
+   * same route twice (e.g. hitting Find route again) still re-fits after the user has panned away.
+   */
+  fitRequest: { coords: [number, number][]; seq: number } | null;
   onMapClick?: (p: LonLat) => void;
   userPosition: LivePosition | null;
   following: boolean;
@@ -297,7 +304,7 @@ interface MapViewProps {
 }
 
 export function MapView({
-  center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, onMapClick,
+  center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, fitRequest, onMapClick,
   userPosition, following, nav, navHeadingUp, resorts, selectedResortId, onSelectResort,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -753,6 +760,19 @@ export function MapView({
     for (const c of focusGeometry) b.extend(c);
     map.fitBounds(b, { padding: 140, maxZoom: 16.5, duration: 700 });
   }, [focusGeometry, loaded]);
+
+  // Frame a route without drawing anything (see `fitRequest`). On desktop the sidebar is a flex
+  // sibling so the map is never underneath it and even padding is right; on mobile the bottom nav
+  // and the route preview card overlay the map, so leave extra room at the bottom.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded || !fitRequest || fitRequest.coords.length < 2) return;
+    const b = new maplibregl.LngLatBounds(fitRequest.coords[0], fitRequest.coords[0]);
+    for (const c of fitRequest.coords) b.extend(c);
+    const mobile = typeof window !== 'undefined' && window.innerWidth <= 820;
+    const padding = mobile ? { top: 72, bottom: 200, left: 32, right: 32 } : 90;
+    map.fitBounds(b, { padding, maxZoom: 16.5, duration: 700 });
+  }, [fitRequest, loaded]);
 
   useEffect(() => {
     mapRef.current?.easeTo({ center: [center.lon, center.lat], zoom });
