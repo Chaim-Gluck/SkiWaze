@@ -192,7 +192,7 @@ npm run check:resort <id> [--skip-elevation]  # THE acceptance gate for a resort
                              #   Each reader parses a specific summary line and FAILs if absent —
                              #   keep it that way, a regex that silently matches nothing reports a
                              #   false 'ok' (this bit us twice while building it).
-npm run check:trapped <id>   # nodes that can't reach a lift / are isolated
+npm run check:trapped <id>   # nodes that can't reach a lift / are isolated / one-way pockets
 npm run check:audit <id>     # false-elevation reversals + non-skiable long connections
 npm run check:graphdiff <id|all>  # structural diff of the built graph vs the committed one:
                              #   matches nodes by position and compares edges as a multiset, so a
@@ -352,6 +352,16 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 - **Islands / one-way sub-areas**: find via strongly-connected-component analysis, not just
   dead-end leaf checks; fix with `overrides/<id>.json` connectors. Some islands are legitimate
   (e.g. only reachable by a ski bus) and should be left disconnected.
+- **One-way pockets** (`check:trapped`, added while onboarding Monterosa): a group you can ski
+  *into*, that has a lift inside it, and that you still cannot leave — riding the lift only
+  returns you to the same pocket. `trapped` misses these entirely, because the skier *can* reach
+  a lift; it just doesn't get them anywhere. The symptom is spectacular and easy to misread:
+  Monterosa routed **1 of 72** bottoms because OSM placed the Punta Indren cable-car station
+  ~280 m from the rest of the Passo dei Salati hub, so the summit could only ever reach its own
+  base station. One `flat_traverse` connector took it to 56/72. A resort's own main body is
+  absorbing too (nothing leaves a resort), so pockets holding ≥25% of the nodes are excluded as
+  the expected drain — do **not** re-implement this as "ignore the largest pocket", which
+  silently swallowed a real satellite area when it happened to be the biggest.
 - The OSM cache is keyed by **resort id, not bbox** — after changing a bbox you must
   `data:refresh` to actually re-fetch.
 - **False-elevation reversals** (arrows/ski-direction wrong): a mis-sampled DEM elevation at a

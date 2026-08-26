@@ -136,6 +136,19 @@ export const RESORTS: Resort[] = [
     timezone: 'Europe/Paris',
     infoUrl: 'https://www.les2alpes.com/en/',
   },
+  {
+    id: 'monterosa-ski',
+    name: 'Monterosa Ski',
+    country: 'Italy',
+    // Three lift-linked valleys: Champoluc (Ayas) in the west, Gressoney-La-Trinite in the
+    // middle, Alagna Valsesia in the east. The bbox stops short of Gressoney-Saint-Jean
+    // (Weissmatten) and Antagnod, which are separate areas with no lift link.
+    center: { lon: 7.83, lat: 45.845 },
+    bbox: { minLon: 7.68, minLat: 45.79, maxLon: 7.98, maxLat: 45.9 },
+    defaultZoom: 12,
+    timezone: 'Europe/Rome',
+    infoUrl: 'https://www.visitmonterosa.com/en/',
+  },
 ];
 
 /** Fallback resort when geolocation is unavailable. */

@@ -1,0 +1,12 @@
+{
+  "_comment": "Monterosa Ski (Champoluc / Gressoney-La-Trinite / Alagna).",
+  "_comment2": "Passo dei Salati is one place on the ground, but OSM puts the Punta Indren cable-car station ~280 m from the rest of the hub, so the compiled graph had a two-node pocket you could ski into and never leave: the only way out of the cable-car base was riding back up to Indren. Found by the 'one-way pockets' check in `npm run check:trapped`. Linked both ways as a flat traverse, which is what it is in reality - you cross the station terrace on foot/skis.",
+  "addConnectors": [
+    {
+      "from": "n825310936",
+      "to": "n372779270",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    }
+  ]
+}
