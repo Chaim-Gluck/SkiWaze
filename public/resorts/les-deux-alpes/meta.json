@@ -17,16 +17,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.les2alpes.com/en/"
   },
-  "generatedAt": "2026-08-27T12:21:16.364Z",
+  "generatedAt": "2026-08-27T17:52:40.746Z",
   "stats": {
     "resortId": "les-deux-alpes",
-    "nodeCount": 519,
-    "edgeCount": 1382,
-    "pisteEdges": 544,
+    "nodeCount": 500,
+    "edgeCount": 1333,
+    "pisteEdges": 523,
     "liftEdges": 67,
-    "connectorEdges": 771,
+    "connectorEdges": 743,
     "meaningfulPoints": 212,
-    "reachableFromLifts": 519,
+    "reachableFromLifts": 500,
     "unreachableNodes": 0,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -257,19 +257,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 74 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 73 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 194 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 183 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 187 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 183 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 28 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 23 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

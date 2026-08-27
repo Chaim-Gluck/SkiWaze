@@ -8,30 +8,44 @@
       "lat": 46.518
     },
     "bbox": {
-      "minLon": 11.68,
+      "minLon": 11.55,
       "minLat": 46.42,
-      "maxLon": 11.94,
-      "maxLat": 46.58
+      "maxLon": 11.955,
+      "maxLat": 46.615
     },
+    "excludeBboxes": [
+      {
+        "minLon": 11.55,
+        "minLat": 46.38,
+        "maxLon": 11.63,
+        "maxLat": 46.47
+      },
+      {
+        "minLon": 11.55,
+        "minLat": 46.555,
+        "maxLon": 11.585,
+        "maxLat": 46.575
+      }
+    ],
     "defaultZoom": 12,
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-08-27T12:19:17.063Z",
+  "generatedAt": "2026-08-27T19:39:11.655Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1647,
-    "edgeCount": 4652,
-    "pisteEdges": 1481,
-    "liftEdges": 275,
-    "connectorEdges": 2896,
-    "meaningfulPoints": 611,
-    "reachableFromLifts": 1607,
-    "unreachableNodes": 40,
+    "nodeCount": 1936,
+    "edgeCount": 5440,
+    "pisteEdges": 1739,
+    "liftEdges": 382,
+    "connectorEdges": 3319,
+    "meaningfulPoints": 823,
+    "reachableFromLifts": 1904,
+    "unreachableNodes": 32,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 2,
-      "missing_opening_hours": 184,
+      "missing_opening_hours": 255,
       "inferred_connector": 7,
       "unreachable_component": 1
     }
@@ -39,7 +53,7 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 70 duplicate OSM node(s) at 67 spot(s) where ways meet but do not share a node."
+      "message": "Unified 73 duplicate OSM node(s) at 70 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -125,6 +139,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Gardenaccia\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Doninz\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Col Alto\" has no opening_hours in OSM."
     },
     {
@@ -142,6 +164,14 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Stella Alpina\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Pradüc\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Sponata\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -170,6 +200,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Piz la Ila\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Baby La Crusc\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -237,11 +271,23 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Seiseralmbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Sass de la Vegla\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Ortisei - Furnes\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Panorama\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -317,6 +363,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"La Curta\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Cisles\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Saslong\" has no opening_hours in OSM."
     },
     {
@@ -357,6 +411,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Ferata Gran Risa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Colz\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Prè dai Corf\" has no opening_hours in OSM."
     },
     {
@@ -366,6 +428,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Sotsaslong\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Fermeda\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -453,6 +519,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Pian Peccei - Pramartin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Vajolet I\" has no opening_hours in OSM."
     },
     {
@@ -461,7 +531,19 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Pian Peccei - Ciampedie\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Santa Cristina - Monte Pana\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Col d'Altin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Col d'Altin\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -509,7 +591,47 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Mont Sëuc\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Mezdì\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Florian\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Zur Sonne - Al Sole\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Monte Piz\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Steger Dellai\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Bamby\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Floralpina\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Goldknopf\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Sanon\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Leo Demetz\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -537,6 +659,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"La Rüa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Col Raiser\" has no opening_hours in OSM."
     },
     {
@@ -549,11 +675,39 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Furnes - Seceda\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Campo Scuola\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Armentarola\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Armentarola\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Cavazes - Grohmann\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Puflatsch - Bullaccia\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Spitzbühl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Laurin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Paradiso\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -577,6 +731,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Euro\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Risaccia I\" has no opening_hours in OSM."
     },
     {
@@ -590,6 +748,66 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Risaccia II\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Catores\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Catores\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -606,6 +824,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Prè Ciablun\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Eurotel\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -629,6 +851,22 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Camp Scuola Ciampediè\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"152010405\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"152014848\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"152014854\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Carpazza\" has no opening_hours in OSM."
     },
     {
@@ -645,7 +883,23 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Ludy\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Cadepunt\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Furdenan\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Furdenan\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Palmer\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -658,6 +912,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Cendevaves\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"255159945\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -705,7 +963,19 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"FUF Alba - Col dei Rossi\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Standseilbahn Raschötz - Funicolare Rasciesa\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -725,6 +995,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"673630275\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"673630276\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Dantercepies II\" has no opening_hours in OSM."
     },
     {
@@ -734,6 +1012,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Frara\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"La Crusc 2\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -754,6 +1036,14 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Sass del Mul\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1123139686\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1131213246\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -785,6 +1075,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"La Crusc 1\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Tappeto scuola sci\" has no opening_hours in OSM."
     },
     {
@@ -792,57 +1086,61 @@
       "message": "Lift \"1483731999\" has no opening_hours in OSM."
     },
     {
-      "code": "inferred_connector",
-      "message": "Snapped 281 dead-end run(s) onto a nearby piste line (T-junction)."
+      "code": "missing_opening_hours",
+      "message": "Lift \"1493589770\" has no opening_hours in OSM."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 824 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Snapped 329 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 703 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Inferred 972 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 77 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 841 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 3 trapped node(s) with a forced traverse to the nearest reachable point (3 onto a piste line)."
+      "message": "Added 84 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 3 lift top(s) with no ski-out onto a nearby piste line."
+      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point (1 onto a piste line)."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 8 unreachable zone(s) to the nearest point a skier can already get to (5 onto a piste line)."
+      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Linked 12 unreachable zone(s) to the nearest point a skier can already get to (8 onto a piste line)."
     },
     {
       "code": "unreachable_component",
-      "message": "40 node(s) unreachable from the main lift network.",
+      "message": "32 node(s) unreachable from the main lift network.",
       "refs": [
-        "n608511303",
+        "n2532518825",
         "n1149155677",
         "n2610898952",
-        "n1584897499",
+        "n338808035",
         "n2610899019",
-        "n461618303",
-        "n608511305",
-        "n608511307",
+        "n278478692",
+        "n338808037",
         "n2610898994",
+        "n12009588137",
         "n12009588131",
         "n12009588156",
         "n864651065",
         "n1149155667",
+        "n6511621009",
+        "n6511621012",
+        "n5868831229",
         "n9691438681",
         "n9691438680",
         "n526850304",
-        "n12282189507",
-        "n12009588124",
-        "n13039689977",
-        "n2610902779"
+        "n12282189507"
       ]
     }
   ]

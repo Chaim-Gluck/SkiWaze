@@ -17,20 +17,20 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.valthorens.com/en/"
   },
-  "generatedAt": "2026-08-27T12:19:46.993Z",
+  "generatedAt": "2026-08-27T17:50:27.362Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
-    "nodeCount": 5105,
-    "edgeCount": 15903,
-    "pisteEdges": 5398,
+    "nodeCount": 4820,
+    "edgeCount": 15104,
+    "pisteEdges": 5081,
     "liftEdges": 238,
-    "connectorEdges": 10267,
-    "meaningfulPoints": 921,
-    "reachableFromLifts": 5095,
-    "unreachableNodes": 10,
+    "connectorEdges": 9785,
+    "meaningfulPoints": 923,
+    "reachableFromLifts": 4813,
+    "unreachableNodes": 7,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
-      "suspicious_merge": 63,
+      "suspicious_merge": 61,
       "missing_opening_hours": 177,
       "inferred_connector": 7,
       "unreachable_component": 1
@@ -39,7 +39,7 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 806 duplicate OSM node(s) at 710 spot(s) where ways meet but do not share a node."
+      "message": "Unified 777 duplicate OSM node(s) at 690 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -92,13 +92,6 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n331873479 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n331873479"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
       "message": "Node n333624177 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n333624177"
@@ -123,13 +116,6 @@
       "message": "Node n270328838 merges points spanning 15.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n270328838"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
-      "message": "Node n597311778 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n597311778"
       ]
     },
     {
@@ -295,9 +281,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000001962 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000001950 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000001962"
+        "n1000000001950"
       ]
     },
     {
@@ -400,9 +386,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000006243 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000006138 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000006243"
+        "n1000000006138"
       ]
     },
     {
@@ -414,9 +400,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000006543 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000006432 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000006543"
+        "n1000000006432"
       ]
     },
     {
@@ -1192,23 +1178,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 727 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 730 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 2392 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 2381 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 2044 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 2021 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 411 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 386 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 8 trapped node(s) with a forced traverse to the nearest reachable point (5 onto a piste line)."
+      "message": "Rescued 6 trapped node(s) with a forced traverse to the nearest reachable point (3 onto a piste line)."
     },
     {
       "code": "inferred_connector",
@@ -1220,17 +1206,14 @@
     },
     {
       "code": "unreachable_component",
-      "message": "10 node(s) unreachable from the main lift network.",
+      "message": "7 node(s) unreachable from the main lift network.",
       "refs": [
         "n678964724",
         "n678964733",
         "n678964727",
         "n2754232379",
         "n9853753103",
-        "n1000000008304",
-        "n7243370102",
-        "n1000000003207",
-        "n1000000003264",
+        "n1000000008170",
         "sn3281771216"
       ]
     }

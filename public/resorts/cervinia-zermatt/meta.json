@@ -17,17 +17,17 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-08-27T12:19:06.514Z",
+  "generatedAt": "2026-08-27T17:49:30.551Z",
   "stats": {
     "resortId": "cervinia-zermatt",
-    "nodeCount": 884,
-    "edgeCount": 2351,
-    "pisteEdges": 898,
+    "nodeCount": 840,
+    "edgeCount": 2241,
+    "pisteEdges": 847,
     "liftEdges": 111,
-    "connectorEdges": 1342,
+    "connectorEdges": 1283,
     "meaningfulPoints": 335,
-    "reachableFromLifts": 871,
-    "unreachableNodes": 13,
+    "reachableFromLifts": 832,
+    "unreachableNodes": 8,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 2,
@@ -39,7 +39,7 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 64 duplicate OSM node(s) at 52 spot(s) where ways meet but do not share a node."
+      "message": "Unified 61 duplicate OSM node(s) at 50 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -381,19 +381,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 117 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 115 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 376 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 365 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 283 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 284 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 46 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 38 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -401,25 +401,20 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 6 unreachable zone(s) to the nearest point a skier can already get to (4 onto a piste line)."
+      "message": "Linked 5 unreachable zone(s) to the nearest point a skier can already get to (3 onto a piste line)."
     },
     {
       "code": "unreachable_component",
-      "message": "13 node(s) unreachable from the main lift network.",
+      "message": "8 node(s) unreachable from the main lift network.",
       "refs": [
-        "n253330327",
         "n7847562228",
         "n342764945",
-        "n253330317",
         "n690807925",
         "n7206042373",
         "n12944659729",
         "n3165652504",
         "n7206060823",
-        "n1906820697",
-        "n713084261",
-        "n1000000000217",
-        "n1000000000219"
+        "n1906820697"
       ]
     }
   ]

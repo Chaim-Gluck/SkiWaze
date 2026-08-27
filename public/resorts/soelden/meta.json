@@ -17,16 +17,16 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.soelden.com/en/"
   },
-  "generatedAt": "2026-08-27T12:21:07.269Z",
+  "generatedAt": "2026-08-27T17:52:16.357Z",
   "stats": {
     "resortId": "soelden",
-    "nodeCount": 712,
-    "edgeCount": 1925,
-    "pisteEdges": 800,
+    "nodeCount": 685,
+    "edgeCount": 1858,
+    "pisteEdges": 765,
     "liftEdges": 59,
-    "connectorEdges": 1066,
-    "meaningfulPoints": 166,
-    "reachableFromLifts": 711,
+    "connectorEdges": 1034,
+    "meaningfulPoints": 167,
+    "reachableFromLifts": 684,
     "unreachableNodes": 1,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -39,7 +39,7 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 32 duplicate OSM node(s) at 32 spot(s) where ways meet but do not share a node."
+      "message": "Unified 31 duplicate OSM node(s) at 31 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -225,23 +225,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 93 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 92 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 238 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 230 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 193 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 192 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 76 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 74 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 4 unreachable zone(s) to the nearest point a skier can already get to (4 onto a piste line)."
+      "message": "Linked 5 unreachable zone(s) to the nearest point a skier can already get to (5 onto a piste line)."
     },
     {
       "code": "unreachable_component",

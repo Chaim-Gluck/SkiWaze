@@ -17,16 +17,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.tignes.net/en/"
   },
-  "generatedAt": "2026-08-27T12:20:19.641Z",
+  "generatedAt": "2026-08-27T17:51:11.600Z",
   "stats": {
     "resortId": "tignes-val-disere",
-    "nodeCount": 1135,
-    "edgeCount": 3340,
-    "pisteEdges": 1120,
-    "liftEdges": 117,
-    "connectorEdges": 2103,
+    "nodeCount": 1073,
+    "edgeCount": 3165,
+    "pisteEdges": 1054,
+    "liftEdges": 118,
+    "connectorEdges": 1993,
     "meaningfulPoints": 426,
-    "reachableFromLifts": 1129,
+    "reachableFromLifts": 1067,
     "unreachableNodes": 6,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -39,7 +39,7 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 70 duplicate OSM node(s) at 65 spot(s) where ways meet but do not share a node."
+      "message": "Unified 65 duplicate OSM node(s) at 62 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -448,19 +448,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 159 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 158 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 564 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 540 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 464 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 453 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 77 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 75 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -468,7 +468,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 13 unreachable zone(s) to the nearest point a skier can already get to (9 onto a piste line)."
+      "message": "Linked 12 unreachable zone(s) to the nearest point a skier can already get to (9 onto a piste line)."
     },
     {
       "code": "unreachable_component",
