@@ -165,6 +165,14 @@ export function isPassengerLift(w: RawWay): boolean {
   const aerialway = w.tags['aerialway'];
   if (aerialway && NON_PASSENGER_AERIALWAYS.has(aerialway)) return false;
   if (CLOSED_ACCESS.has(w.tags['access'])) return false;
+  // A station building tagged `aerialway=yes` instead of `aerialway=station`. The `station`
+  // value catches most of them, but plenty of mappers put the generic `yes` on the outline and
+  // record the real nature in `building` / `public_transport`. Those are polygons, and a lift is
+  // never a polygon, so this can't reject a genuine lift line. Left unfiltered they become
+  // zero-length "lifts" that also weld together everything the outline touches (see the
+  // aerialway=station note above) — around Schröcken they produced a stranded orphan node.
+  if (w.tags['building'] && w.tags['building'] !== 'no') return false;
+  if (w.tags['public_transport'] === 'station') return false;
   return true;
 }
 

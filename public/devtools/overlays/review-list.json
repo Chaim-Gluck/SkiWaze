@@ -1,5 +1,16 @@
 [
   {
+    "label": "st-anton-arlberg: Skiroute - Nesslegg - Schröcken (11 nodes, 0 lift(s), gap 623m, exit +243m)",
+    "resort": "st-anton-arlberg",
+    "node": "n6208824734",
+    "center": [
+      10.109923,
+      47.26072
+    ],
+    "zoom": 15,
+    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the shortest candidate link. Exit n6208824734 (unnamed, 1512 m) Ã¢â€ â€™ n5125494679 (310 Skiroute - Nesslegg - Schröcken (top) · 1755 m, 1755 m), 623 m away and 243 m higher. Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox."
+  },
+  {
     "label": "sella-ronda: Canazei/Rodella 3 / Tre (9 nodes, 0 lift(s), gap 435m, exit -54m)",
     "resort": "sella-ronda",
     "node": "n269039125",
@@ -20,17 +31,6 @@
     ],
     "zoom": 15,
     "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the shortest candidate link. Exit n13026658137 (unnamed, 1509 m) Ã¢â€ â€™ n13572040925 (unnamed, 1497 m), 258 m away and -12 m higher. Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox."
-  },
-  {
-    "label": "st-anton-arlberg: Schafalplift/Langer Zug/Skiroute - Tannegg +1 (9 nodes, 1 lift(s), gap 415m, exit +4m)",
-    "resort": "st-anton-arlberg",
-    "node": "n330032671",
-    "center": [
-      10.143497,
-      47.211313
-    ],
-    "zoom": 15,
-    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the shortest candidate link. Exit n330032671 (215 Langer Zug (bottom) · 1440 m, 1440 m) Ã¢â€ â€™ n1219351466 (unnamed, 1444 m), 415 m away and 4 m higher. Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox."
   },
   {
     "label": "monterosa-ski: Wold 2/Wold 1/Baby wold +3 (7 nodes, 3 lift(s), gap 1285m, exit -91m)",
@@ -154,39 +154,6 @@
     "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the shortest candidate link. Exit n12797254711 (Couloir de petite balme (bottom) · 2664 m, 2664 m) Ã¢â€ â€™ n631747916 (Stade de Slalom (top) · 2293 m, 2293 m), 916 m away and -371 m higher. Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox."
   },
   {
-    "label": "st-anton-arlberg: Flühenlift/Flühen (4 nodes, 1 lift(s), gap 219m, exit -1m)",
-    "resort": "st-anton-arlberg",
-    "node": "n3457700194",
-    "center": [
-      10.143533,
-      47.208621
-    ],
-    "zoom": 15,
-    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the shortest candidate link. Exit n3457700194 (Flühenlift (bottom) · 1448 m, 1448 m) Ã¢â€ â€™ n285898460 (Rüfikopfbahn I (bottom) · 1447 m, 1447 m), 219 m away and -1 m higher. Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox."
-  },
-  {
-    "label": "st-anton-arlberg: Vorderes Maroital/Hinteres Maroital (4 nodes, 0 lift(s), gap 912m, exit +246m)",
-    "resort": "st-anton-arlberg",
-    "node": "n3339664233",
-    "center": [
-      10.183763,
-      47.111946
-    ],
-    "zoom": 15,
-    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the shortest candidate link. Exit n3339664233 (Milchböden (bottom) · 1838 m, 1838 m) Ã¢â€ â€™ n327321442 (Albonagratbahn (bottom) · 2084 m, 2084 m), 912 m away and 246 m higher. Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox."
-  },
-  {
-    "label": "mayrhofen: Übungsland Horberg (3 nodes, 1 lift(s), gap 230m, exit -9m)",
-    "resort": "mayrhofen",
-    "node": "n9713443733",
-    "center": [
-      11.857061,
-      47.189435
-    ],
-    "zoom": 15,
-    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the shortest candidate link. Exit n9713443733 (unnamed, 639 m) Ã¢â€ â€™ n1524467228 (unnamed, 630 m), 230 m away and -9 m higher. Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox."
-  },
-  {
     "label": "cervinia-zermatt: Furggsattel (3 nodes, 0 lift(s), gap 66m, exit +19m)",
     "resort": "cervinia-zermatt",
     "node": "n713084104",
@@ -218,5 +185,16 @@
     ],
     "zoom": 15,
     "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the shortest candidate link. Exit n1709514022 (Zuma (top) · 2190 m, 2190 m) Ã¢â€ â€™ n6262963526 (unnamed, 2185 m), 49 m away and -5 m higher. Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox."
+  },
+  {
+    "label": "mayrhofen: Übungsland Horberg (3 nodes, 1 lift(s), gap 230m, exit -9m)",
+    "resort": "mayrhofen",
+    "node": "n9713443733",
+    "center": [
+      11.857061,
+      47.189435
+    ],
+    "zoom": 15,
+    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the shortest candidate link. Exit n9713443733 (unnamed, 639 m) Ã¢â€ â€™ n1524467228 (unnamed, 630 m), 230 m away and -9 m higher. Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox."
   }
 ]

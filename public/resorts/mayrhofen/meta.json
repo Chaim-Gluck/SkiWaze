@@ -17,24 +17,29 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.mayrhofner-bergbahnen.com/en/"
   },
-  "generatedAt": "2026-08-27T09:42:35.769Z",
+  "generatedAt": "2026-08-27T12:21:03.920Z",
   "stats": {
     "resortId": "mayrhofen",
     "nodeCount": 544,
-    "edgeCount": 1410,
-    "pisteEdges": 531,
+    "edgeCount": 1412,
+    "pisteEdges": 530,
     "liftEdges": 77,
-    "connectorEdges": 802,
+    "connectorEdges": 805,
     "meaningfulPoints": 193,
     "reachableFromLifts": 543,
     "unreachableNodes": 1,
     "warningsByCode": {
+      "coincident_nodes_unified": 1,
       "missing_opening_hours": 53,
       "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "coincident_nodes_unified",
+      "message": "Unified 9 duplicate OSM node(s) at 8 spot(s) where ways meet but do not share a node."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"6er Knorren\" has no opening_hours in OSM."
@@ -253,7 +258,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 226 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 227 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",

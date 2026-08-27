@@ -12,6 +12,7 @@ import { DOWNLOADABLE_LIFT_TYPES } from '../../src/types/domain';
 import type { GraphConstants } from '../../src/config/graphConstants';
 import { haversineM, polylineLength3dM } from '../../src/utils/geo';
 import type { NormPiste, NormLift, NormPoint } from './normalize';
+import { unifyCoincidentOsmNodes } from './coincidentNodes';
 import { inheritUnratedPisteColors } from './inferColors';
 
 // ---- Union-Find -----------------------------------------------------------
@@ -455,6 +456,17 @@ export function buildResortGraph(
   c: GraphConstants,
 ): ResortGraph {
   const warnings: DataWarning[] = [];
+  // Must run before canonical nodes: junctions are found by counting ways per OSM node id, so
+  // duplicate ids standing on the same spot have to be collapsed first or the junction is lost.
+  const coincident = unifyCoincidentOsmNodes(pistes, lifts);
+  if (coincident.spots > 0) {
+    warnings.push({
+      code: 'coincident_nodes_unified',
+      message:
+        `Unified ${coincident.unified} duplicate OSM node(s) at ${coincident.spots} spot(s) ` +
+        `where ways meet but do not share a node.`,
+    });
+  }
   const { canonicalOf, nodes } = buildCanonicalNodes(pistes, lifts, c, warnings);
 
   // Correct DEM false local-minima/maxima before edges are oriented (see repairPotholeElevations).

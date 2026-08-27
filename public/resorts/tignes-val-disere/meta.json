@@ -17,18 +17,19 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.tignes.net/en/"
   },
-  "generatedAt": "2026-08-27T07:08:00.464Z",
+  "generatedAt": "2026-08-27T12:20:19.641Z",
   "stats": {
     "resortId": "tignes-val-disere",
-    "nodeCount": 1134,
-    "edgeCount": 3333,
+    "nodeCount": 1135,
+    "edgeCount": 3340,
     "pisteEdges": 1120,
     "liftEdges": 117,
-    "connectorEdges": 2096,
-    "meaningfulPoints": 427,
-    "reachableFromLifts": 1128,
+    "connectorEdges": 2103,
+    "meaningfulPoints": 426,
+    "reachableFromLifts": 1129,
     "unreachableNodes": 6,
     "warningsByCode": {
+      "coincident_nodes_unified": 1,
       "suspicious_merge": 3,
       "missing_opening_hours": 96,
       "inferred_connector": 6,
@@ -36,6 +37,10 @@
     }
   },
   "warnings": [
+    {
+      "code": "coincident_nodes_unified",
+      "message": "Unified 70 duplicate OSM node(s) at 65 spot(s) where ways meet but do not share a node."
+    },
     {
       "code": "suspicious_merge",
       "message": "Node n3372427212 merges points spanning 13.0 m vertically (> Vmerge). Review in overrides.",
@@ -443,15 +448,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 160 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 159 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 565 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 564 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 468 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 464 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

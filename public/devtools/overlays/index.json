@@ -1,38 +1,38 @@
 [
-    {
-        "id":  "area-skeletons",
-        "label":  "Area skeletons (proposed)",
-        "file":  "area-skeletons.json",
-        "description":  "Report-only preview of the polygon-centreline plan for classes A and B\u0027. Blue = the run\u0027s existing centreline, reused as the spine. Pink = synthesised fan-out arms, routed through an interior 12 m grid so they never leave the polygon. Orange = portals (they do not move); red = a portal the grid could not reach. Grey = the rim these would replace."
-    },
-    {
-        "id":  "over-rim-arcs",
-        "label":  "Over-rim critical arcs",
-        "file":  "over-rim-arcs.json",
-        "description":  "Area (open-bowl) perimeter arcs that hide a rim climb yet are the only lift-escape for a node — deleting them strands the orange node."
-    },
-    {
-        "id":  "trapped-basins",
-        "label":  "Trapped basins (ski in, no way back)",
-        "file":  "trapped-basins.json",
-        "description":  "Terrain you can ski INTO that can never get back to the resort main body - including basins with no lift inside, and the upstream slopes that only drain into them. Red = every trapped node; green = the edges that lead in; amber = the shortest candidate link. Regenerate with `npm run check:basins`."
-    },
-    {
-        "id":  "elevation-reversals",
-        "label":  "Elevation reversal candidates",
-        "file":  "elevation-reversals.json",
-        "description":  "Piste edges that flip direction once mis-sampled elevations are corrected against the Terrarium DEM. Green = suggested top, orange = current (too-high) top; red line = strong, orange line = marginal."
-    },
-    {
-        "id":  "plateau-links",
-        "label":  "Plateau traverses (app-added)",
-        "file":  "plateau-links.json",
-        "description":  "Bidirectional flat traverses the plateau pass added to reconnect points that sit on the same shelf (\u003c=45 m apart, \u003c=8 m height) but were severed because every mapped link out was one-way downhill. Numbered most-questionable first; pink = marginal."
-    },
-    {
-        "id":  "uphill-pistes",
-        "label":  "Uphill piste edges (bug)",
-        "file":  "uphill-pistes.json",
-        "description":  "Piste edges that point uphill because a T-junction split was never re-oriented. The router can use them as a free lift. Red = climbs, blue = the correctly-descending other half, orange = the app-added split node."
-    }
+ {
+  "id": "area-skeletons",
+  "label": "Area skeletons (proposed)",
+  "file": "area-skeletons.json",
+  "description": "Report-only preview of the polygon-centreline plan for classes A and B'. Blue = the run's existing centreline, reused as the spine. Pink = synthesised fan-out arms, routed through an interior 12 m grid so they never leave the polygon. Orange = portals (they do not move); red = a portal the grid could not reach. Grey = the rim these would replace."
+ },
+ {
+  "id": "over-rim-arcs",
+  "label": "Over-rim critical arcs",
+  "file": "over-rim-arcs.json",
+  "description": "Area (open-bowl) perimeter arcs that hide a rim climb yet are the only lift-escape for a node — deleting them strands the orange node."
+ },
+ {
+  "id": "trapped-basins",
+  "label": "Trapped basins (ski in, no way back)",
+  "file": "trapped-basins.json",
+  "description": "Terrain you can ski INTO that can never get back to the resort main body - including basins with no lift inside, and the upstream slopes that only drain into them. Red = every trapped node; green = the edges that lead in; amber = the shortest candidate link. Regenerate with `npm run check:basins`."
+ },
+ {
+  "id": "elevation-reversals",
+  "label": "Elevation reversal candidates",
+  "file": "elevation-reversals.json",
+  "description": "Piste edges that flip direction once mis-sampled elevations are corrected against the Terrarium DEM. Green = suggested top, orange = current (too-high) top; red line = strong, orange line = marginal."
+ },
+ {
+  "id": "plateau-links",
+  "label": "Plateau traverses (app-added)",
+  "file": "plateau-links.json",
+  "description": "Bidirectional flat traverses the plateau pass added to reconnect points that sit on the same shelf (<=45 m apart, <=8 m height) but were severed because every mapped link out was one-way downhill. Numbered most-questionable first; pink = marginal."
+ },
+ {
+  "id": "uphill-pistes",
+  "label": "Uphill piste edges (bug)",
+  "file": "uphill-pistes.json",
+  "description": "Piste edges that point uphill because a T-junction split was never re-oriented. The router can use them as a free lift. Red = climbs, blue = the correctly-descending other half, orange = the app-added split node."
+ }
 ]

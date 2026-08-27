@@ -210,6 +210,7 @@ export interface DataWarning {
     | 'suspicious_merge'
     | 'inferred_connector'
     | 'pothole_repaired'
+    | 'coincident_nodes_unified'
     | 'no_wait_time';
   message: string;
   /** Optional related node/edge ids. */

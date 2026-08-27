@@ -25,6 +25,8 @@ export interface NormPiste {
    * near-flat gradient test that governs a real piste's reverse traverse. See buildGraph.
    */
   skeletonArm?: boolean;
+  /** See `levelKeyFor`. */
+  levelKey?: string;
   points: NormPoint[];
 }
 
@@ -40,7 +42,26 @@ export interface NormLift {
    * can download on it. Only ever *grants* a downhill direction — see `bidirectionalFor`.
    */
   bidirectional?: boolean;
+  /** See `levelKeyFor`. */
+  levelKey?: string;
   points: NormPoint[];
+}
+
+/**
+ * Grade-separation signature, used to decide whether two ways that touch at a point really meet.
+ *
+ * Two ways crossing on a bridge or in a tunnel are at different heights and must never be welded
+ * into a junction. OSM records that with `layer`/`bridge`/`tunnel`, so ways whose signatures differ
+ * are treated as passing over/under each other. Ways with no such tags all share the default key
+ * and are assumed to be on the same snow — which is the normal case.
+ */
+function levelKeyFor(tags: Record<string, string>): string | undefined {
+  const layer = tags['layer'];
+  const bridge = tags['bridge'];
+  const tunnel = tags['tunnel'];
+  if (!layer && !bridge && !tunnel) return undefined;
+  const on = (v: string | undefined) => (v && v !== 'no' ? v : '');
+  return `${layer ?? ''}|${on(bridge)}|${on(tunnel)}`;
 }
 
 const DIFFICULTY_TO_COLOR: Record<string, PisteColor> = {
@@ -115,6 +136,7 @@ export function normalizePiste(w: RawWay): NormPiste {
     name: w.tags['name'] || w.tags['piste:name'],
     ref: w.tags['piste:ref'] || w.tags['ref'],
     area: isPisteArea(w),
+    levelKey: levelKeyFor(w.tags),
     points: toPoints(w),
   };
 }
@@ -151,6 +173,7 @@ export function normalizeLift(w: RawWay): NormLift {
     openingHours: w.tags['opening_hours'],
     durationSec: parseDurationSec(w.tags['aerialway:duration']),
     bidirectional: bidirectionalFor(w.tags, liftType),
+    levelKey: levelKeyFor(w.tags),
     points: toPoints(w),
   };
 }

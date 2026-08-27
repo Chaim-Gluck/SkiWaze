@@ -5,11 +5,11 @@
   ],
   "_comment2": "False-elevation reversals confirmed by eyeball (check:elevation). Two piste ends near the Giggijoch-area lift stations (~2640 m) and one on the glacier (~3230 m) sampled too low/high, flipping the ski direction uphill. Values are the EU-DEM terrain samples reported by npm run check:elevation soelden. n3229643842 is the same mis-sampled cluster as its neighbour n1613091887 22 m away: sampled 14 m too low, which pointed BOTH of its piste edges inward and left it a one-way dead end (the only node fleet-wide that check:trapped regressed on). Set to 2656 rather than the raw DEM 2659: at 2659 it ties its uphill neighbour exactly, which stops the piste INTO it from descending and merely turns the dead end into an orphan. 2656 is what a monotonic slope between its two neighbours (2659 at 22 m, 2650 at 70 m) gives, so both edges stay descending -- one in, one out.",
   "setNodeElevation": [
-    { "node": "n4394538290", "ele": 2634 },
+    { "_why": "Was n4394538290; that node had a coincident twin 0.1 m away and the pipeline now unifies such duplicates into one junction (see coincidentNodes.ts), so the smaller id survives.", "node": "n4394538266", "ele": 2634 },
     { "node": "n261983126", "ele": 2655 },
     { "node": "n4394538265", "ele": 2642 },
     { "node": "n1613091887", "ele": 2659 },
-    { "node": "n3229643842", "ele": 2656 },
+    { "_why": "Was n3229643842; unified with a coincident twin 0.1 m away (see coincidentNodes.ts), smaller id survives.", "node": "n3229643840", "ele": 2656 },
     { "node": "n514207288", "ele": 3222 },
     { "node": "n333226784", "ele": 3242 },
     { "node": "n313310543", "ele": 3243 }

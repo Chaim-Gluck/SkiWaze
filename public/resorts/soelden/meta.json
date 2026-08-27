@@ -17,18 +17,19 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.soelden.com/en/"
   },
-  "generatedAt": "2026-08-27T07:09:52.880Z",
+  "generatedAt": "2026-08-27T12:21:07.269Z",
   "stats": {
     "resortId": "soelden",
-    "nodeCount": 711,
+    "nodeCount": 712,
     "edgeCount": 1925,
-    "pisteEdges": 799,
+    "pisteEdges": 800,
     "liftEdges": 59,
-    "connectorEdges": 1067,
+    "connectorEdges": 1066,
     "meaningfulPoints": 166,
-    "reachableFromLifts": 710,
+    "reachableFromLifts": 711,
     "unreachableNodes": 1,
     "warningsByCode": {
+      "coincident_nodes_unified": 1,
       "suspicious_merge": 6,
       "missing_opening_hours": 35,
       "inferred_connector": 5,
@@ -36,6 +37,10 @@
     }
   },
   "warnings": [
+    {
+      "code": "coincident_nodes_unified",
+      "message": "Unified 32 duplicate OSM node(s) at 32 spot(s) where ways meet but do not share a node."
+    },
     {
       "code": "suspicious_merge",
       "message": "Node n3239888554 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
@@ -66,9 +71,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n3241307968 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n3220088325 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n3241307968"
+        "n3220088325"
       ]
     },
     {

@@ -1,14 +1,5 @@
 [
   {
-    "id": "st-anton-arlberg",
-    "name": "St. Anton am Arlberg",
-    "country": "Austria",
-    "center": {
-      "lon": 10.24,
-      "lat": 47.13
-    }
-  },
-  {
     "id": "madonna-di-campiglio",
     "name": "Madonna di Campiglio",
     "country": "Italy",
@@ -60,6 +51,15 @@
     "center": {
       "lon": 6.72,
       "lat": 45.55
+    }
+  },
+  {
+    "id": "st-anton-arlberg",
+    "name": "St. Anton am Arlberg",
+    "country": "Austria",
+    "center": {
+      "lon": 10.2,
+      "lat": 47.16
     }
   },
   {

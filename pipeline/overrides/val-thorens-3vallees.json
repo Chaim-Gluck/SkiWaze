@@ -6,7 +6,7 @@
     { "node": "sn3281771184", "ele": 2470 },
     { "node": "n1190054006", "ele": 2095 },
     { "node": "sn9631513221", "ele": 2125 },
-    { "node": "n12817376803", "ele": 2399 },
+    { "_why": "Was n12817376803; unified with a coincident twin 0.0 m away (see coincidentNodes.ts), smaller id survives.", "node": "n605504979", "ele": 2399 },
     { "node": "n3281771174", "ele": 2433 },
     { "node": "n1189431557", "ele": 1838 },
     { "node": "n1189431572", "ele": 1865 },

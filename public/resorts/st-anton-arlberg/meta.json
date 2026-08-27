@@ -4,38 +4,51 @@
     "name": "St. Anton am Arlberg",
     "country": "Austria",
     "center": {
-      "lon": 10.24,
-      "lat": 47.13
+      "lon": 10.2,
+      "lat": 47.16
     },
     "bbox": {
-      "minLon": 10.13,
+      "minLon": 10.08,
       "minLat": 47.09,
       "maxLon": 10.33,
-      "maxLat": 47.21
+      "maxLat": 47.28
     },
-    "defaultZoom": 12,
+    "excludeBboxes": [
+      {
+        "minLon": 10.03,
+        "minLat": 47.085,
+        "maxLon": 10.1,
+        "maxLat": 47.16
+      }
+    ],
+    "defaultZoom": 11.5,
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.stantonamarlberg.com/en/"
   },
-  "generatedAt": "2026-08-27T10:00:52.758Z",
+  "generatedAt": "2026-08-27T12:21:01.429Z",
   "stats": {
     "resortId": "st-anton-arlberg",
-    "nodeCount": 740,
-    "edgeCount": 1951,
-    "pisteEdges": 811,
-    "liftEdges": 99,
-    "connectorEdges": 1041,
-    "meaningfulPoints": 372,
-    "reachableFromLifts": 735,
+    "nodeCount": 1110,
+    "edgeCount": 2875,
+    "pisteEdges": 1235,
+    "liftEdges": 138,
+    "connectorEdges": 1502,
+    "meaningfulPoints": 579,
+    "reachableFromLifts": 1105,
     "unreachableNodes": 5,
     "warningsByCode": {
+      "coincident_nodes_unified": 1,
       "suspicious_merge": 1,
-      "missing_opening_hours": 83,
+      "missing_opening_hours": 116,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
   },
   "warnings": [
+    {
+      "code": "coincident_nodes_unified",
+      "message": "Unified 2 duplicate OSM node(s) at 2 spot(s) where ways meet but do not share a node."
+    },
     {
       "code": "suspicious_merge",
       "message": "Node n1620393089 merges points spanning 13.0 m vertically (> Vmerge). Review in overrides.",
@@ -77,6 +90,42 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Steffisalp-Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Wannenkopfbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Wartherhorn-Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Jägeralp-Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Hochalpbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Salober-Jet\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Sonnen-Jet\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ski-Schaukel-Falken (Spielboden - Falkenkopf)\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ski-Schaukel-Falken (Körbersee - Falkenkopf)\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Hexenboden\" has no opening_hours in OSM."
     },
     {
@@ -94,6 +143,14 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Schafalplift\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Schlosskopfbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Schlegelkopfbahn I\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -170,6 +227,34 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Gampenbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Karhornbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Sonnencruiser\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Kuchlbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Übungslift Oberlech\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Übungslift Oberlech\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Kriegerhornbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Weibermahd\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -253,6 +338,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Schlegelkopfbahn II\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Übungslift St. Christoph\" has no opening_hours in OSM."
     },
     {
@@ -277,7 +366,31 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Bergbahn Lech - Oberlech\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Petersbodenbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Rotschrofenbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Körbliftle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Körbliftle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"148855663\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Balmengratlift\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -314,6 +427,30 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Rauzlift\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Hasensprungbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Steinmähderbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Zugerbergbahn\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Auenfeldjet\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Kitzeliftle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"334848515\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -365,6 +502,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Dorfbahn Warth\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Märchenlandlift\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Madlochbahn\" has no opening_hours in OSM."
     },
     {
@@ -377,35 +522,35 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 97 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 149 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 274 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 396 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 233 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 343 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 36 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 54 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 6 trapped node(s) with a forced traverse to the nearest reachable point (2 onto a piste line)."
+      "message": "Rescued 8 trapped node(s) with a forced traverse to the nearest reachable point (3 onto a piste line)."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 6 unreachable zone(s) to the nearest point a skier can already get to (4 onto a piste line)."
+      "message": "Linked 5 unreachable zone(s) to the nearest point a skier can already get to (3 onto a piste line)."
     },
     {
       "code": "unreachable_component",
       "message": "5 node(s) unreachable from the main lift network.",
       "refs": [
-        "n1419003068",
-        "n330035321",
         "n1075531663",
+        "n1617881603",
+        "n3843561892",
         "n2406677016",
         "n9366080665"
       ]

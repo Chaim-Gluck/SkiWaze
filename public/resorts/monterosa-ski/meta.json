@@ -17,7 +17,7 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.visitmonterosa.com/en/"
   },
-  "generatedAt": "2026-08-27T07:09:25.516Z",
+  "generatedAt": "2026-08-27T12:21:16.715Z",
   "stats": {
     "resortId": "monterosa-ski",
     "nodeCount": 200,
@@ -29,11 +29,16 @@
     "reachableFromLifts": 200,
     "unreachableNodes": 0,
     "warningsByCode": {
+      "coincident_nodes_unified": 1,
       "missing_opening_hours": 38,
       "inferred_connector": 5
     }
   },
   "warnings": [
+    {
+      "code": "coincident_nodes_unified",
+      "message": "Unified 2 duplicate OSM node(s) at 2 spot(s) where ways meet but do not share a node."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Pianalunga - Cimalegna - Salati\" has no opening_hours in OSM."
@@ -188,7 +193,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 30 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 29 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",

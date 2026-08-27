@@ -74,6 +74,15 @@ and apply identically to **every** resort — there is no per-resort graph code.
   vertical (`Vmerge`) tolerance — huts close horizontally but at different heights stay distinct.
 - **Endpoint→line snapping** (`snapToLineRadius`): a run touching another run's middle
   (T-junction) splits that run at the touch point (fixes the most common OSM gap).
+- **Coincident duplicate nodes are unified first** (`pipeline/lib/coincidentNodes.ts`). Junctions are
+  found by counting, *per OSM node id*, how many ways contain it — which assumes mappers reuse one
+  node where two runs meet. Often they don't: each way gets its own node at the same coordinates, so
+  both ids count 1, neither way is split, and a junction that exists on the snow is silently dropped.
+  Nothing downstream recovers it (endpoint merge and endpoint→line snap only look at *endpoints*;
+  `weldCoincidentNodes` only welds nodes already joined by an edge). The pre-pass rewrites such ids
+  to the smallest in the group — order-independent, so node ids stay stable. Guards: **piste×piste
+  only** (welding onto a lift's interior would invent a mid-span boarding point), never two points of
+  the same way, never across differing `layer`/`bridge`/`tunnel` (`levelKey`), and ≤ 0.5 m.
 - **Slopes are one-way (descending only)**, except near-flat cat-tracks (gradient ≤ `flatGradeMax`)
   which also get a reverse traverse — but never a rise over `maxTraverseClimb`.
 - **Uphill is never inferred.** Skiable connectors are downhill-only or flat/bidirectional.
@@ -322,6 +331,39 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   **`NOTES.local.md`** (git-ignored) — not committed.
 
 ## Gotchas / lessons learned
+- **"It's drawn on the map, so why won't it route?" is a real bug report — chase it.** Warth (Ski
+  Arlberg) looked like an 8-node island: gondola + 2 runs, zero edges in or out. Everything pointed
+  at missing terrain, and two different connectors were proposed (both wrong). The user insisted the
+  runs visibly meet. They do: run 269 Dorfabfahrt and run 266 Wannenkopf each make a **hairpin at
+  bit-identical coordinates** (`10.1756297,47.2585637`) — 0.000 m apart, node ids `3419720259` vs
+  `12815432358`, interior to both ways. `geo.json` draws true geometry, so the junction was on screen
+  the whole time; only the *router* couldn't turn there. Lessons: (a) when render and routing
+  disagree, diff `geo.json` against `graph.json` in a box before blaming OSM; (b) **compare full
+  vertex lists, not just endpoints and nearest-node distances** — a nearest-*node* search reported a
+  105 m gap and hid a 0 m touch; (c) two ways that each put an explicit vertex at the same spot is a
+  mapper marking a junction, not a coincidence. Fixed generically — see `coincidentNodes.ts` above.
+  Census at the time: 18 dropped junctions across 8 of 15 resorts.
+- **A basin "obviously" needing a lift may just have an unbuilt one.** Schröcken's village gondola is
+  `w660999299 aerialway=proposed`, note "in Planung". Grep OSM for `proposed`/`construction` before
+  assuming a data bug.
+- **Station *polygons* masquerade as lifts.** `aerialway=station` catches most, but mappers also tag
+  outlines `aerialway=yes` + `building=yes` / `public_transport=station`. A lift is a line, never a
+  polygon, so `isPassengerLift` rejects those too. Left in they become zero-length "lifts" that weld
+  together whatever the outline touches (Zermatt's Plan Maison, Madonna's `w561699267`).
+- **Bbox clipping is invisible — check the graph's extent against the bbox.** Overpass returns a way
+  in *full* if any node touches the box, so a clipped resort still looks complete. The tell is the
+  built graph's lon/lat extent exceeding the declared bbox (St. Anton: `lat …47.2398` vs
+  `maxLat 47.21` — the box cut straight through Lech/Oberlech/Warth). Has now bitten Tignes, Mayrhofen
+  and St. Anton. To resize: Overpass `way["piste:type"="downhill"]` + `way["aerialway"]` over a
+  generous box → `out tags center` → histogram lon and lat in 0.005° bins; the real edge is the bin
+  before a multi-km empty run. Then check the other bands for a *foreign* resort a rectangle would
+  swallow (Sonnenkopf/Klösterle) and cut it with `excludeBboxes`. **The OSM cache is keyed by resort
+  id + TTL, not bbox — `npm run data -- <id> --refresh` is mandatory after a bbox edit.**
+- **`check:overrides` reporting N stale does not mean your change caused them.** Triage each id
+  against `git show HEAD:public/resorts/<id>/graph.json`: present-both / lost-today / already-stale.
+  The last fleet run was 17 pre-existing vs 3 genuinely broken; chasing all 20 would have been wasted
+  work. For a lost id, find the nearest node in the new graph — if it is ~0 m away the entry just
+  needs repointing (record the reason in a `_why`).
 - **A parameter sweep that moves nothing is a bug signal, not a plateau.** Twice now, sweeping a
   constant produced byte-identical fleet numbers because the test it fed never actually fired: a
   structurally-dead `TAIL_CLEAR_RATIO`, and `STITCH_ROUTE_MAX_M` whose effect was invisible because

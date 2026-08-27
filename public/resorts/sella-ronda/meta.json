@@ -17,18 +17,19 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-08-27T08:40:30.615Z",
+  "generatedAt": "2026-08-27T12:19:17.063Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1648,
-    "edgeCount": 4654,
-    "pisteEdges": 1484,
+    "nodeCount": 1647,
+    "edgeCount": 4652,
+    "pisteEdges": 1481,
     "liftEdges": 275,
-    "connectorEdges": 2895,
+    "connectorEdges": 2896,
     "meaningfulPoints": 611,
-    "reachableFromLifts": 1608,
+    "reachableFromLifts": 1607,
     "unreachableNodes": 40,
     "warningsByCode": {
+      "coincident_nodes_unified": 1,
       "suspicious_merge": 2,
       "missing_opening_hours": 184,
       "inferred_connector": 7,
@@ -36,6 +37,10 @@
     }
   },
   "warnings": [
+    {
+      "code": "coincident_nodes_unified",
+      "message": "Unified 70 duplicate OSM node(s) at 67 spot(s) where ways meet but do not share a node."
+    },
     {
       "code": "suspicious_merge",
       "message": "Node n366190498 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
@@ -45,9 +50,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n3394049752 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n263479351 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n3394049752"
+        "n263479351"
       ]
     },
     {
@@ -796,11 +801,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 698 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 703 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 80 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 77 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -812,7 +817,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 10 unreachable zone(s) to the nearest point a skier can already get to (7 onto a piste line)."
+      "message": "Linked 8 unreachable zone(s) to the nearest point a skier can already get to (5 onto a piste line)."
     },
     {
       "code": "unreachable_component",

@@ -88,9 +88,25 @@ export const RESORTS: Resort[] = [
     id: 'st-anton-arlberg',
     name: 'St. Anton am Arlberg',
     country: 'Austria',
-    center: { lon: 10.24, lat: 47.13 },
-    bbox: { minLon: 10.13, minLat: 47.09, maxLon: 10.33, maxLat: 47.21 },
-    defaultZoom: 12,
+    center: { lon: 10.2, lat: 47.16 },
+    // Boundary survey (Overpass, Aug 2026). The old box (maxLat 47.21, minLon 10.13) cut
+    // straight through the resort: Lech village sits at 47.208 and Oberlech at 47.216, so
+    // Kriegerhorn, Petersboden, Schlosskopf, Hasensprung, Steinmähder, Rotschrofen and
+    // Weibermahd were all clipped, and with them the ski-out that makes the Schafalp /
+    // Langer Zug sector reachable. Ski Arlberg is one lift pass and one lift-linked area:
+    // Lech/Zürs joins Warth-Schröcken over the Auenfeldjet gondola (47.2362).
+    //   north: dense to 47.270, then ~4.8 km empty until 47.315 = Kleinwalsertal /
+    //          Diedamskopf, a different resort. -> maxLat 47.28.
+    //   west:  dense to 10.085 (Schröcken / Nesslegg), nothing beyond in this band. -> 10.08.
+    //   east:  clean gap 10.195 -> 10.335; the 10.335+ ways are Lechtal (Gföllberg,
+    //          Jöchelspitze). -> maxLon stays 10.33.
+    bbox: { minLon: 10.08, minLat: 47.09, maxLon: 10.33, maxLat: 47.28 },
+    // Widening west to reach Schröcken also reaches down into the Klostertal, where
+    // Sonnenkopf/Klösterle (Riedkopf, Sonnenkopfbahn, Obermuri, Glattingrat) and the
+    // Fuchslochlift are a separate resort on a separate ticket, road-linked only.
+    // A rectangle can't separate them from Lech, so cut them out explicitly.
+    excludeBboxes: [{ minLon: 10.03, minLat: 47.085, maxLon: 10.1, maxLat: 47.16 }],
+    defaultZoom: 11.5,
     timezone: 'Europe/Vienna',
     infoUrl: 'https://www.stantonamarlberg.com/en/',
   },

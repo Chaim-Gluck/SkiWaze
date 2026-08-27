@@ -25,19 +25,20 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.paradiski.com/"
   },
-  "generatedAt": "2026-08-27T07:08:33.694Z",
+  "generatedAt": "2026-08-27T12:20:40.956Z",
   "stats": {
     "resortId": "paradiski",
-    "nodeCount": 3038,
-    "edgeCount": 9106,
-    "pisteEdges": 3226,
+    "nodeCount": 3043,
+    "edgeCount": 9143,
+    "pisteEdges": 3245,
     "liftEdges": 208,
-    "connectorEdges": 5672,
+    "connectorEdges": 5690,
     "meaningfulPoints": 711,
-    "reachableFromLifts": 3029,
+    "reachableFromLifts": 3034,
     "unreachableNodes": 9,
     "warningsByCode": {
-      "suspicious_merge": 18,
+      "coincident_nodes_unified": 1,
+      "suspicious_merge": 16,
       "missing_opening_hours": 171,
       "inferred_connector": 5,
       "unreachable_component": 1
@@ -45,17 +46,14 @@
   },
   "warnings": [
     {
+      "code": "coincident_nodes_unified",
+      "message": "Unified 295 duplicate OSM node(s) at 266 spot(s) where ways meet but do not share a node."
+    },
+    {
       "code": "suspicious_merge",
       "message": "Node n25946536 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n25946536"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
-      "message": "Node n1596164691 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n1596164691"
       ]
     },
     {
@@ -91,13 +89,6 @@
       "message": "Node n2095719977 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n2095719977"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
-      "message": "Node n1724502953 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n1724502953"
       ]
     },
     {
@@ -856,19 +847,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 415 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 417 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 1389 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 1388 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 1136 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 1140 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 229 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 232 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -884,9 +875,9 @@
         "n10862639403",
         "n2628902039",
         "n11386325559",
-        "n1000000003150",
-        "n1000000003176",
-        "n1000000003182"
+        "n1000000003174",
+        "n1000000003200",
+        "n1000000003206"
       ]
     }
   ]

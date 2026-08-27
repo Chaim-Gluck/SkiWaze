@@ -17,23 +17,28 @@
     "timezone": "Asia/Tbilisi",
     "infoUrl": "https://gudauri.com/"
   },
-  "generatedAt": "2026-08-27T07:08:55.684Z",
+  "generatedAt": "2026-08-27T12:12:15.078Z",
   "stats": {
     "resortId": "gudauri",
     "nodeCount": 104,
-    "edgeCount": 238,
+    "edgeCount": 237,
     "pisteEdges": 107,
     "liftEdges": 18,
-    "connectorEdges": 113,
+    "connectorEdges": 112,
     "meaningfulPoints": 54,
     "reachableFromLifts": 104,
     "unreachableNodes": 0,
     "warningsByCode": {
+      "coincident_nodes_unified": 1,
       "missing_opening_hours": 15,
       "inferred_connector": 5
     }
   },
   "warnings": [
+    {
+      "code": "coincident_nodes_unified",
+      "message": "Unified 1 duplicate OSM node(s) at 1 spot(s) where ways meet but do not share a node."
+    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Snow Park\" has no opening_hours in OSM."
@@ -96,11 +101,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 17 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 16 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 37 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 35 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",

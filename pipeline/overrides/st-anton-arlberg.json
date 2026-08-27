@@ -13,6 +13,14 @@
   ],
   "acceptedBasins": [
     {
+      "nodes": ["n3457700195", "n5465166615", "n3457700194", "n12812475759"],
+      "why": "Fluehenlift plus its run 218 Fluehen, on the Rufikopf side of Lech village. This is a ski-school / practice slope, not part of the through-network: you can ski down it but nothing links its bottom (1442 m) back into the circuit. The nearest node outside is the Bergbahn Lech - Oberlech base, 172 m away and 4 m higher - a village walk across the Lechtalstrasse, not a ski link. Reviewed on the map: signed off rather than bridged. If Lech ever grooms a real connector here, drop this entry and add an addConnectors instead."
+    },
+    {
+      "nodes": ["n3339664233", "n1516352681", "n1516352760", "n1653460881"],
+      "why": "Vorderes / Hinteres Maroital, the St. Anton ski routes that drop off Milchboeden east into the Rosanna valley. They bottom out at 1497 m with no node of any kind within 450 m and the cheapest escape climbing 246 m: a classic one-way valley descent that ends at the road, where you take the train or bus back. Nothing to add and nothing to remove, so it is signed off rather than fixed."
+    },
+    {
       "nodes": ["n1259978729", "n1165759951", "n1259978687", "n1259978714", "n1165759824"],
       "why": "Walchlift and Angerlift, the two village nursery drags on the north side of Stuben, with their own short pistes. They sit across the main Arlbergstrasse and the Alfenz from the ski area proper, and no run or lift links them to it - you walk. Reviewed on the map: correctly disconnected, so this is signed off rather than bridged."
     }
