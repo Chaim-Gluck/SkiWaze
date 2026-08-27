@@ -91,7 +91,7 @@ function main(): void {
       lines.push({
         coords: [
           [b.exit.point.lon, b.exit.point.lat],
-          [b.outside.point.lon, b.outside.point.lat],
+          [b.outside.at.lon, b.outside.at.lat],
         ],
         color: '#f59e0b',
         width: 3,
@@ -107,13 +107,16 @@ function main(): void {
           `${b.lifts.length} lift(s), ${b.entries.length} way(s) in<br>${basinLabel(b)}`,
       });
       points.push({
-        at: [b.outside.point.lon, b.outside.point.lat],
+        at: [b.outside.at.lon, b.outside.at.lat],
         color: '#16a34a',
         r: 13,
         tag: `outside ${b.climbM >= 0 ? '+' : ''}${b.climbM}m`,
         label:
-          `<b>${b.outside.id}</b> ${named.get(b.outside.id) ?? ''}<br>` +
-          `${Math.round(b.outside.point.ele ?? 0)} m Ã¢â‚¬â€ nearest node outside, ${b.gapM} m away`,
+          `<b>${b.outside.label}</b><br>` +
+          `${Math.round(b.outside.at.ele)} m, ${b.gapM} m away` +
+          (b.outside.edgeId
+            ? '<br><i>a point ALONG a run, not a node: a link here would split it</i>'
+            : '<br><i>nearest node outside</i>'),
       });
 
       review.push({
@@ -124,8 +127,8 @@ function main(): void {
         resort: id,
         node: b.exit.id,
         center: [
-          +((b.exit.point.lon + b.outside.point.lon) / 2).toFixed(6),
-          +((b.exit.point.lat + b.outside.point.lat) / 2).toFixed(6),
+          +((b.exit.point.lon + b.outside.at.lon) / 2).toFixed(6),
+          +((b.exit.point.lat + b.outside.at.lat) / 2).toFixed(6),
         ],
         zoom: 15,
         note:
@@ -133,8 +136,12 @@ function main(): void {
           `Red = every trapped node (not just the core), green = the edges that lead in, ` +
           `amber = the best candidate link. Exit ${b.exit.id} ` +
           `(${named.get(b.exit.id) ?? 'unnamed'}, ${Math.round(b.exit.point.ele ?? 0)} m) -> ` +
-          `${b.outside.id} (${named.get(b.outside.id) ?? 'unnamed'}, ` +
-          `${Math.round(b.outside.point.ele ?? 0)} m), ${b.gapM} m away and ${b.climbM} m higher. ` +
+          `${b.outside.label} (${Math.round(b.outside.at.ele)} m), ` +
+          `${b.gapM} m away and ${b.climbM} m higher. ` +
+          (b.outside.edgeId
+            ? `NOTE that target is a point ALONG a run rather than one of its ends, so a link ` +
+              `there would split that run. `
+            : '') +
           `A link there would free ${b.frees} of the ${b.nodes.length} trapped node(s)` +
           (b.frees < b.nodes.length
             ? ` - the rest drain somewhere else, so ONE link cannot fix this basin.`

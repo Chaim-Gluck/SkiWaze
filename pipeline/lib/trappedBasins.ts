@@ -37,8 +37,13 @@ export interface TrappedBasin {
    * skiers who can reach it, so on a one-way descent the nearest node is usually the useless one.
    */
   exit: GraphNode;
-  /** The node outside nearest to `exit`. */
-  outside: GraphNode;
+  /**
+   * Where a link from `exit` would actually land. Usually this is an existing node, but very often
+   * the nearest terrain is the *side* of a run rather than either of its ends — a run only carries
+   * a graph node where it meets or ends, so its whole middle is nodeless. Searching nodes alone
+   * therefore overstates the gap and can point the reviewer at the wrong spot entirely.
+   */
+  outside: BasinTarget;
   gapM: number;
   /**
    * How many of the basin's nodes a link at `exit` would actually free (i.e. how many can ski to
@@ -65,14 +70,125 @@ export interface TrappedBasin {
   acceptedWhy?: string;
 }
 
+/**
+ * Somewhere outside the basin a rescue link could attach.
+ *
+ * It is deliberately NOT a `GraphNode`. Measuring node-to-node was a structural blind spot: at
+ * Sella Ronda's Nives / La Poza skiweg the detector proposed a 258 m link at -4.6%, while the run
+ * that actually passes the skiweg's west end does so 157 m away at -8.3% — 100 m shorter and a far
+ * more plausible ski grade — as interior vertex 6 of 25, where there is no node at all. A human
+ * spotted it on the map; the detector could not.
+ */
+export interface BasinTarget {
+  at: { lon: number; lat: number; ele: number };
+  /** Set when the target is an existing graph node. */
+  nodeId?: string;
+  /** Set when the target is a point ALONG an edge — a link here would split that edge. */
+  edgeId?: string;
+  /** Something a reviewer can find on the map: a node id, or a run name plus its way. */
+  label: string;
+}
+
 /** A basin smaller than this is a dead-end stub, not a stranded sector. */
 const MIN_SIGNIFICANT_NODES = 3;
+
+/**
+ * How far out to look for a rescue target. Beyond this nobody would bridge anyway, and the cap is
+ * what keeps the segment search cheap — it bounds how many grid cells each basin node visits.
+ */
+const MAX_TARGET_M = 1500;
+
+/** Grid cell size for the segment index. Comfortably above the typical piste segment length. */
+const CELL_M = 250;
 
 const distM = (a: { lon: number; lat: number }, b: { lon: number; lat: number }): number => {  const rad = Math.PI / 180;
   const x = (b.lon - a.lon) * Math.cos(((a.lat + b.lat) / 2) * rad) * 111320;
   const y = (b.lat - a.lat) * 111320;
   return Math.hypot(x, y);
 };
+
+interface Seg {
+  ax: number;
+  ay: number;
+  bx: number;
+  by: number;
+  aEle: number;
+  bEle: number;
+  edgeId: string;
+  label: string;
+}
+
+/**
+ * Nearest point on segment AB to P, all in local metres. Returns the distance plus the fraction
+ * along the segment, so the caller can interpolate the elevation and the lon/lat back out.
+ */
+function projectOnSeg(
+  px: number,
+  py: number,
+  s: Seg,
+): { d: number; t: number } {
+  const dx = s.bx - s.ax;
+  const dy = s.by - s.ay;
+  const len2 = dx * dx + dy * dy;
+  // A degenerate segment is just its start point; clamping t to 0 avoids a divide by zero.
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - s.ax) * dx + (py - s.ay) * dy) / len2));
+  return { d: Math.hypot(px - (s.ax + t * dx), py - (s.ay + t * dy)), t };
+}
+
+/**
+ * Index every segment of every edge that lies wholly outside the basin, so a basin node can find
+ * the nearest point on a run rather than the nearest node. Local metric coordinates are computed
+ * once against a fixed origin, because doing trigonometry per candidate is what would make this
+ * search too slow to run over the whole fleet.
+ */
+function buildSegIndex(
+  graph: ResortGraph,
+  inside: Set<string>,
+  origin: { lon: number; lat: number },
+): { cells: Map<string, Seg[]>; toXY: (p: { lon: number; lat: number }) => [number, number] } {
+  const rad = Math.PI / 180;
+  const kx = Math.cos(origin.lat * rad) * 111320;
+  const toXY = (p: { lon: number; lat: number }): [number, number] => [
+    (p.lon - origin.lon) * kx,
+    (p.lat - origin.lat) * 111320,
+  ];
+  const cells = new Map<string, Seg[]>();
+  const put = (s: Seg) => {
+    // Register under every cell the segment's bounding box touches, so a long segment is still
+    // found from a cell its endpoints do not occupy.
+    const i0 = Math.floor(Math.min(s.ax, s.bx) / CELL_M);
+    const i1 = Math.floor(Math.max(s.ax, s.bx) / CELL_M);
+    const j0 = Math.floor(Math.min(s.ay, s.by) / CELL_M);
+    const j1 = Math.floor(Math.max(s.ay, s.by) / CELL_M);
+    for (let i = i0; i <= i1; i++)
+      for (let j = j0; j <= j1; j++) {
+        const k = `${i},${j}`;
+        const list = cells.get(k);
+        if (list) list.push(s);
+        else cells.set(k, [s]);
+      }
+  };
+  for (const e of graph.edges) {
+    // A lift's geometry is a cable in the air. Its interior is not a place, so projecting onto it
+    // invents a mid-span boarding point - which is exactly the mistake `coincidentNodes` is already
+    // guarded against. Measured: without this, St. Anton's Fluehen basin was handed a target 10 m
+    // away and 162 m UP, because the Ruefikopfbahn span passes directly overhead. Lift STATIONS are
+    // still valid targets; they are nodes, and nodes are searched separately.
+    if (e.kind === 'lift') continue;
+    // An edge with an end inside the basin is not a rescue target: it is either how you fall in or
+    // part of the basin itself, so projecting onto it proves nothing.
+    if (inside.has(e.from) || inside.has(e.to)) continue;
+    const g = e.geometry;
+    if (!g || g.length < 2) continue;
+    const label = e.pisteName ?? e.liftName ?? (e.srcWayId ? `w${e.srcWayId}` : e.kind);
+    for (let i = 0; i + 1 < g.length; i++) {
+      const [ax, ay] = toXY(g[i]);
+      const [bx, by] = toXY(g[i + 1]);
+      put({ ax, ay, bx, by, aEle: g[i].ele ?? 0, bEle: g[i + 1].ele ?? 0, edgeId: e.id, label });
+    }
+  }
+  return { cells, toXY };
+}
 
 /** Kosaraju SCCs, iterative so a 5k-node resort can't blow the stack. */
 function stronglyConnected(
@@ -249,14 +365,21 @@ export function findTrappedBasins(
     }
     const entries = graph.edges.filter((e) => !inside.has(e.from) && inside.has(e.to));
 
-    // Which node should we point the reviewer at? The obvious answer - the basin node that is
-    // geometrically nearest anything outside - is wrong, and was wrong on 6 of 16 fleet basins.
-    // A link only frees the skiers who can REACH it, and on a one-way descent the nearest point
-    // is usually the TOP: linking it frees the one person standing there and leaves everyone who
-    // has already skied down still trapped (Bamby/Altin freed 1 of 4, Termignon 1 of 5, Leisse
-    // 1 of 3, Balmbrunnen 1 of 6). So rank candidates by how much of the basin they actually free
-    // first, and only use distance to break ties. The reported gap gets longer, which is honest:
-    // it is the real cost of fixing the basin rather than the cost of a link that fixes nothing.
+    // Both halves of this search had a blind spot; they are independent and were fixed separately.
+    //
+    // (a) WHICH BASIN NODE to escape from. The obvious answer — the basin node geometrically
+    // nearest anything outside — is wrong, and was wrong on 6 of 16 fleet basins. A link only frees
+    // the skiers who can REACH it, and on a one-way descent the nearest point is usually the TOP:
+    // linking it frees the one person standing there and leaves everyone who has already skied down
+    // still trapped (Bamby/Altin freed 1 of 4, Termignon 1 of 5, Leisse 1 of 3, Balmbrunnen 1 of 6).
+    // So rank candidates by how much of the basin they actually free first, and only use distance to
+    // break ties. The reported gap gets longer, which is honest: it is the real cost of fixing the
+    // basin rather than the cost of a link that fixes nothing.
+    //
+    // (b) WHAT TO AIM AT outside it — see `BasinTarget`. Searching outside *nodes* only is a
+    // structural blind spot, because a run carries a node where it meets or ends and nowhere else,
+    // so the entire middle of every run was invisible. That understates nothing and overstates the
+    // gap, which matters because the gap is the number a human accepts or rejects the basin on.
     const reachersOf = (() => {
       const rev = new Map<string, string[]>();
       for (const e of graph.edges) {
@@ -280,21 +403,69 @@ export function findTrappedBasins(
       };
     })();
 
+    const { cells, toXY } = buildSegIndex(graph, inside, nodes[0].point);
+    const reach = Math.ceil(MAX_TARGET_M / CELL_M);
+    /** Nearest point on any outside RUN, as opposed to the nearest outside node. */
+    const nearestOnEdge = (p: { lon: number; lat: number }): { d: number; t: number; seg: Seg } | null => {
+      const [px, py] = toXY(p);
+      const ci = Math.floor(px / CELL_M);
+      const cj = Math.floor(py / CELL_M);
+      let best: { d: number; t: number; seg: Seg } | null = null;
+      // Widen ring by ring and stop as soon as the best hit is closer than the ring itself could
+      // improve on — the whole point of the cap is to avoid scanning every segment in the resort.
+      for (let r = 0; r <= reach; r++) {
+        if (best && best.d <= (r - 1) * CELL_M) break;
+        for (let i = ci - r; i <= ci + r; i++)
+          for (let j = cj - r; j <= cj + r; j++) {
+            if (r > 0 && Math.abs(i - ci) !== r && Math.abs(j - cj) !== r) continue;
+            for (const s of cells.get(`${i},${j}`) ?? []) {
+              const pr = projectOnSeg(px, py, s);
+              if (pr.d < (best?.d ?? Infinity)) best = { d: pr.d, t: pr.t, seg: s };
+            }
+          }
+      }
+      return best && best.d <= MAX_TARGET_M ? best : null;
+    };
+
     let gapM = Infinity;
     let freed = -1;
     let exit: GraphNode | null = null;
-    let outside: GraphNode | null = null;
+    let outside: BasinTarget | null = null;
+    const take = (f: number, d: number, n: GraphNode, t: BasinTarget) => {
+      if (f > freed || (f === freed && d < gapM)) {
+        freed = f;
+        gapM = d;
+        exit = n;
+        outside = t;
+      }
+    };
     for (const n of nodes) {
       const f = reachersOf(n.id);
       if (f < freed) continue;
       for (const m of outsideNodes) {
-        const d = distM(n.point, m.point);
-        if (f > freed || d < gapM) {
-          freed = f;
-          gapM = d;
-          exit = n;
-          outside = m;
-        }
+        take(f, distM(n.point, m.point), n, {
+          at: { lon: m.point.lon, lat: m.point.lat, ele: m.point.ele ?? 0 },
+          nodeId: m.id,
+          label: m.id,
+        });
+      }
+      const on = nearestOnEdge(n.point);
+      if (on) {
+        // Interpolate the landing point back out of the segment so the reviewer gets a real
+        // coordinate and an honest climb figure, not just a distance.
+        const rad = Math.PI / 180;
+        const kx = Math.cos(nodes[0].point.lat * rad) * 111320;
+        const x = on.seg.ax + on.t * (on.seg.bx - on.seg.ax);
+        const y = on.seg.ay + on.t * (on.seg.by - on.seg.ay);
+        take(f, on.d, n, {
+          at: {
+            lon: nodes[0].point.lon + x / kx,
+            lat: nodes[0].point.lat + y / 111320,
+            ele: on.seg.aEle + on.t * (on.seg.bEle - on.seg.aEle),
+          },
+          edgeId: on.seg.edgeId,
+          label: `${on.seg.label} (along ${on.seg.edgeId})`,
+        });
       }
     }
     if (!exit || !outside) continue;
@@ -310,7 +481,7 @@ export function findTrappedBasins(
       outside,
       gapM: Math.round(gapM),
       frees: freed,
-      climbM: Math.round((outside.point.ele ?? 0) - (exit.point.ele ?? 0)),
+      climbM: Math.round((outside as BasinTarget).at.ele - ((exit as GraphNode).point.ele ?? 0)),
       significant: pisteEdges > 0 && nodes.length >= MIN_SIGNIFICANT_NODES,
     });
   }

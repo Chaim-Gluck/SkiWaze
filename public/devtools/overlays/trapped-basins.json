@@ -12805,7 +12805,7 @@
         "color": "#16a34a",
         "r": 13,
         "tag": "outside +27m",
-        "label": "<b>n329644544</b> La Curta (bottom) · 1245 m<br>1245 m Ã¢â‚¬â€ nearest node outside, 290 m away"
+        "label": "<b>n329644544</b><br>1245 m, 290 m away<br><i>nearest node outside</i>"
       }
     ],
     "notes": "1 trapped basin(s), 175 node(s) stranded. Red = trapped; green = the way in; amber = shortest candidate link."
