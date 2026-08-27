@@ -1,9 +1,19 @@
 {
   "removePistes": [
-    { "bbox": [6.95973, 45.45736, 6.96111, 45.45923] }
+    {
+      "bbox": [
+        6.95973,
+        45.45736,
+        6.96111,
+        45.45923
+      ]
+    }
   ],
   "reclassifyLift": [
-    { "pisteName": "Carpe Diem", "liftType": "magic_carpet" }
+    {
+      "pisteName": "Carpe Diem",
+      "liftType": "magic_carpet"
+    }
   ],
   "addConnectors": [
     {
@@ -11,6 +21,18 @@
       "to": "n3969371697",
       "kind": "flat_traverse",
       "bidirectional": true
+    }
+  ],
+  "acceptedBasins": [
+    {
+      "nodes": [
+        "n249848222",
+        "n249848221",
+        "n12872108645",
+        "n249848225",
+        "n12872108641"
+      ],
+      "why": "Termignon (Val d'Isere, Pointe du Montet side, 3116-3343 m): the Termignon 1 and Termignon 2 drags plus their red run form a self-contained pod. You ski in at 3356 m and the drags return you only to 3330 m - 22 m below, and 114 m away from, the nearest node outside. The way on from here is the off-piste descent toward Termignon, which is freeride terrain, not a mapped piste. Reviewed on the map by the user: free-ride off-piste, do not add a link. We never invent terrain we cannot verify, so this is signed off rather than bridged."
     }
   ]
 }

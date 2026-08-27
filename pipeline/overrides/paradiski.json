@@ -1,12 +1,19 @@
 {
   "_comment": "Paradiski (Les Arcs / La Plagne).",
   "_comment2": "Arc 1600 funicular top. The Funiculaire Arc-en-Ciel (Les Arcs' Express) is the link from Bourg-Saint-Maurice, and it is bidirectional, but in OSM its top station has no edge onto the Les Arcs piste network - everything reachable downhill from it runs back down the valley. Compiled, that made the whole Bourg-Saint-Maurice / Arc 1600 side a 28-node trapped basin: ride up, and nothing gets you onto the mountain. The arrival station is a multi-level building at the resort entrance and skiers walk out of it straight onto the Bois de Saule piste top, so the real-world height difference is stairs inside the station, not a climb. Joined station -> piste top as a flat traverse both ways (79 m, +2 m).",
+  "_comment3": "Arc 1950 village, Allee du Mont Blanc + its magic carpet. The blue Allee du Mont Blanc ends at 2022 m and the carpet lifts you 39 m back up to 2031 m - but nothing leaves that top, so the pocket is ski-in-and-lap-forever. The village ski-streets (OSM 'Rue de la Piste des Etoiles' and 'Arc 1950') pass 56 m away at 2037 m, and the pipeline built the downhill direction into the pocket (n5361324491 -> n10774972298, skiable_down) while leaving no way back. Reviewed on the map by the user. Both DEMs agree on every node here within 1-2 m, so the 6 m step is real, not a bad sample - this is a short village push at the top of a carpet, which is exactly what the carpet exists for. Added the missing uphill direction only; the downhill one already exists.",
   "addConnectors": [
     {
       "from": "n5398032847",
       "to": "n2298495857",
       "kind": "flat_traverse",
       "bidirectional": true
+    },
+    {
+      "from": "n10774972298",
+      "to": "n5361324491",
+      "kind": "flat_traverse",
+      "_why": "Magic carpet top (2031 m) -> Arc 1950 village ski-street junction (2037 m), 56 m. One-way up: the reverse already exists as a synthetic skiable_down."
     }
   ]
 }

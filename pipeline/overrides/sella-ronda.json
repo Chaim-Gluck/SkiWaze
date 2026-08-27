@@ -1,15 +1,16 @@
 {
   "_comment_serrai": "The Serrai di Sottoguda gorge below Malga Ciapela is mapped in OSM as 22 ways named 'Serrai di Sottoguda' tagged piste:type=downhill + piste:difficulty=freeride, which compiled into a 25-node trapped basin running from Malga Ciapela down the gorge to Sottoguda with no way back. It is not a ski run. The gorge was destroyed by storm Vaia in 2018 and reopened in June 2025 as a ticketed walking-only nature trail (200 visitors at a time); in winter it is open on foot for walkers and ice climbers with an explicit prohibition on entering by ski or sled, and skiers moving between Sottoguda and Malga Ciapela use the SR641 road or the ski bus. Removing it is a safety fix as much as a connectivity one - we must never route anyone into it. The old tourist 'trenino' shuttle through the gorge is not returning.",
+  "_comment_montepana": "The Monte Pana gravel forest road above Santa Cristina used to be removed here by a `{ name: 'Monte Pana' }` entry plus three hand-drawn bboxes. It is now deleted generically by `isPrivateHikingTrack` in pipeline/lib/overpass.ts (piste:type=connection + highway=track + sac_scale + private), so those four entries were dropped as redundant - verified against the post-rule way list, they matched 0 ways. The hand fix was also incomplete: a bbox only caught the middle of the road, leaving the upper 1.8 km as a 7-node trapped basin with no entry edges and a 3-node stub on the main body. All 18 matching ways were reviewed on the debug map before the rule was adopted.",
   "removePistes": [
-    { "name": "Monte Pana" },
     { "name": "Promenade Luis Trenker Weg - Passeggiata Luis Trenker" },
-    { "name": "Serrai di Sottoguda" },
-    { "bbox": [11.69736, 46.53262, 11.70974, 46.54507] },
-    { "bbox": [11.71247, 46.54704, 11.71544, 46.55068] },
-    { "bbox": [11.70985, 46.54502, 11.71288, 46.54757] }
+    { "name": "Serrai di Sottoguda" }
   ],
   "reclassifyLift": [
-    { "pisteName": "Gherdënia Ronda Express - Gardena Ronda Express", "liftType": "funicular", "bidirectional": true }
+    {
+      "pisteName": "Gherdënia Ronda Express - Gardena Ronda Express",
+      "liftType": "funicular",
+      "bidirectional": true
+    }
   ],
   "addConnectors": [
     {
@@ -21,14 +22,33 @@
   ],
   "_comment_elevation": "DEM under-sample fixes found via `npm run check:elevation` (cross-check vs Terrarium DEM) and confirmed on the topo map. Each pair was a piste reversed because our SRTM sample read the true top too low: (1) n312683471/n1180399118 near 2900 m — n1180399118 (~2925) is the top, run skis n1180399118->n312683471; (2) n1352350593/n269039752 near 2360 m — n1352350593 (~2370) is the top, run skis n1352350593->n269039752; (3) n1011618218/n269039125 near 1510 m — n1011618218 (~1523) is the top, run skis n1011618218->n269039125.",
   "setNodeElevation": [
-    { "node": "n1180399118", "ele": 2925 },
-    { "node": "n312683471", "ele": 2908 },
-    { "node": "n1352350593", "ele": 2370 },
-    { "node": "n269039752", "ele": 2355 },
-    { "node": "n1011618218", "ele": 1523 },
-    { "node": "n269039125", "ele": 1500 }
+    {
+      "node": "n1180399118",
+      "ele": 2925
+    },
+    {
+      "node": "n312683471",
+      "ele": 2908
+    },
+    {
+      "node": "n1352350593",
+      "ele": 2370
+    },
+    {
+      "node": "n269039752",
+      "ele": 2355
+    },
+    {
+      "node": "n1011618218",
+      "ele": 1523
+    },
+    {
+      "node": "n269039125",
+      "ele": 1500
+    }
   ],
-  "ignoreReversals": [    {
+  "ignoreReversals": [
+    {
       "from": "n13031955177",
       "to": "n13039689977",
       "why": "Malga Ciapela valley floor (~1440 m). Terrarium reads the east end 25 m higher (a tight 3-node pothole: n13039689977, n12009588137, sn13039689977 all -21..-25 m; every other node within 300 m agrees). Checked on the map: the run really does fall west->east. 'Correcting' it would flip the piste east->west and strand n13039689977/n12009588137, whose only other links are a 22 m flat pair, inside an already-orphaned valley component. Our orientation is right; the DEM is wrong."
@@ -36,12 +56,77 @@
   ],
   "acceptedBasins": [
     {
-      "nodes": ["n340588435", "n340588441", "n3326396035", "n10744934139", "n340588438"],
+      "nodes": [
+        "n340588435",
+        "n340588441",
+        "n3326396035",
+        "n10744934139",
+        "n340588438"
+      ],
       "why": "Vajolet I + Vajolet II (Catinaccio / Rosengarten, above Pera di Fassa). A real satellite ski area in the Val di Fassa with its own two chairlifts and run 8, not linked to the Sella Ronda network by any piste - you get there by ski bus. Reviewed on the map: nothing to add and nothing to remove, so it is signed off rather than fixed. (Two nodes of the Vajolet II top sit just west of the bbox; they are kept because the sector is real terrain, it is simply not reachable on skis.)"
     },
     {
-      "nodes": ["n299140317", "n299140320"],
+      "nodes": [
+        "n299140317",
+        "n299140320"
+      ],
       "why": "Aloch (Pozza di Fassa) is a real satellite ski area with its own chairlift and drag, not linked to the Sella Ronda network by any run - you reach it by ski bus. Reviewed on the map: there is no missing connector to add and nothing to remove. Keeping it in the graph is correct, so this is signed off rather than fixed."
+    },
+    {
+      "nodes": [
+        "n360965364",
+        "n360965365",
+        "n360965369",
+        "n12309090739",
+        "n6308437415"
+      ],
+      "why": "Col d'Altin (La Villa, Alta Badia) is the ski-school field, not a sector. The Col d'Altin platter runs 1409 -> 1421 m - twelve metres of vertical - serving two nursery runs (Col d'Altin 1 and 2) plus two magic carpets. Reviewed on the map: there is nothing to connect. The 109 m / +5 m gap to Colz - Doninz is real, and a beginner finishing here walks; inventing a connector would route real traffic across a teaching area."
+    },
+    {
+      "nodes": [
+        "n269039125",
+        "n1011618218",
+        "n1011618217",
+        "n1011618204",
+        "n2194255374"
+      ],
+      "why": "Canazei village run-out (runs 6a Canazei / Rodella 3-Tre). This is simply how the Canazei runs end: they finish at the edge of the village near the farm buildings, NOT at a lift. Confirmed against resort sources - from there it is a 5-10 minute walk through Canazei, or the Val di Fassa ski bus, to the Canazei - Pecol gondola. Our data agrees: 6a Canazei (bottom) 1500 m -> Canazei - Pecol (bottom) 1446 m, 435 m away and 54 m below, straight through the built-up village. Reviewed on the map by the user: no link should be added, because the gap is a street, not snow."
+    },
+    {
+      "nodes": [
+        "n1620644793",
+        "n1620644791",
+        "n11624886113",
+        "n11624886114",
+        "n4422009761",
+        "n6572856358"
+      ],
+      "why": "Plan da Tieja (Selva/Santa Cristina) is a private/nursery pod, not a stranded sector. The whole thing spans 1470-1492 m - TWENTY-TWO metres of vertical - served by a 203 m platter (Plan da Tieja) plus a 32 m magic carpet, over one green run. The main body is 127 m away and 2 m below. Reviewed on the map by the user twice: read as a ski-in to a house / a baby ski area, with nothing that needs connecting anywhere."
+    },
+    {
+      "nodes": [
+        "n1149155677",
+        "n1149155667",
+        "n2610898952",
+        "sn1149155677"
+      ],
+      "why": "Four-node fragment above Alba/Penia (11.914, 46.427) spanning SEVEN metres of vertical (1423-1430 m). It is a 26 m black stub plus a 52 m unclassified connector, welded to a synthetic snap node - and it has NO entry edges, so nothing can even ski into it. Reviewed on the map by the user: just noise, do not add a link. Signed off so it stops consuming review attention; if OSM ever fleshes this out, drop the entry and rebuild."
+    },
+    {
+      "nodes": [
+        "n3326359000",
+        "n3326359001",
+        "n3326359003"
+      ],
+      "why": "Avisio (Canazei, by the river at 11.769/46.474) is a beginners area, not a stranded sector. The Avisio lift climbs 1445 -> 1484 m - THIRTY-NINE metres of vertical - with a second 42 m lift beside it, serving one short blue. The main body is 411 m away across the valley floor. Reviewed on the map by the user: most likely a kids area, sign off, no link. Signed off rather than bridged."
+    },
+    {
+      "nodes": [
+        "n13026658141",
+        "n13026658137",
+        "n13026660883"
+      ],
+      "why": "Skiweg Skilift Nives - La Poza (Selva): one continuous cat-track, ways w1417548453 -> w1417549594, running E->W from n13026660883 (1559 m) to n13026658141 (11.74212/46.55956, 1508 m) at about 4%, and simply stopping in the meadow. INVESTIGATED IN DETAIL, then signed off for lack of evidence. The detector proposed n13026658137 -> n13572040925 (258 m, -12 m, -4.6%). The user pointed at a different line, and they were right: run w1479527780 passes the skiweg's west end at 157 m as an INTERIOR vertex (6/25), -13 m, -8.3% - 100 m shorter and a plausible ski grade. The detector could not see it because it only measures node-to-node and there is no node there (fix tracked separately). The destination was right either way: w1479527780 + w1479527781 end ~18 m from the Gardena Ronda Express bottom station (n329667428), which is reachable. BUT a full OSM vertex-list search of that corridor found NOTHING mapped in the 157 m between the two runs - they are parallel with bare ground between. Plausible is not evidence, and we never invent terrain, so no link is added. If anyone ever confirms a link from an official piste map, add it at the west end n13026658141 (NOT at the detector’s suggested node) and drop this entry."
     }
   ]
 }

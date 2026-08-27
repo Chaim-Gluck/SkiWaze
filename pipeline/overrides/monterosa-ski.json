@@ -15,5 +15,11 @@
       "kind": "flat_traverse",
       "bidirectional": true
     }
+  ],
+  "acceptedBasins": [
+    {
+      "nodes": ["n8496741886", "n8496741858", "n8496741892", "n3294909171", "n3294909172"],
+      "why": "Wold (Antagnod) is a self-contained ski-school pod, not a stranded sector. Wold 1 and Wold 2 are drags climbing 1263 -> 1342 m (79 m of vertical) over two short blue runs, and 'Baby wold' is a 52 m drag with 2 m of vertical on a green. It has NO entry edges at all - you cannot even ski into it - and the network is 1285 m away and 91 m below. Reviewed on the map by the user: a ski-school area, nothing to connect. (Separately checked the Otro valley the user circled nearby: everything there is aerialway=goods private cargo ropeway, correctly rejected by isPassengerLift. Nothing is missing.)"
+    }
   ]
 }

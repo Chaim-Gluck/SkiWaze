@@ -23,6 +23,10 @@
     {
       "nodes": ["n1259978729", "n1165759951", "n1259978687", "n1259978714", "n1165759824"],
       "why": "Walchlift and Angerlift, the two village nursery drags on the north side of Stuben, with their own short pistes. They sit across the main Arlbergstrasse and the Alfenz from the ski area proper, and no run or lift links them to it - you walk. Reviewed on the map: correctly disconnected, so this is signed off rather than bridged."
+    },
+    {
+      "nodes": ["n6208824734", "n5125495652", "n1875105036", "n6208824730", "n1795360560"],
+      "why": "Schroecken village (1258-1512 m). Runs 310 Skiroute - Nesslegg - Schroecken, 309 Skiroute - Aelpele (Dorfabfahrt Schroecken) and Klemm all bottom out in the village and nothing carries a skier back up: the cheapest escape climbs 243 m over 623 m. That is correct, because the lift that would close it IS NOT BUILT - the village gondola is OSM w660999299 aerialway=proposed, note 'in Planung'. Today you ride the ski bus. Signed off rather than bridged; when the gondola opens, drop this entry and rebuild rather than adding a connector."
     }
   ],
   "addConnectors": [

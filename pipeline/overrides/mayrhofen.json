@@ -1,30 +1,108 @@
 {
   "_comment_elevation_reversals": "DEM under-sample fixes found via `npm run check:elevation` and confirmed on the topo map via the map debug tool's flow arrows. Each pair was a piste reversed because our SRTM sample read one endpoint too low; corrected to the Terrarium DEM values (which matched the topo reads). Several were near-flat mis-samples that showed spurious both-way arrows and become clean one-way descents once corrected. n321004740 is a special case: it sits at a hut/restaurant entrance that is artificially flattened for pedestrian access, so it is set ~level with n7256146736 (2073, within flat tolerance) to KEEP the n7256146736<->n321004740 traverse bidirectional, deliberately overriding the DEM (which reads ~2083).",
   "setNodeElevation": [
-    { "node": "n321002946", "ele": 1983 },
-    { "node": "n321002959", "ele": 1946 },
-    { "node": "n3504064122", "ele": 1952 },
-    { "node": "n357164662", "ele": 1916 },
-    { "node": "n2183940176", "ele": 2033 },
-    { "node": "n2183964098", "ele": 1999 },
-    { "node": "n474792418", "ele": 2389 },
-    { "node": "n321002506", "ele": 2366 },
-    { "node": "n11694536224", "ele": 2050 },
-    { "node": "n333963576", "ele": 2031 },
-    { "node": "n321002745", "ele": 1897 },
-    { "node": "n321002746", "ele": 1879 },
-    { "node": "n12567381733", "ele": 1720 },
-    { "node": "n360066081", "ele": 1701 },
-    { "node": "n7256146736", "ele": 2072 },
-    { "node": "n2183940209", "ele": 2058 },
-    { "node": "n360067737", "ele": 2140 },
-    { "node": "n1130068925", "ele": 2128 },
-    { "node": "n321004740", "ele": 2073 },
-    { "node": "n281873162", "ele": 2400 },
-    { "node": "n357164716", "ele": 1893 }
+    {
+      "node": "n321002946",
+      "ele": 1983
+    },
+    {
+      "node": "n321002959",
+      "ele": 1946
+    },
+    {
+      "node": "n3504064122",
+      "ele": 1952
+    },
+    {
+      "node": "n357164662",
+      "ele": 1916
+    },
+    {
+      "node": "n2183940176",
+      "ele": 2033
+    },
+    {
+      "node": "n2183964098",
+      "ele": 1999
+    },
+    {
+      "node": "n474792418",
+      "ele": 2389
+    },
+    {
+      "node": "n321002506",
+      "ele": 2366
+    },
+    {
+      "node": "n11694536224",
+      "ele": 2050
+    },
+    {
+      "node": "n333963576",
+      "ele": 2031
+    },
+    {
+      "node": "n321002745",
+      "ele": 1897
+    },
+    {
+      "node": "n321002746",
+      "ele": 1879
+    },
+    {
+      "node": "n12567381733",
+      "ele": 1720
+    },
+    {
+      "node": "n360066081",
+      "ele": 1701
+    },
+    {
+      "node": "n7256146736",
+      "ele": 2072
+    },
+    {
+      "node": "n2183940209",
+      "ele": 2058
+    },
+    {
+      "node": "n360067737",
+      "ele": 2140
+    },
+    {
+      "node": "n1130068925",
+      "ele": 2128
+    },
+    {
+      "node": "n321004740",
+      "ele": 2073
+    },
+    {
+      "node": "n281873162",
+      "ele": 2400
+    },
+    {
+      "node": "n357164716",
+      "ele": 1893
+    }
   ],
   "_comment2": "n357164716 (blue 11 Gerent, ~1890 m): we read 1870 while Terrarium reads 1893, and the +-10 m neighbour sweep shows the neighbours only at the -10 m noise floor, so this is a genuine single-node spike. Topology confirms it: at 1870 the node was a pothole — both blue Gerent edges (from n357164713 and from n10717652947) drained INTO it and the only exit was e1060, an unnamed 129 m app-added connector rather than a real run. At 1893 Gerent becomes the clean descending chain n357164713 1908 -> n357164716 1893 -> n10717652947 1877 -> n7231387779 1875, matching the on-the-ground direction (the slope runs n357164716 -> n10717652947).",
   "addConnectors": [
-    { "from": "n321004740", "to": "n7256146736", "kind": "flat_traverse", "bidirectional": true }
+    {
+      "from": "n321004740",
+      "to": "n7256146736",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    }
+  ],
+  "acceptedBasins": [
+    {
+      "nodes": [
+        "n9713443733",
+        "n9713443731",
+        "n9713443732"
+      ],
+      "why": "Uebungsland Horberg ('practice ground') is the village nursery slope at the Horbergbahn base, not a stranded sector. It spans 616-646 m - THIRTY metres of vertical, at 639 m altitude, i.e. the Mayrhofen valley floor - and consists of one 144 m carpet plus a 151 m green. It has no entry edges, so nothing can ski into it, and the network is 230 m away across the valley bottom. Reviewed on the map by the user: do not add a link. Signed off rather than bridged."
+    }
   ]
 }

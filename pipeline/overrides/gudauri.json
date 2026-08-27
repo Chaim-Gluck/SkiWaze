@@ -1,11 +1,31 @@
 {
   "_comment": "Gudauri corrections. (1) 'Frini' blue piste reversal: the top/north endpoint n6225190102 (42.5111, 44.4929), which is really the ~2951 m summit hub next to sn6211635548 (13 m away, correctly 2951 m) and where the Frini run's own polyline peaks at 2951 m, was DEM-sampled at 2698 m. That false low made the 2.4 km Frini piste orient south->north (uphill) and pushed the short Kobi top link n6225190102->sn6211635548 uphill too. It slipped past the global pothole repair because n6225190102 is a piste_endpoint whose only piste-way neighbour is the low sn6211635547 (the n6225190102->sn6211635548 Kobi link is an inferred 8 m connector), so it read as a genuine run end. Set n6225190102 to 2951 m so Frini descends north->south and Kobi's top stays level. (2) DEM cross-check (`npm run check:elevation`) + map verification: the n1815101343->n1708888875 arrows ran uphill. n1708888875 is really ~2840 m and n1815101343 ~2826 m, so that link descends n1708888875->n1815101343. n1815101343 is the shared bottom of the n13564024959 and n1708888875 runs and sits only ~42 m from the 2813 m lift-station cluster (n11464490749/sn1708888489/n11711980247/n1708888489), but OSM has no way joining them, so correcting the elevations left n1815101343 with no exit. Add the missing short ski-out n1815101343->n11464490749 (~13 m drop over ~42 m) that the old, too-high n1815101343 elevation had been masking.",
   "setNodeElevation": [
-    { "node": "n6225190102", "ele": 2951 },
-    { "node": "n1708888875", "ele": 2840 },
-    { "node": "n1815101343", "ele": 2826 }
+    {
+      "node": "n6225190102",
+      "ele": 2951
+    },
+    {
+      "node": "n1708888875",
+      "ele": 2840
+    },
+    {
+      "node": "n1815101343",
+      "ele": 2826
+    }
   ],
   "addConnectors": [
-    { "from": "n1815101343", "to": "n11464490749", "kind": "skiable_down" }
-  ]
+    {
+      "from": "n1815101343",
+      "to": "n11464490749",
+      "kind": "skiable_down"
+    },
+    {
+      "from": "n1709514022",
+      "to": "n6262963526",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    }
+  ],
+  "_comment_zuma": "(3) Zuma nursery pod (New Gudauri base, 2136-2190 m: the Zuma drag plus greens Zuma-1 and Zuma-2) was a trapped basin - you can ski INTO it (n6262963526 -> n4674246815, 56 m) but nothing led back out, so a beginner who rode Zuma could never rejoin the mountain. The gap is from the Zuma top station n1709514022 (2190 m) to the base hub n6262963526 (2185 m): 49 m and 5 m DOWN, across open ground at the foot of the lifts. Nothing is mapped there simply because OSM stops drawing pistes on a lift-base apron. Reviewed on the map by the user, who confirmed the link should be added. Modelled as a bidirectional flat traverse because that is what it is on the ground - a ~10% apron you skate across in either direction. Worth noting for the pipeline: at 49 m this is a NEAR MISS of snapToLineRadius (45 m), i.e. four metres from having been bridged automatically. Do not widen that constant on the strength of this one case - measure the fleet first."
 }
