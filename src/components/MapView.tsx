@@ -235,6 +235,38 @@ export interface NavRender {
  * full slopes/lifts. Keeps the "whole-of-Europe" overview cheap (only centres, always loaded). */
 const RESORT_MARKER_MAXZOOM = 8.5;
 
+/**
+ * Global-vs-resort is an explicit MODE, not a proximity guess.
+ *
+ * Zooming out past `RESORT_MARKER_MAXZOOM` enters global view, and you stay there — flags visible
+ * at every zoom, no resort drawn — until you pick a resort from the list or click its flag. The
+ * earlier zoom-only behaviour looked broken from either side: zooming in past the threshold made a
+ * non-selected resort's flag vanish with nothing in its place, and the A/B pins kept rendering at
+ * a fixed pixel size over a resort that had shrunk to a few dozen pixels, so the pins were bigger
+ * than the mountain.
+ */
+const GLOBAL_VIEW_LAYERS_HIDDEN = [
+  'route-casing',
+  'route-line',
+  'route-synthetic',
+  'route-custom',
+  'route-step',
+  'focus-line',
+  'nav-traveled',
+  'nav-remaining-casing',
+  'nav-remaining',
+];
+
+/**
+ * Below this zoom the A/B pins and custom-link dots are hidden. They are drawn at a fixed pixel
+ * size, so once a 10 km resort is under ~150 px across a pin covers a meaningful part of it. This
+ * has to sit ABOVE `RESORT_MARKER_MAXZOOM`: at 8.5 a resort is already only ~30 px wide, so gating
+ * on the mode threshold alone would still leave a band where the pin dwarfs the mountain.
+ * Deliberately NOT applied to the route line, which is thin and stays readable when zoomed out —
+ * and hiding it could blank a long route that "fit to route" had just framed at a low zoom.
+ */
+const PIN_MINZOOM = 10.5;
+
 /** Detailed slope/lift layers hidden below the marker zoom so dots cleanly replace them. */
 const RESORT_DETAIL_LAYERS = [
   'areas-fill',
@@ -301,11 +333,18 @@ interface MapViewProps {
   resorts?: ResortIndexEntry[];
   selectedResortId?: string;
   onSelectResort?: (id: string) => void;
+  /** True while the map is in global (flags-only) view. Owned by App so the picker can leave it. */
+  globalView?: boolean;
+  /** Fired when the user zooms out past the threshold and the map enters global view. */
+  onEnterGlobalView?: () => void;
+  /** Bumped by App on every resort selection, so re-picking the current resort still re-frames. */
+  resortFrameSeq?: number;
 }
 
 export function MapView({
   center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, fitRequest, onMapClick,
   userPosition, following, nav, navHeadingUp, resorts, selectedResortId, onSelectResort,
+  globalView = false, onEnterGlobalView, resortFrameSeq = 0,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -353,6 +392,18 @@ export function MapView({
   selectedResortIdRef.current = selectedResortId;
   const onSelectResortRef = useRef(onSelectResort);
   onSelectResortRef.current = onSelectResort;
+  const globalViewRef = useRef(globalView);
+  globalViewRef.current = globalView;
+  const onEnterGlobalViewRef = useRef(onEnterGlobalView);
+  onEnterGlobalViewRef.current = onEnterGlobalView;
+  /** Pins are hidden below PIN_MINZOOM; tracked as state so the marker effects can react. */
+  const [pinsVisible, setPinsVisible] = useState(true);
+  /**
+   * True while OUR OWN camera animation is in flight. Without it, leaving global view deadlocks:
+   * the re-framing easeTo starts at the zoomed-out level, the zoom handler sees a low zoom with
+   * `globalView` already false, and flips straight back into global view.
+   */
+  const cameraGuard = useRef(false);
   const followSuspended = useRef(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wasFollowing = useRef(following);
@@ -681,7 +732,25 @@ export function MapView({
       setLoaded(true);
     });
 
-    map.on('click', (e) => clickCb.current?.({ lon: e.lngLat.lng, lat: e.lngLat.lat }));
+    // In global view a click means "pick a resort", never "drop a pin" — the flag layer's own
+    // handler deals with the former, so swallow everything else rather than placing an A/B point
+    // at some arbitrary spot in Europe.
+    map.on('click', (e) => {
+      if (globalViewRef.current) return;
+      clickCb.current?.({ lon: e.lngLat.lng, lat: e.lngLat.lat });
+    });
+    // Zoom drives BOTH mode transitions. Entering global view is one-way here: only an explicit
+    // resort selection leaves it again, which is the whole point of making it a mode.
+    const syncZoomMode = () => {
+      const z = map.getZoom();
+      setPinsVisible(z >= PIN_MINZOOM);
+      if (z < RESORT_MARKER_MAXZOOM && !globalViewRef.current && !cameraGuard.current) {
+        onEnterGlobalViewRef.current?.();
+      }
+    };
+    map.on('zoom', syncZoomMode);
+    map.on('moveend', () => { cameraGuard.current = false; });
+    syncZoomMode();
     // While following, a user gesture (pan/pinch) should NOT drop follow mode. Instead we
     // suspend auto-centering, then recentre on the user once they stop interacting for a beat.
     // `originalEvent` is present only for real user gestures (absent for our own easeTo).
@@ -771,52 +840,72 @@ export function MapView({
     for (const c of fitRequest.coords) b.extend(c);
     const mobile = typeof window !== 'undefined' && window.innerWidth <= 820;
     const padding = mobile ? { top: 72, bottom: 200, left: 32, right: 32 } : 90;
+    cameraGuard.current = true;
     map.fitBounds(b, { padding, maxZoom: 16.5, duration: 700 });
   }, [fitRequest, loaded]);
 
   useEffect(() => {
+    // In global view the camera is the user's to drive; only a resort selection re-frames.
+    if (globalView) return;
+    cameraGuard.current = true;
     mapRef.current?.easeTo({ center: [center.lon, center.lat], zoom });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [center.lon, center.lat, zoom]);
+  }, [center.lon, center.lat, zoom, globalView, resortFrameSeq]);
+
+  // Global vs resort view: flags at every zoom and nothing else, or the resort as usual.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    for (const id of ['resort-flags', 'resort-selected-glow']) {
+      if (map.getLayer(id)) map.setLayerZoomRange(id, 0, globalView ? 24 : RESORT_MARKER_MAXZOOM);
+    }
+    const hide = (id: string, hidden: boolean) => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', hidden ? 'none' : 'visible');
+    };
+    for (const id of GLOBAL_VIEW_LAYERS_HIDDEN) hide(id, globalView);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalView, loaded]);
+
+  const markersVisible = pinsVisible && !globalView;
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    if (from) {
+    if (from && markersVisible) {
       if (!fromMarker.current) fromMarker.current = new maplibregl.Marker({ color: '#2e7d32' });
       fromMarker.current.setLngLat([from.lon, from.lat]).addTo(map);
     } else {
       fromMarker.current?.remove();
       fromMarker.current = null;
     }
-    if (to) {
+    if (to && markersVisible) {
       if (!toMarker.current) toMarker.current = new maplibregl.Marker({ color: '#c62828' });
       toMarker.current.setLngLat([to.lon, to.lat]).addTo(map);
     } else {
       toMarker.current?.remove();
       toMarker.current = null;
     }
-  }, [from, to]);
+  }, [from, to, markersVisible]);
 
   // Custom-link endpoint markers (dots, distinct from the nav pins).
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    if (linkFrom) {
+    if (linkFrom && markersVisible) {
       if (!linkFromMarker.current) linkFromMarker.current = new maplibregl.Marker({ element: linkDotEl('#2e7d32') });
       linkFromMarker.current.setLngLat([linkFrom.lon, linkFrom.lat]).addTo(map);
     } else {
       linkFromMarker.current?.remove();
       linkFromMarker.current = null;
     }
-    if (linkTo) {
+    if (linkTo && markersVisible) {
       if (!linkToMarker.current) linkToMarker.current = new maplibregl.Marker({ element: linkDotEl('#c62828') });
       linkToMarker.current.setLngLat([linkTo.lon, linkTo.lat]).addTo(map);
     } else {
       linkToMarker.current?.remove();
       linkToMarker.current = null;
     }
-  }, [linkFrom, linkTo]);
+  }, [linkFrom, linkTo, markersVisible]);
 
   // Base-map switch: toggle visibility of the three base raster layers.
   useEffect(() => {
@@ -852,21 +941,23 @@ export function MapView({
     }
   }, [is3D, loaded]);
 
-  // Overlay toggles: pistes/connectors and lifts.
+  // Overlay toggles: pistes/connectors and lifts. This effect is the single owner of visibility for
+  // the resort layers, so global view is folded in here rather than fighting it from elsewhere.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded) return;
+    const vis = (on: boolean) => (on && !globalView ? 'visible' : 'none');
     const pisteLayers = ['pistes-line', 'connectors', 'synthetic-links', 'custom-links'];
-    for (const l of pisteLayers) map.setLayoutProperty(l, 'visibility', showPistes ? 'visible' : 'none');
-    map.setLayoutProperty('lifts-line', 'visibility', showLifts ? 'visible' : 'none');
-    for (const l of ['areas-fill', 'areas-outline']) map.setLayoutProperty(l, 'visibility', showAreas ? 'visible' : 'none');
-    const pisteLabelsOn = showLabels && showPistes ? 'visible' : 'none';
-    const liftLabelsOn = showLabels && showLifts ? 'visible' : 'none';
+    for (const l of pisteLayers) map.setLayoutProperty(l, 'visibility', vis(showPistes));
+    map.setLayoutProperty('lifts-line', 'visibility', vis(showLifts));
+    for (const l of ['areas-fill', 'areas-outline']) map.setLayoutProperty(l, 'visibility', vis(showAreas));
+    const pisteLabelsOn = vis(showLabels && showPistes);
+    const liftLabelsOn = vis(showLabels && showLifts);
     map.setLayoutProperty('piste-labels', 'visibility', pisteLabelsOn);
     map.setLayoutProperty('piste-arrows', 'visibility', pisteLabelsOn);
     map.setLayoutProperty('lift-labels', 'visibility', liftLabelsOn);
     map.setLayoutProperty('lift-arrows', 'visibility', liftLabelsOn);
-  }, [showPistes, showLifts, showAreas, showLabels, loaded]);
+  }, [showPistes, showLifts, showAreas, showLabels, globalView, loaded]);
 
   // Live-location puck from the shared position stream.
   useEffect(() => {

@@ -169,6 +169,10 @@ export default function App() {
   const [index, setIndex] = useState<ResortIndexEntry[] | null>(null);
   const [resortId, setResortId] = useState<string>(deepLink.resortId ?? DEFAULT_RESORT_ID);
   const [deepLinkActive, setDeepLinkActive] = useState(deepLink.lat != null && deepLink.lon != null);
+  /** Map is showing the whole-of-Europe flags view; only picking a resort leaves it. */
+  const [globalView, setGlobalView] = useState(false);
+  /** Bumped on every resort selection so the map re-frames even when the id is unchanged. */
+  const [resortFrameSeq, setResortFrameSeq] = useState(0);
   const [graph, setGraph] = useState<ResortGraph | null>(null);
   const [geo, setGeo] = useState<GeoFeatureCollection | null>(null);
   const [prefs, setPrefs] = useState<Preferences>(() => loadPreferences());
@@ -361,10 +365,15 @@ export default function App() {
   }, [resortOptions]);
   // Shared resort selection (used by both the picker and the map's overview dots). The "assumed
   // open" status notice itself is driven by the resortId effect below (gated once per resort/day).
+  // Selecting is also the ONLY way out of the map's global (flags) view — hence the seq bump, so
+  // re-picking the resort you are already on still re-frames it instead of doing nothing.
   const selectResort = useCallback((id: string) => {
     setResortId(id);
     setDeepLinkActive(false);
+    setGlobalView(false);
+    setResortFrameSeq((n) => n + 1);
   }, []);
+  const handleEnterGlobalView = useCallback(() => setGlobalView(true), []);
   // Show the "statuses assumed open" notice at most once per resort per day, on any resortId change
   // (initial landing, picker, map dot, or geolocation) — not on every selection.
   useEffect(() => {
@@ -1387,7 +1396,15 @@ export default function App() {
             resorts={index ?? []}
             selectedResortId={resortId}
             onSelectResort={selectResort}
+            globalView={globalView}
+            onEnterGlobalView={handleEnterGlobalView}
+            resortFrameSeq={resortFrameSeq}
           />
+          {globalView && (
+            <div className="pin-hint" data-testid="global-view-hint">
+              Zoomed out — click a resort flag (or pick one from the list) to open it
+            </div>
+          )}
           {pinMode && <div className="pin-hint">Click the map to set the {pinMode === 'from' ? 'From' : 'To'} point</div>}
           {linkPinMode && <div className="pin-hint">Click the map to place the link's {linkPinMode === 'from' ? '"from"' : '"to"'} point (anywhere)</div>}
           <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1 }}>

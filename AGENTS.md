@@ -481,6 +481,20 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   - A basin is only worth a human's time if **piste edges** are stranded. Filtering on that alone
     took the fleet from 122 noisy hits (lone dead-end nodes, goods ropeways, nursery drags —
     nobody could ski there anyway) to **29 real ones**.
+  - **The proposed escape has two halves, and each was wrong on its own axis.** *Which basin node
+    to leave from* is ranked by how many trapped nodes it **frees**, not by proximity (above).
+    *What to aim at* must include **points along a run**, not just its endpoints: a run carries a
+    node where it meets another run and nowhere else, so a node-only search is structurally blind
+    to the entire middle of every run and always over-states the gap. Fleet effect: 48 of 72 basins
+    improved, 8.8 km of phantom gap removed, the worst single case 1637 m → 146 m. Ground truth for
+    the fix is Sella Ronda's Nives cat-track, where a human found by eye the line the detector could
+    not (157 m as **interior vertex 6 of 25**); it now reports 156 m along that exact way. Two
+    things this must never do: **lift edges are excluded** from the projection index — a cable is
+    not a place, and including them handed St. Anton's Flühen basin a target 10 m away and 162 m
+    **up**, the Rüfikopfbahn passing overhead (lift *stations* are still valid, they are nodes) —
+    and it stays a **review aid**: it proposes, a human disposes, nothing is ever linked
+    automatically. When you change it, re-diff the reported gaps against the accepted sign-offs,
+    because a sign-off's stated gap is the number the human judged on and it goes stale.
 - **bbox spill** (`pipeline/lib/bboxSpill.ts`, automatic in `build.ts`): Overpass returns a way in
   **full** if *any* of its nodes touches the bbox, so a neighbouring resort's terrain leaks in —
   Cervinia carried Monterosa's Sant'Anna–Colle Betta chair and its B1 run. The test must be
@@ -679,6 +693,23 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   (location puck, on-map arrows, route lines, piste badges, pin hints) — they must read over the
   unchanging map tiles in both themes, so don't tie them to the light panel colour.
 - Mobile = **bottom sheet** (≤820px), not a bottom-nav bar.
+- **Global vs resort is an explicit MODE, not a zoom range** (`globalView` in `App.tsx`, threshold
+  `RESORT_MARKER_MAXZOOM` in `MapView.tsx`). Zooming out past the threshold enters global view; the
+  **only** ways out are picking a resort from the list or clicking its flag. Driving it off zoom
+  alone was broken from both sides: zooming *in* made a non-selected resort's flag vanish with
+  nothing in its place, and the A/B pins are drawn at a fixed pixel size, so they kept rendering
+  *larger than the whole resort* once it shrank. Three things this needs, each a bug if omitted:
+  - **A camera guard.** Leaving global view re-frames with an `easeTo` that *starts* at the
+    zoomed-out level, so the zoom handler would see a low zoom with `globalView` already false and
+    flip straight back. `cameraGuard` suppresses the transition during our own animations.
+  - **A frame sequence number.** Clicking the flag of the resort you are already on changes no
+    state, so nothing would re-frame. `resortFrameSeq` makes every selection distinct.
+  - **One owner per layer.** Global view and the layer-picker toggles both set `visibility` on the
+    piste/lift layers, so global view is folded *into* the toggle effect rather than fighting it —
+    otherwise leaving global view leaves the pistes hidden.
+  Pins get their **own, higher** threshold (`PIN_MINZOOM`): at the mode threshold a resort is
+  already only ~30 px across. The route line is deliberately *not* gated — it stays readable when
+  zoomed out, and hiding it could blank a long route that "fit to route" had just framed.
 
 ## Outstanding follow-ups (not in v1)
 - Login/accounts; Strava integration for personal average speeds.
