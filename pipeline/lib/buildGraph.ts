@@ -533,6 +533,15 @@ export function buildResortGraph(
   const pisteEndpointNames: { nodeId: string; name: string; role: 'top' | 'bottom' }[] = [];
   for (const piste of pistes) {
     const armEdgeStart = edges.length;
+    // Does this way START at a lift station? A mapper who draws a run from the station is stating
+    // where you get on it, and that is the one place the "orient high -> low" rule below can
+    // destroy rather than repair. See the leadingClimb branch further down for the case.
+    const startCanon = piste.points.length ? canonicalOf.get(piste.points[0].osmId) : undefined;
+    let leadingClimb =
+      !piste.area &&
+      piste.skeletonArm !== true &&
+      startCanon != null &&
+      nodes.get(startCanon)?.isLiftStation === true;
     for (const seg of segmentWay(piste.points, canonicalOf)) {
       const a = node(seg.from);
       const b = node(seg.to);
@@ -561,6 +570,7 @@ export function buildResortGraph(
             pisteRef: piste.ref,
             area: piste.area || undefined,
             srcWayId: piste.wayId,
+            offPiste: piste.offPiste,
           });
         }
       } else {
@@ -582,6 +592,7 @@ export function buildResortGraph(
           pisteRef: piste.ref,
           area: piste.area || undefined,
           srcWayId: piste.wayId,
+            offPiste: piste.offPiste,
         });
         const label = piste.ref && piste.name ? `${piste.ref} ${piste.name}` : piste.ref ? `Piste ${piste.ref}` : piste.name;
         if (label) {
@@ -618,8 +629,53 @@ export function buildResortGraph(
             pisteRef: piste.ref,
             area: piste.area || undefined,
             srcWayId: piste.wayId,
+            offPiste: piste.offPiste,
           });
         }
+
+        // The run's opening climb away from its own lift station.
+        //
+        // Every piste segment is oriented high -> low from its two endpoint elevations, which is
+        // the right rule almost everywhere. It is wrong for a run that leaves its lift and crosses
+        // a col before descending: the opening stretch is flipped to point back down at the
+        // station, so the ONLY way off that lift disappears and the station becomes terrain you
+        // can ride to and never leave. Measured case: Cervinia/Zermatt `w58069456` (ref 72
+        // "Furggsattel", intermediate) is drawn from the Furggsattel chair top station
+        // n713084121 and climbs 21 m over the saddle in its first 91 m before dropping 300 m down
+        // the far side. Flipped, it produced a 3-node trapped basin at the top of a working
+        // chairlift, and no connector could fix it because the escape is genuinely uphill.
+        //
+        // So re-emit the stretch in the direction the mapper drew it, as a ONE-WAY connector
+        // rather than a piste: a connector is charged CLIMB_SECONDS_PER_M for every metre of
+        // ascent, so the push costs real time (~4 min here) and routing will not abuse it, while
+        // the descent orientation above is left untouched. Deliberately NOT flagged `synthetic`:
+        // that flag is wired to "avoid app-added bridges", and this is load-bearing lift access
+        // taken straight from a real OSM way — the same reasoning that keeps polygon arms unflagged.
+        //
+        // Only the LEADING climb qualifies (`leadingClimb` clears at the way's first real descent),
+        // only when the way starts at a lift station, and only up to `liftAccessClimbMax`. Those
+        // three guards are what stop this from resurrecting the bug the high -> low rule exists to
+        // prevent: an `area=yes` ring arcing over a rim starts at neither a lift nor a small rise.
+        if (leadingClimb && drop > c.maxTraverseClimb && drop <= c.liftAccessClimbMax) {
+          edges.push({
+            id: nextEdgeId(),
+            from: seg.from,
+            to: seg.to,
+            kind: 'connector',
+            connectorKind: 'flat_traverse',
+            geometry: seg.geometry,
+            lengthM,
+            dropM: geomDrop(seg.geometry),
+            gradient: lengthM > 0 ? geomDrop(seg.geometry) / lengthM : 0,
+            color: piste.color,
+            pisteName: piste.name,
+            pisteRef: piste.ref,
+            area: piste.area || undefined,
+            srcWayId: piste.wayId,
+            offPiste: piste.offPiste,
+          });
+        }
+        if (drop < 0) leadingClimb = false;
       }
     }
     if (piste.skeletonArm === true && edges.length > armEdgeStart) {
@@ -731,30 +787,50 @@ export function buildResortGraph(
       }
       if (!best) continue;
       const X = best.edge;
-      const P = best.point;
-      // One snap node per dead-end, so name it after the dead-end it serves: deterministic and
-      // stable across refreshes, unlike a running counter.
-      const N = `s${E.id}`;
-      if (nodes.has(N)) continue;
-      nodes.set(N, { id: N, lon: P.lon, lat: P.lat, ele: P.ele, isLiftStation: false, members: [] });
-      // Split X at P (preserving its downhill direction and attributes).
-      const g1 = [...X.geometry.slice(0, best.segIdx), P];
-      const g2 = [P, ...X.geometry.slice(best.segIdx)];
-      const fromEle = nodes.get(X.from)?.ele ?? 0;
-      const toEle = nodes.get(X.to)?.ele ?? 0;
-      const idx = edges.indexOf(X);
-      if (idx >= 0) edges.splice(idx, 1);
-      pushSplitHalf({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: (P.ele ?? 0) - fromEle });
-      pushSplitHalf({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: toEle - (P.ele ?? 0) });
+      let P = best.point;
+      let N: string;
+      // A projection that lands on one of X's OWN endpoints must reuse that node, never split
+      // there. Splitting yields a zero-length half which a later pass drops as degenerate; the
+      // surviving half then starts at the synthetic copy and the real node is orphaned, so the
+      // terrain above it becomes unreachable. Measured at Monte Pana (sella-ronda): the snap for
+      // n608511307 projected 0.0 m from n461618303, the start of w401909471, and the snap for
+      // n608511305 projected 0.0 m from n290213577, the start of w47843680 — both runs ended up
+      // beginning at an `s…` duplicate and the basin above had zero in-edges. Hmerge is the
+      // project's own definition of "same place", so anything inside it IS that node.
+      const dFromEnd = haversineM(P, nodeGeo(X.from));
+      const dToEnd = haversineM(P, nodeGeo(X.to));
+      if (Math.min(dFromEnd, dToEnd) <= c.Hmerge) {
+        N = dFromEnd <= dToEnd ? X.from : X.to;
+        if (N === E.id) continue;
+        P = nodeGeo(N);
+      } else {
+        // One snap node per dead-end, so name it after the dead-end it serves: deterministic and
+        // stable across refreshes, unlike a running counter.
+        N = `s${E.id}`;
+        if (nodes.has(N)) continue;
+        nodes.set(N, { id: N, lon: P.lon, lat: P.lat, ele: P.ele, isLiftStation: false, members: [] });
+        // Split X at P (preserving its downhill direction and attributes).
+        const g1 = [...X.geometry.slice(0, best.segIdx), P];
+        const g2 = [P, ...X.geometry.slice(best.segIdx)];
+        const fromEle = nodes.get(X.from)?.ele ?? 0;
+        const toEle = nodes.get(X.to)?.ele ?? 0;
+        const idx = edges.indexOf(X);
+        if (idx >= 0) edges.splice(idx, 1);
+        pushSplitHalf({ ...X, id: nextEdgeId(), to: N, geometry: g1, lengthM: polylineLength3dM(g1), dropM: (P.ele ?? 0) - fromEle });
+        pushSplitHalf({ ...X, id: nextEdgeId(), from: N, geometry: g2, lengthM: polylineLength3dM(g2), dropM: toEle - (P.ele ?? 0) });
+      }
       // Link the dead-end onto the run at N. A very close touch (<= Hmerge) is a real
       // junction (not flagged); a larger gap is an app guess (flagged synthetic).
+      // Recompute the gap against P: when N was reused, P moved from the projection to the
+      // node itself, so best.dist is no longer the length of the link we are about to draw.
+      const linkM = haversineM(ep, P);
       const dz = (P.ele ?? 0) - E.ele;
       const flagged = best.dist > c.Hmerge;
       if (dz < -c.maxTraverseClimb) {
-        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'skiable_down', geometry: [ep, P], lengthM: best.dist, dropM: -Math.abs(dz), synthetic: flagged });
+        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'skiable_down', geometry: [ep, P], lengthM: linkM, dropM: -Math.abs(dz), synthetic: flagged });
       } else {
-        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'flat_traverse', geometry: [ep, P], lengthM: best.dist, dropM: geomDrop([ep, P]), synthetic: flagged });
-        edges.push({ id: nextEdgeId(), from: N, to: E.id, kind: 'connector', connectorKind: 'flat_traverse', geometry: [P, ep], lengthM: best.dist, dropM: geomDrop([P, ep]), synthetic: flagged });
+        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'flat_traverse', geometry: [ep, P], lengthM: linkM, dropM: geomDrop([ep, P]), synthetic: flagged });
+        edges.push({ id: nextEdgeId(), from: N, to: E.id, kind: 'connector', connectorKind: 'flat_traverse', geometry: [P, ep], lengthM: linkM, dropM: geomDrop([P, ep]), synthetic: flagged });
       }
       snapped++;
     }

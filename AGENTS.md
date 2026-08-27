@@ -401,6 +401,62 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   and 55% of everything drawn within 5 m of a spine. They are load-bearing (they make gateway
   crossings work in both directions), so do **not** "fix" them by widening `ARM_CLIP_M` — that was
   tried and moved the number the wrong way (29.4% → 32.1%).
+- **A slope's direction comes from its endpoints, so a run that *starts by climbing* can strand its
+  own lift.** `buildGraph.ts` orients every piste segment high→low from its two endpoint elevations.
+  Cervinia's run 72 Furggsattel (`w58069456`, `piste:difficulty=intermediate`) is drawn starting **at
+  the chairlift top station**, climbs **+21 m over the col in its first 91 m**, then descends — so the
+  opening stretch was flipped to point back at the station and the chair lost its only ski-out,
+  trapping the sector. The DEM was innocent (it agreed within 2 m at every node); the *rule* was the
+  bug. Fix: when a way starts at a lift station and its opening segment climbs by more than
+  `maxTraverseClimb` but no more than `liftAccessClimbMax` (40 m), emit an **extra one-way connector
+  in the as-drawn uphill direction** alongside the untouched descending piste. It is not flagged
+  `synthetic` — it comes from real OSM geometry and is load-bearing lift access, not an app guess —
+  and `cost.ts` charges `CLIMB_SECONDS_PER_M` (12 s/m) on it, so a 20 m push costs ~4 min and the
+  router will not abuse it. Blast radius is exactly **14 edges fleet-wide**, all 28–203 m; count them
+  any time with the census in the session artifacts.
+- **Off-piste is not a piste, and importing it as one is a safety bug — but the trigger must be
+  `piste:difficulty`, not grooming.** We mapped `piste:difficulty=freeride|extreme` straight to black
+  and routed over unmarked, unpatrolled, avalanche-exposed terrain with no signal to the skier.
+  Tignes' Leisse even carries `patrolled=no`, `piste:grooming=backcountry` **and**
+  `note="Off-piste. Under your responsability."` — three explicit warnings, all ignored. It also
+  manufactured phantom connectivity defects: the Balme couloirs and Leisse were both reported as
+  trapped basins when nothing was missing from OSM. `NormPiste.offPiste` / `GraphEdge.offPiste` now
+  carry the flag, `cost.ts` refuses those edges unless `Preferences.allowOffPiste` (default
+  **false**), and `trappedBasins.ts` does not count them as stranded piste.
+  **Do not widen the trigger to `piste:grooming=backcountry`.** Measured fleet-wide: freeride/extreme
+  is 205 ways (2.5%), but backcountry-alone is another 169 ways and **17.4% of St. Anton** — that is
+  how mappers tag a signposted *Skiroute*/itinéraire, which is marked, advertised terrain the user
+  has already reviewed and kept. Grooming is corroboration, never the trigger.
+- **A snap must never split a line at its own endpoint.** The dead-end→line snap pass projects an
+  endpoint onto a nearby piste and splits it there. When the projection lands **on that line's own
+  end node**, the "upper half" is zero-length, a later pass drops it as degenerate, and the surviving
+  half then starts at the synthetic `s…` copy — orphaning the real node and taking everything above
+  it out of the graph. At Monte Pana (sella-ronda) this happened **twice at 0.0 m**: `sn608511307`
+  on top of `n461618303` (start of `w401909471`) and `sn608511305` on top of `n290213577` (start of
+  `w47843680`), and the basin above ended up with **zero in-edges**. Fix: if the projection is within
+  `Hmerge` of either endpoint of the target edge, **reuse that node and do not split** — `Hmerge` is
+  already the project's definition of "same place". Recompute the link length afterwards, because the
+  attachment point moves from the projection to the node.
+- **`conveying` is a fourth way-family, and an escalator can be a sector's only way in.** OSM tags
+  resort escalators and moving walkways `conveying=yes|forward|backward|both` on an ordinary
+  `highway=steps`/`footway`, so queries for `piste:type`, `aerialway` and `railway` all miss them.
+  Ortisei's **La Curta** (`w29910707`, `w29912017`, `w1123139686`) is the link to the Alpe di Siusi
+  side; without it that whole **181-node / 23-lift** sector reads as terrain you can ski into and
+  never leave, and the outside node it should reach is literally named "La Curta (top)". It must be
+  modelled as a **lift**, not a connector: `maxTraverseClimb` is 8 m and gates every connector path,
+  while the La Curta chain climbs **56 m**. Hence `LiftType 'people_mover'`, which is deliberately
+  **absent from `ALL_LIFT_TYPES` and the prefs UI** and therefore **exempt from the
+  `allowedLiftTypes` gate in `cost.ts`** — every returning user's persisted array predates the type,
+  so gating it would silently re-strand the sector (the same class of bug as the `speeds` map).
+  **Changing `buildQuery` does not invalidate the cache** (keyed by resort id + TTL), so this needs a
+  full `data:refresh` before it does anything.
+- **Validate the probe before you believe the probe — including the argument order.** `near-point.ts`
+  takes `<resortId> <lon> <lat> <radius>`; called with lat and lon swapped it reported **"0 ways
+  within 260 m"** at a point where a way demonstrably *starts*. A confident zero is the most
+  dangerous probe result there is. The same day, two Overpass mirrors returned HTTP 500/502 for a new
+  query and the obvious conclusion — "my query syntax is wrong" — was also wrong: re-running a
+  **known-good** query against the same endpoint failed identically, proving the servers were down.
+  Always have a known-good control before blaming your own change.
 - **Longest-run "doubling-back"** was winding piste edges (descend-then-climb) over-rewarded by
   raw length; fixed by scoring straight-line progress and penalizing internal uphill.
 - **Islands / one-way sub-areas**: find via strongly-connected-component analysis, not just
@@ -487,6 +543,35 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   review — some are roads/ski-bus links (long + near-flat → `removePistes` by name/bbox), some
   are lifts mis-tagged as pistes (funicular, magic carpet → `reclassifyLift`), some are real
   runs (long + steady descent, e.g. a race stadium → keep).
+- **A private hiking track is not a piste, and a hand-drawn bbox is the wrong tool for saying so.**
+  `isPrivateHikingTrack` (`pipeline/lib/overpass.ts`) drops a way carrying **all four** of
+  `piste:type=connection` + `highway=track` + `sac_scale=*` + `vehicle|access=private`. Each signal is
+  load-bearing and the conjunction was tuned against a fleet census, not guessed: without
+  `connection` it swallows the **619** `downhill` ways on forest roads (21.6% of Paradiski) that are
+  genuine named runs — *Città dei Sassi*, *Réservoir*, piste *27*; without the private tag it takes
+  two more that a human reviewed and kept, one a paved village path in Mayrhofen
+  (`surface=paving_stones`). As tuned it matches **18 ways fleet-wide**, all Sella Ronda, all one
+  thing: the Monte Pana gravel forest road plus the Saltria tracks. All 18 were eyeballed on
+  `mapdebug` before adoption.
+  The real lesson is *how the old fix failed*. That road was already being deleted by hand —
+  `removePistes: {name:'Monte Pana'}` plus three bboxes — but a rectangle drawn on a map only caught
+  the **middle** of it: the upper 1.8 km survived as a **7-node trapped basin with no entry edges at
+  all** (nothing could even ski into it) and a 3-node stub hung off the main body. A tag rule cannot
+  half-cover a feature the way a rectangle can. Removing the whole road cost nothing measurable —
+  main SCC 1606 → 1605, and the only nodes losing reachability were that same road's stub — and took
+  the fleet from **2 trapped basins / 188 stranded to 1 / 175**. The four now-redundant override
+  entries were deleted, which is the point: a generic rule should *replace* the hand fix, not sit
+  beside it.
+  Two traps met while doing it: (a) **`removePistes` bbox filters built graph EDGES, not normalized
+  ways** — it drops any *unrated* edge whose midpoint is inside the box, so my "is this override
+  redundant?" probe, which tested the normalized piste list, said "redundant" while the box was in
+  fact still deleting **6 synthetic connectors** at the Santa Cristina lift base (they turned out to
+  be legitimate base-area links between adjacent stations, so dropping the box was still right —
+  but the probe had lied). (b) The bisect that found the culprit is the reusable technique: run
+  `buildResortGraph` **alone** on cached data, then re-apply `build.ts`'s passes one at a time
+  reporting the watched edges after each. It showed the graph was built correctly and
+  `applyOverrides` cut 7 edges → 2, which immediately killed a day's worth of hunting for a
+  non-existent snap/direction bug.
 - **Not every `aerialway=*` way is a lift.** We used to accept the tag wholesale, which routed skiers
   onto private cargo ropeways (`goods` — e.g. "Zmutt" above Zermatt, `access=private`), zip lines,
   avalanche-control and dismantled lifts. `isPassengerLift` in `pipeline/lib/overpass.ts` now filters

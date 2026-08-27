@@ -31,11 +31,21 @@ export interface TrappedBasin {
   pisteEdges: number;
   /** Edges that lead into the basin: how a skier falls in. */
   entries: GraphEdge[];
-  /** The node inside closest to anything outside — the natural place to link. */
+  /**
+   * The node inside to link, chosen so that a link there frees as much of the basin as possible.
+   * NOT simply the nearest node: see the comment at the selection site. A link only helps the
+   * skiers who can reach it, so on a one-way descent the nearest node is usually the useless one.
+   */
   exit: GraphNode;
-  /** The nearest node outside the basin. */
+  /** The node outside nearest to `exit`. */
   outside: GraphNode;
   gapM: number;
+  /**
+   * How many of the basin's nodes a link at `exit` would actually free (i.e. how many can ski to
+   * it). Equal to `nodes.length` when the whole basin drains to one point. Less than that means
+   * the basin has several independent sinks and one link cannot fix all of it.
+   */
+  frees: number;
   /** How much higher `outside` sits than `exit`. Positive means escaping needs a climb. */
   climbM: number;
   /**
@@ -228,19 +238,59 @@ export function findTrappedBasins(
       if (!inside.has(e.from) || !inside.has(e.to)) continue;
       if (e.kind === 'lift') lifts.add(e.liftName ?? 'unnamed lift');
       else {
-        if (e.kind === 'piste') pisteEdges++;
+        // Off-piste terrain does not count as stranded piste. A freeride line you can only ski
+        // into is not a connectivity defect — that is what off-piste IS — and reporting it sent a
+        // reviewer chasing two phantom basins at Tignes (Balme couloirs, Leisse) where nothing was
+        // missing from OSM at all. Counting only real pistes makes the detector answer the question
+        // it is actually asking: "is groomed, marked terrain cut off?"
+        if (e.kind === 'piste' && !e.offPiste) pisteEdges++;
         if (e.pisteName) pistes.add(e.pisteName);
       }
     }
     const entries = graph.edges.filter((e) => !inside.has(e.from) && inside.has(e.to));
 
+    // Which node should we point the reviewer at? The obvious answer - the basin node that is
+    // geometrically nearest anything outside - is wrong, and was wrong on 6 of 16 fleet basins.
+    // A link only frees the skiers who can REACH it, and on a one-way descent the nearest point
+    // is usually the TOP: linking it frees the one person standing there and leaves everyone who
+    // has already skied down still trapped (Bamby/Altin freed 1 of 4, Termignon 1 of 5, Leisse
+    // 1 of 3, Balmbrunnen 1 of 6). So rank candidates by how much of the basin they actually free
+    // first, and only use distance to break ties. The reported gap gets longer, which is honest:
+    // it is the real cost of fixing the basin rather than the cost of a link that fixes nothing.
+    const reachersOf = (() => {
+      const rev = new Map<string, string[]>();
+      for (const e of graph.edges) {
+        if (!inside.has(e.from) || !inside.has(e.to)) continue;
+        const list = rev.get(e.to);
+        if (list) list.push(e.from);
+        else rev.set(e.to, [e.from]);
+      }
+      return (target: string) => {
+        const seen = new Set([target]);
+        const q = [target];
+        while (q.length) {
+          for (const p of rev.get(q.pop()!) ?? []) {
+            if (!seen.has(p)) {
+              seen.add(p);
+              q.push(p);
+            }
+          }
+        }
+        return seen.size;
+      };
+    })();
+
     let gapM = Infinity;
+    let freed = -1;
     let exit: GraphNode | null = null;
     let outside: GraphNode | null = null;
     for (const n of nodes) {
+      const f = reachersOf(n.id);
+      if (f < freed) continue;
       for (const m of outsideNodes) {
         const d = distM(n.point, m.point);
-        if (d < gapM) {
+        if (f > freed || d < gapM) {
+          freed = f;
           gapM = d;
           exit = n;
           outside = m;
@@ -259,6 +309,7 @@ export function findTrappedBasins(
       exit,
       outside,
       gapM: Math.round(gapM),
+      frees: freed,
       climbM: Math.round((outside.point.ele ?? 0) - (exit.point.ele ?? 0)),
       significant: pisteEdges > 0 && nodes.length >= MIN_SIGNIFICANT_NODES,
     });

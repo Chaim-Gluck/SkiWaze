@@ -38,6 +38,7 @@ function geoJson(graph: ResortGraph, areaPolys: AreaPoly[]) {
         ref: e.pisteRef ?? null,
         connectorKind: e.connectorKind ?? null,
         synthetic: e.synthetic ?? false,
+        offPiste: e.offPiste ?? false,
       },
       geometry: {
         type: 'LineString' as const,

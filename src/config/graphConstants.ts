@@ -38,6 +38,15 @@ export interface GraphConstants {
   flatGradeMax: number;
   /** Max absolute rise (m) allowed on any flat traverse (reverse cat-track / rescue) — you can skate a small rise, not climb. */
   maxTraverseClimb: number;
+  /**
+   * Max rise (m) of a run's *opening* climb away from a lift station that we still model as an
+   * access push rather than a mis-drawn way. Piste segments are oriented high -> low from their
+   * endpoint elevations, which is right almost everywhere and wrong for a run that leaves its lift
+   * and crosses a col before descending: the opening stretch gets flipped, and the lift loses its
+   * only ski-out. Beyond this cap the climb is no longer a push a skier would make, so we keep the
+   * plain high -> low orientation and let the basin check report it instead of inventing a link.
+   */
+  liftAccessClimbMax: number;
   /** Flat-junction pass: max horizontal distance (m) to bridge a dangling piste end across a flat. */
   flatJunctionRadius: number;
   /** Flat-junction pass: max elevation difference (m) to treat as the same flat area (DEM-noise tolerant). */
@@ -85,6 +94,7 @@ export const DEFAULT_GRAPH_CONSTANTS: GraphConstants = {
   rescueLineRadius: 130,
   flatGradeMax: 0.06,
   maxTraverseClimb: 8,
+  liftAccessClimbMax: 40,
   flatJunctionRadius: 120,
   flatJunctionDV: 8,
   flatJunctionK: 2,

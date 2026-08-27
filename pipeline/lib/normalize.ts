@@ -27,6 +27,24 @@ export interface NormPiste {
   skeletonArm?: boolean;
   /** See `levelKeyFor`. */
   levelKey?: string;
+  /**
+   * True when OSM says this is not a piste at all but off-piste/freeride terrain.
+   *
+   * We used to map `piste:difficulty=freeride|extreme` straight to black and route on it like any
+   * other run, which is a safety problem: it puts unmarked, unpatrolled, avalanche-exposed terrain
+   * into a suggested route with no signal to the skier. It also produced phantom "trapped basins" —
+   * Tignes' Balme couloirs and Leisse are freeride lines you can only ski into, and both were
+   * reported as connectivity defects when nothing was missing at all. Leisse even carries
+   * `patrolled=no`, `piste:grooming=backcountry` and `note="Off-piste. Under your responsability."`,
+   * i.e. three explicit warnings we ignored.
+   *
+   * The trigger is **difficulty only**. `piste:grooming=backcountry` on its own is how mappers tag a
+   * signposted *ski route* (an itinéraire — marked and part of the advertised network, just ungroomed
+   * and unpatrolled); it covers 169 fleet ways and 17% of St. Anton, whose Skirouten are real terrain
+   * the user has already reviewed and kept. Freeride/extreme is 205 ways (2.5%) and means "this is
+   * not a piste". Measured with offpiste-census.
+   */
+  offPiste?: boolean;
   points: NormPoint[];
 }
 
@@ -103,6 +121,8 @@ function liftTypeFor(tags: Record<string, string>): LiftType {
   // Ground-running lifts (see RAIL_LIFT_TYPES in overpass.ts). A rack railway is modelled as a
   // funicular: for routing purposes both are a fixed track that carries skiers in both directions.
   if (RAIL_LIFT_TYPES.has(tags['railway'])) return 'funicular';
+  // Resort escalators / moving walkways (see isPeopleMover in overpass.ts).
+  if (tags['conveying'] && tags['conveying'] !== 'no') return 'people_mover';
   return 'unknown';
 }
 
@@ -129,7 +149,10 @@ function toPoints(w: RawWay): NormPoint[] {
   }));
 }
 
+const OFF_PISTE_DIFFICULTIES = new Set(['freeride', 'extreme']);
+
 export function normalizePiste(w: RawWay): NormPiste {
+  const difficulty = w.tags['piste:difficulty'];
   return {
     wayId: w.id,
     color: colorFor(w.tags),
@@ -137,6 +160,7 @@ export function normalizePiste(w: RawWay): NormPiste {
     ref: w.tags['piste:ref'] || w.tags['ref'],
     area: isPisteArea(w),
     levelKey: levelKeyFor(w.tags),
+    offPiste: difficulty ? OFF_PISTE_DIFFICULTIES.has(difficulty) : undefined,
     points: toPoints(w),
   };
 }

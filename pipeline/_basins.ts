@@ -120,7 +120,7 @@ function main(): void {
         size: b.nodes.length,
         label:
           `${id}: ${basinLabel(b)} (${b.nodes.length} nodes, ${b.lifts.length} lift(s), ` +
-          `gap ${b.gapM}m, exit ${b.climbM >= 0 ? '+' : ''}${b.climbM}m)`,
+          `gap ${b.gapM}m, exit ${b.climbM >= 0 ? '+' : ''}${b.climbM}m, frees ${b.frees}/${b.nodes.length})`,
         resort: id,
         node: b.exit.id,
         center: [
@@ -131,12 +131,16 @@ function main(): void {
         note:
           `Trapped basin: you can ski in, and nothing gets you back to the main mountain. ` +
           `Red = every trapped node (not just the core), green = the edges that lead in, ` +
-          `amber = the shortest candidate link. Exit ${b.exit.id} ` +
-          `(${named.get(b.exit.id) ?? 'unnamed'}, ${Math.round(b.exit.point.ele ?? 0)} m) Ã¢â€ â€™ ` +
+          `amber = the best candidate link. Exit ${b.exit.id} ` +
+          `(${named.get(b.exit.id) ?? 'unnamed'}, ${Math.round(b.exit.point.ele ?? 0)} m) -> ` +
           `${b.outside.id} (${named.get(b.outside.id) ?? 'unnamed'}, ` +
           `${Math.round(b.outside.point.ele ?? 0)} m), ${b.gapM} m away and ${b.climbM} m higher. ` +
-          `Wrong station height Ã¢â€ â€™ setNodeElevation; a real short walk or unmapped link Ã¢â€ â€™ ` +
-          `addConnectors; wrong resort / a separate ski area Ã¢â€ â€™ tighten the bbox.`,
+          `A link there would free ${b.frees} of the ${b.nodes.length} trapped node(s)` +
+          (b.frees < b.nodes.length
+            ? ` - the rest drain somewhere else, so ONE link cannot fix this basin.`
+            : ` (all of them: the basin drains to this point).`) +
+          ` Wrong station height -> setNodeElevation; a real short walk or unmapped link -> ` +
+          `addConnectors; wrong resort / a separate ski area -> tighten the bbox.`,
       });
     }
 

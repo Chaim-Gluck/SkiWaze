@@ -27,6 +27,14 @@ export type LiftType =
   | 'rope_tow'
   | 'magic_carpet'
   | 'mixed_lift'
+  /**
+   * A resort escalator or moving walkway (OSM `conveying=*` on a footway/steps). Deliberately NOT
+   * part of ALL_LIFT_TYPES and not offered in the preferences UI: it is a piece of resort plumbing
+   * that gets you between two parts of the mountain, not a ski lift anyone chooses to avoid.
+   * Because it is absent from `allowedLiftTypes`, `cost.ts` exempts it from that gate — otherwise
+   * every returning user's persisted array would lack it and silently strand the sector behind it.
+   */
+  | 'people_mover'
   | 'unknown';
 
 /**
@@ -155,6 +163,12 @@ export interface GraphEdge {
   synthetic?: boolean;
   /** True specifically for user-added custom links (a subset of synthetic). */
   custom?: boolean;
+  /**
+   * True when OSM tags this run `piste:difficulty=freeride|extreme` — unmarked, unpatrolled
+   * off-piste terrain rather than an actual piste. Excluded from routing unless the skier opts in
+   * via `Preferences.allowOffPiste`. See NormPiste.offPiste for why the trigger is difficulty only.
+   */
+  offPiste?: boolean;
 }
 
 export interface ResortBBox {
@@ -261,6 +275,14 @@ export interface Preferences {
   allowedLiftTypes: LiftType[];
   /** When true, exclude app-added (synthetic) bridges from routing (user custom links still allowed). */
   avoidSyntheticBridges: boolean;
+  /**
+   * When true, allow routing over off-piste/freeride terrain (`GraphEdge.offPiste`).
+   *
+   * Defaults to **false**, and deliberately so: this is unmarked, unpatrolled, avalanche-exposed
+   * terrain, and a route that silently includes it is a safety problem, not a routing preference.
+   * Opting in is the skier's decision to make explicitly.
+   */
+  allowOffPiste: boolean;
   /** When true, strongly prefer skiing over riding lifts (especially downhill lifts). */
   preferSkiing: boolean;
   /** Which "Find route" mode to use: balanced (one per objective) or a single objective ×3. */
@@ -332,6 +354,7 @@ export interface RouteWarning {
     | 'missing_opening_hours'
     | 'above_preferred_color'
     | 'questionable_edge'
+    | 'off_piste'
     | 'custom_edge';
   message: string;
 }

@@ -108,6 +108,19 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
     return { allowed: false, seconds: 0, distanceM, descentM, ascentM, weight: Infinity, warnings };
   }
 
+  // Refuse off-piste/freeride terrain unless the skier has explicitly opted in. This is unmarked,
+  // unpatrolled, avalanche-exposed ground that OSM tags `piste:difficulty=freeride|extreme`; we
+  // used to import it as an ordinary black run and route over it silently.
+  if (!prefs.allowOffPiste && edge.offPiste) {
+    return { allowed: false, seconds: 0, distanceM, descentM, ascentM, weight: Infinity, warnings };
+  }
+  if (edge.offPiste) {
+    warnings.push({
+      code: 'off_piste',
+      message: `${edge.pisteName ?? 'This section'} is off-piste (freeride): unmarked, ungroomed and unpatrolled.`,
+    });
+  }
+
   if (edge.kind === 'piste') {
     // Difficulty filter.
     if (colorRank(edge.color) > colorRank(prefs.maxDifficulty)) {
@@ -140,7 +153,10 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
   }
 
   if (edge.kind === 'lift') {
-    if (edge.liftType && !prefs.allowedLiftTypes.includes(edge.liftType)) {
+    // `people_mover` is exempt: it is resort plumbing (an escalator between two parts of the
+    // mountain), never offered in the prefs UI, and absent from every persisted `allowedLiftTypes`
+    // array — gating it would strand the sector behind it for every returning user.
+    if (edge.liftType && edge.liftType !== 'people_mover' && !prefs.allowedLiftTypes.includes(edge.liftType)) {
       return { allowed: false, seconds: 0, distanceM, descentM, ascentM, weight: Infinity, warnings };
     }
     const windows = parseDailyWindows(edge.openingHours);

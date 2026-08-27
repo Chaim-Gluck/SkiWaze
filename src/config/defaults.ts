@@ -32,6 +32,8 @@ export const DEFAULT_SPEEDS: SpeedConfig = {
     rope_tow: 1.5, // too few tagged to measure
     magic_carpet: 1.05, // measured 1.08 (n=15)
     mixed_lift: 4.65, // measured 4.65 (n=10)
+    // Escalator/moving walkway: standard escalator pace, and you stand still on it.
+    people_mover: 0.65,
   },
   // Typical, NOT peak. A rush-hour queue can be far longer, but guessing high here would make every
   // route pessimistic all day; peak queues belong with live lift status, where a real figure is
@@ -48,6 +50,8 @@ export const DEFAULT_SPEEDS: SpeedConfig = {
     rope_tow: 30,
     magic_carpet: 20,
     mixed_lift: 120,
+    // You step straight on - an escalator has no queue in any meaningful sense.
+    people_mover: 5,
   },
   fallbackSkiSpeed: 8.75,
   fallbackLiftSpeed: 3.0,
@@ -76,6 +80,9 @@ export const DEFAULT_PREFERENCES: Preferences = {
   // All lift types allowed by default.
   allowedLiftTypes: [...ALL_LIFT_TYPES],
   avoidSyntheticBridges: false,
+  // Off-piste stays OFF by default: freeride terrain is unmarked, ungroomed and unpatrolled, so a
+  // skier has to ask for it rather than be routed onto it.
+  allowOffPiste: false,
   preferSkiing: false,
   // Balanced by default: one best route per objective, deduped.
   routeType: 'balanced',

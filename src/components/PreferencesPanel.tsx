@@ -42,7 +42,7 @@ const SLOPE_HEX: Record<PisteColor, string> = {
 const LIFT_LABEL: Record<LiftType, string> = {
   gondola: 'Gondola', cable_car: 'Cable car', funicular: 'Funicular', chair_lift: 'Chair lift',
   t_bar: 'T-bar', drag_lift: 'Drag lift', platter: 'Platter', rope_tow: 'Rope tow',
-  magic_carpet: 'Magic carpet', mixed_lift: 'Mixed lift', unknown: 'Unknown',
+  magic_carpet: 'Magic carpet', mixed_lift: 'Mixed lift', people_mover: 'Escalator', unknown: 'Unknown',
 };
 
 interface Props {
@@ -208,6 +208,11 @@ export function PreferencesPanel({ prefs, onChange }: Props) {
         control={<Checkbox size="small" checked={prefs.avoidSyntheticBridges}
           onChange={(e) => onChange({ ...prefs, avoidSyntheticBridges: e.target.checked })} />}
         label={<Typography variant="body2">Avoid app-added bridges (dotted magenta gap-fills)</Typography>}
+      />
+      <FormControlLabel
+        control={<Checkbox size="small" checked={prefs.allowOffPiste}
+          onChange={(e) => onChange({ ...prefs, allowOffPiste: e.target.checked })} />}
+        label={<Typography variant="body2">Include off-piste / freeride terrain (unmarked, unpatrolled)</Typography>}
       />
       <FormControlLabel
         control={<Checkbox size="small" checked={prefs.preferSkiing}

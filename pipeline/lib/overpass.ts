@@ -43,13 +43,16 @@ function buildQuery(r: Resort): string {
   const { minLat, minLon, maxLat, maxLon } = r.bbox;
   const bbox = `${minLat},${minLon},${maxLat},${maxLon}`;
   // Downhill (and connection) pistes + all aerialway lift ways, PLUS ground-running lifts, which
-  // OSM tags as `railway`, not `aerialway` — see RAIL_LIFT_TYPES.
+  // OSM tags as `railway`, not `aerialway` — see RAIL_LIFT_TYPES. The fourth family is `conveying`:
+  // resort escalators and moving walkways, tagged on a `highway=steps`/`footway`, which carry
+  // skiers uphill between two parts of a ski area. See isPeopleMover.
   return `[out:json][timeout:120];
 (
   way["piste:type"="downhill"](${bbox});
   way["piste:type"="connection"](${bbox});
   way["aerialway"](${bbox});
   way["railway"~"^(funicular|rack)$"](${bbox});
+  way["conveying"](${bbox});
 );
 out geom;`;
 }
@@ -176,10 +179,77 @@ export function isPassengerLift(w: RawWay): boolean {
   return true;
 }
 
+/**
+ * A resort escalator / moving walkway: OSM tags it `conveying=yes|forward|backward|both` on an
+ * ordinary `highway=steps` or `highway=footway`, so all three of our other families miss it.
+ *
+ * This is not a curiosity. Ortisei's **La Curta** escalator (`w29910707` + `w29912017` +
+ * `w1123139686`) is the link between the village and the Alpe di Siusi side, and without it the
+ * whole 181-node / 23-lift Alpe di Siusi sector reads as terrain you can ski into and never leave.
+ * The outside node it should reach is literally named "La Curta (top)".
+ *
+ * It must be modelled as a **lift**, not a connector: `maxTraverseClimb` is 8 m and every
+ * connector-creation path in buildGraph is gated on it, while the La Curta chain climbs 56 m. A
+ * lift is also the honest model — you stand still and it carries you up.
+ *
+ * Two guards keep town escalators out. The query is already bbox-limited to the resort, and
+ * `access=private|no` is rejected exactly as it is for aerialways. Beyond that we rely on the fact
+ * that an escalator which touches no piste or lift node simply becomes an isolated two-node
+ * fragment: nothing can route *to* it, so it is inert rather than dangerous. It is deliberately NOT
+ * filtered on connectivity here, because connectivity is not known until the graph is built.
+ */
+export function isPeopleMover(w: RawWay): boolean {
+  const conveying = w.tags['conveying'];
+  if (!conveying || conveying === 'no') return false;
+  if (CLOSED_ACCESS.has(w.tags['access'])) return false;
+  const highway = w.tags['highway'];
+  return highway === 'steps' || highway === 'footway' || highway === 'path';
+}
+
+/**
+ * A private hiking track that someone also flagged as a piste connection — a forest road, not
+ * skiable terrain. All four signals are required, and each one is load-bearing:
+ *
+ *   `piste:type=connection`  it is not a run in its own right (it carries no difficulty), merely
+ *                            something a mapper marked as a link between runs;
+ *   `highway=track`          an unpaved farm/forest road;
+ *   `sac_scale=*`            a HIKING difficulty scale — the mapper is classifying it as a walk;
+ *   `vehicle|access=private` not a public way.
+ *
+ * Dropping any one of them breaks it, which is why the conjunction is not negotiable:
+ *  - without `connection`, it swallows 619 fleet-wide `downhill` ways on forest roads — 21.6% of
+ *    Paradiski — which are genuine named runs (Citta dei Sassi, Reservoir, piste 27, Charly);
+ *  - without the private tag it takes two more that a human reviewed on the map and kept, one of
+ *    them a paved village path in Mayrhofen (`surface=paving_stones`, `smoothness=good`).
+ *
+ * As tuned it matches 18 ways fleet-wide, all in Sella Ronda, and they are one thing: the Monte
+ * Pana gravel forest road above Santa Cristina (`sac_scale=hiking`, `vehicle=private`) plus the
+ * Saltria tracks. Reviewed on the debug map way by way and confirmed non-skiable.
+ *
+ * This generalises a fix that was previously made by hand. The Monte Pana road was already being
+ * deleted by `removePistes` name+bbox entries in the Sella Ronda override, but a hand-drawn bbox
+ * only caught the middle of it: the upper 1.8 km survived as a 7-node trapped basin with no entry
+ * edges at all, and a 3-node stub hung off the main body. Removing the whole road by its tags costs
+ * nothing else — measured on the built graph, the main SCC moves 1606 -> 1605 and the only nodes
+ * that lose reachability are that same road's stub.
+ */
+export function isPrivateHikingTrack(w: RawWay): boolean {
+  if (w.tags['piste:type'] !== 'connection') return false;
+  if (w.tags['highway'] !== 'track') return false;
+  if (!w.tags['sac_scale']) return false;
+  return w.tags['vehicle'] === 'private' || w.tags['access'] === 'private';
+}
+
 function splitWays(ways: RawWay[]): OverpassResult {
-  const lifts = ways.filter((w) => w.tags['aerialway'] || RAIL_LIFT_TYPES.has(w.tags['railway']));
+  const lifts = ways.filter(
+    (w) => w.tags['aerialway'] || RAIL_LIFT_TYPES.has(w.tags['railway']) || isPeopleMover(w),
+  );
   return {
-    pistes: ways.filter((w) => w.tags['piste:type']),
+    // A conveying way is a lift, never a piste — it can carry `piste:type` in theory but the
+    // moving walkway is what a skier actually uses.
+    pistes: ways.filter(
+      (w) => w.tags['piste:type'] && !isPeopleMover(w) && !isPrivateHikingTrack(w),
+    ),
     lifts: lifts.filter(isPassengerLift),
   };
 }

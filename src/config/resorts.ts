@@ -31,7 +31,27 @@ export const RESORTS: Resort[] = [
     name: 'Sella Ronda (Canazei)',
     country: 'Italy',
     center: { lon: 11.808, lat: 46.518 },
-    bbox: { minLon: 11.68, minLat: 46.42, maxLon: 11.94, maxLat: 46.58 },
+    // Boundary survey (Overpass, Aug 2026). The old box (minLon 11.68, maxLat 46.58, maxLon 11.94)
+    // cut straight through the Dolomiti Superski core, and the tell was the built graph spilling
+    // west, north AND east of its own declared box. 32 lifts were missing:
+    //   - Alpe di Siusi / Seiser Alm (19): Seiseralmbahn, Puflatsch, Spitzbuehl, Panorama, Bamby,
+    //     Florian, Paradiso, Monte Piz, Goldknopf, Sanon, Mezdi ... all north-west of 11.68.
+    //   - Ortisei / Seceda / Resciesa (9): Mont Seuc (the Ortisei<->Alpe di Siusi cable car),
+    //     Ortisei-Furnes, Furnes-Seceda, Rasciesa funicular, Fermeda, Cisles.
+    //   - La Crusc / Santa Croce (4), just past the old east edge.
+    // maxLat 46.58 was the meanest cut of all: it sliced 80 m below the Ferata Gran Risa funicular
+    // at La Villa (46.58071), which is how you get from the bottom of Gran Risa to the Piz la Ila
+    // gondola - so that whole corner read as a trapped basin.
+    // Plose falls out naturally past a 3.9 km empty band north of 46.615.
+    bbox: { minLon: 11.55, minLat: 46.42, maxLon: 11.955, maxLat: 46.615 },
+    // Reaching west to Ortisei also reaches south-west into Carezza / Nova Levante and Tiers am
+    // Rosengarten - a separate ski area on a separate ticket, road-linked only - and north-west to
+    // the Kastelruth village lifts (Marinzen, Dorflift), which are village drags with no link to
+    // the Alpe di Siusi plateau above them. No rectangle separates either from Val Gardena.
+    excludeBboxes: [
+      { minLon: 11.55, minLat: 46.38, maxLon: 11.63, maxLat: 46.47 },
+      { minLon: 11.55, minLat: 46.555, maxLon: 11.585, maxLat: 46.575 },
+    ],
     defaultZoom: 12,
     timezone: 'Europe/Rome',
     infoUrl: 'https://www.dolomitisuperski.com/en/',
