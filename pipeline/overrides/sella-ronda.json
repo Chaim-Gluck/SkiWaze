@@ -1,7 +1,9 @@
 {
+  "_comment_serrai": "The Serrai di Sottoguda gorge below Malga Ciapela is mapped in OSM as 22 ways named 'Serrai di Sottoguda' tagged piste:type=downhill + piste:difficulty=freeride, which compiled into a 25-node trapped basin running from Malga Ciapela down the gorge to Sottoguda with no way back. It is not a ski run. The gorge was destroyed by storm Vaia in 2018 and reopened in June 2025 as a ticketed walking-only nature trail (200 visitors at a time); in winter it is open on foot for walkers and ice climbers with an explicit prohibition on entering by ski or sled, and skiers moving between Sottoguda and Malga Ciapela use the SR641 road or the ski bus. Removing it is a safety fix as much as a connectivity one - we must never route anyone into it. The old tourist 'trenino' shuttle through the gorge is not returning.",
   "removePistes": [
     { "name": "Monte Pana" },
     { "name": "Promenade Luis Trenker Weg - Passeggiata Luis Trenker" },
+    { "name": "Serrai di Sottoguda" },
     { "bbox": [11.69736, 46.53262, 11.70974, 46.54507] },
     { "bbox": [11.71247, 46.54704, 11.71544, 46.55068] },
     { "bbox": [11.70985, 46.54502, 11.71288, 46.54757] }
@@ -26,11 +28,20 @@
     { "node": "n1011618218", "ele": 1523 },
     { "node": "n269039125", "ele": 1500 }
   ],
-  "ignoreReversals": [
-    {
+  "ignoreReversals": [    {
       "from": "n13031955177",
       "to": "n13039689977",
       "why": "Malga Ciapela valley floor (~1440 m). Terrarium reads the east end 25 m higher (a tight 3-node pothole: n13039689977, n12009588137, sn13039689977 all -21..-25 m; every other node within 300 m agrees). Checked on the map: the run really does fall west->east. 'Correcting' it would flip the piste east->west and strand n13039689977/n12009588137, whose only other links are a 22 m flat pair, inside an already-orphaned valley component. Our orientation is right; the DEM is wrong."
+    }
+  ],
+  "acceptedBasins": [
+    {
+      "nodes": ["n340588435", "n340588441", "n3326396035", "n10744934139", "n340588438"],
+      "why": "Vajolet I + Vajolet II (Catinaccio / Rosengarten, above Pera di Fassa). A real satellite ski area in the Val di Fassa with its own two chairlifts and run 8, not linked to the Sella Ronda network by any piste - you get there by ski bus. Reviewed on the map: nothing to add and nothing to remove, so it is signed off rather than fixed. (Two nodes of the Vajolet II top sit just west of the bbox; they are kept because the sector is real terrain, it is simply not reachable on skis.)"
+    },
+    {
+      "nodes": ["n299140317", "n299140320"],
+      "why": "Aloch (Pozza di Fassa) is a real satellite ski area with its own chairlift and drag, not linked to the Sella Ronda network by any run - you reach it by ski bus. Reviewed on the map: there is no missing connector to add and nothing to remove. Keeping it in the graph is correct, so this is signed off rather than fixed."
     }
   ]
 }

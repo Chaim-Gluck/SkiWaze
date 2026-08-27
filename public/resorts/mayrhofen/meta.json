@@ -8,7 +8,7 @@
       "lat": 47.16
     },
     "bbox": {
-      "minLon": 11.72,
+      "minLon": 11.695,
       "minLat": 47.12,
       "maxLon": 11.9,
       "maxLat": 47.205
@@ -17,32 +17,24 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.mayrhofner-bergbahnen.com/en/"
   },
-  "generatedAt": "2026-08-26T13:35:01.667Z",
+  "generatedAt": "2026-08-27T09:42:35.769Z",
   "stats": {
     "resortId": "mayrhofen",
-    "nodeCount": 550,
-    "edgeCount": 1454,
-    "pisteEdges": 485,
-    "liftEdges": 92,
-    "connectorEdges": 877,
-    "meaningfulPoints": 187,
-    "reachableFromLifts": 548,
-    "unreachableNodes": 2,
+    "nodeCount": 544,
+    "edgeCount": 1410,
+    "pisteEdges": 531,
+    "liftEdges": 77,
+    "connectorEdges": 802,
+    "meaningfulPoints": 193,
+    "reachableFromLifts": 543,
+    "unreachableNodes": 1,
     "warningsByCode": {
-      "suspicious_merge": 1,
-      "missing_opening_hours": 66,
+      "missing_opening_hours": 53,
       "inferred_connector": 5,
       "unreachable_component": 1
     }
   },
   "warnings": [
-    {
-      "code": "suspicious_merge",
-      "message": "Node n619309071 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n619309071"
-      ]
-    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"6er Knorren\" has no opening_hours in OSM."
@@ -82,10 +74,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"4er Lärchwald-Express\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Finkenberger Almbahn I\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -133,6 +121,18 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Lattenalm\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Beilspitzlift\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Beilspitzlift\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Finkenberger Almbahn II\" has no opening_hours in OSM."
     },
     {
@@ -153,10 +153,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"71291924\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Hinterangerlift\" has no opening_hours in OSM."
     },
     {
@@ -165,51 +161,11 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Talstation Ahornbahn\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Talstation Ahornbahn\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Hasenmuldenlift II\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Hasenmuldenlift II\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"141122929\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"141122929\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Finkenberger Almbahn I\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Finkenberger Almbahn I\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Bergstation Ahornbahn\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Bergstation Ahornbahn\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Finkenberger Almbahn I\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Finkenberger Almbahn I\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -241,10 +197,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"285962729\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Babylift Penken\" has no opening_hours in OSM."
     },
     {
@@ -269,10 +221,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"834235090\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Übungsland Penken\" has no opening_hours in OSM."
     },
     {
@@ -290,10 +238,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Übungsland Horberg\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1152550113\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -301,37 +245,32 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"1259807285\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Möslbahn I\" has no opening_hours in OSM."
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 70 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 68 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 246 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 226 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 219 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 193 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 34 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 21 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 3 unreachable zone(s) to the nearest point a skier can already get to (1 onto a piste line)."
+      "message": "Linked 1 unreachable zone(s) to the nearest point a skier can already get to (1 onto a piste line)."
     },
     {
       "code": "unreachable_component",
-      "message": "2 node(s) unreachable from the main lift network.",
+      "message": "1 node(s) unreachable from the main lift network.",
       "refs": [
-        "n1128771612",
         "n474792418"
       ]
     }

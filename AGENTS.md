@@ -40,7 +40,8 @@ pipeline/
   build.ts               orchestrator (npm run data)
   _trapped.ts, _routetest.ts   connectivity / routing smoke tests
   overrides/<id>.json    per-resort human corrections (merge/split, connectors, lift dl,
-                         setNodeElevation, removePistes, reclassifyLift)
+                         setNodeElevation, removePistes, reclassifyLift, removeConnectors,
+                         acceptedBasins)
 public/resorts/<id>/     compiled datasets: graph.json, geo.json, meta.json (+ index.json)
 ```
 
@@ -84,7 +85,16 @@ and apply identically to **every** resort — there is no per-resort graph code.
   more than `maxTraverseClimb` is emitted **reversed** (`pushSplitHalf` in `buildGraph.ts`), so the
   real descent survives and the bogus ascent goes. Smaller rises are left alone: that's DEM noise,
   and flipping a run over it would be worse than the rise.
-- **Lifts are up-only**, except gondolas/cable-cars/funiculars which also carry skiers **down**.
+- **Lifts are up-only**, except gondolas/cable-cars/funiculars which also carry skiers **down** —
+  plus any **aerial** lift OSM explicitly tags `aerialway:oneway=no` / `oneway=no`. That tag is a
+  deliberate minority signal, not an editor default: fleet-wide only 32 of 347 chairlifts carry it
+  against 103 explicitly `oneway=yes`, and **zero** of 318 surface lifts claim it. Honouring it is
+  what makes the Sella Ronda circuit work in both directions (Arabba Fly, Arabba–Monte Burz), and it
+  alone cut fleet stranded nodes **720 → 287**. Two rules keep it safe:
+  **(a) grant-only, never revoke** — `oneway=yes` on a gondola usually just records the way's drawn
+  direction, so believing it would strand terrain on ambiguous evidence; we only ever *add* a
+  downhill direction. **(b)** gated on `AERIAL_LIFT_TYPES`, so a drag lift/platter can never become
+  bidirectional however it is tagged.
 - **Rescue pass**: any node that can't reach a lift is linked to the nearest reachable node
   within `rescueRadius`; large drops become one-way so they can't be abused to climb.
 - **Lift-top ski-out pass** (`liftSkiOutRadius`): a lift top with no ski-out is projected onto
@@ -192,7 +202,9 @@ npm run check:resort <id> [--skip-elevation]  # THE acceptance gate for a resort
                              #   Each reader parses a specific summary line and FAILs if absent —
                              #   keep it that way, a regex that silently matches nothing reports a
                              #   false 'ok' (this bit us twice while building it).
-npm run check:trapped <id>   # nodes that can't reach a lift / are isolated / one-way pockets
+npm run check:trapped <id>   # nodes that can't reach a lift / are isolated / trapped basins
+npm run check:basins         # fleet-wide trapped basins (ski in, no way back to the main body);
+                             #   writes the trapped-basins overlay + the mapdebug review list
 npm run check:audit <id>     # false-elevation reversals + non-skiable long connections
 npm run check:graphdiff <id|all>  # structural diff of the built graph vs the committed one:
                              #   matches nodes by position and compares edges as a multiset, so a
@@ -352,16 +364,46 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 - **Islands / one-way sub-areas**: find via strongly-connected-component analysis, not just
   dead-end leaf checks; fix with `overrides/<id>.json` connectors. Some islands are legitimate
   (e.g. only reachable by a ski bus) and should be left disconnected.
-- **One-way pockets** (`check:trapped`, added while onboarding Monterosa): a group you can ski
-  *into*, that has a lift inside it, and that you still cannot leave — riding the lift only
-  returns you to the same pocket. `trapped` misses these entirely, because the skier *can* reach
-  a lift; it just doesn't get them anywhere. The symptom is spectacular and easy to misread:
-  Monterosa routed **1 of 72** bottoms because OSM placed the Punta Indren cable-car station
-  ~280 m from the rest of the Passo dei Salati hub, so the summit could only ever reach its own
-  base station. One `flat_traverse` connector took it to 56/72. A resort's own main body is
-  absorbing too (nothing leaves a resort), so pockets holding ≥25% of the nodes are excluded as
-  the expected drain — do **not** re-implement this as "ignore the largest pocket", which
-  silently swallowed a real satellite area when it happened to be the biggest.
+- **Trapped basins** (`check:basins` / `check:trapped`): terrain you can ski *into* that can never
+  get back to the resort's **main body** (the largest SCC). This replaced a narrower "one-way
+  pocket" test (an absorbing SCC containing a lift), which was wrong in two directions — both
+  found by a human eyeballing the overlay and saying *"everything I circled is trapped, not just
+  the bit you painted"*:
+  - it **demanded a lift**, so it missed stranded runs with no lift (Tignes' Balme couloirs, Leisse);
+  - it painted only the absorbing **core**, hiding the upstream slopes that merely drain into it.
+  Asking the honest question instead — *can this node get back to the main body?* — immediately
+  found that the **entire Alta Badia half of Sella Ronda (437 nodes, 42 lifts) could be skied into
+  and never left**, a defect that `check:trapped`, `check:resort` and the pocket test all passed.
+  The original symptom class is still the loudest: Monterosa routed **1 of 72** bottoms because OSM
+  placed the Punta Indren cable-car station ~280 m from the rest of the Passo dei Salati hub.
+  Two lessons that must not be re-learned:
+  - Never define the main body by **size rank** ("ignore the largest pocket") — that silently
+    swallowed a real satellite area when it happened to be the biggest. Use the largest SCC as the
+    main body and report `mainShare`, so a fractured mountain (Sella Ronda: 59%) announces itself.
+  - A basin is only worth a human's time if **piste edges** are stranded. Filtering on that alone
+    took the fleet from 122 noisy hits (lone dead-end nodes, goods ropeways, nursery drags —
+    nobody could ski there anyway) to **29 real ones**.
+- **bbox spill** (`pipeline/lib/bboxSpill.ts`, automatic in `build.ts`): Overpass returns a way in
+  **full** if *any* of its nodes touches the bbox, so a neighbouring resort's terrain leaks in —
+  Cervinia carried Monterosa's Sant'Anna–Colle Betta chair and its B1 run. The test must be
+  **disconnected *and* majority-outside the bbox**; neither half works alone. "Wholly outside" is
+  too weak (Colle Betta's top station sits **11 m** inside Cervinia's bbox, enough to keep the whole
+  fragment), and "majority outside" alone would bite legitimate terrain, since a main body routinely
+  spills past a hand-drawn bbox. Both together flag exactly 3 fragments fleet-wide, all genuine.
+  When the leaked terrain is a whole *sector*, the honest fix is **tightening the bbox** — which
+  declares what the resort *is* — not deleting pistes.
+- **Not every lift is an `aerialway`.** Funiculars and cogwheel railways are tagged `railway=funicular`
+  / `railway=rack`, so a query for `aerialway` alone silently misses them — for years we fetched
+  **zero** of the 22 that exist across the fleet. They are ordinary ski lifts to a skier and several
+  are a sector's **only** way back up: Les Arcs' Funiculaire Les Arcs' Express (the Bourg-Saint-Maurice
+  valley return), Tignes' **Funival** to the Grande Motte glacier, Zermatt's Sunnegga, Courchevel's
+  Croisette, Sella Ronda's Gardena Ronda Express. Without them the terrain above reads as a trapped
+  basin you can ski into and never leave — which is exactly how this was found. `RAIL_LIFT_TYPES`
+  in `overpass.ts` drives both the query and the lift/piste split; a rack railway is modelled as a
+  `funicular` because for routing both are a fixed track carrying skiers both ways.
+- **Changing the Overpass query does NOT invalidate the cache** — it is keyed by resort id (and TTL),
+  not by the query text. After editing `buildQuery` you must `npm run data:refresh` **every** resort
+  or they silently keep serving data fetched by the old query.
 - The OSM cache is keyed by **resort id, not bbox** — after changing a bbox you must
   `data:refresh` to actually re-fetch.
 - **False-elevation reversals** (arrows/ski-direction wrong): a mis-sampled DEM elevation at a
@@ -385,11 +427,46 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     `RESEAT_MAX_M`. Uncapped it once fabricated a 76 m error to satisfy the slope constraint.
   Blind adoption of the second DEM is ~80% right and the other 20% is actively harmful, so the pass
   declines rather than guesses; whatever it declines still shows up in `npm run check:resort`.
+- **Ski sinks** (second category of the same pass): a node every skiable edge *arrives* at and none
+  leaves — you ski in and can only get out by riding a lift or climbing. Most are real (a valley
+  station, the bottom of a bowl), so **topology alone cannot tell you**: a genuine bottom looks
+  identical. The tell is that the node is an **isolated outlier** — it reads ≥`SINK_MIN` below the
+  second DEM while *every* neighbour agrees with that DEM within `SINK_NBR_AGREE`. If the neighbours
+  disagree too, it's a systematic offset between two datasets over the whole area, not one bad point,
+  and we leave it alone. **Lift stations are deliberately included**: `repairPotholeElevations` skips
+  them by design, so this is the only pass that can catch a mis-seated station — and a station is
+  exactly where a sector's runs converge. Worked example: Sölden's Giggijoch read 2262 m against a
+  true ~2274 m and single-handedly trapped a 13-node basin, because at −13 m over 44 m its cat-track
+  is too steep to earn a reverse traverse while at −3 m it is flat enough to walk back up. Note the
+  damage was **not** a reversed arrow — nothing flipped — which is why the reversal category missed
+  it for so long.
 - **Non-skiable / mis-tagged connections**: OSM `piste:type=connection` imports as an orange
   (unrated) piste with a forced direction. `check:audit` lists "long connections" (>250 m) to
   review — some are roads/ski-bus links (long + near-flat → `removePistes` by name/bbox), some
   are lifts mis-tagged as pistes (funicular, magic carpet → `reclassifyLift`), some are real
   runs (long + steady descent, e.g. a race stadium → keep).
+- **Not every `aerialway=*` way is a lift.** We used to accept the tag wholesale, which routed skiers
+  onto private cargo ropeways (`goods` — e.g. "Zmutt" above Zermatt, `access=private`), zip lines,
+  avalanche-control and dismantled lifts. `isPassengerLift` in `pipeline/lib/overpass.ts` now filters
+  `NON_PASSENGER_AERIALWAYS` + `access=private|no` (`permissive`/`customers` stay — a resort lift *is*
+  "customers only"). This removed **401 bogus lifts** fleet-wide.
+- **`aerialway=station` on a WAY is a building outline, not a line you travel along** — 322 of those
+  401. Beware the second-order effect: a station polygon shares nodes with both the lift end and the
+  pistes outside it, so it acts as **accidental glue**. Dropping it can orphan a fragment, and
+  `bboxSpill` then discards it — which *looks* like losing a real lift. Both cases we hit
+  ("Ortisei – Furnes" in Sella Ronda, "Sant'Anna – Colle Betta" in Cervinia–Zermatt, plus 9 Monterosa
+  lifts) turned out to be **neighbouring resorts' lifts** that only ever appeared because a station
+  polygon smuggled them in. **Always diff removed lifts by NAME and check each one's coordinates
+  against the resort bbox before assuming a regression.**
+- **A lift station with zero non-lift edges usually means a clipped bbox, not a missing connector.**
+  Overpass returns a way in full when *any* node touches the bbox, so a lift straddling the edge
+  arrives whole while the pistes at its far end are never fetched. Check the station's lon/lat
+  against the resort bbox *before* reaching for `addConnectors` (this was Tignes' Le Fornet sector).
+- **Piste names are not stored on graph edges' `name`** — grepping edges by piste name silently
+  returns nothing. Names live on `pisteName`/`liftName` and in `graph.points`.
+- **Never write temp probe scripts into the repo while `npm run dev` is running.** Vite's watcher
+  dies with `EBUSY: resource busy or locked, watch '…/pipeline/_tmp*.ts'` and takes the dev server
+  with it. Put throwaway scripts in the session artifacts folder and `process.chdir()` to the repo.
 
 ## Conventions
 - Static, offline-compiled data; the app is read-only over `public/resorts/*`.

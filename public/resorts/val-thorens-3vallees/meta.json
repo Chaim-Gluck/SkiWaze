@@ -17,20 +17,20 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.valthorens.com/en/"
   },
-  "generatedAt": "2026-08-26T13:33:38.620Z",
+  "generatedAt": "2026-08-27T07:06:50.460Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
-    "nodeCount": 5118,
-    "edgeCount": 15942,
-    "pisteEdges": 5425,
-    "liftEdges": 242,
-    "connectorEdges": 10275,
-    "meaningfulPoints": 921,
-    "reachableFromLifts": 5108,
+    "nodeCount": 5087,
+    "edgeCount": 15855,
+    "pisteEdges": 5415,
+    "liftEdges": 238,
+    "connectorEdges": 10202,
+    "meaningfulPoints": 919,
+    "reachableFromLifts": 5077,
     "unreachableNodes": 10,
     "warningsByCode": {
-      "suspicious_merge": 64,
-      "missing_opening_hours": 187,
+      "suspicious_merge": 62,
+      "missing_opening_hours": 177,
       "inferred_connector": 7,
       "unreachable_component": 1
     }
@@ -185,13 +185,6 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n597288464 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n597288464"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
       "message": "Node n254017616 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n254017616"
@@ -283,9 +276,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000001958 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000001959 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000001958"
+        "n1000000001959"
       ]
     },
     {
@@ -339,9 +332,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000002957 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000002953 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000002957"
+        "n1000000002953"
       ]
     },
     {
@@ -388,13 +381,6 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n10005185405 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n10005185405"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
       "message": "Node n9657933776 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n9657933776"
@@ -402,9 +388,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000006224 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000006227 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000006224"
+        "n1000000006227"
       ]
     },
     {
@@ -416,9 +402,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000006524 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000006527 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000006524"
+        "n1000000006527"
       ]
     },
     {
@@ -555,10 +541,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Mont de la Chambre\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Becca\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -834,6 +816,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Brelin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Aigle\" has no opening_hours in OSM."
     },
     {
@@ -990,18 +976,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"181944021\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"181944021\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Super-Bissorte\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Loze A\" has no opening_hours in OSM."
     },
     {
@@ -1011,10 +985,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Bouc Blanc\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Tyrolienne\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -1050,15 +1020,15 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire des Tremplins de Courchevel\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Bettex\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Arolles\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"473347179\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -1090,10 +1060,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Bee Flying\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Funitel Péclet\" has no opening_hours in OSM."
     },
     {
@@ -1103,14 +1069,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Praz\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Tyrolienne\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Tyrolienne\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -1126,14 +1084,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Télécabine d'Orelle\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Télécabine d'Orelle\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Biolley 2\" has no opening_hours in OSM."
     },
     {
@@ -1142,19 +1092,15 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"1004799225\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"1028640559\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"1030749604\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Loze\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Loze\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -1167,10 +1113,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"1062266198\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1135008035\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -1226,6 +1168,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"La Croisette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"1505821791\" has no opening_hours in OSM."
     },
     {
@@ -1234,27 +1180,27 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 722 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 719 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 2381 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 2375 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 2051 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 2045 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 450 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 417 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 10 trapped node(s) with a forced traverse to the nearest reachable point (7 onto a piste line)."
+      "message": "Rescued 8 trapped node(s) with a forced traverse to the nearest reachable point (5 onto a piste line)."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
+      "message": "Linked 2 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
       "code": "inferred_connector",
@@ -1269,10 +1215,10 @@
         "n678964727",
         "n2754232379",
         "n9853753103",
-        "n1000000008288",
+        "n1000000008287",
         "n7243370102",
-        "n1000000003206",
-        "n1000000003263",
+        "n1000000003202",
+        "n1000000003259",
         "sn3281771216"
       ]
     }

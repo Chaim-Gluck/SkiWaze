@@ -1,8 +1,27 @@
 {
   "_comment": "St. Anton am Arlberg (Ski Arlberg) corrections. Main fix: reconnect the Zurs->Lech Madloch descent (OSM gap) so the Flexenbahn interconnection routes end-to-end; plus a few stray-endpoint snaps.",
+  "_comment_stuben": "Stuben am Arlberg. The whole Albona Nord black run plus the two village drags (Walchlift, Angerlift) formed one 13-node trapped basin, and the two halves were only joined by a 178 m connector our rescue pass invented across the Arlbergstrasse / Alfenz, which made the nursery area look reachable. Two separate corrections: (a) the real way off Albona Nord is a level traverse partway down the run over to the Rauztobel (102) run-out, which flows straight into the Albonabahn I base - OSM has no node there, so splitPisteAt mints one at the branch point; (b) the invented bridge to the drags is removed, leaving them as the genuinely separate basin they are (signed off below).",
+  "splitPisteAt": [
+    { "at": [10.15614, 47.1362], "pisteName": "Albona Nord", "radius": 25, "node": "xStubenTraverse" }
+  ],
+  "removeConnectors": [
+    {
+      "from": "n1165519841",
+      "to": "n1259978714",
+      "why": "Rescue-pass invention: a 178 m flat traverse from the Albona Nord run-out across the Arlbergstrasse and the Alfenz to the Angerlift base. Reviewed on the map - there is no skiable link there, and keeping it welded the Stuben village nursery lifts onto the main network so they never surfaced as stranded."
+    }
+  ],
+  "acceptedBasins": [
+    {
+      "nodes": ["n1259978729", "n1165759951", "n1259978687", "n1259978714", "n1165759824"],
+      "why": "Walchlift and Angerlift, the two village nursery drags on the north side of Stuben, with their own short pistes. They sit across the main Arlbergstrasse and the Alfenz from the ski area proper, and no run or lift links them to it - you walk. Reviewed on the map: correctly disconnected, so this is signed off rather than bridged."
+    }
+  ],
   "addConnectors": [
+    { "from": "xStubenTraverse", "to": "sn249417956", "kind": "flat_traverse", "bidirectional": true },
     { "from": "n1623687503", "to": "n279736879", "kind": "skiable_down" },
-    { "from": "n1437496212", "to": "n1436596085", "kind": "flat_traverse", "bidirectional": true },
+    { "_why": "Lech village floor -> Hinterwieslift bottom. Repointed from n1436596085: that id belonged to an aerialway=station building polygon, which the non-passenger-lift filter now drops, so the merge cluster lost its id-holder. n3457627022 is the same spot, 6 m away.",
+      "from": "n1437496212", "to": "n3457627022", "kind": "flat_traverse", "bidirectional": true },
     { "from": "n12798747121", "to": "n487179638", "kind": "flat_traverse", "bidirectional": true },
     { "from": "n612548368", "to": "n6682123969", "kind": "flat_traverse", "bidirectional": true },
     { "from": "n327300760", "to": "n328068749", "kind": "flat_traverse", "bidirectional": true },

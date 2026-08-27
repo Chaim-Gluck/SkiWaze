@@ -43,13 +43,15 @@ const checks: Check[] = [
     name: 'connectivity',
     script: '_trapped.ts',
     read: (o) => {
-      const m = o.match(/summary:\s*trapped=(\d+)\s+orphan=(\d+)\s+oneWayPockets=(\d+)/i);
+      const m = o.match(
+        /summary:\s*trapped=(\d+)\s+orphan=(\d+)\s+basins=(\d+)\s+strandedNodes=(\d+)/i,
+      );
       if (!m) return { verdict: 'fail', note: 'could not parse summary line' };
-      const [trapped, orphan, pockets] = [Number(m[1]), Number(m[2]), Number(m[3])];
-      const note = `${trapped} trapped, ${orphan} orphan, ${pockets} one-way pocket(s)`;
-      // Orphans and one-way pockets are always wrong; a couple of trapped nodes are usually
+      const [trapped, orphan, basins, stranded] = m.slice(1, 5).map(Number);
+      const note = `${trapped} trapped, ${orphan} orphan, ${basins} trapped basin(s) holding ${stranded} node(s)`;
+      // Orphans and trapped basins are always wrong; a couple of trapped nodes are usually
       // real valley dead-ends.
-      return { verdict: orphan > 0 || pockets > 0 || trapped > 5 ? 'review' : 'ok', note };
+      return { verdict: orphan > 0 || basins > 0 || trapped > 5 ? 'review' : 'ok', note };
     },
   },
   {

@@ -1,6 +1,7 @@
 import type { LiftType, PisteColor } from '../../src/types/domain';
+import { AERIAL_LIFT_TYPES, DOWNLOADABLE_LIFT_TYPES } from '../../src/types/domain';
 import type { RawWay } from './overpass';
-import { isPisteArea } from './overpass';
+import { isPisteArea, RAIL_LIFT_TYPES } from './overpass';
 
 /** A vertex carrying its OSM node id (for topology) and coordinates (+ elevation later). */
 export interface NormPoint {
@@ -34,6 +35,11 @@ export interface NormLift {
   openingHours?: string;
   /** Ride duration in seconds when the OSM `aerialway:duration` tag is present. */
   durationSec?: number;
+  /**
+   * OSM explicitly says this lift runs both ways (`oneway=no` / `aerialway:oneway=no`), so skiers
+   * can download on it. Only ever *grants* a downhill direction — see `bidirectionalFor`.
+   */
+  bidirectional?: boolean;
   points: NormPoint[];
 }
 
@@ -73,6 +79,9 @@ function colorFor(tags: Record<string, string>): PisteColor {
 function liftTypeFor(tags: Record<string, string>): LiftType {
   const a = tags['aerialway'];
   if (a && AERIALWAY_TO_LIFT[a]) return AERIALWAY_TO_LIFT[a];
+  // Ground-running lifts (see RAIL_LIFT_TYPES in overpass.ts). A rack railway is modelled as a
+  // funicular: for routing purposes both are a fixed track that carries skiers in both directions.
+  if (RAIL_LIFT_TYPES.has(tags['railway'])) return 'funicular';
   return 'unknown';
 }
 
@@ -110,13 +119,38 @@ export function normalizePiste(w: RawWay): NormPiste {
   };
 }
 
+/**
+ * A lift you can also ride *down*, per OSM rather than per type.
+ *
+ * Our default is "up-only, except gondolas/cable-cars/funiculars". That default silently strands
+ * whole sectors: the Sella Ronda circuit only worked clockwise because **Arabba Fly** — a chair
+ * that really does carry skiers both ways — was modelled up-only, and the entire Alta Badia side
+ * (437 nodes, 42 lifts) could be skied into and never left.
+ *
+ * `oneway=no` on a chairlift is a deliberate minority signal, not an editor default: across the
+ * fleet only 32 of 347 chairs carry it, against 103 tagged `oneway=yes`, and **no** drag lift
+ * claims it. Mappers in these areas clearly distinguish, so the tag is worth honouring.
+ *
+ * Deliberately one-directional: this only ever *grants* a downhill direction, never removes one.
+ * `oneway=yes` on a gondola usually just records the way's drawn direction rather than a ban on
+ * downloading, so believing it would strand terrain on the strength of an ambiguous tag.
+ */
+function bidirectionalFor(tags: Record<string, string>, liftType: LiftType): boolean | undefined {
+  // You cannot ride a surface lift downhill however it is tagged.
+  if (!DOWNLOADABLE_LIFT_TYPES.has(liftType) && !AERIAL_LIFT_TYPES.has(liftType)) return undefined;
+  if (tags['aerialway:oneway'] === 'no' || tags['oneway'] === 'no') return true;
+  return undefined;
+}
+
 export function normalizeLift(w: RawWay): NormLift {
+  const liftType = liftTypeFor(w.tags);
   return {
     wayId: w.id,
-    liftType: liftTypeFor(w.tags),
+    liftType,
     name: w.tags['name'],
     openingHours: w.tags['opening_hours'],
     durationSec: parseDurationSec(w.tags['aerialway:duration']),
+    bidirectional: bidirectionalFor(w.tags, liftType),
     points: toPoints(w),
   };
 }

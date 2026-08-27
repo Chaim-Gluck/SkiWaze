@@ -5,8 +5,10 @@
     { "node": "n342786568", "ele": 3052 },
     { "node": "sn1004274415", "ele": 3065 }
   ],
+  "_comment_zermatt_village": "n253323900 <-> n240240207: Zermatt village. The runs and paths ending on the Moosstrasse / Zen Steckenstrasse side of the village (16 nodes, incl. the Zmutt ski route) had no link to the Matterhorn Express base 100 m away and 9 m higher, so the whole lower-village side was a trapped basin. Zermatt is car-free and skiers routinely walk or skate the last block between a run-out and a lift station, so this is a flat traverse both ways.",
   "addConnectors": [
-    { "from": "sn3400152764", "to": "sn240324408", "kind": "flat_traverse", "bidirectional": true }
+    { "from": "sn3400152764", "to": "sn240324408", "kind": "flat_traverse", "bidirectional": true },
+    { "from": "n253323900", "to": "n240240207", "kind": "flat_traverse", "bidirectional": true }
   ],
   "ignoreReversals": [
     { "from": "sn3400152764", "to": "sn240324408", "why": "Checked on the map: the two ends really are ~1 m apart on the glacier plateau, so our near-level orientation is right and the DEM's 15 m drop is wrong." }

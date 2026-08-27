@@ -1,10 +1,17 @@
 {
   "_comment": "Monterosa Ski (Champoluc / Gressoney-La-Trinite / Alagna).",
   "_comment2": "Passo dei Salati is one place on the ground, but OSM puts the Punta Indren cable-car station ~280 m from the rest of the hub, so the compiled graph had a two-node pocket you could ski into and never leave: the only way out of the cable-car base was riding back up to Indren. Found by the 'one-way pockets' check in `npm run check:trapped`. Linked both ways as a flat traverse, which is what it is in reality - you cross the station terrace on foot/skis.",
+  "_comment3": "The same pass, the other side. Passo dei Salati is the ONLY link between the Alagna valley and Gressoney, and OSM leaves a 52 m hole across the hub between the top of the Cimalegna-Passo Salati chair (n1303504790, 2964 m) and the Gressoney-side junction at the Salati/Gabiet stations (n8488819883, 2969 m). Compiled, that made the entire Alagna sector a 36-node trapped basin - you could ride in over the pass and never get back - and it is why the resort reported as only 70% connected ('fractured'). On the ground the two station areas are adjacent and you cross the terrace, so this is a flat traverse both ways, exactly like _comment2.",
   "addConnectors": [
     {
       "from": "n825310936",
       "to": "n372779270",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "from": "n1303504790",
+      "to": "n8488819883",
       "kind": "flat_traverse",
       "bidirectional": true
     }

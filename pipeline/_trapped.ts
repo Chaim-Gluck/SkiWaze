@@ -5,17 +5,16 @@
 //   - "trapped": nodes from which a skier CANNOT reach any lift station (they'd get stuck
 //     at the bottom of a fragment with no way back up / onward).
 //   - "orphan":  nodes NOT reachable FROM the lift network (you can never get there).
-//   - "one-way pocket": a group you can ski into, that has a lift inside it, and that you
-//     still cannot leave — riding the lift just returns you to the same pocket. `trapped`
-//     misses these because the skier *can* reach a lift; it simply doesn't get them out.
-//     The resort's own main body is absorbing too (nothing leaves a resort), so the largest
-//     pocket is excluded as the expected drain.
+//   - "trapped basin": terrain you can ski into that can never get back to the resort's main
+//     body. `trapped` misses these because the skier *can* reach a lift; it simply doesn't get
+//     them out. See lib/trappedBasins.ts for why this replaced a narrower "one-way pocket" test.
 // Use this after `npm run data <id>` to find genuinely isolated fragments, then fix them
 // via pipeline/overrides/<id>.json.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ResortGraph } from '../src/types/domain';
+import { basinLabel, findTrappedBasins } from './lib/trappedBasins';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -44,54 +43,6 @@ function bfs(adj: Map<string, string[]>, seeds: string[]): Set<string> {
   return seen;
 }
 
-/** Kosaraju strongly-connected components, iterative so a 5k-node resort can't blow the stack. */
-function stronglyConnected(
-  nodeIds: string[],
-  fwd: Map<string, string[]>,
-  rev: Map<string, string[]>,
-): Map<string, number> {
-  const order: string[] = [];
-  const seen = new Set<string>();
-  for (const start of nodeIds) {
-    if (seen.has(start)) continue;
-    seen.add(start);
-    const stack: [string, number][] = [[start, 0]];
-    while (stack.length) {
-      const top = stack[stack.length - 1];
-      const outs = fwd.get(top[0]) ?? [];
-      if (top[1] < outs.length) {
-        const next = outs[top[1]++];
-        if (!seen.has(next)) {
-          seen.add(next);
-          stack.push([next, 0]);
-        }
-      } else {
-        order.push(top[0]);
-        stack.pop();
-      }
-    }
-  }
-  const comp = new Map<string, number>();
-  let c = 0;
-  for (let i = order.length - 1; i >= 0; i--) {
-    const seed = order[i];
-    if (comp.has(seed)) continue;
-    const stack = [seed];
-    comp.set(seed, c);
-    while (stack.length) {
-      const cur = stack.pop()!;
-      for (const prev of rev.get(cur) ?? []) {
-        if (!comp.has(prev)) {
-          comp.set(prev, c);
-          stack.push(prev);
-        }
-      }
-    }
-    c++;
-  }
-  return comp;
-}
-
 function main(): void {
   const id = process.argv[2];
   if (!id) {
@@ -118,57 +69,45 @@ function main(): void {
   const label = (nid: string): string => {
     const p = graph.points.find((x) => x.nodeId === nid);
     const n = nodeById.get(nid);
-    return `${p ? p.name : nid} · ${Math.round(n?.point.ele ?? 0)} m`;
+    return `${p ? p.name : nid} Â· ${Math.round(n?.point.ele ?? 0)} m`;
   };
 
   console.log(`=== check:trapped ${id} ===`);
   console.log(`nodes=${graph.nodes.length} edges=${graph.edges.length} lift_stations=${liftStations.length}`);
-  console.log(`\ntrapped (can't reach any lift → skier gets stuck): ${trapped.length}`);
+  console.log(`\ntrapped (can't reach any lift â†’ skier gets stuck): ${trapped.length}`);
   trapped.slice(0, 30).forEach((n) => console.log('  - ' + label(n.id)));
-  if (trapped.length > 30) console.log(`  … and ${trapped.length - 30} more`);
+  if (trapped.length > 30) console.log(`  â€¦ and ${trapped.length - 30} more`);
   console.log(`\norphan (unreachable from the lift network): ${orphan.length}`);
   orphan.slice(0, 30).forEach((n) => console.log('  - ' + label(n.id)));
-  if (orphan.length > 30) console.log(`  … and ${orphan.length - 30} more`);
+  if (orphan.length > 30) console.log(`  â€¦ and ${orphan.length - 30} more`);
 
-  // One-way pockets: you can get in, there's a lift, and you still can't get out.
-  const comp = stronglyConnected(
-    graph.nodes.map((n) => n.id),
-    fwd,
-    rev,
+  // Trapped basins: terrain you can ski into that can never get back to the main mountain.
+  const report = findTrappedBasins(graph, id);
+  console.log(
+    `\ntrapped basins (ski in, no way back to the main body): ${report.significant.length}` +
+      ` â€” ${report.significantNodes} stranded node(s)` +
+      (report.basins.length > report.significant.length
+        ? `, plus ${report.basins.length - report.significant.length} lone dead-end node(s)`
+        : ''),
   );
-  const members = new Map<number, string[]>();
-  for (const n of graph.nodes) {
-    const c = comp.get(n.id)!;
-    (members.get(c) ?? members.set(c, []).get(c)!).push(n.id);
-  }
-  const pockets: { ids: string[]; lifts: string[] }[] = [];
-  for (const ids of members.values()) {
-    const inside = new Set(ids);
-    const escapes = ids.some((id) => (fwd.get(id) ?? []).some((v) => !inside.has(v)));
-    const entered = ids.some((id) => (rev.get(id) ?? []).some((v) => !inside.has(v)));
-    if (escapes || !entered) continue;
-    const lifts = [
-      ...new Set(
-        graph.edges
-          .filter((e) => e.kind === 'lift' && inside.has(e.from) && inside.has(e.to))
-          .map((e) => e.liftName ?? 'unnamed lift'),
-      ),
-    ];
-    if (lifts.length) pockets.push({ ids, lifts });
-  }
-  // Everything drains into the resort's main body and nothing leaves a resort, so a pocket
-  // holding a large share of the mountain is the expected drain, not a defect.
-  const suspect = pockets.filter((p) => p.ids.length < graph.nodes.length * 0.25);
-  console.log(`\none-way pockets (ski in, lift inside, no way out): ${suspect.length}`);
-  suspect.slice(0, 15).forEach((p) => {
-    console.log(`  - ${p.ids.length} node(s) via ${p.lifts.join(', ')} — e.g. ${label(p.ids[0])}`);
+  console.log(
+    `main body: ${report.mainSize}/${graph.nodes.length} nodes (${(report.mainShare * 100).toFixed(0)}%)`,
+  );
+  report.significant.slice(0, 15).forEach((b) => {
+    console.log(
+      `  - ${String(b.nodes.length).padStart(4)} node(s), ${b.lifts.length} lift(s), ` +
+        `gap ${b.gapM}m, exit ${b.climbM >= 0 ? '+' : ''}${b.climbM}m â€” ${basinLabel(b)}` +
+        ` (e.g. ${label(b.exit.id)})`,
+    );
   });
-  if (suspect.length > 15) console.log(`  … and ${suspect.length - 15} more`);
+  if (report.significant.length > 15)
+    console.log(`  â€¦ and ${report.significant.length - 15} more`);
 
   console.log(
-    `\nsummary: trapped=${trapped.length} orphan=${orphan.length} oneWayPockets=${suspect.length}`,
+    `\nsummary: trapped=${trapped.length} orphan=${orphan.length}` +
+      ` basins=${report.significant.length} strandedNodes=${report.significantNodes}`,
   );
-  if (!trapped.length && !orphan.length && !suspect.length) {
+  if (!trapped.length && !orphan.length && !report.significant.length) {
     console.log('\nOK: every node connects to the lift network both ways.');
   }
 }

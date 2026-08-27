@@ -17,20 +17,20 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.soelden.com/en/"
   },
-  "generatedAt": "2026-08-26T13:34:31.097Z",
+  "generatedAt": "2026-08-27T07:09:52.880Z",
   "stats": {
     "resortId": "soelden",
     "nodeCount": 711,
-    "edgeCount": 1902,
-    "pisteEdges": 796,
-    "liftEdges": 54,
-    "connectorEdges": 1052,
-    "meaningfulPoints": 161,
+    "edgeCount": 1925,
+    "pisteEdges": 799,
+    "liftEdges": 59,
+    "connectorEdges": 1067,
+    "meaningfulPoints": 166,
     "reachableFromLifts": 710,
     "unreachableNodes": 1,
     "warningsByCode": {
       "suspicious_merge": 6,
-      "missing_opening_hours": 34,
+      "missing_opening_hours": 35,
       "inferred_connector": 5,
       "unreachable_component": 1
     }
@@ -112,6 +112,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Gratl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gratl\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Gaislachkoglbahn I\" has no opening_hours in OSM."
     },
     {
@@ -156,6 +164,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Zentrum Shuttle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Zentrum Shuttle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Innerwald I\" has no opening_hours in OSM."
     },
     {
@@ -192,10 +208,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"(Projekt) Fernerkogelbahn III\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"777561186\" has no opening_hours in OSM."
     },
     {
@@ -207,24 +219,16 @@
       "message": "Lift \"Rotkogl I\" has no opening_hours in OSM."
     },
     {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Heidebahn\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Heidebahn\" has no opening_hours in OSM."
+      "code": "inferred_connector",
+      "message": "Snapped 93 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 91 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Inferred 238 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 237 skiable/flat connector(s) to bridge stuck nodes."
-    },
-    {
-      "code": "inferred_connector",
-      "message": "Added 189 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 193 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

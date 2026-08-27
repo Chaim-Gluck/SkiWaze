@@ -1,11 +1,10 @@
-﻿// Graph assembly: significant-node detection, 3D snapping/merge, way segmentation,
+// Graph assembly: significant-node detection, 3D snapping/merge, way segmentation,
 // piste / lift / connector / flat edge construction, and meaningful-point extraction.
 import type {
   DataWarning,
   GeoPoint,
   GraphEdge,
   GraphNode,
-  LiftType,
   MeaningfulPoint,
   ResortGraph,
 } from '../../src/types/domain';
@@ -274,8 +273,12 @@ function segmentWay(points: NormPoint[], canonicalOf: Map<number, string>): Segm
   return segs;
 }
 
-function isDownloadable(lt: LiftType): boolean {
-  return DOWNLOADABLE_LIFT_TYPES.has(lt);
+/**
+ * Can skiers ride this particular lift down? Type is the default; an explicit OSM `oneway=no`
+ * upgrades a lift that would otherwise be up-only. See `bidirectionalFor` in normalize.ts.
+ */
+function isDownloadable(lift: NormLift): boolean {
+  return lift.bidirectional === true || DOWNLOADABLE_LIFT_TYPES.has(lift.liftType);
 }
 
 /** Nodes that can reach a lift station following directed edges (reverse BFS from stations). */
@@ -651,7 +654,7 @@ export function buildResortGraph(
       };
       edges.push(upEdge);
 
-      if (isDownloadable(lift.liftType)) {
+      if (isDownloadable(lift)) {
         edges.push({
           id: nextEdgeId(),
           from: topId,

@@ -1,0 +1,893 @@
+{
+  "resort": {
+    "id": "paradiski",
+    "name": "Paradiski (Les Arcs – La Plagne)",
+    "country": "France",
+    "center": {
+      "lon": 6.72,
+      "lat": 45.55
+    },
+    "bbox": {
+      "minLon": 6.58,
+      "minLat": 45.44,
+      "maxLon": 6.876,
+      "maxLat": 45.62
+    },
+    "excludeBboxes": [
+      {
+        "minLon": 6.85,
+        "minLat": 45.4,
+        "maxLon": 6.9,
+        "maxLat": 45.475
+      }
+    ],
+    "defaultZoom": 11.5,
+    "timezone": "Europe/Paris",
+    "infoUrl": "https://www.paradiski.com/"
+  },
+  "generatedAt": "2026-08-27T07:08:33.694Z",
+  "stats": {
+    "resortId": "paradiski",
+    "nodeCount": 3038,
+    "edgeCount": 9106,
+    "pisteEdges": 3226,
+    "liftEdges": 208,
+    "connectorEdges": 5672,
+    "meaningfulPoints": 711,
+    "reachableFromLifts": 3029,
+    "unreachableNodes": 9,
+    "warningsByCode": {
+      "suspicious_merge": 18,
+      "missing_opening_hours": 171,
+      "inferred_connector": 5,
+      "unreachable_component": 1
+    }
+  },
+  "warnings": [
+    {
+      "code": "suspicious_merge",
+      "message": "Node n25946536 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n25946536"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1596164691 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1596164691"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n611037812 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n611037812"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n2535243634 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n2535243634"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n650881840 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n650881840"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1690208427 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1690208427"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n2095719977 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n2095719977"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1724502953 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1724502953"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n2095708145 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n2095708145"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n619485260 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n619485260"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n2535243616 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n2535243616"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n150549728 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n150549728"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n2095715655 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n2095715655"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n13393853408 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n13393853408"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n2535243621 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n2535243621"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n4359066045 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n4359066045"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n11386207316 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n11386207316"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n12822714715 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n12822714715"
+      ]
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Col de Forcle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiplagne Grande Rochette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Adrets\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Blanchets\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Inversens\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"La Roche\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Golf\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Stade\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Montalbert\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Chalet de Bellecôte\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Droset\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Marmottes\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Saint-Jacques\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Varet\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Vagère\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Derby\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Vallandry\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Peisey\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Grand Col\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Grand Col\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Aiguille Rouge\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Bois de l'Ours\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Arcabulle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire Les Arcs' Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire Les Arcs' Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire Les Arcs' Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Mont-Blanc\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Cachette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Dos Rond\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Salla\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1800\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Crêtes\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Grenouilles\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Petit Bois\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Replat\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Replat\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Replat\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Replat\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Aollets\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Aollets\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Chevrette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Chevrette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Verdons Sud\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Grizzly\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Montchavin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Pierres Blanches\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Plan Bois\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Les Coches\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Patinoire\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Vanoise Express 1\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"2300\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Petit Sauget\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Plagnettes\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Arpette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Comborcière\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Lanchettes\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Cabriolet\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Cabri\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Snow Park\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Clocheret\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Bergerie\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Mélèzes\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Plateau de Carella\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Solu\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Boulevard\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Premiers Virages\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Télémétro\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"TKE - Gentil\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Borseliers 3\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"TK Éterlou\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Télébus\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Rhodos\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Eldorador\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Éterlou\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire 1\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Parchey\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Praconduit\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Sucette de Montchavin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Tyrolien\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Bauches\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Biquet\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Combettes\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Tommelet\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Rhonaz\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Vezaille\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Millerette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Flamme Olympique\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Raffort\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Aiglon\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ourson\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Plan Leschaux\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Écureuils\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Quillis\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Jardin Alpin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Charmettoger\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Manège Club Med\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Dromadaire\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Le France\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Jardin d'Enfants Plagne Villages\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Oxygène\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Tétras\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1ers virages 1800\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Dou du Praz\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Dou du Praz\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Villards\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Montalbert\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Dahu\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Carreley\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Plan Vert\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Grangette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Aime-la-Plagne\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Envers\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Blanchot\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Pré-Saint-Esprit\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Lac des Combes\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Patinoire\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Lac Noir\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Télébuffette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Vallandry\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"École\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ange 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Vanoise Express 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Bécoin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Colorado\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Belle Plagne\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Colosses\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Arpette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Carella\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Rossa\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Borseliers\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Champagny\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Crozats\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Bijolin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ourson\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Mélèzes\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Sifflote\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Mini Club\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Pente École\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1ere glisse 1800\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Jackson\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Bougnette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ange\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire 1\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Oursons Plagne Montalbert\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Piou Piou\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Cap Vacances\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Petits Loups\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Planchamps\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Club Med\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1080049565\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1080050654\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1080097949\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Premières Glisses\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1152407522\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1158635340\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Glaciers 1\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Glaciers 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1201464682\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1201464683\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Aiguillette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Petit Chemin\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Glaciers\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1253287509\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Transarc II\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Transarc I\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1346357315\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Tétras\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Villaroger\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Roche de Mio 1\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Roche de Mio\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Roche de Mio 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Snapped 415 dead-end run(s) onto a nearby piste line (T-junction)."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Inferred 1389 skiable/flat connector(s) to bridge stuck nodes."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 1136 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 229 plateau traverse(s) linking hub nodes on the same level apron."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Linked 11 unreachable zone(s) to the nearest point a skier can already get to (5 onto a piste line)."
+    },
+    {
+      "code": "unreachable_component",
+      "message": "9 node(s) unreachable from the main lift network.",
+      "refs": [
+        "n361156184",
+        "n2275118807",
+        "n2275118673",
+        "n10862639403",
+        "n2628902039",
+        "n11386325559",
+        "n1000000003150",
+        "n1000000003176",
+        "n1000000003182"
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import { DEFAULT_GRAPH_CONSTANTS } from '../src/config/graphConstants';
 import type { Resort } from '../src/types/domain';
 import { fetchResortOsm } from './lib/overpass';
 import { normalizeLift, normalizePiste } from './lib/normalize';
+import { dropExcludedFeatures } from './lib/excludeArea';
 import { enrichElevations } from './lib/elevation';
 import { buildResortGraph } from './lib/buildGraph';
 import { buildSkeletons } from './lib/areaSkeleton';
@@ -15,6 +16,7 @@ import { skeletonPistes } from './lib/areaSkeletonPistes';
 import { applyOverrides, loadOverrides } from './lib/overrides';
 import { applyCorrectionsGuarded, proposeElevationCorrections } from './lib/elevationConsensus';
 import { pruneRedundantArms } from './lib/pruneArms';
+import { dropOutOfAreaSpill } from './lib/bboxSpill';
 import { weldCoincidentNodes } from './lib/weldCoincident';
 import { markSpineDuplicates } from './lib/spineDuplicates';
 import { printReport, reachableFromLiftStations, validateGraph } from './lib/validate';
@@ -37,8 +39,17 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
     return;
   }
 
-  const pistes = osm.pistes.map(normalizePiste);
-  const lifts = osm.lifts.map(normalizeLift);
+  const rawPistes = osm.pistes.map(normalizePiste);
+  const rawLifts = osm.lifts.map(normalizeLift);
+  const excl = dropExcludedFeatures(rawPistes, rawLifts, resort.excludeBboxes);
+  if (excl.droppedPistes || excl.droppedLifts) {
+    console.log(
+      `  excluded area: dropped ${excl.droppedPistes} piste(s) + ${excl.droppedLifts} lift(s) — ` +
+        `${[...new Set(excl.names)].slice(0, 8).join(', ')}`,
+    );
+  }
+  const pistes = excl.pistes;
+  const lifts = excl.lifts;
 
   console.log('  enriching elevation...');
   const missing = await enrichElevations([
@@ -121,7 +132,7 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
       graph = guarded.graph;
       if (guarded.kept.length) {
         console.log(
-          `  elevation consensus: repaired ${guarded.kept.length} node(s) across ${flips} reversal endpoint(s) (${sampled} sampled)`,
+          `  elevation consensus: repaired ${guarded.kept.length} node(s) of ${flips} suspect(s) (${sampled} sampled)`,
         );
         for (const c of guarded.kept) console.log(`    ${c.node} -> ${c.ele}m  (${c.why})`);
       }
@@ -158,6 +169,14 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
   // and that proof is only worth anything if nothing moves afterwards. Overrides re-issue edges,
   // so this cannot live inside buildGraph. See pruneArms.ts.
   graph = pruneRedundantArms(graph, DEFAULT_GRAPH_CONSTANTS);
+
+  // Overpass returns a way in full whenever any of its nodes touches the query bbox, so a lift or
+  // run straddling the boundary arrives complete in the wrong resort's dataset. See bboxSpill.ts.
+  const spill = dropOutOfAreaSpill(graph, resort);
+  graph = spill.graph;
+  for (const d of spill.dropped) {
+    console.log(`  dropped out-of-area fragment: ${d.nodes} node(s) — ${d.label}`);
+  }
 
   const report = validateGraph(graph);
   printReport(report);

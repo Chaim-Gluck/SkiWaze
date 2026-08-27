@@ -17,20 +17,20 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.stantonamarlberg.com/en/"
   },
-  "generatedAt": "2026-08-26T13:34:24.577Z",
+  "generatedAt": "2026-08-27T10:00:52.758Z",
   "stats": {
     "resortId": "st-anton-arlberg",
-    "nodeCount": 765,
-    "edgeCount": 2003,
-    "pisteEdges": 804,
-    "liftEdges": 110,
-    "connectorEdges": 1089,
-    "meaningfulPoints": 379,
-    "reachableFromLifts": 760,
+    "nodeCount": 740,
+    "edgeCount": 1951,
+    "pisteEdges": 811,
+    "liftEdges": 99,
+    "connectorEdges": 1041,
+    "meaningfulPoints": 372,
+    "reachableFromLifts": 735,
     "unreachableNodes": 5,
     "warningsByCode": {
       "suspicious_merge": 1,
-      "missing_opening_hours": 95,
+      "missing_opening_hours": 83,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
@@ -269,27 +269,11 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"122886696\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"122886696\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"122886697\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"122886698\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Materialseilbahn Stuttgarter Hütte\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Materialseilbahn Kaltenberghütte\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -330,10 +314,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Rauzlift\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Materialseilbahn Ulmer Hütte\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -385,34 +365,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Flexenbahn/Trittkopfbahn I/Trittkopfbahn II\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Flexenbahn/Trittkopfbahn I/Trittkopfbahn II\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Materialseilbahn Trittalpe\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"553813930\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"553813930\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Trittkopf Talstation\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Trittkopf Talstation\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Madlochbahn\" has no opening_hours in OSM."
     },
     {
@@ -425,23 +377,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 99 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 97 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 295 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 274 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 236 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 233 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 51 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 36 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 5 trapped node(s) with a forced traverse to the nearest reachable point (1 onto a piste line)."
+      "message": "Rescued 6 trapped node(s) with a forced traverse to the nearest reachable point (2 onto a piste line)."
     },
     {
       "code": "inferred_connector",

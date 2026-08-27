@@ -17,20 +17,20 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-08-26T13:32:46.690Z",
+  "generatedAt": "2026-08-27T07:05:23.909Z",
   "stats": {
     "resortId": "cervinia-zermatt",
-    "nodeCount": 900,
-    "edgeCount": 2408,
-    "pisteEdges": 892,
-    "liftEdges": 123,
-    "connectorEdges": 1393,
+    "nodeCount": 883,
+    "edgeCount": 2358,
+    "pisteEdges": 897,
+    "liftEdges": 113,
+    "connectorEdges": 1348,
     "meaningfulPoints": 334,
-    "reachableFromLifts": 887,
+    "reachableFromLifts": 870,
     "unreachableNodes": 13,
     "warningsByCode": {
-      "suspicious_merge": 3,
-      "missing_opening_hours": 99,
+      "suspicious_merge": 2,
+      "missing_opening_hours": 83,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
@@ -41,13 +41,6 @@
       "message": "Node n1109869943 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n1109869943"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
-      "message": "Node n313408919 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n313408919"
       ]
     },
     {
@@ -283,67 +276,7 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Plan Maison\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Plan Maison\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Plan Maison\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Plan Maison\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Plan Maison\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Plan Maison\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Fornet\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Fornet\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"166437927\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"166437927\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"166437927\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"166437927\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"166437929\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"166437929\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"166437929\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"166437929\" has no opening_hours in OSM."
+      "message": "Lift \"167161897\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -371,26 +304,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"332858216\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"332858216\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"332905047\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Zmutt\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"332906111\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"332911053\" has no opening_hours in OSM."
     },
     {
@@ -400,6 +313,14 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Matterhorn Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Leisee-Shuttle\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Leisee-Shuttle\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -431,6 +352,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"1050990481\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"1050992341\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"1266342298\" has no opening_hours in OSM."
     },
     {
@@ -455,23 +384,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 121 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 119 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 390 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 377 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 301 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 281 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 61 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 52 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point (0 onto a piste line)."
+      "message": "Rescued 3 trapped node(s) with a forced traverse to the nearest reachable point (0 onto a piste line)."
     },
     {
       "code": "inferred_connector",
@@ -491,9 +420,9 @@
         "n3165652504",
         "n7206060823",
         "n1906820697",
-        "n1000000000065",
-        "n1000000000221",
-        "n1000000000223"
+        "n1000000000064",
+        "n1000000000218",
+        "n1000000000220"
       ]
     }
   ]

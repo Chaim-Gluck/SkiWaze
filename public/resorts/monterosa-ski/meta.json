@@ -8,37 +8,32 @@
       "lat": 45.845
     },
     "bbox": {
-      "minLon": 7.68,
-      "minLat": 45.79,
-      "maxLon": 7.98,
-      "maxLat": 45.9
+      "minLon": 7.72,
+      "minLat": 45.822,
+      "maxLon": 7.95,
+      "maxLat": 45.895
     },
     "defaultZoom": 12,
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.visitmonterosa.com/en/"
   },
-  "generatedAt": "2026-08-26T15:20:46.280Z",
+  "generatedAt": "2026-08-27T07:09:25.516Z",
   "stats": {
     "resortId": "monterosa-ski",
-    "nodeCount": 254,
-    "edgeCount": 534,
-    "pisteEdges": 213,
-    "liftEdges": 64,
-    "connectorEdges": 257,
-    "meaningfulPoints": 140,
-    "reachableFromLifts": 252,
-    "unreachableNodes": 2,
+    "nodeCount": 200,
+    "edgeCount": 495,
+    "pisteEdges": 196,
+    "liftEdges": 53,
+    "connectorEdges": 246,
+    "meaningfulPoints": 113,
+    "reachableFromLifts": 200,
+    "unreachableNodes": 0,
     "warningsByCode": {
-      "missing_opening_hours": 55,
-      "inferred_connector": 5,
-      "unreachable_component": 1
+      "missing_opening_hours": 38,
+      "inferred_connector": 5
     }
   },
   "warnings": [
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Antagnod - Pian Pera\" has no opening_hours in OSM."
-    },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Pianalunga - Cimalegna - Salati\" has no opening_hours in OSM."
@@ -69,15 +64,15 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Funicolare Frachey-Alpe Ciarcerio\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Crest - Alpe Ostafa III\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Punta Jolanda\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Boudin\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -113,35 +108,15 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Gondola Staffal-Gabiet\" has no opening_hours in OSM."
+      "message": "Lift \"Funicolare Frachey-Alpe Ciarcerio\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Gondola Staffal-Gabiet\" has no opening_hours in OSM."
+      "message": "Lift \"Funicolare Frachey-Alpe Ciarcerio\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Gondola Staffal-Gabiet\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"157006980\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"157006980\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"306616210\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Atagnod 1\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Atagnod 2\" has no opening_hours in OSM."
+      "message": "Lift \"Funicolare Frachey-Alpe Ciarcerio\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -173,31 +148,11 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Ca' Verno - Pian di Staffo\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"S. Antonio - Alpe del Gias\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Cimalegna-Passo Salati\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Champoluc - Crest\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"660782401\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Monterosa Ski\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Monterosa Ski\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -209,15 +164,11 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"973558765\" has no opening_hours in OSM."
+      "message": "Lift \"Funicolare Frachey-Alpe Ciarcerio\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"1063670764\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1063670765\" has no opening_hours in OSM."
+      "message": "Lift \"Funicolare Frachey-Alpe Ciarcerio\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -229,27 +180,7 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Ca' Piacentino - Oro\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Piane\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Peccia - Larecchio\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Moos\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1424866074\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1424866075\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -257,31 +188,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 33 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 30 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 73 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 66 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 65 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 66 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 11 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 9 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
       "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point (0 onto a piste line)."
-    },
-    {
-      "code": "unreachable_component",
-      "message": "2 node(s) unreachable from the main lift network.",
-      "refs": [
-        "n372790132",
-        "n567146015"
-      ]
     }
   ]
 }

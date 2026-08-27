@@ -37,6 +37,24 @@ const MIN_DROP = 1;
 /** How far a monotonic seat may stray from the second DEM's reading before we distrust it. */
 const RESEAT_MAX_M = 20;
 
+/**
+ * A "ski sink" is a node every skiable edge ARRIVES at and none leaves: you ski in and can only get
+ * out by riding a lift or by climbing. Most are real (a valley station, the bottom of a bowl). The
+ * ones that are not are single mis-sampled points sitting in a dip they invented, and they strand
+ * every run above them — Sölden's Giggijoch station read 2262 m against a true ~2274 m, and that
+ * alone trapped a 13-node basin: at -13 m over 44 m its cat-track is too steep to earn a reverse
+ * traverse, while at -3 m it is flat enough to walk back up.
+ *
+ * The tell is NOT topology (a genuine valley bottom looks identical) but that the node is an
+ * ISOLATED outlier: it disagrees with the second DEM by a clear margin while every neighbour agrees
+ * with it. At a real bottom both sources agree, so nothing fires. Lift stations are included on
+ * purpose — `repairPotholeElevations` skips them by design, so this is the only pass that can catch
+ * a mis-seated station, and a station is exactly where a whole sector's runs converge.
+ */
+const SINK_MIN = 8;
+/** ...and only when every neighbour agrees with the second DEM this closely (m). */
+const SINK_NBR_AGREE = 5;
+
 export interface EleCorrection {
   node: string;
   ele: number;
@@ -228,12 +246,46 @@ export async function proposeElevationCorrections(
       flipped.add(e.to);
     }
   }
-  if (!flipped.size) return { corrections: [], sampled: S.size, flips: 0 };
+  // --- 2b. Ski sinks the second source says are simply seated too low -----------------------------
+  // See SINK_MIN. Skiable = piste/connector; lift edges are ignored, because "you can only leave by
+  // lift" is precisely the symptom, not a refutation.
+  const skiIn = new Map<string, number>();
+  const skiOut = new Map<string, number>();
+  const skiNbrs = new Map<string, Set<string>>();
+  const note = (m: Map<string, number>, k: string): void => m.set(k, (m.get(k) ?? 0) + 1);
+  for (const e of graph.edges) {
+    if (e.kind === 'lift' || e.area) continue;
+    note(skiOut, e.from);
+    note(skiIn, e.to);
+    for (const [a, b] of [
+      [e.from, e.to],
+      [e.to, e.from],
+    ] as const)
+      (skiNbrs.get(a) ?? skiNbrs.set(a, new Set()).get(a)!).add(b);
+  }
+  const sunk = new Set<string>();
+  for (const n of graph.nodes) {
+    const self = S.get(n.id);
+    if (!self || flipped.has(n.id)) continue;
+    if ((skiOut.get(n.id) ?? 0) > 0 || (skiIn.get(n.id) ?? 0) < 2) continue; // not a sink
+    // Both readings must put us clearly too low, and no lower than the ground around us.
+    if (self.terr - self.our < SINK_MIN || self.smooth - self.our < SINK_MIN) continue;
+    const around = [...(skiNbrs.get(n.id) ?? [])]
+      .map((id) => S.get(id))
+      .filter((x): x is NonNullable<typeof x> => x != null);
+    if (around.length < 2) continue;
+    // The isolation test: if the neighbours disagree with the second DEM too, this is a systematic
+    // offset between two datasets over the whole area, not one bad point we may safely replace.
+    if (!around.every((x) => Math.abs(x.terr - x.our) <= SINK_NBR_AGREE)) continue;
+    sunk.add(n.id);
+  }
+
+  const suspect = new Set([...flipped, ...sunk]);
+  if (!suspect.size) return { corrections: [], sampled: S.size, flips: 0 };
 
   // --- 3. Adopt the second opinion at those nodes -------------------------------------------------
   const adopted = new Map<string, number>();
-  for (const id of flipped) adopted.set(id, S.get(id)!.terr);
-
+  for (const id of suspect) adopted.set(id, S.get(id)!.terr);
   // Piste neighbours of each corrected node, under the field as it will stand after adoption.
   const eleAfter = (id: string): number | null => adopted.get(id) ?? S.get(id)?.our ?? null;
   const nbrs = new Map<string, { id: string; dist: number }[]>();
@@ -243,7 +295,7 @@ export async function proposeElevationCorrections(
       [e.from, e.to],
       [e.to, e.from],
     ] as const) {
-      if (!flipped.has(a)) continue;
+      if (!suspect.has(a)) continue;
       const A = S.get(a);
       const B = S.get(b);
       if (!A || !B) continue;
@@ -262,7 +314,7 @@ export async function proposeElevationCorrections(
   const changed = new Set<string>();
   for (let pass = 0; pass < 3; pass++) {
     let moved = false;
-    for (const id of flipped) {
+    for (const id of suspect) {
       const cur = adopted.get(id)!;
       const around = nbrs.get(id) ?? [];
       if (around.length < 2) continue;
@@ -285,18 +337,19 @@ export async function proposeElevationCorrections(
     if (!moved) break;
   }
 
-  for (const id of flipped) {
+  for (const id of suspect) {
     const value = adopted.get(id)!;
     const our = S.get(id)?.our ?? value;
     if (Math.abs(value - our) < MIN_DROP) continue; // nothing to change
+    const kind = sunk.has(id) ? 'ski sink, isolated low outlier' : 'second DEM';
     corrections.push({
       node: id,
       ele: Math.round(value),
       why: changed.has(id)
-        ? `second DEM ${Math.round(S.get(id)!.terr)}m would tie a neighbour; seated on a monotonic slope instead`
-        : 'second DEM',
+        ? `${kind}: ${Math.round(S.get(id)!.terr)}m would tie a neighbour; seated on a monotonic slope instead`
+        : kind,
     });
   }
 
-  return { corrections, sampled: S.size, flips: flipped.size };
+  return { corrections, sampled: S.size, flips: flipped.size + sunk.size };
 }

@@ -17,20 +17,20 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.ischgl.com/en/"
   },
-  "generatedAt": "2026-08-26T13:34:38.565Z",
+  "generatedAt": "2026-08-27T07:09:13.141Z",
   "stats": {
     "resortId": "ischgl-samnaun",
-    "nodeCount": 1776,
-    "edgeCount": 5493,
-    "pisteEdges": 1817,
+    "nodeCount": 1765,
+    "edgeCount": 5468,
+    "pisteEdges": 1819,
     "liftEdges": 68,
-    "connectorEdges": 3608,
-    "meaningfulPoints": 265,
-    "reachableFromLifts": 1775,
+    "connectorEdges": 3581,
+    "meaningfulPoints": 267,
+    "reachableFromLifts": 1764,
     "unreachableNodes": 1,
     "warningsByCode": {
       "suspicious_merge": 46,
-      "missing_opening_hours": 59,
+      "missing_opening_hours": 54,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
@@ -185,9 +185,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000000239 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000000235 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000000239"
+        "n1000000000235"
       ]
     },
     {
@@ -227,9 +227,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000000656 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000000650 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000000656"
+        "n1000000000650"
       ]
     },
     {
@@ -304,9 +304,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000001897 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000001889 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000001897"
+        "n1000000001889"
       ]
     },
     {
@@ -318,16 +318,16 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000002653 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000002646 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000002653"
+        "n1000000002646"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000002695 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000002688 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000002695"
+        "n1000000002688"
       ]
     },
     {
@@ -360,19 +360,11 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Silvrettabahn\" has no opening_hours in OSM."
+      "message": "Lift \"Silvrettabahn I\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Silvrettabahn\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Fimbabahn\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Fimbabahn\" has no opening_hours in OSM."
+      "message": "Lift \"Fimbabahn II\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -516,14 +508,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"138957401\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"138957401\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Förderband Musella\" has no opening_hours in OSM."
     },
     {
@@ -576,18 +560,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"1427934896\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1427934897\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1427934898\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Sassgalunbahn\" has no opening_hours in OSM."
     },
     {
@@ -595,20 +567,28 @@
       "message": "Lift \"Höllbodenbahn\" has no opening_hours in OSM."
     },
     {
-      "code": "inferred_connector",
-      "message": "Snapped 265 dead-end run(s) onto a nearby piste line (T-junction)."
+      "code": "missing_opening_hours",
+      "message": "Lift \"Fimbabahn I\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Silvrettabahn II\" has no opening_hours in OSM."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 873 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Snapped 263 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 680 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Inferred 854 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 130 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 677 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 131 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

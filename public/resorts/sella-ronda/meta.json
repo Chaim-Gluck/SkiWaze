@@ -17,20 +17,20 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-08-26T13:33:01.793Z",
+  "generatedAt": "2026-08-27T08:40:30.615Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1652,
-    "edgeCount": 4643,
-    "pisteEdges": 1501,
-    "liftEdges": 218,
-    "connectorEdges": 2924,
-    "meaningfulPoints": 620,
-    "reachableFromLifts": 1620,
-    "unreachableNodes": 32,
+    "nodeCount": 1648,
+    "edgeCount": 4654,
+    "pisteEdges": 1484,
+    "liftEdges": 275,
+    "connectorEdges": 2895,
+    "meaningfulPoints": 611,
+    "reachableFromLifts": 1608,
+    "unreachableNodes": 40,
     "warningsByCode": {
       "suspicious_merge": 2,
-      "missing_opening_hours": 175,
+      "missing_opening_hours": 184,
       "inferred_connector": 7,
       "unreachable_component": 1
     }
@@ -356,19 +356,83 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Codes\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Codes\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Gran Paradiso\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Sotsaslong\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Gherdënia Ronda Express - Gardena Ronda Express\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -576,10 +640,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"234261015\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Cadepunt\" has no opening_hours in OSM."
     },
     {
@@ -672,10 +732,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"843259190\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"1012218193\" has no opening_hours in OSM."
     },
     {
@@ -688,23 +744,11 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Zipline Monte Pana\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Fedaia-Pian dei Fiacconi\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Fedaia-Sass del Mul\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Sass del Mul\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1072357904\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -736,10 +780,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"1331618903\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Tappeto scuola sci\" has no opening_hours in OSM."
     },
     {
@@ -747,24 +787,20 @@
       "message": "Lift \"1483731999\" has no opening_hours in OSM."
     },
     {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1539825344\" has no opening_hours in OSM."
+      "code": "inferred_connector",
+      "message": "Snapped 281 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 278 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Inferred 824 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 822 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Added 698 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 707 flat-junction traverse(s) bridging dangling run ends across level areas."
-    },
-    {
-      "code": "inferred_connector",
-      "message": "Added 79 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 80 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -780,28 +816,28 @@
     },
     {
       "code": "unreachable_component",
-      "message": "32 node(s) unreachable from the main lift network.",
+      "message": "40 node(s) unreachable from the main lift network.",
       "refs": [
         "n608511303",
+        "n1149155677",
+        "n2610898952",
         "n1584897499",
+        "n2610899019",
         "n461618303",
         "n608511305",
         "n608511307",
-        "n12009588137",
+        "n2610898994",
         "n12009588131",
-        "n7041793723",
-        "n689263117",
         "n12009588156",
         "n864651065",
+        "n1149155667",
+        "n9691438681",
+        "n9691438680",
         "n526850304",
         "n12282189507",
-        "n13031955177",
-        "n13039689974",
         "n12009588124",
         "n13039689977",
-        "n2610902779",
-        "n12009588159",
-        "n12009588158"
+        "n2610902779"
       ]
     }
   ]

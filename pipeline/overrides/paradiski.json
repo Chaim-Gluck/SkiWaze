@@ -1,0 +1,12 @@
+{
+  "_comment": "Paradiski (Les Arcs / La Plagne).",
+  "_comment2": "Arc 1600 funicular top. The Funiculaire Arc-en-Ciel (Les Arcs' Express) is the link from Bourg-Saint-Maurice, and it is bidirectional, but in OSM its top station has no edge onto the Les Arcs piste network - everything reachable downhill from it runs back down the valley. Compiled, that made the whole Bourg-Saint-Maurice / Arc 1600 side a 28-node trapped basin: ride up, and nothing gets you onto the mountain. The arrival station is a multi-level building at the resort entrance and skiers walk out of it straight onto the Bois de Saule piste top, so the real-world height difference is stairs inside the station, not a climb. Joined station -> piste top as a flat traverse both ways (79 m, +2 m).",
+  "addConnectors": [
+    {
+      "from": "n5398032847",
+      "to": "n2298495857",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    }
+  ]
+}

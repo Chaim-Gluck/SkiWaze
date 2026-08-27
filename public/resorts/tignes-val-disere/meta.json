@@ -10,27 +10,27 @@
     "bbox": {
       "minLon": 6.83,
       "minLat": 45.4,
-      "maxLon": 7.02,
+      "maxLon": 7.07,
       "maxLat": 45.52
     },
     "defaultZoom": 12,
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.tignes.net/en/"
   },
-  "generatedAt": "2026-08-26T13:34:19.227Z",
+  "generatedAt": "2026-08-27T07:08:00.464Z",
   "stats": {
     "resortId": "tignes-val-disere",
-    "nodeCount": 1031,
-    "edgeCount": 2993,
-    "pisteEdges": 1015,
-    "liftEdges": 93,
-    "connectorEdges": 1885,
-    "meaningfulPoints": 381,
-    "reachableFromLifts": 1024,
-    "unreachableNodes": 7,
+    "nodeCount": 1134,
+    "edgeCount": 3333,
+    "pisteEdges": 1120,
+    "liftEdges": 117,
+    "connectorEdges": 2096,
+    "meaningfulPoints": 427,
+    "reachableFromLifts": 1128,
+    "unreachableNodes": 6,
     "warningsByCode": {
       "suspicious_merge": 3,
-      "missing_opening_hours": 84,
+      "missing_opening_hours": 96,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
@@ -52,9 +52,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000000060 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000000061 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000000060"
+        "n1000000000061"
       ]
     },
     {
@@ -68,6 +68,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Daille\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funival\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -147,7 +151,27 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Céma\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Cascade\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Montet\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Montet\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Leissières\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Signal 1\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -168,6 +192,22 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Vanoise\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire Perce-Neige\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire Perce-Neige\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire Perce-Neige\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funival\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -227,6 +267,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Pays Désert\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"TKD1 Chardonnet\" has no opening_hours in OSM."
     },
     {
@@ -272,6 +316,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Termignon 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Brévières\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -323,6 +371,14 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire Perce-Neige\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Funiculaire Perce-Neige\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Snow Park\" has no opening_hours in OSM."
     },
     {
@@ -343,19 +399,11 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Signal 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Replat\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"CATEX\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1215020827\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1215020829\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -395,19 +443,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 137 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 160 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 505 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 565 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 419 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 468 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 67 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 77 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -415,15 +463,14 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 14 unreachable zone(s) to the nearest point a skier can already get to (10 onto a piste line)."
+      "message": "Linked 13 unreachable zone(s) to the nearest point a skier can already get to (9 onto a piste line)."
     },
     {
       "code": "unreachable_component",
-      "message": "7 node(s) unreachable from the main lift network.",
+      "message": "6 node(s) unreachable from the main lift network.",
       "refs": [
         "n2374893280",
         "n2374893332",
-        "n339346757",
         "n12797186395",
         "n12797254711",
         "n12797254712",

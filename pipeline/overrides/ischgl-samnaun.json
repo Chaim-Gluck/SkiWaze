@@ -1,5 +1,19 @@
 {
   "_comment": "Ischgl / Samnaun. Both entries below are verified-good elevation-audit candidates, kept only to silence npm run check:elevation.",
+  "acceptedBasins": [
+    {
+      "nodes": [
+        "on11635633275",
+        "n344523790",
+        "n344523806",
+        "n6067525004",
+        "n14119234235",
+        "n13570327286",
+        "n661493619"
+      ],
+      "why": "Runs 60/61 (Alp Trida - Samnaun Laret) plus the Skiweg Compatsch / Skiweg Laret-West cat-tracks: the valley descent off Alp Trida down to the Samnaun village floor at ~1711 m. Reviewed on the map - this really is a one-way exit. You ski it down into the village and there is no run or lift back up from the bottom; you ride the Twinliner / village lifts or take the bus, none of which is a skiable link. Nothing to add and nothing to remove, so it is signed off rather than fixed."
+    }
+  ],
   "ignoreReversals": [
     {
       "from": "n247908235",

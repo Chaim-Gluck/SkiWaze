@@ -19,6 +19,17 @@ export interface Overrides {
   /** Edge ids to delete. */
   removeEdges?: string[];
   /**
+   * Delete a connector by its two endpoint NODE ids, in either direction (so one entry kills both
+   * halves of a bidirectional traverse). Use this — not `removeEdges` — to retract a link the
+   * rescue / snap / ski-out passes invented but that does not exist on the ground: a synthetic
+   * bridge across a main road or river welds two sectors together and makes a genuinely stranded
+   * sector look reachable, which hides it from `check:basins` instead of fixing it. Node ids are
+   * derived from OSM and stable across a refresh, whereas `e<idx>` edge ids are order-dependent
+   * and silently repoint. Only `kind: 'connector'` edges are matched, so this can never delete a
+   * real piste or lift.
+   */
+  removeConnectors?: { from: string; to: string; why?: string }[];
+  /**
    * Remove non-skiable pistes that OSM tagged as ski runs/connections (roads, walking paths,
    * mapping bugs). Match by exact `name`, and/or by a `bbox` [minLon,minLat,maxLon,maxLat]
    * (bbox only removes UNRATED pistes fully inside it, so it can't clip a real coloured run).
@@ -69,6 +80,15 @@ export interface Overrides {
    * touches the graph — so the remaining audit output stays signal rather than known noise.
    */
   ignoreReversals?: { from: string; to: string; why?: string }[];
+  /**
+   * Trapped basins a human checked on the map and confirmed are genuinely disconnected on the
+   * ground — a satellite area you can only reach by ski bus, a sector closed to skiing. Like
+   * `ignoreReversals` this never touches the graph; it only tells `npm run check:basins` to stop
+   * asking. Without it every review pass re-litigates the same handful of legitimate islands, and
+   * the real defects get lost in them. Match is by node id: any listed id inside the basin accepts
+   * it, so list a few for resilience.
+   */
+  acceptedBasins?: { nodes: string[]; why: string }[];
 }
 
 export function loadOverrides(resortId: string, dir: string): Overrides | null {
@@ -100,6 +120,14 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
   if (ov.removeEdges?.length) {
     const dead = new Set(ov.removeEdges);
     edges = edges.filter((e) => !dead.has(e.id));
+  }
+
+  // 2-conn. Remove a connector by its endpoints. See the `removeConnectors` doc-comment.
+  if (ov.removeConnectors?.length) {
+    const dead = new Set(
+      ov.removeConnectors.flatMap((c) => [`${c.from}\u0000${c.to}`, `${c.to}\u0000${c.from}`]),
+    );
+    edges = edges.filter((e) => e.kind !== 'connector' || !dead.has(`${e.from}\u0000${e.to}`));
   }
 
   // 2-lift. Remove non-skiable lifts (e.g. foot-passenger sightseeing gondolas) by name.

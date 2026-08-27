@@ -42,12 +42,14 @@ export function isPisteArea(w: RawWay): boolean {
 function buildQuery(r: Resort): string {
   const { minLat, minLon, maxLat, maxLon } = r.bbox;
   const bbox = `${minLat},${minLon},${maxLat},${maxLon}`;
-  // Downhill (and connection) pistes + all aerialway lift ways.
+  // Downhill (and connection) pistes + all aerialway lift ways, PLUS ground-running lifts, which
+  // OSM tags as `railway`, not `aerialway` — see RAIL_LIFT_TYPES.
   return `[out:json][timeout:120];
 (
   way["piste:type"="downhill"](${bbox});
   way["piste:type"="connection"](${bbox});
   way["aerialway"](${bbox});
+  way["railway"~"^(funicular|rack)$"](${bbox});
 );
 out geom;`;
 }
@@ -121,9 +123,55 @@ export async function fetchResortOsm(
   throw new Error(`All Overpass attempts failed: ${String(lastErr)}`);
 }
 
+/**
+ * Lifts that run on the ground rather than on a cable, which OSM tags under `railway` — so a query
+ * for `aerialway` alone silently misses them. They are ordinary ski lifts to a skier and several are
+ * a sector's ONLY way back up: without them Les Arcs' valley return, Tignes' Funival to the Grande
+ * Motte glacier and Zermatt's Sunnegga all read as terrain you can ski into but never leave. `rack`
+ * (cogwheel mountain railway) is included for the same reason.
+ */
+export const RAIL_LIFT_TYPES: ReadonlySet<string> = new Set(['funicular', 'rack']);
+
+/**
+ * `aerialway` values that never carry a skier between two points on the mountain. We used to accept
+ * any `aerialway=*` tag, which quietly made a private cargo ropeway to a hamlet (Zmutt, above
+ * Zermatt: `aerialway=goods` + `access=private`) a perfectly good leg of a ski route, and did the
+ * same for zip lines, avalanche-control ropeways and dismantled lifts. `station` and `pylon` are
+ * here because our query asks for WAYS: a station tagged on a way is its building outline and a
+ * pylon is its footprint, neither of which is a line anyone travels along.
+ */
+export const NON_PASSENGER_AERIALWAYS: ReadonlySet<string> = new Set([
+  'goods',
+  'zip_line',
+  'explosive',
+  'avalanche',
+  'abandoned',
+  'disused',
+  'construction',
+  'proposed',
+  'planned',
+  'station',
+  'pylon',
+]);
+
+/**
+ * Access values that put a lift off-limits to the skiing public. `permissive` and `customers` stay
+ * routable — a resort lift is exactly "customers only".
+ */
+const CLOSED_ACCESS: ReadonlySet<string> = new Set(['private', 'no']);
+
+/** True when a lift way is usable by a skier travelling through the resort. */
+export function isPassengerLift(w: RawWay): boolean {
+  const aerialway = w.tags['aerialway'];
+  if (aerialway && NON_PASSENGER_AERIALWAYS.has(aerialway)) return false;
+  if (CLOSED_ACCESS.has(w.tags['access'])) return false;
+  return true;
+}
+
 function splitWays(ways: RawWay[]): OverpassResult {
+  const lifts = ways.filter((w) => w.tags['aerialway'] || RAIL_LIFT_TYPES.has(w.tags['railway']));
   return {
     pistes: ways.filter((w) => w.tags['piste:type']),
-    lifts: ways.filter((w) => w.tags['aerialway']),
+    lifts: lifts.filter(isPassengerLift),
   };
 }

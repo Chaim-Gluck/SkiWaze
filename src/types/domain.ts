@@ -40,6 +40,19 @@ export const DOWNLOADABLE_LIFT_TYPES: ReadonlySet<LiftType> = new Set<LiftType>(
   'mixed_lift',
 ]);
 
+/**
+ * Lift types that are *physically* capable of carrying a skier downhill, whether or not they do
+ * by default. A chair can be ridden down when the operator allows it; you can never ride a drag
+ * lift down. Used to decide whether an OSM `oneway=no` tag is believable.
+ */
+export const AERIAL_LIFT_TYPES: ReadonlySet<LiftType> = new Set<LiftType>([
+  'gondola',
+  'cable_car',
+  'funicular',
+  'mixed_lift',
+  'chair_lift',
+]);
+
 /** Kind of graph edge. */
 export type EdgeKind = 'piste' | 'lift' | 'connector';
 
@@ -158,6 +171,12 @@ export interface Resort {
   /** Map default center. */
   center: { lon: number; lat: number };
   bbox: ResortBBox;
+  /**
+   * Rectangles to SUBTRACT from `bbox` (build-time only). Real ski areas are not rectangles, so
+   * where a neighbouring resort shares a corner there is no single box that holds all of ours and
+   * none of theirs. A piste/lift with the majority of its points inside one of these is dropped.
+   */
+  excludeBboxes?: ResortBBox[];
   defaultZoom: number;
   /** IANA timezone for interpreting lift opening hours. */
   timezone: string;

@@ -17,19 +17,19 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.campigliodolomiti.it/en/"
   },
-  "generatedAt": "2026-08-26T13:32:19.256Z",
+  "generatedAt": "2026-08-27T07:04:26.682Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
-    "nodeCount": 425,
-    "edgeCount": 1063,
-    "pisteEdges": 395,
-    "liftEdges": 94,
-    "connectorEdges": 574,
-    "meaningfulPoints": 236,
-    "reachableFromLifts": 425,
+    "nodeCount": 394,
+    "edgeCount": 1007,
+    "pisteEdges": 393,
+    "liftEdges": 81,
+    "connectorEdges": 533,
+    "meaningfulPoints": 235,
+    "reachableFromLifts": 394,
     "unreachableNodes": 0,
     "warningsByCode": {
-      "missing_opening_hours": 74,
+      "missing_opening_hours": 61,
       "inferred_connector": 7
     }
   },
@@ -168,14 +168,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"88208505\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"88208505\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Marilleva\" has no opening_hours in OSM."
     },
     {
@@ -193,14 +185,6 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Tapis Roulant Grostè Express - Fortini\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"121064777\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"121064778\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -264,23 +248,7 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"662367215\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"662367215\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Daolasa 2\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"830666441\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"830666442\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -296,31 +264,11 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Telecabina Belvedere\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Telecabina Belvedere\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Ottava\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Marilleva 900\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"998722616\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"998762576\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1095904197\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -332,19 +280,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 62 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 60 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 161 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 152 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 152 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 140 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 18 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 12 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

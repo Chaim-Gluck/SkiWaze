@@ -17,20 +17,20 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.les2alpes.com/en/"
   },
-  "generatedAt": "2026-08-26T13:34:47.627Z",
+  "generatedAt": "2026-08-27T07:09:59.531Z",
   "stats": {
     "resortId": "les-deux-alpes",
-    "nodeCount": 518,
-    "edgeCount": 1368,
-    "pisteEdges": 538,
-    "liftEdges": 55,
-    "connectorEdges": 775,
-    "meaningfulPoints": 209,
-    "reachableFromLifts": 518,
+    "nodeCount": 520,
+    "edgeCount": 1386,
+    "pisteEdges": 541,
+    "liftEdges": 67,
+    "connectorEdges": 778,
+    "meaningfulPoints": 212,
+    "reachableFromLifts": 520,
     "unreachableNodes": 0,
     "warningsByCode": {
       "suspicious_merge": 1,
-      "missing_opening_hours": 47,
+      "missing_opening_hours": 52,
       "inferred_connector": 5
     }
   },
@@ -41,6 +41,22 @@
       "refs": [
         "n11280322406"
       ]
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Dôme Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Dôme Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Dôme Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ascenceur Incliné\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -228,19 +244,23 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Dôme Express\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Express\" has no opening_hours in OSM."
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 70 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 73 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 197 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 199 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 197 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 193 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
