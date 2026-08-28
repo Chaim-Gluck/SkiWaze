@@ -14,6 +14,14 @@ import type { PisteColor, Preferences, Route, RouteObjective } from '../types/do
  * Each key is compared within a tolerance, so "effectively tied" falls through to the next key.
  * `distance` is appended after all four as an exact last resort: without it two routes that tie on
  * every key are ordered arbitrarily, which is how a 200 m detour once beat the 40 m direct line.
+ *
+ * The PROMOTED key is the exception: it is compared only as loosely as the UI rounds. A generous
+ * tolerance is right for a secondary key — "these are effectively the same, so prefer the nicer
+ * one" — but on the key the user explicitly asked for it produces a badge that contradicts the
+ * number printed beside it. Mount Hermon shipped exactly that: 8 min / 2.5 km badged "Fastest"
+ * over a 7 min / 1.9 km option, because 480 s vs 420 s is *precisely* the 60 s floor, so time tied
+ * and "Skiing" (more piste metres) decided. The rule is now: the objective may only call two
+ * routes tied when the app displays them as the same value.
  */
 type RankKey = 'preference' | 'lifts' | 'skiing' | 'time' | 'distance';
 
@@ -73,20 +81,31 @@ function metricsOf(route: Route, prefs: Preferences): RouteMetrics {
   };
 }
 
-/** Compare one key; 0 when within tolerance (a tie → fall through to the next key). */
-function compareKey(key: RankKey, a: RouteMetrics, b: RouteMetrics): number {
+/**
+ * Compare one key; 0 when within tolerance (a tie → fall through to the next key).
+ *
+ * `lead` is the promoted key for the active objective, and it ties only when the two values render
+ * identically — minutes for time (`fmtDuration`), 0.1 km for the metre keys (`fmtDistance`).
+ */
+function compareKey(key: RankKey, a: RouteMetrics, b: RouteMetrics, lead = false): number {
   switch (key) {
     case 'time': {
+      if (lead) {
+        const d = Math.round(a.timeS / 60) - Math.round(b.timeS / 60);
+        return d === 0 ? 0 : d; // less is better
+      }
       const tol = Math.max(60, 0.08 * Math.min(a.timeS, b.timeS)); // 60 s or 8%
       return Math.abs(a.timeS - b.timeS) <= tol ? 0 : a.timeS - b.timeS; // less is better
     }
     case 'lifts':
       return a.lifts - b.lifts; // exact — one lift always matters
     case 'preference': {
+      if (lead) return Math.round(a.offPrefM / 100) - Math.round(b.offPrefM / 100); // less is better
       const tol = Math.max(30, 0.03 * Math.min(a.offPrefM, b.offPrefM)); // 30 m or 3%
       return Math.abs(a.offPrefM - b.offPrefM) <= tol ? 0 : a.offPrefM - b.offPrefM; // less is better
     }
     case 'skiing': {
+      if (lead) return Math.round(b.skiM / 100) - Math.round(a.skiM / 100); // MORE is better
       const tol = Math.max(100, 0.05 * Math.min(a.skiM, b.skiM)); // 100 m or 5%
       return Math.abs(a.skiM - b.skiM) <= tol ? 0 : b.skiM - a.skiM; // MORE is better
     }
@@ -114,7 +133,7 @@ export function makeRouteComparator(objective: RouteObjective, prefs: Preference
     const a = metricsOf(ra, prefs);
     const b = metricsOf(rb, prefs);
     for (const key of order) {
-      const c = compareKey(key, a, b);
+      const c = compareKey(key, a, b, key === order[0]);
       if (c !== 0) return c;
     }
     return 0;

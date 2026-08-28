@@ -26,6 +26,7 @@
                     "probe:trappeddiff":  "tsx pipeline/_trappeddiff.ts",
                     "probe:reach":  "tsx pipeline/_reachprobe.ts",
                     "probe:plan":  "tsx pipeline/_planprobe.ts",
+                    "probe:badges":  "tsx pipeline/_badgecheck.ts",
                     "probe:wiggle":  "tsx pipeline/_wiggle.ts",
                     "probe:legturns":  "tsx pipeline/_legturns.ts",
                     "probe:hood":  "tsx pipeline/_hood.ts",

@@ -57,6 +57,16 @@
   "acceptedBasins": [
     {
       "nodes": [
+        "n366182231",
+        "n102561253",
+        "n411679826",
+        "n290215518",
+        "n6511621012"
+      ],
+      "why": "Alpe di Siusi / Seiser Alm above Ortisei (175 nodes, 23 lifts - Seiseralmbahn, Mont Seuc, Panorama). The largest basin in the fleet, and it is NOT a data defect: the sector's ski-out ends in the town of Ortisei and the only way back up is the La Curta escalator, whose base is 259 m away ACROSS ORTISEI'S PEDESTRIANISED MAIN STREET. The escalator itself is imported and works (conveying/people_mover, see AGENTS.md) - it welds through to the Ortisei-Furnes gondola base - so this is not a missing-lift bug and importing it did not, and cannot, free the basin. Closing the 259 m would mean importing village footways (Streda Rezia w30633601, Streda Pedetliva w114144111, w1028635548/9, w1351892632) as skiable/walkable links. OSM half-tags that street chain: some segments carry piste:type=connection and are already in our graph, the rest are untagged. Reviewed on the map by the user with a dedicated overlay (public/devtools/overlays/ortisei-gap.json). USER VERDICT: import the escalator, add NO synthetic link, the sector remains an island - that is the ground truth and we are not changing it. The honest fix is upstream in OSM; if those street segments are ever tagged, a refresh picks them up and this entry can be dropped."
+    },
+    {
+      "nodes": [
         "n340588435",
         "n340588441",
         "n3326396035",

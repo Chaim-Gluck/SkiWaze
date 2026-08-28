@@ -43,7 +43,14 @@ export function routeForEdges(graph: ResortGraph, prefs: Preferences, edges: Gra
 /** Find up to `k` diverse longest lift-free runs across the resort, within the user's level. */
 export function findLongestRuns(graph: ResortGraph, prefs: Preferences, k = 3): LongestRun[] {
   const index = new GraphIndex(graph);
-  const chains = longestDownhillRuns(index, colorRank(prefs.maxDifficulty), k);
+  // Same gate as the A→B longest search: this walks the graph directly, so without it the card
+  // advertises unpatrolled freeride terrain to a skier who never opted into it.
+  const chains = longestDownhillRuns(
+    index,
+    colorRank(prefs.maxDifficulty),
+    k,
+    (e) => (prefs.allowOffPiste || !e.offPiste) && !(prefs.avoidSyntheticBridges && e.synthetic && !e.custom),
+  );
   return chains.map((chain) => {
     let distanceM = 0;
     let descentM = 0;
@@ -151,6 +158,37 @@ function noRouteResult(closedEdgeIds: ReadonlySet<string>): PlanResult {
 }
 
 /**
+ * Last-step guarantee that a badge never contradicts the number printed beside it.
+ *
+ * Badges are assigned per objective from a candidate *pool*, but the final card list is not that
+ * pool: the "Alternative" fallback is drawn from a wider set and appended afterwards, so a route
+ * the fastest comparator never saw can end up on screen showing fewer minutes than the card badged
+ * "Fastest". That is what Mount Hermon showed the user — 8 min badged Fastest above a 7 min
+ * sibling. Rather than widen the pool (which would change which routes are offered), the label is
+ * moved to whichever shown card actually wins on the badge's own metric.
+ *
+ * Comparison is at DISPLAY resolution — whole minutes, 0.1 km — because a margin the user cannot
+ * see is not a contradiction, and re-badging on it would just make the ordering look random.
+ */
+function reconcileLabels(routes: Route[]): void {
+  const move = (label: string, better: (a: Route, b: Route) => boolean) => {
+    const holder = routes.find((r) => r.labels?.includes(label));
+    if (!holder) return;
+    let winner = holder;
+    for (const r of routes) if (r !== holder && better(r, winner)) winner = r;
+    if (winner === holder) return;
+    holder.labels = (holder.labels ?? []).filter((l) => l !== label);
+    if (holder.labels.length === 0) holder.labels = ['Alternative'];
+    winner.labels = [label, ...(winner.labels ?? []).filter((l) => l !== label && l !== 'Alternative')];
+  };
+  const mins = (r: Route) => Math.round(r.stats.totalDurationS / 60);
+  const skiHm = (r: Route) => Math.round(pisteMetres(r) / 100);
+  move(OBJECTIVE_LABEL.fastest, (a, b) => mins(a) < mins(b));
+  move(OBJECTIVE_LABEL.fewest_lifts, (a, b) => a.stats.liftCount < b.stats.liftCount);
+  move(OBJECTIVE_LABEL.longest_ab, (a, b) => skiHm(a) > skiHm(b));
+}
+
+/**
  * Plan route option(s) for a request. `prefs.routeType` picks the mode: `balanced` shows one
  * best route per objective (deduped, each labeled); an individual type shows up to 3 distinct
  * routes optimised for that one objective. Every option honors both A and B.
@@ -179,6 +217,21 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
 
   const maxRank = colorRank(prefs.maxDifficulty);
   const routeType = prefs.routeType ?? 'balanced';
+
+  /**
+   * The gate the longest-descent search must respect, on top of its own colour-rank test.
+   *
+   * `longestDownhillPaths` walks the graph directly rather than through `edgeCost`, so without
+   * this it was the only search in the app that ignored closures, the avoid-bridges preference and
+   * — worst — the off-piste opt-out, returning routes over unpatrolled freeride terrain that
+   * `buildRoute` then priced at 0 s because `edgeCost` refuses them.
+   */
+  const allowForLongest = (e: GraphEdge): boolean => {
+    if (closedEdgeIds.has(e.id)) return false;
+    if (!prefs.allowOffPiste && e.offPiste) return false;
+    if (prefs.avoidSyntheticBridges && e.synthetic && !e.custom) return false;
+    return true;
+  };
 
   const withSkiNote = (routes: Route[]): PlanResult => {
     const ski = nearestSkiDestination(graph, index, fromNodeId, toNodeId, prefs, closedEdgeIds);
@@ -239,13 +292,15 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
 
   // Longest is a special lift-free DAG search — handle it on its own.
   if (routeType === 'longest') {
-    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3), 'longest_ab');
+    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3, 0.7, allowForLongest), 'longest_ab');
     if (longRoutes.length === 0) {
       // Only when B can't be reached lift-free do we allow a lift.
       const withLift = genAlts('fewest_lifts', 1)[0];
       if (!withLift) return noRouteResult(closedEdgeIds);
       const r = finalize(withLift, 'longest_ab', 'route-1');
-      r.labels = ['Longest (needs a lift)'];
+      // Just "Longest" — the card already shows a lift icon and count, so spelling out "(needs a
+      // lift)" in the badge only repeats what is printed right below it.
+      r.labels = [OBJECTIVE_LABEL.longest_ab];
       return { routes: [r] };
     }
     const routes = distinctTerrain(longRoutes.sort(makeRouteComparator('longest_ab', prefs)))
@@ -266,7 +321,7 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     routes.slice().sort(makeRouteComparator(objective, prefs))[0];
 
   if (routeType === 'balanced') {
-    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3), 'longest_ab');
+    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3, 0.7, allowForLongest), 'longest_ab');
     const byKey = new Map<string, { route: Route; objective: RouteObjective; labels: string[]; order: number }>();
     const consider = (route: Route | undefined, objective: RouteObjective, order: number) => {
       if (!route) return;
@@ -315,6 +370,7 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
         routes.push(alt);
       }
     }
+    reconcileLabels(routes);
     routes.forEach((r, i) => { r.id = `route-${i + 1}`; });
     return withSkiNote(routes);
   }

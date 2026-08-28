@@ -259,6 +259,11 @@ npm run probe:plan <id> [pairs]  # routing quality: option 1's distance vs the s
                              #   path (never straight-line — one-way pistes make a 40 m gap
                              #   legitimately cost kilometres), plus mean option count and connector
                              #   share. Run before and after a ranking change and diff.
+npm run probe:badges <id|all> [pairs]  # asserts a badge never contradicts the number printed beside
+                             #   it: no card badged "Fastest" shows more minutes than a sibling, none
+                             #   badged "Longest" shows fewer ski km. Compares at DISPLAY resolution
+                             #   (whole minutes, 0.1 km) — a margin the user cannot see is not a lie.
+                             #   Exit code 1 on any violation, so it works as a gate.
 npm run probe:wiggle <id>    # how often option 1 detours off a spine onto a parallel duplicate, and
                              #   by how far. Report the RATE, MEAN and WORST together — a pass that
                              #   turns one 1246 m detour into several 50 m ones raises the rate while
@@ -300,10 +305,13 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 > server). Resort + investigation-overlay dropdowns, OpenTopoMap/OSM/satellite base, area fills,
 > flow-direction arrows (double-headed ⟺ = bidirectional), piste-name labels, and a node finder —
 > the main way to eyeball routing/elevation questions. It also has a **review list** (dropdown +
-> prev/next) driven by `public/devtools/overlays/review-list.json`: a **hand-written**, committed
-> file that nothing generates, so it must be kept in git or the reviewer silently disappears (the
-> box only renders when that file loads non-empty). Replace its contents for a new review round,
-> but keep one entry as a schema example.
+> prev/next) driven by `public/devtools/overlays/review-list.json`, which `npm run check:basins`
+> writes (AGENTS and the tool's own comment both used to call it hand-written — it never was). It
+> holds only the **unsigned** basins, so the moment the last one is signed off in `acceptedBasins`
+> a run legitimately produces nothing, and writing that `[]` takes the reviewer off the tool with
+> no error anywhere (the box only renders when the file loads non-empty). `_basins.ts` therefore
+> **refuses to write an empty list or an empty overlay**, same guard as `_areaskel.ts`. Keep both
+> files committed, and keep one entry as a schema example.
 >
 > **`check:areaskel` and `check:areaclass` are retired.** They re-derive polygons straight from OSM
 > via `buildResortGraph` and so never see `build.ts`'s synthesis passes — today they classify every
@@ -440,16 +448,25 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 - **`conveying` is a fourth way-family, and an escalator can be a sector's only way in.** OSM tags
   resort escalators and moving walkways `conveying=yes|forward|backward|both` on an ordinary
   `highway=steps`/`footway`, so queries for `piste:type`, `aerialway` and `railway` all miss them.
-  Ortisei's **La Curta** (`w29910707`, `w29912017`, `w1123139686`) is the link to the Alpe di Siusi
-  side; without it that whole **181-node / 23-lift** sector reads as terrain you can ski into and
-  never leave, and the outside node it should reach is literally named "La Curta (top)". It must be
-  modelled as a **lift**, not a connector: `maxTraverseClimb` is 8 m and gates every connector path,
-  while the La Curta chain climbs **56 m**. Hence `LiftType 'people_mover'`, which is deliberately
+  Ortisei's **La Curta** (`w29910707`, `w29912017`, `w1123139686`) is the escalator chain from the
+  village up toward the Alpe di Siusi side, and the outside node it should reach is literally named
+  "La Curta (top)". It must be modelled as a **lift**, not a connector: `maxTraverseClimb` is 8 m and
+  gates every connector path, while the La Curta chain climbs **56 m**. Hence `LiftType
+  'people_mover'`, which is deliberately
   **absent from `ALL_LIFT_TYPES` and the prefs UI** and therefore **exempt from the
   `allowedLiftTypes` gate in `cost.ts`** — every returning user's persisted array predates the type,
   so gating it would silently re-strand the sector (the same class of bug as the `speeds` map).
   **Changing `buildQuery` does not invalidate the cache** (keyed by resort id + TTL), so this needs a
   full `data:refresh` before it does anything.
+  **Do not expect the import to have freed Alpe di Siusi — it did not, and it cannot.** The escalator
+  welds correctly (base → escalator → 18 m connector → escalator → the Ortisei–Furnes gondola base),
+  but the trapped sector's ski-out ends **259 m away across Ortisei's pedestrianised main street**,
+  and the fleet refresh that activated `people_mover` left the resort's trapped count unchanged
+  (44 → 44). OSM **half-tags** that street chain: some segments of Streda Rezia / Streda Pedetliva
+  carry `piste:type=connection` and are already in our graph, the rest (`w30633601`, `w114144111`,
+  `w1028635548/9`, `w1351892632`) are untagged. **Reviewed by the user and signed off as an island**
+  (`acceptedBasins` in `overrides/sella-ronda.json`, overlay `public/devtools/overlays/ortisei-gap.json`):
+  no synthetic link is to be added — the honest fix is upstream in OSM.
 - **Validate the probe before you believe the probe — including the argument order.** `near-point.ts`
   takes `<resortId> <lon> <lat> <radius>`; called with lat and lon swapped it reported **"0 ways
   within 260 m"** at a point where a way demonstrably *starts*. A confident zero is the most
@@ -635,6 +652,31 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 - **An objective badge is suppressed when its margin is noise.** Balanced only offers the `longest`
   candidate when its piste metres beat the best pool route's by more than the ranking layer's own
   skiing tolerance (`skiingTolerance`, 100 m or 5%) — otherwise a 40 m hop gets badged "Longest".
+- **A tolerance belongs on secondary keys, never on the key the user asked for.** On a *secondary*
+  key a generous tolerance says the right thing — "these are effectively the same, so prefer the
+  nicer one". On the **promoted** key it produces a badge that contradicts the number beside it.
+  Mount Hermon shipped 8 min / 2.5 km badged **"Fastest"** above a 7 min / 1.9 km option, because
+  480 s vs 420 s is *precisely* the comparator's 60 s floor, so time tied and "Skiing" (more piste
+  metres) decided the objective the user had explicitly asked be decided on time. `compareKey` now
+  takes a `lead` flag: the promoted key ties only when the app **displays** the two values the same
+  (whole minutes via `fmtDuration`, 0.1 km via `fmtDistance`). Fleet effect was not just cosmetic —
+  `probe:plan` on les-deux-alpes went 1.054× → 1.044× with detours over 1.25× dropping 11 → 6.
+- **A badge is assigned from the pool, but the cards are not the pool — reconcile at the end.**
+  Balanced badges `bestOf(pool, objective)`, then *appends* the "Alternative" fallback drawn from a
+  wider set (`pool ∪ longRoutes`). So a route the fastest comparator never saw can land on screen
+  showing fewer minutes than the "Fastest" card. `reconcileLabels()` in `plan.ts` moves a label to
+  whichever **shown** card actually wins on that badge's own metric, at display resolution.
+  Widening the pool instead was rejected: that changes which routes are *offered*, not just how
+  they are labelled. `npm run probe:badges all` is the standing guard (0 violations / 1481 plans).
+- **The longest-descent search walks the graph directly, so it must be handed the preference gate.**
+  `longestDownhillPaths`/`longestDownhillRuns` filter on `maxColorRank` alone and never call
+  `edgeCost`, which quietly made them the only searches in the app ignoring closures,
+  "avoid app-added bridges" and — a **safety** bug — the off-piste opt-out. They returned routes
+  over unpatrolled freeride terrain with `allowOffPiste` false, and because `edgeCost` refuses such
+  an edge (`allowed:false, seconds:0`) `buildRoute` charged **0 s** for it: a Paradiski card showed
+  375 m of black off-piste as a **0-minute** route. Both now take an `EdgeAllow` predicate, passed
+  from `plan.ts`. Any future search that bypasses `edgeCost` needs the same treatment — and note
+  the 0 s is the tell: a leg with distance and no duration means an edge the cost model refused.
 - **Longest** = max-km **lift-free** descent A→B, exact via a DAG longest-path (`longestStreak.ts`);
   only falls back to a lift if B is otherwise unreachable. The resort-wide "Longest runs" card is the
   only feature that ignores A and B.
@@ -714,7 +756,12 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 ## Outstanding follow-ups (not in v1)
 - Login/accounts; Strava integration for personal average speeds.
 - Live lift status & queue/wait times; live GPS turn-by-turn; 3D terrain; offline/PWA.
-- A few resorts still have minor real-world dead-ends and one legitimate disconnected island.
+- A few resorts have real-world dead-ends and genuinely disconnected areas: measured over the
+  fleet, **9 one-way dead-ends** (ski in, no way back) and **9 true islands** (nothing connects
+  at all) across **7 of 15 resorts**. All are reviewed and signed off in `acceptedBasins`, so
+  `check:basins` reports 0 unexplained. Not all are small — Zermatt's Balmbrunnen dead-end is
+  329 nodes and Sella Ronda's Alpe di Siusi island is 175 nodes / 23 lifts, i.e. whole sectors,
+  not stubs. Never bridge one to make a number go down.
 - Consider a license file before going public (see README).
 
 ### Sharing user-contributed data across users (closures + custom links/edges)

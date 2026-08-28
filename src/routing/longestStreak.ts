@@ -292,13 +292,33 @@ function usableFrom(edges: GraphEdge[], keep: (e: GraphEdge) => boolean): GraphE
 }
 
 /**
+ * Extra per-edge admissibility, beyond "not a lift and within the colour rank".
+ *
+ * The longest-descent family used to gate on `maxColorRank` alone, which quietly made it the one
+ * search in the app that ignored the rest of the skier's preferences: it happily returned routes
+ * over `offPiste` freeride terrain with `allowOffPiste` false, over closed runs, and over synthetic
+ * bridges the user had asked to avoid. `buildRoute` then charged **0 s** for every such edge
+ * (`edgeCost` returns `allowed:false, seconds:0`), so a Paradiski option showed 375 m of black
+ * off-piste as a 0-minute route — and, being quicker than the genuine "Fastest" card, it is what
+ * first exposed this. Callers pass the same gate the rest of the planner uses.
+ */
+export type EdgeAllow = (e: GraphEdge) => boolean;
+
+const ALLOW_ALL: EdgeAllow = () => true;
+
+/**
  * Extract up to `k` diverse longest lift-free runs. Candidate starts are ranked by a cheap
  * whole-graph DP, then each is re-solved from its own root and de-duplicated by overlap, so the
  * carousel shows genuinely different runs. Selection is by descent score (which is what keeps a
  * run a real descent rather than padded metres); the results are then presented longest-first,
  * because distance is the number the card shows.
  */
-export function longestDownhillRuns(index: GraphIndex, maxColorRank = Infinity, k = 3): GraphEdge[][] {
+export function longestDownhillRuns(
+  index: GraphIndex,
+  maxColorRank = Infinity,
+  k = 3,
+  allow: EdgeAllow = ALLOW_ALL,
+): GraphEdge[][] {
   const eleOf = new Map<string, number>();
   for (const [id, n] of index.nodes) eleOf.set(id, n.point.ele ?? 0);
 
@@ -317,7 +337,7 @@ export function longestDownhillRuns(index: GraphIndex, maxColorRank = Infinity, 
   // (plus a shallow climb where that is the only way on — see MAX_ESCAPE_CLIMB_M).
   const adj = new Map<string, GraphEdge[]>();
   for (const [from, edges] of index.out) {
-    const kept = usableFrom(edges, (e) => e.kind !== 'lift' && colorRank(e) <= maxColorRank);
+    const kept = usableFrom(edges, (e) => e.kind !== 'lift' && colorRank(e) <= maxColorRank && allow(e));
     if (kept.length) adj.set(from, kept);
   }
 
@@ -501,7 +521,7 @@ export function longestDownhillRuns(index: GraphIndex, maxColorRank = Infinity, 
   // the same flat sub-mesh). Non-custom synthetic bridges are excluded so smoothing never
   // introduces a dotted-magenta warning edge the original run didn't already use.
   const isFlatLeg = (e: GraphEdge) =>
-    e.kind !== 'lift' && e.dropM > -2 && colorRank(e) <= maxColorRank && !(e.synthetic && !e.custom);
+    e.kind !== 'lift' && e.dropM > -2 && colorRank(e) <= maxColorRank && allow(e) && !(e.synthetic && !e.custom);
   const shortestFlat = (entry: string, exit: string): GraphEdge[] | null => {
     if (entry === exit) return [];
     const dist = new Map<string, number>([[entry, 0]]);
@@ -648,8 +668,8 @@ export function longestDownhillRuns(index: GraphIndex, maxColorRank = Infinity, 
  *
  * Returns the ordered edge chain of the run (empty if none).
  */
-export function longestDownhillStreak(index: GraphIndex, maxColorRank = Infinity): GraphEdge[] {
-  return longestDownhillRuns(index, maxColorRank, 1)[0] ?? [];
+export function longestDownhillStreak(index: GraphIndex, maxColorRank = Infinity, allow: EdgeAllow = ALLOW_ALL): GraphEdge[] {
+  return longestDownhillRuns(index, maxColorRank, 1, allow)[0] ?? [];
 }
 
 /**
@@ -671,12 +691,13 @@ export function longestDownhillPath(
   toId: string,
   maxColorRank = Infinity,
   penalties?: Map<string, number>,
+  allow: EdgeAllow = ALLOW_ALL,
 ): GraphEdge[] {
   // Prefer a run that never climbs. Only if B is unreachable that way do we allow a rise, so a
   // legitimately awkward pairing still returns something rather than nothing.
-  const strict = descentPath(index, fromId, toId, maxColorRank, penalties, false);
+  const strict = descentPath(index, fromId, toId, maxColorRank, penalties, false, allow);
   if (strict.length) return strict;
-  return descentPath(index, fromId, toId, maxColorRank, penalties, true);
+  return descentPath(index, fromId, toId, maxColorRank, penalties, true, allow);
 }
 
 function descentPath(
@@ -686,6 +707,7 @@ function descentPath(
   maxColorRank: number,
   penalties: Map<string, number> | undefined,
   allowClimb: boolean,
+  allow: EdgeAllow = ALLOW_ALL,
 ): GraphEdge[] {
   if (fromId === toId) return [];
 
@@ -704,7 +726,7 @@ function descentPath(
   // (plus a shallow climb where that is the only way on — see MAX_ESCAPE_CLIMB_M).
   const adj = new Map<string, GraphEdge[]>();
   for (const [from, edges] of index.out) {
-    const keep = (e: GraphEdge) => e.kind !== 'lift' && colorRank(e) <= maxColorRank;
+    const keep = (e: GraphEdge) => e.kind !== 'lift' && colorRank(e) <= maxColorRank && allow(e);
     const kept = allowClimb ? edges.filter(keep) : usableFrom(edges, keep);
     if (kept.length) adj.set(from, kept);
   }
@@ -800,7 +822,7 @@ function descentPath(
  * plumbing keeps this to a couple of extra searches per run, and every edge descends, so a spliced
  * sub-path can never collide with the rest of the chain.
  */
-function smoothPlumbing(index: GraphIndex, chain: GraphEdge[], maxColorRank: number): GraphEdge[] {
+function smoothPlumbing(index: GraphIndex, chain: GraphEdge[], maxColorRank: number, allow: EdgeAllow = ALLOW_ALL): GraphEdge[] {
   const isPlumbing = (e: GraphEdge) => !!(e.skeletonArm || e.spineDuplicate);
   if (!chain.some(isPlumbing)) return chain;
 
@@ -819,7 +841,7 @@ function smoothPlumbing(index: GraphIndex, chain: GraphEdge[], maxColorRank: num
     while (start > 0 && isPlumbing(out[start - 1])) start--;
 
     const seg = out.slice(start, end);
-    const alt = descentPath(index, seg[0].from, seg[seg.length - 1].to, maxColorRank, undefined, false);
+    const alt = descentPath(index, seg[0].from, seg[seg.length - 1].to, maxColorRank, undefined, false, allow);
     if (alt.length && total(alt) > total(seg) + 1e-6) out.splice(start, seg.length, ...alt);
 
     end = start;
@@ -840,18 +862,19 @@ export function longestDownhillPaths(
   maxColorRank = Infinity,
   k = 3,
   maxOverlap = 0.7,
+  allow: EdgeAllow = ALLOW_ALL,
 ): GraphEdge[][] {
   const accepted: GraphEdge[][] = [];
   const penalties = new Map<string, number>();
   const maxAttempts = k * 4;
 
   for (let attempt = 0; attempt < maxAttempts && accepted.length < k; attempt++) {
-    const found = longestDownhillPath(index, fromId, toId, maxColorRank, penalties);
+    const found = longestDownhillPath(index, fromId, toId, maxColorRank, penalties, allow);
     if (found.length === 0) break;
 
     // Keep the straightened run, but penalise what the search actually walked — penalties exist to
     // push the *next* search onto new terrain, and the dogleg is terrain it should not retry.
-    const chain = smoothPlumbing(index, found, maxColorRank);
+    const chain = smoothPlumbing(index, found, maxColorRank, allow);
 
     const isDup = accepted.some(
       (r) => r.length === chain.length && r.every((e, i) => e.id === chain[i].id),

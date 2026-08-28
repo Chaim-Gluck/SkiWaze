@@ -85,78 +85,62 @@ no per-resort graph code; adding a resort just runs the same passes.
   (force-merge/split nodes, add/remove connectors, set lift download capability).
 
 ## Adding a resort
-The pipeline is fully generic — the same graph rules apply to every resort, with **no
-per-resort code**. To add one:
+Adding a resort is a **supported, routine operation and should go smoothly**. The pipeline is fully
+generic — the same graph rules apply to every resort, with **no per-resort code**. Every defect we
+have hit so far has been turned into a build-time rule that fires for all resorts, so a new resort
+mostly just works.
 
 1. **Define it** — add an entry to `RESORTS` in `src/config/resorts.ts`
-   (`id`, `name`, `country`, `center`, `bbox`, `defaultZoom`, `timezone`). The **`bbox`** is
-   the OpenStreetMap extraction area, so make it cover the whole ski area (not too tight).
+   (`id`, `name`, `country`, `center`, `bbox`, `defaultZoom`, `timezone`). The **`bbox`** is the
+   OpenStreetMap extraction area, so make it cover the whole ski area. Size it from data, not by
+   eye — bbox clipping is invisible and has silently cut three resorts (procedure in `AGENTS.md`).
 2. **Build its data** — `npm run data <id>`. Fetches OSM + elevation and writes
-   `public/resorts/<id>/{graph,geo,meta}.json` and updates `resorts/index.json`.
-   This also runs the **elevation-consensus pass**, which cross-checks every node against a second
-   DEM and automatically repairs piste segments pointing the wrong way — the correction that used
-   to be the bulk of the hand-written `setNodeElevation` work. It only adopts a value when doing so
-   doesn't strand terrain from the lift network, and prints what it repaired and what it declined.
+   `public/resorts/<id>/{graph,geo,meta}.json` and updates `resorts/index.json`. This also runs the
+   elevation-consensus pass, which repairs mis-oriented piste segments automatically.
 3. **Audit it — one command** —
    ```bash
-   npm run check:resort <id>              # runs the whole battery, prints one verdict table
+   npm run check:resort <id>                    # the acceptance gate: one verdict table
    npm run check:resort <id> --skip-elevation   # skip the (slower) second-DEM cross-check
    ```
-   This is the acceptance gate. It runs connectivity (`check:trapped`), the reversal/pothole audit
-   (`check:audit`), the second-DEM elevation cross-check (`check:elevation`), polygon spine health
-   (`check:spines`), override integrity (`check:overrides`), a routing smoke test (`routetest`) and
-   route quality (`probe:plan`) — the checks that used to be seven separate commands you had to
-   remember. Each line reports `ok` / `REVIEW` / `FAIL`.
+   Each line reports `ok` / `REVIEW` / `FAIL`. **`REVIEW` is not failure** — these tools report
+   *candidates*, not certainties, and a valley run ending at a road is a legitimate "trapped" node.
+   Verify every candidate on the map (`/devtools/mapdebug.html`, or the deep-link
+   `?resort=<id>&at=<lat>,<lon>&z=18`) before writing an override. `FAIL` means the check itself
+   errored — fix the tooling first.
+4. **Sign off the islands** — `npm run check:basins` finds terrain you can ski *into* that cannot
+   get back to the main body. Usually the biggest review job on a new resort, and most of what it
+   finds is **not a bug** (ski-bus satellites, village run-outs, nursery pods). Record each verdict
+   as an `acceptedBasins` entry with the evidence in `why`. **Never bridge a basin just to make the
+   number go down**, and never invent terrain.
+5. **Sanity-check the model** — `npm run probe:liftmix` and `npm run probe:liftspeed` (a new region
+   can shift the measured per-type medians), then `npm run probe:badges <id>` (a route card must
+   never contradict the number printed beside it).
+6. **Preview** — `npm run dev`, pick the resort, try a few A→B routes and the longest-run widget.
+7. **Ship** — commit `public/resorts/<id>/*` and `src/config/resorts.ts` (plus any override), push,
+   then deploy (below).
 
-   **`REVIEW` is not failure.** These tools report *candidates*, not certainties — a valley run
-   ending at a road is a legitimate "trapped" node. Verify every candidate on the map
-   (`/devtools/mapdebug.html`, or the deep-link `?resort=<id>&at=<lat>,<lon>&z=18`) before writing
-   an override. `FAIL` means the check itself errored — fix the tooling first.
+Genuine data gaps are fixed with a `pipeline/overrides/<id>.json` file — see
+`pipeline/overrides/example.json.example` for the schema; overrides run *after* the generic passes.
+Real-world dead-ends (a valley run ending at a road with no lift) are fine to leave.
 
-   Fix genuine data gaps with a `pipeline/overrides/<id>.json` file. Real-world dead-ends
-   (e.g. a valley run ending at a road with no lift) are fine to leave.
+### Pitfalls — see `AGENTS.md`
+**Every pitfall we have discovered and handled, with its symptom, diagnosis and fix, lives in
+[`AGENTS.md`](AGENTS.md)** — the maintainer/agent handbook. It is the single source of truth and is
+updated with each pipeline change; keeping a second copy here is what let this section go stale
+before. Go there for the override recipes (which primitive fixes which symptom), the bbox-sizing
+procedure, the full pass-by-pass graph invariants, and the "gotchas / lessons learned" log — for
+example why a line drawn on the map may still not route, why a basin with no entry edges is a
+clipping symptom rather than a missing connector, and why a sector that "obviously" needs a lift may
+just have an unbuilt one.
 
-   **`check:spines` matters most for a resort with open bowls.** OSM `area=yes` polygons are kept
-   in the routing graph (dropping them disconnects bowls) but routed via a synthesised interior
-   *spine* rather than their rim. A polygon whose spine covers only part of its shape will route
-   you around the edge of the bowl instead of down it. Eyeball anything it complains about on
-   `/devtools/mapdebug.html` with the area-skeletons overlay before overriding.
-4. **Sanity-check the lift model** — `npm run probe:liftmix` (does the lift type mix look right?)
-   and `npm run probe:liftspeed` (do the measured medians still match `DEFAULT_SPEEDS`? a new
-   region can shift them). Lifts with no `aerialway:duration` fall back to those per-type speeds.
-5. **Preview** — `npm run dev`, pick the resort, try a few A→B routes and the longest-run widget.
-6. **Ship** — commit the `public/resorts/<id>/*` files and `src/config/resorts.ts` (plus any
-   override), push, then deploy (below).
-
-### Pitfall checklist & override recipes
-
-Step 3 is where the real work is. Run **`npm run check:audit <id>`** and **`npm run check:trapped
-<id>`**, then walk this list. Every fix goes in `pipeline/overrides/<id>.json` (see
-`overrides/example.json.example` for the schema; overrides run *after* the generic passes).
-Verify any candidate on the map with the deep-link `?resort=<id>&at=<lat>,<lon>&z=18` before
-"fixing" it — the auditor flags *candidates*, not certainties, and some are legitimate.
-
-| Symptom | How to spot it | Fix (override primitive) |
-|---|---|---|
-| **Arrow / ski direction reversed** on a piste; a run appears to start uphill | `check:audit` lists it as a **reversal candidate** (piste starts at a node only reachable via an *uphill* flat). `npm run data` prints an `audit:` line when candidates exist. | `setNodeElevation` — correct the mis-sampled DEM elevation at the junction node; it re-orients every touching piste/skiable_down edge. |
-| **Phantom top** — a piste hangs off a node nothing can reach | `check:trapped` / `check:audit`; the node is an isolated source in SCC analysis | Add a connector in the override (merge the stray node, or `addConnectors`) — but first confirm it's not a **legitimate** ski-bus-only island (those stay disconnected). |
-| **Connectivity island** — a whole sub-area routes to nothing | `check:trapped` via **strongly-connected-component** analysis (not just dead-end leaves) | Add connector edges linking the island to the reachable graph. Leave genuinely bus-only areas alone. |
-| **Non-skiable "connection"** drawn as an orange (unrated) piste with a forced direction — a road, path, or ski-bus link | `check:audit` "long connections" (>250 m); long **and near-flat** | `removePistes` by `name` and/or `bbox` (removes unrated edges whose midpoint is inside). |
-| **Lift mis-tagged as a piste** (funicular, magic carpet, people-mover) | `check:audit` long connection that is actually mechanical uphill | `reclassifyLift` `{ pisteName, liftType, bidirectional? }` — converts the piste edges to lift edges (bidirectional keeps both directions, else uphill-only). |
-| **Real long run flagged** (e.g. a race stadium, a long steady descent) | `check:audit` long connection but **steadily descending** | **Keep it** — no override. Not every candidate is a bug. |
-| **Lift doesn't let you ski down** where it should (gondola/cable-car/funicular) | Route refuses to descend via the lift | `setLiftDownload` — mark the lift as carrying skiers downhill. |
-| **Two runs that touch aren't joined**, or a hut splits into duplicates | Missing T-junction / over-eager merge | `mergeNodes` (join) or `removeEdges` / `addConnectors` as needed. |
-
-**Gotchas that bite every time:**
-- **Node ids are stable**: a node is named after the smallest OSM node id in its merged cluster
-  (`n<osmId>`, plus `s<id>`/`k<id>` for the two synthetic passes), so `data:refresh` no longer
-  renumbers anything and id-based override entries survive a re-sync. Run
-  **`npm run check:overrides`** anyway after a refresh — if OSM deletes the exact node a cluster was
-  named after, that one id changes. **Edge ids are still order-dependent.**
-- The OSM cache is keyed by **resort id, not bbox** — after you change a resort's `bbox` you must
-  `data:refresh` (not plain `data`) to actually re-fetch.
-- **Never add per-resort routing code.** All corrections are data (`RESORTS` entry + override
-  JSON); the graph passes are global.
+A few that bite every run of the pipeline itself:
+- **Stop the Vite dev server before any `npm run data*`** — its watcher on `public/` causes
+  `graph.json` open errors mid-write.
+- The OSM cache is keyed by **resort id, not bbox and not the query text** — after changing a
+  `bbox`, or `buildQuery`, you must `data:refresh` (not plain `data`) to actually re-fetch.
+- **Never add per-resort routing code.** All corrections are data. If a defect is one a *future*
+  resort could hit too, fix it as a build-time rule in the pipeline rather than an override — that
+  is what keeps adding a resort cheap.
 - Validate with **`npm run build`** (`tsc -b`) and **`npm run lint`** — both must stay green.
 
 ## Deploy

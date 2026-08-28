@@ -170,14 +170,29 @@ function main(): void {
   review.sort((a, b) => (b as { size: number }).size - (a as { size: number }).size);
   for (const r of review) delete (r as { size?: number }).size;
 
-  fs.writeFileSync(
-    path.join(OVERLAY_DIR, 'trapped-basins.json'),
-    JSON.stringify(overlay, null, 2) + '\n',
-  );
-  fs.writeFileSync(
-    path.join(OVERLAY_DIR, 'review-list.json'),
-    JSON.stringify(review, null, 2) + '\n',
-  );
+  // Refuse to overwrite good overlays with nothing — the same trap `_areaskel.ts` already guards.
+  // These two files ARE generated here (mapdebug's comment used to claim review-list.json was
+  // hand-written; it never was), and they only ever contain the *unsigned* basins. So the moment
+  // the last basin gets a sign-off in `acceptedBasins` this run legitimately produces zero rows,
+  // writes `[]`, and the map-debug prev/next reviewer silently disappears along with the red
+  // overlay — with no error anywhere. A signed-off basin is exactly the thing a human comes back
+  // to re-examine, so keeping the previous contents is more useful than blanking them.
+  if (!review.length) {
+    console.log(
+      '\noverlays NOT written: nothing left to review (every basin is signed off in ' +
+        'acceptedBasins), and writing that would wipe trapped-basins.json + review-list.json ' +
+        'and take the reviewer off /devtools/mapdebug.html.',
+    );
+  } else {
+    fs.writeFileSync(
+      path.join(OVERLAY_DIR, 'trapped-basins.json'),
+      JSON.stringify(overlay, null, 2) + '\n',
+    );
+    fs.writeFileSync(
+      path.join(OVERLAY_DIR, 'review-list.json'),
+      JSON.stringify(review, null, 2) + '\n',
+    );
+  }
 
   console.log('=== check:basins ===');
   rows.sort((a, b) => b.basin.nodes.length - a.basin.nodes.length);
@@ -197,9 +212,11 @@ function main(): void {
   console.log(
     `\nsummary: ${rows.length} trapped basin(s), ${nodes} stranded node(s) across ${ids.length} resort(s)`,
   );
-  console.log(
-    'wrote overlays/trapped-basins.json and overlays/review-list.json Ã¢â‚¬â€ open /devtools/mapdebug.html',
-  );
+  if (review.length) {
+    console.log(
+      'wrote overlays/trapped-basins.json and overlays/review-list.json - open /devtools/mapdebug.html',
+    );
+  }
 }
 
 main();
