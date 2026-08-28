@@ -25,21 +25,21 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.paradiski.com/"
   },
-  "generatedAt": "2026-08-27T17:51:47.009Z",
+  "generatedAt": "2026-08-28T03:06:58.719Z",
   "stats": {
     "resortId": "paradiski",
-    "nodeCount": 2927,
-    "edgeCount": 8828,
-    "pisteEdges": 3116,
-    "liftEdges": 208,
-    "connectorEdges": 5504,
-    "meaningfulPoints": 713,
-    "reachableFromLifts": 2925,
+    "nodeCount": 2946,
+    "edgeCount": 8889,
+    "pisteEdges": 3119,
+    "liftEdges": 220,
+    "connectorEdges": 5550,
+    "meaningfulPoints": 730,
+    "reachableFromLifts": 2944,
     "unreachableNodes": 2,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 15,
-      "missing_opening_hours": 171,
+      "missing_opening_hours": 183,
       "inferred_connector": 5,
       "unreachable_component": 1
     }
@@ -47,7 +47,7 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 271 duplicate OSM node(s) at 247 spot(s) where ways meet but do not share a node."
+      "message": "Unified 272 duplicate OSM node(s) at 248 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -544,6 +544,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Club Med (Jardin)\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Le France\" has no opening_hours in OSM."
     },
     {
@@ -553,6 +557,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Oxygène\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Club Med (Poney)\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -593,6 +601,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Grangette\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Belle Plagne\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -688,6 +700,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Indiens\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Ourson\" has no opening_hours in OSM."
     },
     {
@@ -736,6 +752,26 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Jardin d'Enfants Plagne 1800\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Soleil\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Jardin d'Enfants Belle Plagne (bas)\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Jardin d'Enfants Belle Plagne (bas)\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Montchavin Évolution 2\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Cap Vacances\" has no opening_hours in OSM."
     },
     {
@@ -764,11 +800,19 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"1149651055\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Premières Glisses\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
       "message": "Lift \"1152407522\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"MMV\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -839,20 +883,24 @@
       "message": "Lift \"Roche de Mio 2\" has no opening_hours in OSM."
     },
     {
-      "code": "inferred_connector",
-      "message": "Snapped 421 dead-end run(s) onto a nearby piste line (T-junction)."
+      "code": "missing_opening_hours",
+      "message": "Lift \"1551621791\" has no opening_hours in OSM."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 1351 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Snapped 428 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 1131 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Inferred 1375 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 222 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 1142 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 228 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

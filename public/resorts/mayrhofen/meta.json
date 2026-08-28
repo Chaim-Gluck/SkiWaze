@@ -17,14 +17,14 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.mayrhofner-bergbahnen.com/en/"
   },
-  "generatedAt": "2026-08-27T17:52:10.312Z",
+  "generatedAt": "2026-08-28T03:07:35.712Z",
   "stats": {
     "resortId": "mayrhofen",
     "nodeCount": 524,
-    "edgeCount": 1368,
+    "edgeCount": 1370,
     "pisteEdges": 512,
     "liftEdges": 77,
-    "connectorEdges": 779,
+    "connectorEdges": 781,
     "meaningfulPoints": 193,
     "reachableFromLifts": 523,
     "unreachableNodes": 1,
@@ -258,11 +258,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 220 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 222 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 185 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 187 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

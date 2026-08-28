@@ -1,14 +1,5 @@
 [
   {
-    "id": "sella-ronda",
-    "name": "Sella Ronda (Canazei)",
-    "country": "Italy",
-    "center": {
-      "lon": 11.808,
-      "lat": 46.518
-    }
-  },
-  {
     "id": "madonna-di-campiglio",
     "name": "Madonna di Campiglio",
     "country": "Italy",
@@ -24,6 +15,15 @@
     "center": {
       "lon": 7.71,
       "lat": 45.958
+    }
+  },
+  {
+    "id": "sella-ronda",
+    "name": "Sella Ronda (Canazei)",
+    "country": "Italy",
+    "center": {
+      "lon": 11.808,
+      "lat": 46.518
     }
   },
   {

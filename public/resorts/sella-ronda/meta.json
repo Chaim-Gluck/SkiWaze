@@ -31,21 +31,21 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-08-27T19:39:11.655Z",
+  "generatedAt": "2026-08-28T03:04:08.675Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1936,
-    "edgeCount": 5440,
+    "nodeCount": 1940,
+    "edgeCount": 5445,
     "pisteEdges": 1739,
-    "liftEdges": 382,
-    "connectorEdges": 3319,
+    "liftEdges": 384,
+    "connectorEdges": 3322,
     "meaningfulPoints": 823,
-    "reachableFromLifts": 1904,
+    "reachableFromLifts": 1908,
     "unreachableNodes": 32,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 2,
-      "missing_opening_hours": 255,
+      "missing_opening_hours": 257,
       "inferred_connector": 7,
       "unreachable_component": 1
     }
@@ -360,6 +360,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Buffaure\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"La Curta\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -867,6 +871,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"172848886\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Carpazza\" has no opening_hours in OSM."
     },
     {
@@ -1091,15 +1099,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 329 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 330 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 972 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 975 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 841 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 838 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

@@ -17,21 +17,21 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.tignes.net/en/"
   },
-  "generatedAt": "2026-08-27T17:51:11.600Z",
+  "generatedAt": "2026-08-28T03:06:19.870Z",
   "stats": {
     "resortId": "tignes-val-disere",
-    "nodeCount": 1073,
-    "edgeCount": 3165,
-    "pisteEdges": 1054,
-    "liftEdges": 118,
-    "connectorEdges": 1993,
-    "meaningfulPoints": 426,
-    "reachableFromLifts": 1067,
+    "nodeCount": 1071,
+    "edgeCount": 3143,
+    "pisteEdges": 1053,
+    "liftEdges": 119,
+    "connectorEdges": 1971,
+    "meaningfulPoints": 427,
+    "reachableFromLifts": 1065,
     "unreachableNodes": 6,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 3,
-      "missing_opening_hours": 96,
+      "missing_opening_hours": 97,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
@@ -372,6 +372,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"Tignes le Lac (ESF)\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"Snowtubing\" has no opening_hours in OSM."
     },
     {
@@ -448,11 +452,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 158 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 157 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 540 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 537 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",

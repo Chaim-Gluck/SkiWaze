@@ -25,21 +25,21 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.stantonamarlberg.com/en/"
   },
-  "generatedAt": "2026-08-27T17:52:07.237Z",
+  "generatedAt": "2026-08-28T03:07:29.142Z",
   "stats": {
     "resortId": "st-anton-arlberg",
-    "nodeCount": 1081,
-    "edgeCount": 2786,
+    "nodeCount": 1082,
+    "edgeCount": 2789,
     "pisteEdges": 1206,
-    "liftEdges": 138,
-    "connectorEdges": 1442,
+    "liftEdges": 140,
+    "connectorEdges": 1443,
     "meaningfulPoints": 579,
-    "reachableFromLifts": 1076,
+    "reachableFromLifts": 1077,
     "unreachableNodes": 5,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 1,
-      "missing_opening_hours": 116,
+      "missing_opening_hours": 118,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
@@ -271,6 +271,10 @@
     {
       "code": "missing_opening_hours",
       "message": "Lift \"Schüttbodenlift\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"54449149\" has no opening_hours in OSM."
     },
     {
       "code": "missing_opening_hours",
@@ -514,6 +518,10 @@
     },
     {
       "code": "missing_opening_hours",
+      "message": "Lift \"1059032366\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
       "message": "Lift \"1383788366\" has no opening_hours in OSM."
     },
     {
@@ -522,15 +530,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 147 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 148 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 368 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 372 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 332 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 331 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
