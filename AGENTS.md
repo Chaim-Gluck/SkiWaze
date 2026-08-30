@@ -841,10 +841,30 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   accusing nodes of a height difference the builder one step earlier would have erased. Madonna's
   `n6200757170` on Skiweg Campiglio (1631 m) was reported for a **3 m rise over 33 m** of two-way
   flat cat-track onto the 5 Laghi blue — original data from the very first resort ever built, routed
-  across in both directions for the app's whole life. The constant is now `= DEFAULT_GRAPH_CONSTANTS
-  .Vmerge` and the test is `climb <= TOL → skip`, so the two rules can never drift apart again.
-  Fleet: **8 → 6**. Generalise it: before trusting any threshold in a checker, find the constant the
-  *builder* uses for the same physical quantity and make the checker derive from it.
+  across in both directions for the app's whole life. Generalise it: before trusting any threshold in
+  a checker, find the constant the *builder* uses for the same physical quantity and make the checker
+  derive from it.
+  **That rule then caught its own first application.** The fix reached for `Vmerge` — which is the
+  right *form* (a builder constant) but the wrong *quantity*: `Vmerge` answers "are these two points
+  the same place?", a statement about measurement noise, while the pothole test is asking "can a
+  skier get back up out of here?", a statement about the skier. At `Vmerge` exactly **six** nodes
+  survived fleet-wide, and every single one escaped along a reverse traverse the builder had itself
+  created — total ascent 5.0/8.0/6.7/7.0/5.0/7.0 m at net grades 3.1/5.6/5.9/4.7/3.1/1.6%, all
+  inside both `maxTraverseClimb` (8 m) and `flatGradeMax` (6%). `buildGraph.ts` emits such a traverse
+  only when `gradeOk && Math.abs(drop) <= maxTraverseClimb`, and calls that constant *"more than a
+  skate — that's a real slope"*: it is literally the pipeline's own answer to the question the
+  detector was asking. Constant is now `= DEFAULT_GRAPH_CONSTANTS.maxTraverseClimb`. Fleet: **8 → 6
+  → 0**. Verified non-vacuous by *injecting* a 15 m sink into a scratch resort and confirming it is
+  still reported (climb-out 20 m) — a checker that reaches zero must be proven to still fire, or you
+  have only proved it stopped looking.
+- **An overlay guard must key on "did we EXAMINE anything", not "did we FIND anything".**
+  `writePotholeOverlay` refused to write when the merged result was empty, copying `_areaskel.ts` /
+  `_basins.ts`. But it already deletes each examined resort from the merged file, so the truncation
+  those guards exist to prevent was handled; all the empty check still did was make a *true* zero
+  unwritable. The overlay then pinned to its last non-empty state, so all six already-cleared nodes
+  kept their markers and got clicked and re-reviewed one at a time — the exact wear the fix was
+  meant to end. A run that loaded 18 graphs and found nothing has produced a **result**; a broken run
+  examines **nothing**. Guard on `ids.length`, and let a clean mountain write `{}`.
 - **"The node is wrong" and "the marker on the node is wrong" are different claims — say which.**
   Every pothole the user opened turned out to be untouched original data that had always routed
   correctly; what was wrong was the *verdict* printed about it. Phrasing it as "these have been

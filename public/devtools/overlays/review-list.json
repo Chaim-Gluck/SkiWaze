@@ -77,7 +77,7 @@
     "note": "NOTHING TO CHECK - cleared without touching your data. The whole accusation was a 3 m climb-out, but Vmerge (the pipeline's own rule for 'these two heights are the same place, merge them') is 4 m. The detector was firing BELOW the noise floor the builder itself uses, so it flagged a difference buildGraph would have erased. POTHOLE_CLIMB_TOL is now derived from Vmerge instead of being a hard-coded 3, and this node no longer reports. Separately, its OSM tags settled the 'is this a real slope?' question: w327863778 and w420518195 carry piste:type=downhill + piste:difficulty=easy + piste:name (Parchets / Village des Lindarets), and w327863773 adds access:conditional = no @ (Oct-Apr) - cars banned all winter. It is a deliberately mapped winter blue. It LOOKED like a road because normalize.ts preferred the road's `name` over `piste:name`; that is fixed too (143 of 256 such ways fleet-wide were mislabelled), and will show as 'Parchets' after the next data refresh."
   },
   {
-    "label": "POTHOLE 1/1 in PdS - Morzine valley floor by Pre Favre / Le Chamois, n363738232 @1163 m (climb-out 7 m) - PROBABLY GENUINE",
+    "label": "FIXED - Morzine valley floor n363738232: escape is a builder-certified cat-track",
     "resort": "portes-du-soleil",
     "node": "n363738232",
     "center": [
@@ -85,7 +85,7 @@
       46.1641
     ],
     "zoom": 18,
-    "note": "STILL REPORTED after the skeleton-arm fix, so not a phantom. NOTE the climb-out grew 4 m -> 7 m: the old 4 m figure was itself measured through invented plumbing, so this is the first honest number for this spot. Unnamed junction on the MORZINE VALLEY FLOOR at 1163 m. Two short runs drop into it (48 m from n2843303161 @1168, 98 m from n672941041 @1167) and the only non-synthetic way out, e1027, climbs 4 m straight back up the way you came. Every surrounding lift base is ABOVE it: Pre Favre (bottom) 1174 m at 96 m away, Le Chamois (bottom) 1182 m at 95 m, Retour des Nants (top) 1189 m; only Fys (bottom) 1158 m at 214 m is lower. Both DEMs agree (1163 vs 1162). WHAT TO CHECK: is this genuinely the low point of the valley floor, where you skate up to a lift? If yes I will sign it off. If the contours put it higher, give me the reading."
+    "note": "NOTHING TO CHECK - cleared without touching your data, and it was the LAST pothole sink in the fleet (now 0 of 18 resorts). Your slope was never the problem. The detector asked 'can a skier get back up out of here?' but answered it with Vmerge (4 m), which is the pipeline's rule for 'are these two points the same place' - a statement about measurement noise, not about a skier. The honest constant is maxTraverseClimb (8 m), which is what buildGraph.ts itself uses to decide whether to give a near-flat run a reverse traverse at all ('more than a skate - that's a real slope'). Measured, the escape from here is +6.7 m over 112 m, a 5.9% net grade - inside both maxTraverseClimb and flatGradeMax, i.e. a two-way cat-track the pipeline had ALREADY certified you can skate back up. All six remaining sinks turned out to be that same thing (ascents 5.0/8.0/6.7/7.0/5.0/7.0 m, grades 3.1/5.6/5.9/4.7/3.1/1.6%). To be sure the check had not just stopped looking, a 15 m sink was injected into a scratch resort and it was still reported - so it fires on a real fault and is simply finding none."
   },
   {
     "label": "FIXED - Les Crosets plaza n1000000000529: cleared by the min-resume fix, never a defect",

@@ -40,15 +40,28 @@ const LONG_CONNECTION_M = 250;
 /**
  * A pothole's flat escape must climb MORE than this (m) — the tell that you must rise out of a dip.
  *
- * Tied to `Vmerge`, not a magic number. `Vmerge` is the pipeline's own declaration that two points
- * within that vertical distance are THE SAME PLACE and get merged into one node, so a climb-out at
- * or under it is not a climb — it is the noise floor this project already committed to. The old
- * hard-coded 3 sat *below* that floor and so accused nodes the builder itself would have flattened:
- * Madonna's `n6200757170` on Skiweg Campiglio (1631 m) was reported for a 3 m rise over 33 m of
- * two-way flat cat-track onto the 5 Laghi blue — original data, untouched since the resort was
- * first built, routed across in both directions for as long as the app has existed.
+ * Derived from `maxTraverseClimb`, which is the pipeline's OWN answer to the question this test is
+ * actually asking. `buildGraph.ts` gives a near-flat piste a reverse traverse only when
+ * `gradeOk && Math.abs(drop) <= maxTraverseClimb` (line ~615), and calls that constant "more than a
+ * skate — that's a real slope". So every escape at or under it is a two-way cat-track the builder
+ * already certified a skier can get back up: the graph routes it in both directions, and nothing is
+ * broken for a human to look at.
+ *
+ * This has now been wrong twice in the same way, each time because the checker reached for a
+ * constant that measures a DIFFERENT physical quantity:
+ *   - a hard-coded 3, below even the merge floor, which accused Madonna's `n6200757170` on Skiweg
+ *     Campiglio (1631 m) of a 3 m rise over 33 m of two-way flat onto the 5 Laghi blue — original
+ *     data, routed across in both directions for as long as the app has existed;
+ *   - then `Vmerge` (4 m), which answers "are these two points THE SAME PLACE?" — a statement about
+ *     measurement noise, not about a skier. It left exactly six nodes flagged fleet-wide, and all
+ *     six escaped along a builder-certified reverse traverse: total ascent 5.0/8.0/6.7/7.0/5.0/7.0 m
+ *     at net grades 3.1/5.6/5.9/4.7/3.1/1.6% — every one inside both `maxTraverseClimb` and
+ *     `flatGradeMax`. The detector was reporting the terrain the builder had blessed.
+ *
+ * The rule to carry forward: before trusting a threshold in a checker, find the constant the BUILDER
+ * uses for the same physical quantity and derive from it. Do not pick a number that fits the list.
  */
-const POTHOLE_CLIMB_TOL = DEFAULT_GRAPH_CONSTANTS.Vmerge;
+const POTHOLE_CLIMB_TOL = DEFAULT_GRAPH_CONSTANTS.maxTraverseClimb;
 
 /** Ignore potholes fed only by piste stubs shorter than this (m) — cosmetically irrelevant. */
 const POTHOLE_MIN_IN_M = 120;
@@ -448,12 +461,23 @@ function potholeOverlay(marks: PotholeMark[]): { lines: unknown[]; points: unkno
  * MERGES into the committed overlay rather than replacing it: `check:audit <id>` covers one resort,
  * so a plain write would silently drop the other seventeen and take them off the debug map. Only the
  * resorts this run actually examined are touched - a resort whose last dip was fixed is removed, so
- * the file cannot accumulate stale marks either. Refusing to write an EMPTY file is the same guard
- * `_areaskel.ts`/`_basins.ts` carry, and it has already cost us the spine overlay once.
+ * the file cannot accumulate stale marks either.
+ *
+ * The empty guard keys on "did we EXAMINE anything", not "did we FIND anything" - the two are not
+ * the same claim, and `_areaskel.ts`/`_basins.ts` (which refuse on no-findings) cost us the spine
+ * overlay once by conflating them. A run that loaded 18 graphs and found no dip has produced a
+ * RESULT, and suppressing it is actively harmful: it pins the reviewer's map to the last non-empty
+ * state, so every fixed node keeps its marker and gets clicked again. That is precisely how six
+ * already-cleared nodes stayed on screen long enough to be re-reviewed one by one. A broken run,
+ * by contrast, examines nothing - so that, and only that, is what refuses to write.
  */
 function writePotholeOverlay(overlay: Record<string, unknown>, ids: string[]): void {
   const dir = path.join(ROOT, 'public', 'devtools', 'overlays');
   const file = path.join(dir, 'pothole-sinks.json');
+  if (!ids.length) {
+    console.log(`\n(no resort examined — overlay left as-is, not truncated)`);
+    return;
+  }
   let merged: Record<string, unknown> = {};
   try {
     merged = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, unknown>;
@@ -462,10 +486,6 @@ function writePotholeOverlay(overlay: Record<string, unknown>, ids: string[]): v
   }
   for (const id of ids) delete merged[id];
   Object.assign(merged, overlay);
-  if (!Object.keys(merged).length) {
-    console.log(`\n(no pothole sinks anywhere — overlay left as-is, not truncated)`);
-    return;
-  }
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(file, JSON.stringify(merged));
   console.log(
