@@ -41,7 +41,7 @@ pipeline/
   _trapped.ts, _routetest.ts   connectivity / routing smoke tests
   overrides/<id>.json    per-resort human corrections (merge/split, connectors, lift dl,
                          setNodeElevation, removePistes, reclassifyLift, removeConnectors,
-                         acceptedBasins)
+                         acceptedBasins, acceptedDeadEnds)
 public/resorts/<id>/     compiled datasets: graph.json, geo.json, meta.json (+ index.json)
 ```
 
@@ -354,6 +354,23 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 - **A basin "obviously" needing a lift may just have an unbuilt one.** Schröcken's village gondola is
   `w660999299 aerialway=proposed`, note "in Planung". Grep OSM for `proposed`/`construction` before
   assuming a data bug.
+- **…and a basin obviously needing a lift may have had one that was torn down.** The mirror image of
+  the case above, and the more common one. A **lifecycle-prefixed** OSM tag — `abandoned:aerialway=*`,
+  `disused:aerialway=*`, `razed:`, `demolished:` — is the signature of a dismantled lift. Our Overpass
+  query matches **bare `aerialway`** only, so dead lifts are already excluded **fleet-wide and
+  automatically**; no pipeline change is ever needed for this, and the stranded terrain below is
+  **correct output, not a bug**. Portes du Soleil's Torgon sector read as 7 stranded nodes above the
+  village until OSM itself supplied the proof: `w44538226` *Télésiège Jorette* and `w45666705`
+  *Télésiège Grands Places* are both `abandoned:aerialway=chair_lift`, `w44538224` *Fignards* is
+  `disused:aerialway=drag_lift`, and their coordinates land **on** our stranded chain — corroborated
+  externally by the resort now running a shuttle bus to that side. **Query the lifecycle prefixes
+  before assuming a data bug, and sign the result off (`acceptedDeadEnds`) rather than bridging it** —
+  a synthetic link there would route skiers to a lift that no longer physically exists.
+- **Trapped/orphan is a DIRECTED property — never walk the component undirected.** A first pass at
+  Torgon flood-filled ignoring edge direction and returned **the whole 1233-node resort**, i.e. "no
+  problem here", which is the wrong question answered confidently. One-way pistes mean a sector can be
+  fully *reachable* and still have no way back. Use SCC (Kosaraju/Tarjan) or a directed BFS in **both**
+  directions from the lift network — the same trap the "largest SCC as main body" rule exists to avoid.
 - **Station *polygons* masquerade as lifts.** `aerialway=station` catches most, but mappers also tag
   outlines `aerialway=yes` + `building=yes` / `public_transport=station`. A lift is a line, never a
   polygon, so `isPassengerLift` rejects those too. Left in they become zero-length "lifts" that weld
@@ -367,6 +384,16 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   before a multi-km empty run. Then check the other bands for a *foreign* resort a rectangle would
   swallow (Sonnenkopf/Klösterle) and cut it with `excludeBboxes`. **The OSM cache is keyed by resort
   id + TTL, not bbox — `npm run data -- <id> --refresh` is mandatory after a bbox edit.**
+- **An `excludeBboxes` rectangle is drawn around the NEIGHBOUR, not clipped to your own bbox.** The
+  instinct is to trim the exclusion so it sits inside the resort's own box — it feels tidier and
+  avoids "overlapping" rectangles. It does not work, for the same reason bbox clipping is invisible
+  (above): Overpass returns a way in **full** if *any* node touches the query box, so a neighbouring
+  resort's run only needs to graze your boundary to arrive whole, with the bulk of its geometry far
+  **outside** your bbox. An exclusion clipped to your own edge then covers the few metres that
+  crossed and misses the body of the thing you are trying to exclude — the identical half-covered
+  failure as `removePistes` bboxes on the Monte Pana forest road. Draw the rectangle generously
+  around the *foreign* resort, extending well past your own bbox; the excess costs nothing because
+  nothing of yours is there.
 - **`check:overrides` reporting N stale does not mean your change caused them.** Triage each id
   against `git show HEAD:public/resorts/<id>/graph.json`: present-both / lost-today / already-stale.
   The last fleet run was 17 pre-existing vs 3 genuinely broken; chasing all 20 would have been wasted
@@ -435,6 +462,39 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   is 205 ways (2.5%), but backcountry-alone is another 169 ways and **17.4% of St. Anton** — that is
   how mappers tag a signposted *Skiroute*/itinéraire, which is marked, advertised terrain the user
   has already reviewed and kept. Grooming is corroboration, never the trigger.
+- **`expert` is the one difficulty that means different things alone and in company.** On its own it
+  is a legitimate marked black — the hardest graded run on the hill. Combined with
+  `piste:grooming=backcountry` it is how mappers record high-alpine ground, and the conjunction is
+  the *only* sanctioned widening of the rule above. Found via Verbier's **Rosablanche**: one
+  ski-mountaineering glacier descent (crevasse terrain, reached on skins, no lift within reach) is
+  mapped as two ways — the lower `w55151514` `extreme`, correctly hidden, and the upper
+  `w446319329` off the summit `expert` + `backcountry`, drawn and routed as an ordinary black
+  piste. **Half a touring route rendered as a marked run** is exactly the safety bug the rule exists
+  to prevent. The conjunction stays narrow and well separated from the Skirouten: 29 ways fleet-wide
+  (tignes 12, paradiski 10, les-deux-alpes 4, then singles) against **182** backcountry-*without*-
+  expert, which must never trigger. Measured effect of adopting it: **73 edges / 27.4 km**
+  reclassified, `check:basins` still **0 trapped / 0 stranded** across 18 resorts — off-piste is
+  excluded from stranded-piste counting, so widening the trigger can only ever *reduce* phantom
+  defects, never create one. Note the census had to be redone once: the Overpass disk cache is
+  `{savedAt, data:[...]}`, not `data.elements`, and the first run returned a confident zero.
+- **The off-piste rule has a RENDERING half, and it was missing for as long as the routing half
+  existed.** `offPiste` appeared only in `cost.ts` / `plan.ts` / `longestStreak.ts` and **nowhere in
+  `MapView.tsx`**, so 359 edges / **310.6 km** fleet-wide (St. Anton 131 km, Verbier 46 km, Tignes
+  40 km) were drawn as ordinary solid black pistes. The map therefore advertised unpatrolled
+  avalanche terrain that the router itself refuses by default — found because a user reported
+  Sölden's "Ötztal black run" (`w411503401`, one 10.7 km edge, 2921→1356 m) as a suspected hiking
+  path. It is a genuine freeride descent; the data was right and the *drawing* was the bug.
+  Three things this needs, each a separate trap:
+  - **It must be its own layer.** MapLibre's `line-dasharray` is **not data-driven**, so no
+    `['get','offPiste']` expression can dash a subset of `pistes-line`. Narrow that layer's filter
+    and add a complementary dashed one, reusing `SLOPE_COLOR_EXPR`.
+  - **Default OFF, behind the layer toggle.** Drawing it by default makes the map contradict the
+    router (`allowOffPiste` defaults false). Showing it is opt-in, exactly like the preference.
+  - **Labels and arrows come off the same source** and filter on `kind === 'piste'`, so hiding only
+    the line leaves a run's name and direction arrows floating over empty snow. Their filter is
+    driven by the same toggle via `setFilter`. Any future per-edge visual distinction needs to sweep
+    the symbol layers too, not just the line layer.
+  No data rebuild was needed — `geo.json` already carried `offPiste` in feature properties.
 - **A snap must never split a line at its own endpoint.** The dead-end→line snap pass projects an
   endpoint onto a nearby piste and splits it there. When the projection lands **on that line's own
   end node**, the "upper half" is zero-length, a later pass drops it as degenerate, and the surviving
@@ -465,8 +525,8 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   (44 → 44). OSM **half-tags** that street chain: some segments of Streda Rezia / Streda Pedetliva
   carry `piste:type=connection` and are already in our graph, the rest (`w30633601`, `w114144111`,
   `w1028635548/9`, `w1351892632`) are untagged. **Reviewed by the user and signed off as an island**
-  (`acceptedBasins` in `overrides/sella-ronda.json`, overlay `public/devtools/overlays/ortisei-gap.json`):
-  no synthetic link is to be added — the honest fix is upstream in OSM.
+  (`acceptedBasins` in `overrides/sella-ronda.json`): no synthetic link is to be added — the honest
+  fix is upstream in OSM. The one-off investigation overlay was not kept, since the question is closed.
 - **Validate the probe before you believe the probe — including the argument order.** `near-point.ts`
   takes `<resortId> <lon> <lat> <radius>`; called with lat and lon swapped it reported **"0 ways
   within 260 m"** at a point where a way demonstrably *starts*. A confident zero is the most
@@ -474,6 +534,19 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   query and the obvious conclusion — "my query syntax is wrong" — was also wrong: re-running a
   **known-good** query against the same endpoint failed identically, proving the servers were down.
   Always have a known-good control before blaming your own change.
+- **An Overpass error code tells you *who* is wrong, and the shell may be the one lying.** The
+  control-first rule above has now been needed twice more, with two different root causes that both
+  *presented* as "my query is broken":
+  - **HTTP 406 is the server rejecting your query text; 500/502 is the server itself failing.** Treat
+    them oppositely — 406 means fix the query, 5xx means try another mirror and stop editing. Deciding
+    which one you have costs one known-good control query and saves an afternoon.
+  - **PowerShell silently strips the inner double quotes out of an inline query**, so
+    `way["disused:aerialway"]` reaches Overpass as `way[disused:aerialway]` and comes back as a parse
+    error naming the `':'` — pointing at the colon, which is *not* the problem, and sending you off to
+    debug a perfectly good tag. Never inline a quoted Overpass query: write the body to a file and
+    post it with `curl.exe --data "@file.txt"` (or `--data-urlencode`), and prefer single quotes plus
+    a key-regex, e.g. `way[~'^(disused|abandoned|razed|demolished):?aerialway$'~'.']`.
+  Same family as the `node -e` quoting trap: **if a command embeds quotes, put it in a file.**
 - **Longest-run "doubling-back"** was winding piste edges (descend-then-climb) over-rewarded by
   raw length; fixed by scoring straight-line progress and penalizing internal uphill.
 - **Islands / one-way sub-areas**: find via strongly-connected-component analysis, not just
@@ -521,6 +594,42 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   spills past a hand-drawn bbox. Both together flag exactly 3 fragments fleet-wide, all genuine.
   When the leaked terrain is a whole *sector*, the honest fix is **tightening the bbox** — which
   declares what the resort *is* — not deleting pistes.
+  **The `<=` tie-break on line 67 is deliberate, and measuring it settled the question: leave it.**
+  `outside * 2 <= ids.length` keeps a component that is *exactly* half outside. Fleet-wide that spares
+  **3 components, and the 35–50% band is empty** — there are no near-misses, so it is not a knob worth
+  tuning. More importantly the majority test **degenerates at small n**: for a 2-node component
+  `outside * 2 <= 2` means it can only ever be dropped when *both* nodes are outside, so the tie-break
+  is structurally incapable of judging a boundary-straddling lift either way. All 3 affected
+  components are n=2, and all are **isolated lifts with no piste attached** — which `inertFragments`
+  also refuses to touch by design. Tightening the comparison would delete them for the wrong reason.
+  *Related observation, not yet acted on:* those isolated lifts are largely **not ski lifts** —
+  Riddes–Isérables is public transport, Dixence–Lac des Dix and Fionnay–Plan du Tsenau are dam/hydro
+  access cable cars. If they ever need removing, that is a **passenger-lift classification** question
+  (the `NON_PASSENGER_AERIALWAYS` family), not a bbox question.
+- **Inert fragments** (`pipeline/lib/inertFragments.ts`, automatic in `build.ts`): a disconnected
+  component made **entirely of app-invented plumbing** — synthetic connectors, no piste, no lift, no
+  OSM way id — is not terrain and is dropped. These arise when a snap/rescue/ski-out pass builds
+  links around a piste that a later pass removes, leaving the scaffolding floating with **zero edges
+  to the rest of the graph**. They cannot be skied to or from, but they still counted as trapped and
+  orphaned nodes, which is noise a human then has to triage. Two guards keep it honest: never drop a
+  component containing a **lift** or a **rated** piste, and `MAX_LEN_M = 500`. Fleet-wide it removes
+  **6 fragments (15 nodes) across 2 resorts** and took sella-ronda from trapped 44 → 29, orphan
+  32 → 17, with **no** other resort changing at all. Verify any change to it with
+  `probe:trappeddiff` against a pre-rebuild snapshot — a count moving proves nothing, a REGRESSED
+  section is the only signal.
+  **Do not "improve" it by relaxing the all-synthetic test.** The rule is deliberately about
+  *provenance*, not size or shape: the moment a real OSM way is in the component, the fragment is
+  evidence of terrain and the honest fix is upstream or a sign-off, never a deletion. Note also that a
+  dropped component can still carry a **name** (sella-ronda's "Serrai di Sottoguda (bottom)") —
+  that is a `graph.points` node *label*, not a piste, so a name is not grounds to spare it.
+- **A dead end that is real gets signed off, not bridged** — `acceptedDeadEnds` in
+  `overrides/<id>.json`, the directional sibling of `acceptedBasins`: `{ nodes: string[]; why: string }[]`.
+  `applyOverrides` deliberately **ignores** both — they are audit filters consumed by `_trapped.ts`,
+  never graph edits, so a sign-off can never invent connectivity. The `why` is the deliverable: record
+  the evidence (OSM way ids, coordinates, elevations, any external corroboration) **and the
+  alternatives you rejected**, because the next person will otherwise re-litigate it. Useful property:
+  `_trapped.ts` **warns when a signed-off node stops being trapped**, so a sign-off doubles as a
+  tripwire — write one whenever the real fix is upstream in OSM and you want to be told when it lands.
 - **Not every lift is an `aerialway`.** Funiculars and cogwheel railways are tagged `railway=funicular`
   / `railway=rack`, so a query for `aerialway` alone silently misses them — for years we fetched
   **zero** of the 22 that exist across the fleet. They are ordinary ski lifts to a skier and several
@@ -556,6 +665,215 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     `RESEAT_MAX_M`. Uncapped it once fabricated a 76 m error to satisfy the slope constraint.
   Blind adoption of the second DEM is ~80% right and the other 20% is actively harmful, so the pass
   declines rather than guesses; whatever it declines still shows up in `npm run check:resort`.
+- **When both DEMs agree AND are both wrong, no automated pass can help — only ground knowledge.**
+  `elevationConsensus` fires on *disagreement*, so a systematic error shared by both sources is
+  structurally invisible to it, and the residue lands in `check:audit` wearing the costume of a
+  different defect. Passo Tonale's Sozzine chair base read 1315 m (our chain) and 1313 m (Terrarium)
+  against a true **~1308 m**. The 7 m error put the station *above* the bottom of run 17 Pegrà
+  (1309 m), so the 116 m link into it read as a climb and the valley bottom was reported as a
+  **pothole sink** — an elevation fault correctly detected, but at the wrong node and with the wrong
+  cause. The fix is a `setNodeElevation` override on the station (which the consensus pass then
+  pins), **not** a wider tolerance in the detector. Tempting and wrong: the tolerance sweep offered a
+  value that made the symptom vanish fleet-wide, which would have buried a real bad datum under a
+  knob. When a user tells you a height is wrong and both sources agree with each other, believe the
+  user — agreement between two DEMs is not independent evidence when both derive from similar data.
+- **A "real bottom" is a lift you can reach, not only a lift you are standing on.** The pothole test
+  exempts a node where a lift is boardable, but mappers routinely end a run a few metres SHORT of
+  the station it serves, joined by a short flat link — so testing only the node's own out-edges
+  reported ordinary lift bases as elevation faults, **82 flagged nodes fleet-wide against 37 real
+  ones**. `POTHOLE_LIFT_WALK_M` (150 m) lets the test follow those links. Two traps:
+  - **The walk must not climb.** `connectorKind` is direction-derived, so every bidirectional link
+    is labelled `flat_traverse` however steep it is (the same mislabel that cost `cost.ts` 4.7×);
+    trusting it let the walk gain up to **+14 m**. Exempting a node via a climbing walk is
+    self-defeating — a pothole is *defined* as a dip you can only leave by climbing out, so that
+    walk is the symptom, not a refutation. The gain is held to `POTHOLE_CLIMB_TOL`, and a climbing
+    route to a lift does not end the search, since a flatter one may still exist.
+  - **The distance cap has no knee** (25 m→72 flagged, 100→43, 150→37, 250→29, 400→26), so it is a
+    judgement about what "at the base" means, not a discovered optimum. It is pinned to a *verified*
+    case — Pegrà's real 142 m ski-out to the Sozzine base — rather than to a number that minimises
+    the count. Beyond ~250 m the exemption starts reaching a different part of the mountain.
+- **A human sign-off must silence every detector that can see the same node, or it silences none.**
+  `acceptedDeadEnds` in `overrides/<id>.json` was honoured by `check:trapped`/`check:basins` but not by
+  `check:audit`, so Portes du Soleil's three signed-off dead ends kept coming back as "DISCONNECTED
+  tops" and kept `check:resort` amber forever — the exact failure mode that trains a reviewer to
+  ignore the gate. `auditGraph` now takes the accepted set (`acceptedDeadEndNodes(id)`) and routes
+  those nodes to a separate `disconnectedAccepted` list, printed below the counted line so the
+  evidence stays visible and a sign-off can still be re-examined. Two deliberate non-features:
+  the counted line's exact wording is unchanged because `_checkresort.ts` parses it with a regex that
+  reports a false `ok` if it matches nothing; and this pass does **not** warn about stale accepted
+  ids — a sign-off covers a whole trapped group, most of whose nodes never surface as disconnected
+  tops, so only `_trapped.ts` sees enough to judge staleness. Fleet effect is exactly PdS 3 → 0; the
+  other 29 disconnected tops are genuinely unsigned, which is the check that this did not over-suppress.
+- **A lift's type tells you which way its runs must point — use it as a check, not a guess.** Domain
+  rule from the user, and it is what caught the Avoriaz fault by eye when every automated detector
+  passed:
+  - **Out of a chairlift/drag TOP, routes go OUT, never in.** These lifts are up-only, so their top
+    station is a *source*: a top with only incoming ski edges is a defect, not terrain.
+  - A **gondola/cable-car top can be both** — those carry skiers down, so incoming edges are legitimate.
+  - **At a lift BOTTOM, routes come IN**, and links between bottoms may be **bidirectional** where
+    several bases sit close together at the same height.
+  This is a stronger signal than it looks, because it is independent of elevation: it comes from
+  `liftType`, which is published OSM tagging, while the arrow directions come from our DEM chain. When
+  the two disagree, the DEM is wrong. `check:audit`'s "ski sink" category cannot substitute for it —
+  a sink requires *every* skiable edge to arrive and none to leave, so a station with one ski-out and
+  three ski-ins looks healthy while being 20 m mis-seated (Avoriaz `n4578135789`).
+- **A run's colour is a published fact with a physical ceiling, so an impossible gradient proves a bad
+  elevation — no second DEM required.** This is the **third** category of `elevationConsensus.ts`
+  (`COLOUR_GRADE_CEILING`: green 0.35, blue 0.45, red 0.65, black 1.0). It exists because categories 1
+  and 2 both fire on a **reversal**, and a contiguous patch that is uniformly *too low* stays perfectly
+  monotonic — every arrow still points downhill — so nothing fired. Portes du Soleil's Nyon pocket was
+  **76 m** wrong across 11 nodes and completely invisible: a near-flat blue traverse ("Bleue d'Arare")
+  rendered as a gully with blue edges at **58–78%** gradient. Its only residue surfaced in `check:audit`
+  as two unrelated "pothole sinks" — i.e. **detected at the wrong node with the wrong cause**.
+  Three things make it safe, each learned the hard way:
+  - **Rank by *excess drop*, never by gradient.** `excess = (grade − ceiling) × lengthM`. A 21 m edge at
+    48% implies ~1 m of error (DEM noise); a 67 m edge at 75% implies ~20 m (a fault). The two
+    populations separate cleanly, so `STEEP_EXCESS_M = 5` is a knee, not a guess. Ranking by gradient
+    instead puts a harmless 21 m stub above a 20 m fault.
+  - **The colour is only the *trigger*; the DEM still supplies the *value*.** The pass refuses unless
+    adopting the second DEM (or its smoothed median) actually brings the grade under the ceiling **and**
+    an endpoint disagrees by `STEEP_MIN_M`. Where it can't prove a value it **declines**. Declining is
+    the feature; the residual keeps showing up in `check:audit`.
+  - **It changes ski directions, so it must say so.** `applyOverrides` re-orients a piste that ends up
+    climbing, which is correct but *user-visible*. `build.ts` therefore snapshots each piste edge's
+    `from` before the repair and prints every edge that swapped, with run name and way id. **Any future
+    pass that edits elevations owes the same report** — a silently reversed run is the worst possible
+    regression, because the map still looks plausible.
+- **Repair a whole elevation fault or none of it: half a repair is worse than none.** The colour-ceiling
+  trigger fires where a sunken patch **meets sound ground**, so the seed is always on the patch's *rim*.
+  Correcting only the seeds lifts the rim and drops a step into the untouched interior. Measured, not
+  theorised: the first version of the rule repaired 5 nodes of Avoriaz's fault and left the other 17,
+  which put the lift top `n4578135789` 20–34 m below the runs around it so that **every ski arrow
+  pointed into it** — a defect the user spotted on the map within minutes, and one the pre-fix data did
+  not have. `elevationConsensus.ts` therefore grows each seed to the connected set of nodes disagreeing
+  with the second DEM by `PATCH_DISAGREE_M`, prices **every** touching edge under the fully-corrected
+  field, and adopts only if all of them stay plausible. Two tests, and the second is the one that bites:
+  a piste must stay under its colour ceiling, and a connector the builder emitted in **both directions**
+  must stay under `PATCH_FLAT_CEILING` — a two-way connector is by construction a link the builder
+  judged flat (`flatGradeMax`, 6%), so a correction that turns one into a real pitch has disproved
+  itself. Fleet effect: the guard declines 22 nodes at Avoriaz, 12 at Mayrhofen and 5 at Sölden, and
+  passes Paradiski's isolated 2-node fault untouched.
+- **Where BOTH elevation sources are wrong, no rule can help — that is what `setNodeElevation` is for.**
+  Avoriaz is the reference case and the reason the guard exists. Ground truth read off contours by the
+  user: the Stade, Lac-Intrêts and Tour chair bases are all **~1737 m and level within 1–2 m**, and the
+  Surf platter base is **~1745 m**. Our chain says 1731 / 1732 / **1748** / 1733; Terrarium says 1744 /
+  1740 / 1746 / **1752**. So our source is 5–12 m *low* on three of them and 11 m *high* on Tour, while
+  Terrarium runs 3–7 m *high* across the whole village — plausibly building tops on a built-up plateau.
+  Adopting either source wholesale invents a 6–12 m spread between three bases that are physically
+  level, which then forces the links between them one-way. **Do not widen a tolerance to make this
+  patch pass**; it needs hand overrides from map readings. **Now done — 17 nodes pinned in
+  `overrides/portes-du-soleil.json`**, after which the automatic pass has nothing left to decline
+  here at all.
+- **The atomic-patch rule binds a human too: pin the whole fault, or you will move the hole.** The
+  Avoriaz overrides took *three* rounds, and rounds two and three were self-inflicted. Pinning the
+  four lift bases left `n7012682590` (Stade Tête au Boeuf's bottom, 20 m away) at 1720 m while
+  everything around it went to 1737–1745, so all four runs bottomed out there and it became a
+  **22-node trapped basin that had not existed before the fix**. Pinning that left the same shelf's
+  east end (`n7858239736` at 1720, `n1626744832` at 1728) as a 4-node basin. Only the third round
+  reached 0. So: before writing any `setNodeElevation`, take the **whole connected patch** — the
+  detector already prints its size, and here it said 22 from the start — and get a reading for
+  every node in it, including the synthetic `sn…` twins. A twin sits at its parent's height; the
+  user's own readings for `sn362907957` and `sn7021400781` matched their parents exactly, so pin
+  them together. And re-run `check:basins` after **every** round: a partial elevation patch does not
+  merely under-fix, it actively manufactures a basin, which is worse than what you started with.
+- **An elevation override must re-run every direction rule, not just the ones it thought of.**
+  `buildGraph` gives a near-flat piste a reverse traverse (`flatGradeMax` 6% + `maxTraverseClimb`
+  8 m), but it runs on the **raw provider** elevations, and `applyOverrides` re-derives direction
+  afterwards. That re-derive handled connectors in both directions (flat→slope demotion, and
+  `skiable_down`→level promotion) but had **no mirror for a piste that a correction levels out** — so
+  a pin fixed the printed heights and left the topology exactly as the bad DEM had built it. At the
+  Avoriaz Stade/Lac-Intrêts/Tour hub that left five runs at **0.0 m drop / 0.0 % grade** one-way
+  (`e1625`, `e1628`, `e1629`, `e2282`, `e4115`) while the connectors on the very same ground were
+  two-way: you could ski from one lift base to the next and not back. The user spotted it by eye —
+  "part of it is 2 ways and part is one way". `overrides.ts` now calls `addFlatReverse` on any piste
+  branch, using **buildGraph's own constants** so this is that rule re-applied, not a second rule.
+  Blast radius fleet-wide: **20 edges across 7 resorts**, all near-flat. The general lesson: any pass
+  that edits a field another pass derived a decision from owes that decision a re-derivation, and the
+  cheapest way to find the gap is to dump one neighbourhood and ask *why* of each one-way edge —
+  `files/whyoneway.ts` prints exactly that, with the failing rule named.
+- **A lift base you can ski away from but never ski *to* is invisible to every existing guard.**
+  `buildGraph` has a lift-**top** ski-out pass; there was no mirror for the base. Nothing else finds
+  it: the rescue pass fixes nodes that cannot leave, the orphan pass fixes components with no
+  entrance, and a lift base always has an exit (the cable) and belongs to the main component — so
+  `check:basins` reports 0 while the router can never once put that lift in a route. `liftSkiIn.ts`
+  projects such a base onto the nearest piste line within `liftSkiOutRadius`, splitting it, exactly
+  as the ski-out twin does; the projected point must be at or above the base, and the link is
+  one-way down past `maxTraverseClimb`, so it cannot become a free ascent. **It lives in `build.ts`,
+  not in `buildResortGraph`, and that placement is the whole point:** "has a ski-in" is a question
+  about edge *direction*, and direction is re-derived twice afterwards (by `applyOverrides` and by
+  the elevation consensus). Avoriaz's Surf platter proves it — inside `buildResortGraph` the base
+  looked fine because the raw DEM read the shelf below it too high and the runs pointed inward; the
+  hand pins then flipped all three outward. Fleet-wide the pass fires on **~30 bases across 15
+  resorts**, mostly 10–60 m. Watch the long ones (117–126 m at Zermatt, Verbier, Val Thorens): they
+  are legal but worth an eyeball, and they are the reason not to widen the radius.
+- **A detector must never accept the app's own plumbing as evidence about the mountain.** The pothole
+  detector (`_phantoms.ts`) looks for a node every descent arrives at whose only way onward climbs,
+  and it decided "the descent resumes over there" using *any* descending edge. Polygon **skeleton
+  arms** are links the app invents for connectivity, so this let it manufacture its own proof that
+  real terrain was broken. At Les Gets the Indiens/Trappeurs junction `n13535054703` was reported
+  with a 7 m climb-out purely because the arm pair `e3141`/`e3142` hangs off it: the walk climbed
+  `e3142` (+7 m), found `e3141` "descending" at the top — and `e3141` descends **straight back into
+  the node under test**. Meanwhile the honest route (110 m down to the Grand Cry station, where
+  Piste des Indiens really does continue 1513 → 1495 m) was never reached. Two guards: arms are out
+  of both the flat-escape walk and the resume test, and a resume whose descent returns to the origin
+  is not an escape. Fleet effect: **35 → 19 sinks, so 16 of 35 were phantom**. `spineDuplicate` is
+  deliberately *not* excluded — that flag marks a real piste paralleling a spine, which is terrain a
+  skier can actually ski. This is the mirror of the paradiski Kamikaze bug (an arm that *climbs*
+  counted as a way out, hiding a real sink); when a detector walks the graph, ask of every edge class
+  whether the app invented it. **A user's "the slope here is obviously fine" is the fastest way to
+  find one of these** — that is exactly how this surfaced.
+- **A search for "how bad is it" must take the BEST option, not the first one it stumbles on.** The
+  same pothole walk was a BFS that `break`ed at the first node offering a descent and reported *that*
+  node's height as the climb-out — so the verdict was decided by **edge storage order**. Paradiski's
+  `n1000000002298` (1699 m, the foot of Route des Espagnols) has two flat outs: `e1892` → `n257077953`
+  @1702 m is stored first, giving +3.0 m, which is *precisely* `POTHOLE_CLIMB_TOL`. One slot behind it
+  in the same queue sat `e7724`, a **2 m** link to `sn1000000002298` @1700 m (+1.0 m), from which
+  La Forêt continues down 35 m and then 179 m for −16 m. The node was visibly connected downhill on
+  the map and was reported anyway. A pothole is *defined* as a dip you can only leave by climbing, so
+  the honest measure is the **least** climb reachable; stopping early can only over-report. The walk
+  now keeps expanding past a node that offers a descent, because a lower resume may lie beyond it.
+  Fleet effect: **19 → 8 sinks**, clearing Val Thorens and Madonna's Panciana base entirely. Rule of
+  thumb: any `break` inside a "measure the severity" search is suspect — `break` is for *existence*
+  questions, `min`/`max` for magnitude ones.
+- **A detector's threshold must not sit below the pipeline's own noise floor.** `POTHOLE_CLIMB_TOL`
+  was a hard-coded `3`, while `Vmerge` is **4** — the vertical distance within which `buildGraph`
+  declares two points to be *the same place* and merges them into one node. So the audit was
+  accusing nodes of a height difference the builder one step earlier would have erased. Madonna's
+  `n6200757170` on Skiweg Campiglio (1631 m) was reported for a **3 m rise over 33 m** of two-way
+  flat cat-track onto the 5 Laghi blue — original data from the very first resort ever built, routed
+  across in both directions for the app's whole life. The constant is now `= DEFAULT_GRAPH_CONSTANTS
+  .Vmerge` and the test is `climb <= TOL → skip`, so the two rules can never drift apart again.
+  Fleet: **8 → 6**. Generalise it: before trusting any threshold in a checker, find the constant the
+  *builder* uses for the same physical quantity and make the checker derive from it.
+- **"The node is wrong" and "the marker on the node is wrong" are different claims — say which.**
+  Every pothole the user opened turned out to be untouched original data that had always routed
+  correctly; what was wrong was the *verdict* printed about it. Phrasing it as "these have been
+  wrong since the detector was written" read as an accusation against their data and cost trust.
+  When a checker and a user disagree, state plainly which of the two you think is broken.
+- **`piste:name` beats `name`, exactly as `piste:ref` already beat `ref`.** `normalize.ts` had
+  `name: tags.name || tags['piste:name']`, one line above the correct `ref: tags['piste:ref'] ||
+  tags.ref`. Runs are routinely mapped on top of a road or forest track that carries the *road's*
+  name, so we labelled pistes with road names: the Avoriaz → Les Lindarets blue showed as **"D 228
+  Route des Lindarets"** when its `piste:name` is **"Parchets"**, which is why it read as a service
+  road rather than a run. Fleet-wide **143 of the 256** downhill ways carrying both tags disagree
+  (Zermatt "Moosstrasse" vs "Moos", "Riedweg" vs "Ried"; Alpe d'Huez "Lac Blanc" vs "Retour 1800").
+  Takes effect only after `npm run data:refresh`.
+- **A road can be a real piste, and OSM says so explicitly.** Before treating a run that follows a
+  road as an import artefact, read its tags: the Route des Lindarets ways carry `piste:type=downhill`
+  + `piste:difficulty=easy` + a `piste:name`, and `w327863773` adds
+  `access:conditional = no @ (Oct-Apr)` — cars banned for the whole season. That is a mapper
+  deliberately declaring a winter blue, not a road that leaked in.
+- **A per-resort tool that writes a fleet-wide overlay must MERGE, not replace.** `check:audit <id>`
+  examines one resort; writing its result whole dropped the other seventeen and took them off the
+  debug map. Refusing to write an *empty* file (the `_areaskel.ts`/`_basins.ts` guard) does not catch
+  this, because the file was not empty — just narrower. Delete the keys this run covered, then merge,
+  so a fixed resort is still removed and stale marks cannot accumulate. `applyOverrides` builds a Map,
+  so the **last** entry for a node beats every earlier one. A rationale-free `{"node":"n10722198686",
+  "ele":1765}` sitting lower in `portes-du-soleil.json` quietly ate a freshly-written 1760 reading,
+  and the build looked like it had ignored the fix. `check:overrides` now reports duplicates
+  (conflicting values = stale, exact repeats = clutter); fleet-wide there were no others. Grep the
+  array for the node id before adding an entry, and give every entry a `_why` — the entry without
+  provenance was, predictably, the wrong one.
 - **Ski sinks** (second category of the same pass): a node every skiable edge *arrives* at and none
   leaves — you ski in and can only get out by riding a lift or climbing. Most are real (a valley
   station, the bottom of a bowl), so **topology alone cannot tell you**: a genuine bottom looks
@@ -569,6 +887,31 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   is too steep to earn a reverse traverse while at −3 m it is flat enough to walk back up. Note the
   damage was **not** a reversed arrow — nothing flipped — which is why the reversal category missed
   it for so long.
+- **A detector that reads the field as it *arrived* is testing a state that will not exist.** The
+  ski-sink test used the stored edge orientation and the raw elevations, but it runs in the same pass
+  that is about to *move* nodes — and moving one end of a run re-orients it. Paradiski's
+  `n1000000001983` is the worked example, found by a user's eye after every detector passed: while
+  its neighbour `n669482305` still read 15 m low the node had two out-edges and was plainly no sink;
+  the instant that neighbour was repaired it became one. So the sink test now reads the field through
+  `cur()` (raw, plus everything already adopted), **implies** each piste's direction from those
+  elevations rather than trusting `from`/`to`, and **iterates** (bounded at 4 rounds) because each
+  repair can expose the next one downstream.
+- **A link that climbs is not a way out — which is also how a skeleton arm hides a sink.** The same
+  node was additionally masked by polygon plumbing: arm `e4897` leaves it *climbing 8 m over 39 m*,
+  and any out-edge disqualified the node. Filtering on `skeletonArm` does **not** work here, because
+  the flag is stamped by a later pass and the edge reaches the consensus pass unmarked. Test the
+  physics instead: an edge rising more than `SINK_OUT_CLIMB` is not counted, since you cannot ski up
+  it (`cost.ts` charges 12 s/m to push). That covers arms, mis-oriented connectors and anything else
+  without depending on a flag's timing. Effect: the node was repaired 1998 → 2014 m, which
+  simultaneously turned Kamikaze `e1927` downhill *out* of the junction and made `e4896`/`e4897`
+  one-way toward `n2328038825` — three separate wrong arrows, one root cause.
+- **One neighbour over the line does not make a disagreement systematic.** The isolation test used to
+  demand that *every* neighbour agree with the second DEM within `SINK_NBR_AGREE`, so a single
+  neighbour at 6 m vetoed a node reading 16 m low with a median neighbour at 1 m. That is not a
+  systematic dataset offset, it is one noisy point next to a real fault. A node may now also pass by
+  being a clear **outlier**: the median neighbour must still agree, and the node's own disagreement
+  must be at least `SINK_OUTLIER_RATIO` (2×) the worst neighbour's. Do **not** fix this class of miss
+  by raising `SINK_NBR_AGREE` — that weakens the test everywhere to rescue one node.
 - **Non-skiable / mis-tagged connections**: OSM `piste:type=connection` imports as an orange
   (unrated) piste with a forced direction. `check:audit` lists "long connections" (>250 m) to
   review — some are roads/ski-bus links (long + near-flat → `removePistes` by name/bbox), some
@@ -754,6 +1097,45 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   zoomed out, and hiding it could blank a long route that "fit to route" had just framed.
 
 ## Outstanding follow-ups (not in v1)
+
+### Iconic circuits (Sella Ronda clockwise/anti-clockwise, and friends)
+A third routing mode beside "A → B" and "longest run": follow a resort's **signposted circuit**.
+Designed, not built. The design decisions that matter:
+- **A circuit is DATA, not routing code** — which is what keeps it inside the "never add per-resort
+  routing code" rule. Model it as a small ordered **ring of waypoints** (Sella Ronda is literally the
+  four passes: Pordoi, Sella, Gardena, Campolongo) and plan each consecutive pair with the **existing**
+  `planRoutes`. That inherits closures, `maxDifficulty`, lift-type gating and the off-piste opt-out
+  for free, because every leg still goes through `edgeCost`.
+- **Anti-clockwise is the same ring reversed**, and joining at a different valley is a **rotation** of
+  the ring — so one dataset serves every variant. Note the two directions are **not symmetric** (pistes
+  are one-way, so the reverse uses genuinely different terrain) and must be validated independently.
+- **Solving A → A directly cannot work** — it returns the trivial empty route. The waypoints are
+  precisely what makes the cycle well-posed.
+- **Anchor waypoints by COORDINATE, not node id.** Coordinates survive an OSM refresh; ids can move if
+  OSM deletes the node a cluster was named after. Resolve to the nearest node at build time and **fail
+  a `check:circuits` if the nearest node is beyond a tolerance** — same tripwire discipline as
+  `check:overrides`, so a stale circuit is caught at build time and not in the browser.
+- **Do NOT auto-detect loops from the graph.** "Iconic" is a signage/cultural fact, not a graph
+  property; there are unlimited legal cycles and generating them would be inventing routes nobody
+  skis — the routing equivalent of inventing terrain. Only ever add a circuit that is officially
+  signposted, and record the `source` in the data file. Auto-detection is legitimate only in *reverse*,
+  as a validator that our planned line matches the published one.
+- **Known gap: waypoints under-constrain the route.** Between two passes several legal ways exist and
+  the planner takes the fastest, which need not be the signposted one. Add an optional `via` hint
+  (a named piste/lift) **only** where validation shows divergence — don't pre-emptively over-specify.
+- **Report feasibility per leg, honestly.** If the skier's `maxDifficulty` can't do leg 3, say so;
+  never silently substitute or drop it. Same discipline as badge reconciliation.
+- **The feature that makes it worth building: "latest start time."** A circuit is time-critical and
+  resorts publish exactly this warning. `minutesUntilClose()` + per-lift hours already exist, so
+  working backwards from each leg's last lift gives *"leave by 13:20 to finish"*. It also yields a free
+  correctness check — our estimate vs the published duration (Sella Ronda ≈ 6 h, ~26 km skiing) is a
+  natural **`probe:goldenroutes` fixture**.
+- Suggested staging: (1) data format + `check:circuits` + Sella Ronda both ways; (2) leg-by-leg
+  planning + total time, reusing `RouteOptions`; (3) latest-start-time; (4) more circuits (Portes du
+  Soleil tour, Tour du Mont Fort, 3 Vallées traverse).
+- Open question deferred: whether a circuit is **fixed** (follow signage, warn when a leg is closed) or
+  **adaptive** (reroute around closures, may deviate from signage). Start fixed-with-warnings.
+
 - Login/accounts; Strava integration for personal average speeds.
 - Live lift status & queue/wait times; live GPS turn-by-turn; 3D terrain; offline/PWA.
 - A few resorts have real-world dead-ends and genuinely disconnected areas: measured over the
