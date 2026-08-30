@@ -1,126 +1,4 @@
 {
-  "mayrhofen": {
-    "focus": {
-      "bounds": [
-        [
-          11.7697558,
-          47.1849798
-        ],
-        [
-          11.7717262,
-          47.1871307
-        ]
-      ]
-    },
-    "lines": [
-      {
-        "coords": [
-          [
-            11.7697558,
-            47.1871307
-          ],
-          [
-            11.7699041,
-            47.1870341
-          ],
-          [
-            11.7699753,
-            47.1869806
-          ],
-          [
-            11.7700208,
-            47.1869294
-          ],
-          [
-            11.7700708,
-            47.1868422
-          ],
-          [
-            11.7701126,
-            47.1867472
-          ],
-          [
-            11.7701469,
-            47.1866539
-          ],
-          [
-            11.7702671,
-            47.1864147
-          ],
-          [
-            11.7703272,
-            47.1862981
-          ],
-          [
-            11.7704614,
-            47.1860522
-          ],
-          [
-            11.7707134,
-            47.1857381
-          ],
-          [
-            11.7707821,
-            47.1856448
-          ],
-          [
-            11.7709108,
-            47.1854639
-          ],
-          [
-            11.7709537,
-            47.1853823
-          ],
-          [
-            11.7711168,
-            47.1852656
-          ],
-          [
-            11.7713142,
-            47.1851548
-          ],
-          [
-            11.7714258,
-            47.1850906
-          ],
-          [
-            11.771546,
-            47.1850498
-          ],
-          [
-            11.7717262,
-            47.1849798
-          ]
-        ],
-        "color": "#e11d1d",
-        "width": 4,
-        "label": "n321002506->sn474792415 reverses (margin 22 m; fix n321002506 our2366~terr2366  sn474792415 our2365~terr2388)"
-      }
-    ],
-    "points": [
-      {
-        "at": [
-          11.7717262,
-          47.1849798
-        ],
-        "color": "#22a06b",
-        "r": 16,
-        "tag": "sn474792415",
-        "label": "SUGGESTED TOP (descend from here) · sn474792415 · corrected 2388 m"
-      },
-      {
-        "at": [
-          11.7697558,
-          47.1871307
-        ],
-        "color": "#f59e0b",
-        "r": 14,
-        "tag": "n321002506",
-        "label": "current top (looks too high) · n321002506 · our 2366->2366 m"
-      }
-    ],
-    "notes": "<b>1 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
-  },
   "ischgl-samnaun": {
     "focus": {
       "bounds": [
@@ -160,7 +38,7 @@
         "color": "#22a06b",
         "r": 16,
         "tag": "sn1000000000089",
-        "label": "SUGGESTED TOP (descend from here) · sn1000000000089 · corrected 2454 m"
+        "label": "SUGGESTED TOP (descend from here) Â· sn1000000000089 Â· corrected 2454 m"
       },
       {
         "at": [
@@ -170,61 +48,7 @@
         "color": "#f59e0b",
         "r": 14,
         "tag": "n364108865",
-        "label": "current top (looks too high) · n364108865 · our 2464->2442 m"
-      }
-    ],
-    "notes": "<b>1 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
-  },
-  "paradiski": {
-    "focus": {
-      "bounds": [
-        [
-          6.687510877054078,
-          45.4814203
-        ],
-        [
-          6.6880322,
-          45.48164216669534
-        ]
-      ]
-    },
-    "lines": [
-      {
-        "coords": [
-          [
-            6.6880322,
-            45.4814203
-          ],
-          [
-            6.687510877054078,
-            45.48164216669534
-          ]
-        ],
-        "color": "#e11d1d",
-        "width": 4,
-        "label": "n669482305->n1000000001983 reverses (margin 11 m; fix n669482305 our2002~terr2002  n1000000001983 our1998~terr2014)"
-      }
-    ],
-    "points": [
-      {
-        "at": [
-          6.687510877054078,
-          45.48164216669534
-        ],
-        "color": "#22a06b",
-        "r": 16,
-        "tag": "n1000000001983",
-        "label": "SUGGESTED TOP (descend from here) Â· n1000000001983 Â· corrected 2014 m"
-      },
-      {
-        "at": [
-          6.6880322,
-          45.4814203
-        ],
-        "color": "#f59e0b",
-        "r": 14,
-        "tag": "n669482305",
-        "label": "current top (looks too high) Â· n669482305 Â· our 2002->2002 m"
+        "label": "current top (looks too high) Â· n364108865 Â· our 2464->2442 m"
       }
     ],
     "notes": "<b>1 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"

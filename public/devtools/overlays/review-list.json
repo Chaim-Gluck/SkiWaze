@@ -110,6 +110,28 @@
     "note": "NOTHING TO CHECK - cleared without touching your data, and Verbier is now trapped=0 orphan=0 basins=0. All 18 trapped nodes plus both orphans lie on L'Eteygeon / Itineraire Bruson, and EVERY non-off-piste edge in the whole sector is synthetic:true - i.e. rescue/snap connectors the app invented trying to save the itinerary. There is no real piste here to be cut off. A freeride line that descends to the Val de Bagnes floor and stops is not a defect: that is what off-piste IS, and cost.ts refuses those edges entirely unless allowOffPiste is on, so by default a skier cannot even enter this terrain to get stuck in it. Same call already signed off for Tignes' Termignon ('free-ride off-piste, do not add a link'). The bug was that check:trapped and trappedBasins.ts DISAGREED about off-piste: basins has excluded it since the off-piste work, check:trapped never did, so this sector sat on the review list for rounds while check:basins reported it clean. check:trapped now reports off-piste-only nodes separately, exactly like acceptedBasins - the graph is untouched and the BFS is unfiltered. Fleet effect: 48 of 138 trapped and 23 of 57 orphan nodes across 7 resorts were this same class (Verbier 18/18, Tignes 11 -> 1, St Anton 26 -> 15)."
   },
   {
+    "label": "ELEVATION 1/2 - Ischgl n364108865: DEM says climb, we say descend - I believe OUR data",
+    "resort": "ischgl-samnaun",
+    "node": "n364108865",
+    "center": [
+      10.2661,
+      46.9772
+    ],
+    "zoom": 17,
+    "note": "LOW PRIORITY, only if you are near it on the map. The ONLY routing-impacting elevation candidate in the whole fleet after the rebuild (18 resorts, 5 disagreeing nodes total). We have this junction at 2464 m, Terrarium says 2442 m, and under Terrarium two mapped pistes leaving it would become CLIMBS (+9 m over 40 m, +12 m over 56 m) - i.e. a hollow that runs climb out of. Three reasons I think Terrarium is wrong, not us: (1) every neighbour reads low against it too (-13, -29, -10 m), and the project's own sink rule says a genuinely bad point is an ISOLATED outlier - when the neighbours disagree in the same direction it is a systematic offset between two datasets over the area; (2) our reading is self-consistent as an ordinary junction part-way down a slope; (3) the build-time elevation-consensus pass, which repairs a node only when it reverses under BOTH the point sample and a smoothed median, declined to touch it. The checker itself grades it [marginal]. WHAT TO CHECK: does the contour line put this junction above or below the two nodes SE of it? If you confirm our reading I will silence it with ignoreReversals in overrides/ischgl-samnaun.json so it stops coming back."
+  },
+  {
+    "label": "ELEVATION 2/2 - Alpe d'Huez lift top n251684113: DEM artifact at a summit station",
+    "resort": "alpe-dhuez",
+    "node": "n251684113",
+    "center": [
+      6.10494,
+      45.12872
+    ],
+    "zoom": 17,
+    "note": "LOW PRIORITY, almost certainly nothing. Two nodes here read ~40 m above Terrarium (n251684113 2802 vs 2763, n11724215777 2799 vs 2756), which is the largest cluster left in the fleet - but ROUTING IMPACT IS ZERO, no edge reverses. n251684113 is a LIFT TOP STATION (top of a 1640 m lift climbing 765 m), and two things make a DEM unreliable exactly there: a top station stands on a platform while the DEM samples bare ground, and DEMs smooth sharp ridges downward. The DEM's own numbers give it away - it would make the 55 m flat traverse to n7779237420 climb 27 m, a 49% grade, at a lift top; ours says +2 m. Our field is the plausible one. WHAT TO CHECK: nothing on the ground - just confirm you are happy leaving it, and I will note it so it is not re-examined every rebuild."
+  },
+  {
     "label": "SCHEMA EXAMPLE - NOT a defect (Teleski de Lourtier, already signed off)",
     "resort": "verbier-4vallees",
     "node": "n1",
