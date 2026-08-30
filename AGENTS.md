@@ -857,6 +857,24 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   → 0**. Verified non-vacuous by *injecting* a 15 m sink into a scratch resort and confirming it is
   still reported (climb-out 20 m) — a checker that reaches zero must be proven to still fire, or you
   have only proved it stopped looking.
+- **Two checks that answer the same question must agree about off-piste.** `trappedBasins.ts` has
+  excluded off-piste from "stranded piste" since the off-piste work, but `check:trapped`'s flat
+  trapped/orphan lists never did — so `check:basins` called Verbier clean while `check:trapped`
+  reported **18 trapped nodes**, and that disagreement parked L'Eteygeon on the review list for
+  rounds. Every one of those 18 (plus both orphans) lies on L'Eteygeon / Itinéraire Bruson, and
+  **every non-off-piste edge in the sector is `synthetic:true`** — rescue/snap connectors the app
+  invented trying to save the itinerary. There is no real piste there to be cut off. A freeride line
+  that descends to a valley and stops is not a defect, and `cost.ts` refuses those edges outright
+  unless `allowOffPiste` is on, so by default a skier cannot even enter the terrain to get stuck in
+  it. Fleet-wide this was **48 of 138 trapped and 23 of 57 orphan nodes across 7 resorts** — a third
+  of the check's noise (Verbier 18→0, Tignes 11→1, St. Anton 26→15). Three deliberate constraints:
+  judge **ignoring the app's own `synthetic` plumbing**, or the sector reads "mixed" on the strength
+  of the app's guesses about terrain it cannot see; **report separately, never silently drop**, same
+  contract as `acceptedBasins`; and **do not filter the BFS** — `check:trapped` still walks off-piste
+  when deciding what can reach a lift, so a *piste* node whose only escape is a freeride line still
+  counts as reaching one. That last one is arguably too generous, but it is what `trappedBasins.ts`
+  does, and changing reachability semantics is a far bigger behavioural change than suppressing a
+  report; measure it on its own rather than smuggling it in.
 - **An overlay guard must key on "did we EXAMINE anything", not "did we FIND anything".**
   `writePotholeOverlay` refused to write when the merged result was empty, copying `_areaskel.ts` /
   `_basins.ts`. But it already deletes each examined resort from the merged file, so the truncation

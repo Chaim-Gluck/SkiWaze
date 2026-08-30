@@ -13,7 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ResortGraph } from '../src/types/domain';
+import type { GraphEdge, ResortGraph } from '../src/types/domain';
 import { loadOverrides } from './lib/overrides';
 import { basinLabel, findTrappedBasins } from './lib/trappedBasins';
 
@@ -75,10 +75,46 @@ function main(): void {
   }
   const accepted = (n: { id: string }) => acceptedNodes.has(n.id);
 
+  // Off-piste terrain is not a connectivity defect, and this check disagreed with `trappedBasins.ts`
+  // about that for as long as both have existed.
+  //
+  // A freeride itinerary that descends to a valley and stops IS the thing it is; nothing is missing
+  // from OSM. `cost.ts` refuses those edges outright unless the skier opts in with `allowOffPiste`,
+  // so by default a skier cannot even enter this terrain, let alone "get stuck" in it — and a skier
+  // who does opt in has accepted unpatrolled, unlinked terrain by definition. Reporting it sent
+  // reviewers chasing phantoms: Verbier's L'Eteygeon accounted for ALL 18 of that resort's trapped
+  // nodes and sat on the review list for rounds, and it is the same call already signed off for
+  // Tignes' Termignon ("free-ride off-piste, do not add a link"). Fleet-wide this is 48 of 138
+  // trapped and 23 of 57 orphan nodes across 7 resorts — a third of the noise in this check.
+  //
+  // The graph is NOT changed and the BFS is NOT filtered: same contract as `acceptedBasins`, the
+  // nodes are only moved out of the counts and reported separately. Deliberately conservative:
+  // `_trapped.ts` still walks off-piste when deciding what can reach a lift, so a PISTE node whose
+  // only escape is a freeride line still counts as reaching one. That is arguably too generous, but
+  // it matches `trappedBasins.ts` exactly, and changing reachability semantics is a much larger
+  // behavioural change than suppressing a report — it should be measured on its own, not smuggled in
+  // here.
+  //
+  // The app's OWN synthetic plumbing is ignored when judging. At L'Eteygeon every single
+  // non-off-piste edge in the sector is `synthetic:true` — rescue/snap connectors the pipeline
+  // invented while trying to save the itinerary — so judging raw edges would call the sector "mixed"
+  // on the strength of the app's own guesses about terrain it cannot see.
+  const touching = new Map<string, GraphEdge[]>();
+  for (const e of graph.edges) {
+    for (const nid of [e.from, e.to]) (touching.get(nid) ?? touching.set(nid, []).get(nid)!).push(e);
+  }
+  const offPisteOnly = (n: { id: string }): boolean => {
+    const real = (touching.get(n.id) ?? []).filter((e) => e.kind !== 'lift' && !e.synthetic);
+    return real.length > 0 && real.every((e) => e.offPiste === true);
+  };
+
   const trappedAll = graph.nodes.filter((n) => !canReachLift.has(n.id));
   const orphanAll = graph.nodes.filter((n) => !reachableFromLift.has(n.id));
-  const trapped = trappedAll.filter((n) => !accepted(n));
-  const orphan = orphanAll.filter((n) => !accepted(n));
+  const trapped = trappedAll.filter((n) => !accepted(n) && !offPisteOnly(n));
+  const orphan = orphanAll.filter((n) => !accepted(n) && !offPisteOnly(n));
+  const offPisteSeen = new Set(
+    [...trappedAll, ...orphanAll].filter((n) => !accepted(n) && offPisteOnly(n)).map((n) => n.id),
+  );
   const acceptedSeen = new Set(
     [...trappedAll, ...orphanAll].filter(accepted).map((n) => n.id),
   );
@@ -139,6 +175,17 @@ function main(): void {
     );
   }
 
+  if (offPisteSeen.size) {
+    console.log(
+      `\noff-piste only (freeride terrain, not a connectivity defect — not counted above): ${offPisteSeen.size}`,
+    );
+    const names = new Set<string>();
+    for (const nid of offPisteSeen) {
+      for (const e of touching.get(nid) ?? []) if (e.offPiste && e.pisteName) names.add(e.pisteName);
+    }
+    console.log(`  ${[...names].join(', ') || '(unnamed lines)'}`);
+  }
+
   if (acceptedSeen.size) {
     console.log(
       `\naccepted dead ends (signed off in overrides/${id}.json, not counted above): ${acceptedSeen.size}`,
@@ -160,7 +207,8 @@ function main(): void {
 
   console.log(
     `\nsummary: trapped=${trapped.length} orphan=${orphan.length}` +
-      ` basins=${report.significant.length} strandedNodes=${report.significantNodes}`,
+      ` basins=${report.significant.length} strandedNodes=${report.significantNodes}` +
+      ` offPisteOnly=${offPisteSeen.size}`,
   );
   if (!trapped.length && !orphan.length && !report.significant.length) {
     console.log('\nOK: every node connects to the lift network both ways.');

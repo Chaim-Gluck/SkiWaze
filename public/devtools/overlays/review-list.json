@@ -99,15 +99,15 @@
     "note": "NOTHING TO CHECK. This was reported only because the flat-escape walk used to `break` at the FIRST node offering a descent and report that node's height, so the verdict was decided by edge storage order rather than by the mountain. The walk now takes the LOWEST resume in the whole frontier - a pothole is by definition a dip you can only leave by climbing, so the honest measure is the least climb available. The plaza sits level at 1682-1685 m, exactly as a base area should, and it no longer reports."
   },
   {
-    "label": "VERBIER - Leytegeon + L'Eteygeon: ONE trapped sector, 17 nodes, 1556-2034 m",
+    "label": "FIXED - Verbier L'Eteygeon: all 18 were OFF-PISTE, never a connectivity defect",
     "resort": "verbier-4vallees",
-    "node": "n1",
+    "node": "n12893884464",
     "center": [
-      7.3,
-      46.09
+      7.3844,
+      46.1292
     ],
     "zoom": 14,
-    "note": "PARKED from an earlier round, still awaiting your map review. Use the node finder rather than this centre."
+    "note": "NOTHING TO CHECK - cleared without touching your data, and Verbier is now trapped=0 orphan=0 basins=0. All 18 trapped nodes plus both orphans lie on L'Eteygeon / Itineraire Bruson, and EVERY non-off-piste edge in the whole sector is synthetic:true - i.e. rescue/snap connectors the app invented trying to save the itinerary. There is no real piste here to be cut off. A freeride line that descends to the Val de Bagnes floor and stops is not a defect: that is what off-piste IS, and cost.ts refuses those edges entirely unless allowOffPiste is on, so by default a skier cannot even enter this terrain to get stuck in it. Same call already signed off for Tignes' Termignon ('free-ride off-piste, do not add a link'). The bug was that check:trapped and trappedBasins.ts DISAGREED about off-piste: basins has excluded it since the off-piste work, check:trapped never did, so this sector sat on the review list for rounds while check:basins reported it clean. check:trapped now reports off-piste-only nodes separately, exactly like acceptedBasins - the graph is untouched and the BFS is unfiltered. Fleet effect: 48 of 138 trapped and 23 of 57 orphan nodes across 7 resorts were this same class (Verbier 18/18, Tignes 11 -> 1, St Anton 26 -> 15)."
   },
   {
     "label": "SCHEMA EXAMPLE - NOT a defect (Teleski de Lourtier, already signed off)",
