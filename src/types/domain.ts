@@ -180,7 +180,15 @@ export interface ResortBBox {
 
 export interface Resort {
   id: string;
+  /** Full display name, shown where there is room (the resort dropdown). */
   name: string;
+  /**
+   * Compact label for the two places `name` does not fit: the collapsed resort picker
+   * (`maxWidth: 280`) and the global-view flag label, which is 10-13 px map text that wraps at
+   * 10 ems into a multi-line block under a tiny flag. Falls back to `name` when unset, so only
+   * resorts whose full name spells out their sub-areas need it.
+   */
+  shortName?: string;
   country: string;
   /** Map default center. */
   center: { lon: number; lat: number };

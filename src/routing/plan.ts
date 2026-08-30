@@ -2,7 +2,7 @@ import type { GraphEdge, MeaningfulPoint, Preferences, Route, RouteRequest, Reso
 import { PISTE_COLOR_ORDER } from '../types/domain';
 import { GraphIndex } from './graphIndex';
 import { alternativeRoutes } from './alternatives';
-import { longestDownhillRuns, longestDownhillPaths } from './longestStreak';
+import { longestDownhillRuns, longestDownhillPaths, longestDownhillPath } from './longestStreak';
 import { buildRoute } from './buildRoute';
 import { resolveClosedEdgeIds } from './closures';
 import { makeRouteComparator, pisteMetres, skiingTolerance } from './ranking';
@@ -233,8 +233,45 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     return true;
   };
 
-  const withSkiNote = (routes: Route[]): PlanResult => {
-    const ski = nearestSkiDestination(graph, index, fromNodeId, toNodeId, prefs, closedEdgeIds);
+  /**
+   * Re-solve every lift-free stretch of a route for maximum descent, keeping its lifts as they are.
+   *
+   * When B is only reachable by lift, "longest" still has a meaning on each side of that lift: ski
+   * the longest line down to the station, ride up, then ski the longest line to B. The lift chain
+   * itself is taken as given (from the fewest-lifts search) — searching over lift chains as well
+   * would be a different, much larger problem, and the point here is that no stretch of the route
+   * is silently left as the *short* way down.
+   *
+   * A stretch is only replaced when it genuinely skis further, so this can never make a route worse.
+   */
+  const maximiseBetweenLifts = (edges: GraphEdge[]): GraphEdge[] => {
+    const pisteM = (es: GraphEdge[]): number =>
+      es.reduce((m, e) => (e.kind === 'piste' ? m + e.lengthM : m), 0);
+
+    const out: GraphEdge[] = [];
+    let segment: GraphEdge[] = [];
+    const flushSegment = () => {
+      if (segment.length === 0) return;
+      const from = segment[0].from;
+      const to = segment[segment.length - 1].to;
+      const better = longestDownhillPath(index, from, to, maxRank, undefined, allowForLongest);
+      out.push(...(better.length && pisteM(better) > pisteM(segment) ? better : segment));
+      segment = [];
+    };
+
+    for (const e of edges) {
+      if (e.kind === 'lift') {
+        flushSegment();
+        out.push(e);
+      } else {
+        segment.push(e);
+      }
+    }
+    flushSegment();
+    return out;
+  };
+
+  const withSkiNote = (routes: Route[]): PlanResult => {    const ski = nearestSkiDestination(graph, index, fromNodeId, toNodeId, prefs, closedEdgeIds);
     if (!ski.skiable) return { routes, noLiftFreeRoute: true, nearestSkiDestination: ski.suggestion };
     return { routes };
   };
@@ -294,10 +331,12 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
   if (routeType === 'longest') {
     const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3, 0.7, allowForLongest), 'longest_ab');
     if (longRoutes.length === 0) {
-      // Only when B can't be reached lift-free do we allow a lift.
+      // B can't be reached lift-free, so a lift is unavoidable. Take the fewest-lifts chain and
+      // then maximise the descent on each side of every lift it rides — "longest" should still mean
+      // the longest skiing available, not whatever line the fewest-lifts search happened to pick.
       const withLift = genAlts('fewest_lifts', 1)[0];
       if (!withLift) return noRouteResult(closedEdgeIds);
-      const r = finalize(withLift, 'longest_ab', 'route-1');
+      const r = finalize(maximiseBetweenLifts(withLift), 'longest_ab', 'route-1');
       // Just "Longest" — the card already shows a lift icon and count, so spelling out "(needs a
       // lift)" in the badge only repeats what is printed right below it.
       r.labels = [OBJECTIVE_LABEL.longest_ab];

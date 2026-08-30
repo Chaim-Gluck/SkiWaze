@@ -3,6 +3,8 @@ import type { ResortGraph } from '../types/domain';
 export interface ResortIndexEntry {
   id: string;
   name: string;
+  /** Compact label for the collapsed picker and the map flag; falls back to `name`. */
+  shortName?: string;
   country: string;
   center: { lon: number; lat: number };
 }

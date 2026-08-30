@@ -9,6 +9,7 @@ import LegendToggleIcon from '@mui/icons-material/LegendToggle';
 const SWATCH: Record<string, Record<string, unknown>> = {
   'piste-multi': { height: 3, width: 22, borderRadius: '2px', background: 'linear-gradient(90deg,#2e7d32 0 25%,#1565c0 25% 50%,#d32f2f 50% 75%,#111 75% 100%)' },
   'piste-unrated': { height: 3, width: 22, borderRadius: '2px', background: '#ff9800' },
+  'piste-offpiste': { width: 22, borderTop: '3px dashed #111' },
   lift: { width: 22, borderTop: '3px dashed #7b1fa2' },
   connector: { width: 22, borderTop: '3px dashed #00bfa5' },
   synthetic: { width: 22, borderTop: '3px dashed #e040fb' },
@@ -19,6 +20,7 @@ const SWATCH: Record<string, Record<string, unknown>> = {
 const ROWS: { swatch: string; label: string }[] = [
   { swatch: 'piste-multi', label: 'Piste: green / blue / red / black' },
   { swatch: 'piste-unrated', label: 'Unrated / connection piste' },
+  { swatch: 'piste-offpiste', label: 'Off-piste / freeride — unpatrolled (toggle on)' },
   { swatch: 'lift', label: 'Lift (up; gondolas also down)' },
   { swatch: 'connector', label: 'Flat link / cat-track (real)' },
   { swatch: 'synthetic', label: 'App-added bridge (verify)' },

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import maplibregl, { type StyleSpecification } from 'maplibre-gl';
+import maplibregl, { type StyleSpecification, type FilterSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import rtlTextPluginUrl from '@mapbox/mapbox-gl-rtl-text/mapbox-gl-rtl-text.min.js?url';
 import Paper from '@mui/material/Paper';
@@ -275,6 +275,7 @@ const RESORT_DETAIL_LAYERS = [
   'synthetic-links',
   'custom-links',
   'pistes-line',
+  'pistes-offpiste-line',
   'lifts-line',
 ];
 
@@ -287,7 +288,10 @@ function resortsFC(resorts: ResortIndexEntry[], selectedId: string | undefined) 
       geometry: { type: 'Point' as const, coordinates: [r.center.lon, r.center.lat] },
       properties: {
         id: r.id,
-        name: r.name,
+        // The flag label is 10-13 px map text that wraps at 10 ems, so a name spelling out the
+        // sub-areas would stack into a multi-line block under a tiny flag and collide with its
+        // neighbours. Use the compact label here; the dropdown still shows the full name.
+        name: r.shortName ?? r.name,
         country: r.country.split('/')[0].trim(),
         code: resortFlagCode(r.country),
         selected: r.id === selectedId,
@@ -359,6 +363,9 @@ export function MapView({
   const [showPistes, setShowPistes] = useState(true);
   const [showLifts, setShowLifts] = useState(true);
   const [showAreas, setShowAreas] = useState(false);
+  // Off-piste defaults OFF so the map agrees with the router, which refuses these edges unless
+  // `allowOffPiste` is set. Drawing unpatrolled freeride terrain by default would advertise it.
+  const [showOffPiste, setShowOffPiste] = useState(false);
   const [showLabels, setShowLabels] = useState(true);
   const [controlsOpen, setControlsOpen] = useState(false);
 
@@ -475,8 +482,26 @@ export function MapView({
         id: 'pistes-line',
         type: 'line',
         source: 'pistes',
-        filter: ['==', ['get', 'kind'], 'piste'],
+        filter: ['all', ['==', ['get', 'kind'], 'piste'], ['!=', ['get', 'offPiste'], true]],
         paint: { 'line-width': 2.5, 'line-color': SLOPE_COLOR_EXPR },
+      });
+      // Off-piste (piste:difficulty=freeride|extreme) gets its OWN layer purely so it can be
+      // dashed: `line-dasharray` is not a data-driven property in MapLibre, so a single layer
+      // cannot dash a subset. Drawn dashed and thinner in its slope colour, matching the
+      // convention that anything a skier must not treat as ordinary marked terrain is visually
+      // distinct. Solid black here was a safety bug - 310 km fleet-wide read as patrolled runs.
+      map.addLayer({
+        id: 'pistes-offpiste-line',
+        type: 'line',
+        source: 'pistes',
+        filter: ['all', ['==', ['get', 'kind'], 'piste'], ['==', ['get', 'offPiste'], true]],
+        layout: { visibility: 'none' },
+        paint: {
+          'line-width': 2,
+          'line-color': SLOPE_COLOR_EXPR,
+          'line-dasharray': [1.5, 2],
+          'line-opacity': 0.85,
+        },
       });
       map.addLayer({
         id: 'lifts-line',
@@ -949,15 +974,24 @@ export function MapView({
     const vis = (on: boolean) => (on && !globalView ? 'visible' : 'none');
     const pisteLayers = ['pistes-line', 'connectors', 'synthetic-links', 'custom-links'];
     for (const l of pisteLayers) map.setLayoutProperty(l, 'visibility', vis(showPistes));
+    map.setLayoutProperty('pistes-offpiste-line', 'visibility', vis(showPistes && showOffPiste));
     map.setLayoutProperty('lifts-line', 'visibility', vis(showLifts));
     for (const l of ['areas-fill', 'areas-outline']) map.setLayoutProperty(l, 'visibility', vis(showAreas));
+    // Labels and arrows come off the same source, so hiding only the LINE would leave an off-piste
+    // run's name and direction arrows floating over empty snow. Their filter has to follow the
+    // toggle too.
+    const pisteSymbolFilter: FilterSpecification = showOffPiste
+      ? ['==', ['get', 'kind'], 'piste']
+      : ['all', ['==', ['get', 'kind'], 'piste'], ['!=', ['get', 'offPiste'], true]];
+    map.setFilter('piste-labels', pisteSymbolFilter);
+    map.setFilter('piste-arrows', pisteSymbolFilter);
     const pisteLabelsOn = vis(showLabels && showPistes);
     const liftLabelsOn = vis(showLabels && showLifts);
     map.setLayoutProperty('piste-labels', 'visibility', pisteLabelsOn);
     map.setLayoutProperty('piste-arrows', 'visibility', pisteLabelsOn);
     map.setLayoutProperty('lift-labels', 'visibility', liftLabelsOn);
     map.setLayoutProperty('lift-arrows', 'visibility', liftLabelsOn);
-  }, [showPistes, showLifts, showAreas, showLabels, globalView, loaded]);
+  }, [showPistes, showLifts, showAreas, showLabels, showOffPiste, globalView, loaded]);
 
   // Live-location puck from the shared position stream.
   useEffect(() => {
@@ -1078,7 +1112,7 @@ export function MapView({
               <ToggleButton value="3d" selected={is3D} size="small" onClick={() => setIs3D((v) => !v)} title="Toggle 3D terrain" sx={{ px: 1, py: 0.25, mr: 0.5 }}>
                 3D
               </ToggleButton>
-              {([['Pistes', showPistes, setShowPistes], ['Lifts', showLifts, setShowLifts], ['Areas', showAreas, setShowAreas], ['Labels', showLabels, setShowLabels]] as const).map(
+              {([['Pistes', showPistes, setShowPistes], ['Lifts', showLifts, setShowLifts], ['Areas', showAreas, setShowAreas], ['Off-piste', showOffPiste, setShowOffPiste], ['Labels', showLabels, setShowLabels]] as const).map(
                 ([label, checked, setter]) => (
                   <FormControlLabel
                     key={label}

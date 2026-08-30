@@ -1106,7 +1106,7 @@ export default function App() {
               labelId="resort-picker-label"
               label="Resort"
               value={index ? resortId : ''}
-              renderValue={() => resortEntry?.name ?? ''}
+              renderValue={() => resortEntry?.shortName ?? resortEntry?.name ?? ''}
               onChange={(e) => {
                 selectResort(e.target.value);
               }}
