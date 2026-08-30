@@ -1,0 +1,23 @@
+{
+  "_comment": "Verbier / 4 Vallées. Basin sign-offs only — no graph edits.",
+  "acceptedBasins": [
+    {
+      "nodes": [
+        "n310532730",
+        "n3201608548",
+        "n599673759",
+        "n3201608549",
+        "n310532734"
+      ],
+      "why": "Les Moulins (Verbier village, 7.227/46.101) is the nursery slope, not a stranded sector. The whole component is 5 nodes spanning 1504–1545 m — FORTY-ONE metres of vertical — served by one 302 m platter ('Moulins') over a single 315 m blue of the same name. The nearest node outside is 231 m away and 12 m ABOVE it, so nothing could be linked without inventing an uphill piste. Reviewed on the map by the user: a ski-school / nursery area, same call as Monterosa's Wold, Mayrhofen's Übungsland Horberg and Sella Ronda's Plan da Tieja — sign off, add no link."
+    },
+    {
+      "nodes": [
+        "n4638244057",
+        "n8582921875",
+        "n1326737841"
+      ],
+      "why": "Téléski de Lourtier (7.271/46.052) is the village drag at Lourtier, on the Val de Bagnes valley FLOOR — 3 nodes, one 433 m platter and one unnamed blue, spanning 1096–1209 m. It is not part of the 4 Vallées circuit and nothing links it: the nearest node outside is 3137 m away and 1045 m ABOVE, i.e. up on the Bruson/Verbier massif. A separate village lift, the same call as Sella Ronda's Vajolet and Aloch. Reviewed on the map by the user: sign off, add no link. Kept in the graph because it is real terrain inside the bbox; it is simply not reachable on skis."
+    }
+  ]
+}

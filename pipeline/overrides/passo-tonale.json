@@ -1,0 +1,9 @@
+{
+  "setNodeElevation": [
+    {
+      "node": "n663551016",
+      "ele": 1308,
+      "_why": "Sozzine chairlift base, above Ponte di Legno. Both elevation sources agree with EACH OTHER and are both wrong here: our chain reads 1315 m and Terrarium 1313 m, so the elevation-consensus pass could not catch it (it only fires when the two DISAGREE). Confirmed on the ground as ~1308 m. The 7 m error made the station sit ABOVE the bottom of run 17 Pegra (n496526570 / n1778043293, both 1309 m), so the 116 m link to the station read as a climb and check:audit reported the Pegra valley bottom as a pothole sink. At 1308 m the link descends into the station, which is what actually happens."
+    }
+  ]
+}

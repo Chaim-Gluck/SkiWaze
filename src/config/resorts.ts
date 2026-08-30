@@ -8,7 +8,8 @@ import type { Resort } from '../types/domain';
 export const RESORTS: Resort[] = [
   {
     id: 'madonna-di-campiglio',
-    name: 'Madonna di Campiglio',
+    name: 'Madonna di Campiglio · Pinzolo · Folgarida-Marilleva',
+    shortName: 'Madonna di Campiglio',
     country: 'Italy',
     center: { lon: 10.826, lat: 46.23 },
     bbox: { minLon: 10.72, minLat: 46.16, maxLon: 10.94, maxLat: 46.32 },
@@ -18,8 +19,13 @@ export const RESORTS: Resort[] = [
   },
   {
     id: 'cervinia-zermatt',
-    name: 'Cervinia\u2013Zermatt',
-    country: 'Italy / Switzerland',
+    // Zermatt leads: it is far better known internationally than Cervinia, and "Matterhorn Ski
+    // Paradise" is the official brand for the linked area.
+    name: 'Zermatt \u2013 Cervinia (Matterhorn Ski Paradise)',
+    shortName: 'Zermatt \u2013 Cervinia',
+    // Country order follows the name order (same convention as Ischgl - Samnaun = Austria /
+    // Switzerland), because it drives the split flag icon in global view.
+    country: 'Switzerland / Italy',
     center: { lon: 7.71, lat: 45.958 },
     bbox: { minLon: 7.55, minLat: 45.87, maxLon: 7.82, maxLat: 46.05 },
     defaultZoom: 12,
@@ -28,7 +34,10 @@ export const RESORTS: Resort[] = [
   },
   {
     id: 'sella-ronda',
-    name: 'Sella Ronda (Canazei)',
+    // "Canazei" used to sit in this name and was misleading: it is one village of five. The graph
+    // spans Val Gardena (Ortisei, Seceda, Mont Sëuc), Alta Badia (Piz Sorega, Piz la Ila,
+    // Gardenaccia), Arabba, Selva and Canazei.
+    name: 'Sella Ronda (Dolomites)',
     country: 'Italy',
     center: { lon: 11.808, lat: 46.518 },
     // Boundary survey (Overpass, Aug 2026). The old box (minLon 11.68, maxLat 46.58, maxLon 11.94)
@@ -58,7 +67,8 @@ export const RESORTS: Resort[] = [
   },
   {
     id: 'val-thorens-3vallees',
-    name: 'Val Thorens \u2013 Les 3 Vall\u00e9es',
+    name: 'Les 3 Vallées (Val Thorens · Méribel · Courchevel)',
+    shortName: 'Les 3 Vallées',
     country: 'France',
     center: { lon: 6.58, lat: 45.36 },
     bbox: { minLon: 6.5, minLat: 45.19, maxLon: 6.68, maxLat: 45.44 },
@@ -106,7 +116,11 @@ export const RESORTS: Resort[] = [
   },
   {
     id: 'st-anton-arlberg',
-    name: 'St. Anton am Arlberg',
+    // Named for the whole area, not just St. Anton: the widened bbox (see below) means the graph
+    // holds Rüfikopfbahn, Kriegerhornbahn, Bergbahn Lech - Oberlech, Zürsersee, Dorfbahn Warth and
+    // Wartherhorn-Express, so someone searching for "Lech" would otherwise never find this resort.
+    name: 'Ski Arlberg (St. Anton · Lech · Zürs · Warth)',
+    shortName: 'Ski Arlberg',
     country: 'Austria',
     center: { lon: 10.2, lat: 47.16 },
     // Boundary survey (Overpass, Aug 2026). The old box (maxLat 47.21, minLon 10.13) cut
@@ -222,6 +236,88 @@ export const RESORTS: Resort[] = [
     defaultZoom: 12,
     timezone: 'Europe/Rome',
     infoUrl: 'https://www.visitmonterosa.com/en/',
+  },
+  {
+    id: 'passo-tonale',
+    name: 'Pontedilegno\u2013Tonale',
+    country: 'Italy',
+    // Boundary survey (Overpass, Aug 2026), 0.005 deg histogram over a generous
+    // 46.15-46.38 / 10.36-10.76 box. The lift-linked area occupies a single tight block:
+    // lat 46.2107-46.2916, lon 10.4759-10.5871 (148 ways, 39 passenger lifts).
+    // The western lobe (lon 10.475-10.53) is Ponte di Legno / Temu and IS part of the area -
+    // the "Ponte di Legno - Colonia Vigili" gondola chain links it to the pass, so it stays.
+    // Peio (Pejo 3000) sits north-east at lat 46.355-46.379 / lon 10.645-10.719: a separate
+    // Val di Sole ski area, 30 ways, behind a 6.5 km empty lat band. The box excludes it
+    // outright, so no excludeBboxes is needed.
+    center: { lon: 10.531, lat: 46.251 },
+    bbox: { minLon: 10.462, minLat: 46.2, maxLon: 10.6, maxLat: 46.302 },
+    defaultZoom: 12.5,
+    timezone: 'Europe/Rome',
+    infoUrl: 'https://www.pontedilegnotonale.com/en/',
+  },
+  {
+    id: 'verbier-4vallees',
+    name: 'Verbier \u2013 4 Vall\u00e9es',
+    country: 'Switzerland',
+    // The fleet's first standalone Swiss resort, and the largest purely-Swiss area measured
+    // (488 downhill ways, 82 passenger lifts; 63% of lifts carry aerialway:duration).
+    // Boundary survey (Overpass, Aug 2026) over a deliberately generous 45.95-46.35 / 7.00-7.65
+    // box, because the first attempt (46.05-46.22 / 7.15-7.45) was clipped on all four sides.
+    // The Valais is dense with separate ski areas, so every edge here is a measured empty band:
+    //   west  7.17 - empty bin; beyond it Ovronnaz / Champex / La Breya / Les Marecottes.
+    //   east  7.395-7.430 empty; beyond it Val d'Herens (Evolene, La Forclaz) then Val
+    //         d'Anniviers (Grimentz, Zinal, St-Luc). maxLon 7.40 also drops the
+    //         "Dixence-Lac des Dix" dam cable car at 7.4004, which is not a ski lift.
+    //   north 46.200-46.290 empty; beyond it Crans-Montana / Anzere. The strays just inside
+    //         (Teleski des Ombrins at 46.253, two unnamed dam funiculars) are Iserables
+    //         village terrain, not lift-linked to the 4 Vallees.
+    //   south 46.040; below it the Fionnay-Plan du Tsenau dam cable car (46.0377) and the
+    //         Lorette drag at Bourg-St-Pierre (45.96). Bruson, which IS part of the area, sits
+    //         at 46.043-46.07 and is kept.
+    // Retained extent is lat 46.0433-46.1956, lon 7.1825-7.3930 - inside the box on all sides,
+    // so nothing is clipped and no excludeBboxes is needed.
+    center: { lon: 7.28, lat: 46.12 },
+    bbox: { minLon: 7.17, minLat: 46.04, maxLon: 7.4, maxLat: 46.21 },
+    defaultZoom: 12,
+    timezone: 'Europe/Zurich',
+    infoUrl: 'https://www.verbier4vallees.ch/en/',
+  },
+  {
+    id: 'portes-du-soleil',
+    name: 'Portes du Soleil',
+    country: 'France / Switzerland',
+    // The largest area in the fleet (961 downhill ways, 180 passenger lifts) and our third
+    // cross-border circuit after Cervinia-Zermatt and Ischgl-Samnaun.
+    // Boundary survey (Overpass, Aug 2026) over a 45.98-46.48 / 6.45-7.10 box. The Chablais is
+    // continuous ski terrain, so only two edges fall out of empty bands and the other two are
+    // judgement calls recorded here:
+    //   south 46.09-46.10 empty - below it the Grand Massif / Chamonix side.
+    //   east  6.88-6.90 empty - beyond it the Vaud Alps (Villars, Leysin, Les Diablerets).
+    //   north cut at 46.315: content stops at 46.312 (Torgon, the circuit's northern tip) and
+    //         the next cluster is Thollon-les-Memises + Bernex at 46.335+, plus the Vevey
+    //         funicular - all separate, none lift-linked.
+    //   west  cut at 6.605. There is NO empty band here: Praz-de-Lys/Sommand (6.543-6.595) and
+    //         Bellevaux/Hirmentaz (6.570-6.595) run straight into Les Gets (6.640+) with no gap
+    //         a rectangle can find. 6.605 sits in the quietest part of that run and keeps every
+    //         Les Gets lift (westernmost is Chery Nord at 6.640).
+    bbox: { minLon: 6.605, minLat: 46.125, maxLon: 6.88, maxLat: 46.315 },
+    // Saint-Jean-d'Aulps / La Grande Terche (9 lifts, 59 ways) is a Portes du Soleil *member*
+    // station on the same pass, but it is not piste- or lift-linked to the circuit - it sits
+    // ~4 km west of Morzine across the Vallee d'Aulps. Same call as Monterosa's Antagnod and
+    // Brusson: draw the box around the lift-linked network, because a looser box imports
+    // terrain a skier can never reach. Morzine's westernmost lift (Nabor, 6.691) is well clear
+    // of this rectangle, so nothing linked is lost.
+    // The rectangle deliberately starts WEST of the resort bbox (6.56 vs minLon 6.605). Grande
+    // Terche is the eastern half of OSM's "Espace Roc d'Enfer" (r5757156), whose western half is
+    // Bellevaux-La Chevrerie; two of its runs (L'Aigle w383430795, Eterlou) straddle 6.605, and
+    // `dropExcludedFeatures` only drops a way when the MAJORITY of its points is inside a box, so
+    // a rectangle stopping at the bbox edge left them behind as a 4-node island. Everything the
+    // extra width covers is outside the resort bbox anyway, so it can cost us nothing.
+    excludeBboxes: [{ minLon: 6.56, minLat: 46.19, maxLon: 6.65, maxLat: 46.235 }],
+    center: { lon: 6.76, lat: 46.2 },
+    defaultZoom: 11.5,
+    timezone: 'Europe/Paris',
+    infoUrl: 'https://www.portesdusoleil.com/en/',
   },
 ];
 
