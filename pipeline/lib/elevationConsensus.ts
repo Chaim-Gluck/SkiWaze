@@ -52,8 +52,64 @@ const RESEAT_MAX_M = 20;
  * a mis-seated station, and a station is exactly where a whole sector's runs converge.
  */
 const SINK_MIN = 8;
-/** ...and only when every neighbour agrees with the second DEM this closely (m). */
+/** ...and only when the ground around it agrees with the second DEM this closely (m). */
 const SINK_NBR_AGREE = 5;
+/**
+ * One neighbour a little over SINK_NBR_AGREE does not make a disagreement systematic. Where the
+ * median neighbour still agrees, a node may pass on being a clear OUTLIER instead: its own
+ * disagreement must be at least this multiple of the worst neighbour's.
+ */
+const SINK_OUTLIER_RATIO = 2;
+/** A link rising more than this (m) under the current field is not counted as a way out. */
+const SINK_OUT_CLIMB = 2;
+
+/**
+ * A run's COLOUR is a published fact from the resort, and a colour has a physical ceiling — a blue
+ * is not a 75% wall. So a piste edge measured far beyond its colour's ceiling is evidence of a bad
+ * elevation at one of its ends, arrived at WITHOUT consulting a second DEM at all. That independence
+ * is the whole point: it gives this pass a trigger it did not have.
+ *
+ * The two categories above both fire on a *reversal* (an edge, or a sink, whose flow is wrong). A
+ * contiguous patch of nodes that is uniformly too low stays monotonic — every arrow still points
+ * downhill — so it is structurally invisible to them, and the pass correctly declines. Portes du
+ * Soleil's Nyon/Chamossière pocket is the worked example: five nodes read 19–76 m below the true
+ * surface, turning a near-flat blue traverse ("Bleue d'Arare") into a 78% gully. Nothing reversed,
+ * so nothing fired, while `check:audit` reported the residue as two unrelated pothole sinks.
+ *
+ * Ceilings are deliberately generous — well above the steepest real-world pitch of each colour — so
+ * this reports faults, not steep-but-legal terrain.
+ */
+const COLOUR_GRADE_CEILING: Record<string, number> = {
+  green: 0.35,
+  blue: 0.45,
+  red: 0.65,
+  black: 1.0,
+};
+/**
+ * Rank by EXCESS DROP (metres of implied error), never by gradient. A 21 m edge at 48% implies
+ * about a metre of error and is noise; a 67 m edge at 75% implies 20 m and is a fault. Measured
+ * fleet-wide the two populations separate cleanly at ~5 m: 8 edges across 4 resorts sit above it,
+ * and everything below is ≤5.7 m and short.
+ */
+const STEEP_EXCESS_M = 5;
+/** Below this length a metre of DEM noise is itself a huge fake gradient, so the test is meaningless. */
+const STEEP_MIN_LEN = 20;
+/** The second source must actually disagree at one end, or there is nothing to adopt. */
+const STEEP_MIN_M = 8;
+
+/**
+ * How far a node must sit from the second DEM to count as part of the same fault. A colour-ceiling
+ * complaint fires at the EDGE where a sunken patch meets sound ground, so the seed is always at the
+ * patch's rim — repairing only the seed lifts the rim and opens a step into the untouched interior.
+ */
+const PATCH_DISAGREE_M = 8;
+
+/**
+ * A connector the builder emitted in BOTH directions is, by construction, a link it judged traversable
+ * on the flat (`flatGradeMax`, 6%). If a proposed correction turns one into a real pitch, the
+ * correction is wrong — not the connector. 2x slack, because the label was assigned from the old field.
+ */
+const PATCH_FLAT_CEILING = 0.12;
 
 export interface EleCorrection {
   node: string;
@@ -213,7 +269,7 @@ export function applyCorrectionsGuarded(
 export async function proposeElevationCorrections(
   graph: ResortGraph,
   ignoreReversals: { from: string; to: string }[] = [],
-): Promise<{ corrections: EleCorrection[]; sampled: number; flips: number }> {
+): Promise<{ corrections: EleCorrection[]; sampled: number; flips: number; steep: number }> {
   const ignored = new Set(ignoreReversals.map((r) => pairKey(r.from, r.to)));
 
   // --- 1. Second opinion for every node ---------------------------------------------------------
@@ -249,40 +305,197 @@ export async function proposeElevationCorrections(
   // --- 2b. Ski sinks the second source says are simply seated too low -----------------------------
   // See SINK_MIN. Skiable = piste/connector; lift edges are ignored, because "you can only leave by
   // lift" is precisely the symptom, not a refutation.
-  const skiIn = new Map<string, number>();
-  const skiOut = new Map<string, number>();
+  //
+  // App-invented PLUMBING does not count as a way out. A polygon skeleton arm is exempt from the
+  // flat-traverse grade cap by design (see buildGraph: an arm may be emitted in both directions on a
+  // real pitch, so a gateway does not become a one-way valve), which means a single arm reaching a
+  // node hands it a fake out-edge and hides it from this test. Worked example, found by a user's eye
+  // when every detector passed: Paradiski n1000000001983 sits 16 m below the second DEM with three
+  // real runs arriving and nothing leaving but arm e4897 — a 20% "flat traverse". That one fake
+  // out-edge is the only reason the node was not reported, and it pointed Kamikaze up the hill.
+  const plumbing = (e: { skeletonArm?: boolean; spineDuplicate?: boolean }): boolean =>
+    e.skeletonArm === true || e.spineDuplicate === true;
   const skiNbrs = new Map<string, Set<string>>();
-  const note = (m: Map<string, number>, k: string): void => m.set(k, (m.get(k) ?? 0) + 1);
   for (const e of graph.edges) {
     if (e.kind === 'lift' || e.area) continue;
-    note(skiOut, e.from);
-    note(skiIn, e.to);
     for (const [a, b] of [
       [e.from, e.to],
       [e.to, e.from],
     ] as const)
       (skiNbrs.get(a) ?? skiNbrs.set(a, new Set()).get(a)!).add(b);
   }
+
+  // The detector must judge the field as it will STAND, not as it arrived: category 1 is about to
+  // move nodes, and moving one end of a run re-orients it. Paradiski n1000000001983 is the worked
+  // example — while its downhill neighbour n669482305 still read 15 m low, the node had two
+  // out-edges and was no sink; the instant that neighbour was repaired it became one. So the field
+  // is read through `cur`, and a piste's direction is IMPLIED by `cur` rather than taken from the
+  // stored orientation, which build.ts has not yet redone.
   const sunk = new Set<string>();
-  for (const n of graph.nodes) {
-    const self = S.get(n.id);
-    if (!self || flipped.has(n.id)) continue;
-    if ((skiOut.get(n.id) ?? 0) > 0 || (skiIn.get(n.id) ?? 0) < 2) continue; // not a sink
-    // Both readings must put us clearly too low, and no lower than the ground around us.
-    if (self.terr - self.our < SINK_MIN || self.smooth - self.our < SINK_MIN) continue;
-    const around = [...(skiNbrs.get(n.id) ?? [])]
-      .map((id) => S.get(id))
-      .filter((x): x is NonNullable<typeof x> => x != null);
-    if (around.length < 2) continue;
-    // The isolation test: if the neighbours disagree with the second DEM too, this is a systematic
-    // offset between two datasets over the whole area, not one bad point we may safely replace.
-    if (!around.every((x) => Math.abs(x.terr - x.our) <= SINK_NBR_AGREE)) continue;
-    sunk.add(n.id);
+  const cur = (id: string): number | undefined => {
+    const s = S.get(id);
+    if (!s) return undefined;
+    return flipped.has(id) || sunk.has(id) ? s.terr : s.our;
+  };
+  const findSinks = (): boolean => {
+    const skiIn = new Map<string, number>();
+    const skiOut = new Map<string, number>();
+    const note = (m: Map<string, number>, k: string): void => m.set(k, (m.get(k) ?? 0) + 1);
+    for (const e of graph.edges) {
+      if (e.kind === 'lift' || e.area || plumbing(e)) continue;
+      let [from, to] = [e.from, e.to];
+      const a = cur(from);
+      const b = cur(to);
+      // A piste's direction is decided by its endpoints, so read it off the field rather than the
+      // stored orientation, which build.ts has not redone yet.
+      if (e.kind === 'piste' && a !== undefined && b !== undefined && b > a) [from, to] = [to, from];
+      // A link that CLIMBS is not a way out. You cannot ski up it — cost.ts charges 12 s/m to push —
+      // so counting it hides exactly the node this test exists to find. This also covers polygon
+      // skeleton arms, which reach here before `skeletonArm` is stamped on them and are emitted in
+      // both directions regardless of grade: Paradiski's n1000000001983 was masked by one climbing
+      // 8 m, and the sunken node then pointed Kamikaze up the hill.
+      const rise = a !== undefined && b !== undefined ? cur(to)! - cur(from)! : 0;
+      if (rise > SINK_OUT_CLIMB) continue;
+      note(skiOut, from);
+      note(skiIn, to);
+    }
+    let found = false;
+    for (const n of graph.nodes) {
+      const self = S.get(n.id);
+      if (!self || flipped.has(n.id) || sunk.has(n.id)) continue;
+      if ((skiOut.get(n.id) ?? 0) > 0 || (skiIn.get(n.id) ?? 0) < 2) continue; // not a sink
+      // Both readings must put us clearly too low, and no lower than the ground around us.
+      if (self.terr - self.our < SINK_MIN || self.smooth - self.our < SINK_MIN) continue;
+      const around = [...(skiNbrs.get(n.id) ?? [])]
+        .map((id) => {
+          const s = S.get(id);
+          return s ? Math.abs(s.terr - (cur(id) ?? s.our)) : null;
+        })
+        .filter((x): x is number => x != null)
+        .sort((p, q) => p - q);
+      if (around.length < 2) continue;
+      // The isolation test: if the ground around us disagrees with the second DEM too, this is a
+      // systematic offset between two datasets over the whole area, not one bad point we may safely
+      // replace. A single neighbour a little over the line does not make it systematic, though — so
+      // the median must agree AND we must be a clear outlier against the worst of them.
+      const median = around[Math.floor(around.length / 2)];
+      const worst = around[around.length - 1];
+      if (median > SINK_NBR_AGREE) continue;
+      if (worst > SINK_NBR_AGREE && self.terr - self.our < SINK_OUTLIER_RATIO * worst) continue;
+      sunk.add(n.id);
+      found = true;
+    }
+    return found;
+  };
+  // Each repair can expose the next one downstream, so keep going until it settles. Bounded, because
+  // a bound is cheaper than proving termination on data we do not control.
+  for (let round = 0; round < 4 && findSinks(); round++);
+
+  // --- 2c. Piste edges far too steep for their published colour ----------------------------------
+  // See COLOUR_GRADE_CEILING. Unlike 2 and 2b this does not need the flow to be wrong, only the
+  // shape to be impossible — which is what makes it catch a uniformly-sunken patch.
+  const steep = new Set<string>();
+  for (const e of graph.edges) {
+    if (e.kind !== 'piste' || e.area) continue;
+    if (ignored.has(pairKey(e.from, e.to))) continue;
+    const ceil = COLOUR_GRADE_CEILING[e.color ?? ''];
+    if (ceil === undefined) continue; // an unrated run has no published ceiling to test against
+    if (!e.lengthM || e.lengthM < STEEP_MIN_LEN) continue;
+    const A = S.get(e.from);
+    const B = S.get(e.to);
+    if (!A || !B) continue;
+    const excess = (Math.abs(A.our - B.our) / e.lengthM - ceil) * e.lengthM;
+    if (excess < STEEP_EXCESS_M) continue;
+    // Self-validating: only adopt where adopting actually RESOLVES the complaint. If the second
+    // source thinks the pitch is impossible too, it is not the arbiter here and we leave it for a
+    // human — the same "decline rather than guess" rule the other two categories follow.
+    if (Math.abs(A.terr - B.terr) / e.lengthM > ceil) continue;
+    if (Math.abs(A.smooth - B.smooth) / e.lengthM > ceil) continue;
+    if (Math.abs(A.terr - A.our) < STEEP_MIN_M && Math.abs(B.terr - B.our) < STEEP_MIN_M) continue;
+    steep.add(e.from);
+    steep.add(e.to);
   }
 
-  const suspect = new Set([...flipped, ...sunk]);
-  if (!suspect.size) return { corrections: [], sampled: S.size, flips: 0 };
+  // --- 2d. Atomic patches: repair a whole fault or none of it ------------------------------------
+  // Half a repair is worse than none. A colour-ceiling complaint fires where a sunken patch MEETS
+  // sound ground, so correcting only the flagged nodes raises the rim and drops a step into the
+  // interior. Worked example (Avoriaz, portes-du-soleil): 15 nodes read 8-64 m low; repairing the 5
+  // that broke a blue's ceiling left the lift top n4578135789 20 m below the runs around it, so every
+  // ski arrow pointed INTO it. So: grow each seed to the connected set that disagrees with the second
+  // DEM, then price EVERY touching edge under the fully-corrected field. If any of them comes out
+  // implausible, the second DEM is not a competent arbiter over this patch and we decline all of it.
+  const patchOf = (seeds: Set<string>): Set<string>[] => {
+    const adj = new Map<string, string[]>();
+    for (const e of graph.edges) {
+      if (e.area) continue;
+      (adj.get(e.from) ?? adj.set(e.from, []).get(e.from)!).push(e.to);
+      (adj.get(e.to) ?? adj.set(e.to, []).get(e.to)!).push(e.from);
+    }
+    const seen = new Set<string>();
+    const out: Set<string>[] = [];
+    for (const seed of seeds) {
+      if (seen.has(seed)) continue;
+      const patch = new Set<string>([seed]);
+      const queue = [seed];
+      seen.add(seed);
+      while (queue.length) {
+        for (const nb of adj.get(queue.pop()!) ?? []) {
+          if (patch.has(nb)) continue;
+          const s = S.get(nb);
+          if (!s || Math.abs(s.terr - s.our) < PATCH_DISAGREE_M) continue;
+          patch.add(nb);
+          seen.add(nb);
+          queue.push(nb);
+        }
+      }
+      out.push(patch);
+    }
+    return out;
+  };
 
+  const twoWay = new Set<string>();
+  const seenDir = new Set<string>();
+  for (const e of graph.edges) {
+    if (e.kind !== 'connector' || plumbing(e)) continue;
+    if (seenDir.has(`${e.to}>${e.from}`)) twoWay.add(pairKey(e.from, e.to));
+    seenDir.add(`${e.from}>${e.to}`);
+  }
+
+  const rejected = new Set<string>();
+  for (const patch of patchOf(steep)) {
+    const after = (id: string): number | undefined =>
+      patch.has(id) ? S.get(id)?.terr : S.get(id)?.our;
+    let ok = true;
+    for (const e of graph.edges) {
+      if (e.area || !e.lengthM) continue;
+      if (!patch.has(e.from) && !patch.has(e.to)) continue;
+      const a = after(e.from);
+      const b = after(e.to);
+      if (a === undefined || b === undefined) continue;
+      const grade = Math.abs(a - b) / e.lengthM;
+      if (e.kind === 'piste') {
+        const ceil = COLOUR_GRADE_CEILING[e.color ?? ''];
+        if (ceil !== undefined && e.lengthM >= STEEP_MIN_LEN && (grade - ceil) * e.lengthM >= STEEP_EXCESS_M)
+          ok = false;
+      } else if (e.kind === 'connector' && twoWay.has(pairKey(e.from, e.to))) {
+        // Skeleton arms are EXEMPT: buildGraph emits an arm in both directions on a real pitch on
+        // purpose, so "two-way" proves nothing about its grade. Only an ordinary two-way connector
+        // carries the flat-traverse promise this test relies on.
+        if (!plumbing(e) && grade > PATCH_FLAT_CEILING) ok = false;
+      }
+      if (!ok) break;
+    }
+    if (ok) for (const id of patch) steep.add(id);
+    else for (const id of patch) rejected.add(id);
+  }
+  for (const id of rejected) steep.delete(id);
+  if (rejected.size)
+    console.log(
+      `  elevation consensus: declined ${rejected.size} node(s) — the second DEM cannot repair that patch consistently`,
+    );
+
+  const suspect = new Set([...flipped, ...sunk, ...steep]);
+  if (!suspect.size) return { corrections: [], sampled: S.size, flips: 0, steep: 0 };
   // --- 3. Adopt the second opinion at those nodes -------------------------------------------------
   const adopted = new Map<string, number>();
   for (const id of suspect) adopted.set(id, S.get(id)!.terr);
@@ -341,7 +554,11 @@ export async function proposeElevationCorrections(
     const value = adopted.get(id)!;
     const our = S.get(id)?.our ?? value;
     if (Math.abs(value - our) < MIN_DROP) continue; // nothing to change
-    const kind = sunk.has(id) ? 'ski sink, isolated low outlier' : 'second DEM';
+    const kind = sunk.has(id)
+      ? 'ski sink, isolated low outlier'
+      : steep.has(id) && !flipped.has(id)
+        ? 'impossible gradient for the run colour'
+        : 'second DEM';
     corrections.push({
       node: id,
       ele: Math.round(value),
@@ -351,5 +568,5 @@ export async function proposeElevationCorrections(
     });
   }
 
-  return { corrections, sampled: S.size, flips: flipped.size + sunk.size };
+  return { corrections, sampled: S.size, flips: flipped.size + sunk.size, steep: steep.size };
 }

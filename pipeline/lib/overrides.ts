@@ -89,6 +89,21 @@ export interface Overrides {
    * it, so list a few for resilience.
    */
   acceptedBasins?: { nodes: string[]; why: string }[];
+  /**
+   * Individual trapped / orphan NODES a human checked on the map and confirmed are correct — most
+   * often a run that legitimately ends at the houses it serves, so you ski in and walk from there.
+   * `acceptedBasins` cannot express these: a basin is a *group* that can ski among itself but not
+   * back to the main body, whereas these are single dead-end nodes counted by `check:trapped`'s
+   * separate `trapped` / `orphan` tallies, which no override could quiet.
+   *
+   * Like `acceptedBasins` and `ignoreReversals` this NEVER touches the graph — the terrain stays
+   * routable, it is only removed from the audit's counts (and listed separately), so `check:resort`
+   * stops reporting REVIEW for a resort whose dead ends are all understood.
+   *
+   * Do NOT use this to silence a node that ought to connect. If a run stops short of a lift base
+   * that is the pipeline's problem to solve; sign-off is for terrain that really does end there.
+   */
+  acceptedDeadEnds?: { nodes: string[]; why: string }[];
 }
 
 export function loadOverrides(resortId: string, dir: string): Overrides | null {
@@ -212,6 +227,39 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
     const prior = edges;
     // Reverse partners created when a correction levels out a one-way link (see below).
     const levelled: GraphEdge[] = [];
+    const havePair = new Set(prior.map((x) => `${x.from}>${x.to}`));
+    // Mirror of buildGraph's near-flat cat-track rule, re-applied after a correction.
+    //
+    // buildGraph gives every near-flat piste a reverse traverse, but it runs on the RAW provider
+    // elevations — so a run across a shelf the DEM read as sloping is built one-way, and pinning its
+    // ends level afterwards fixed the numbers while leaving the topology stuck. At the Avoriaz
+    // Stade/Lac-Intrets/Tour lift hub that left five 0.0 m / 0.0 % runs (e1625, e1628, e1629, e2282,
+    // e4115) one-way while the connectors beside them, on the very same ground, were two-way: you
+    // could ski between two lift bases but not back. Same constants as buildGraph deliberately —
+    // this is that rule, not a second one.
+    const addFlatReverse = (e: GraphEdge, geom: GraphEdge['geometry'], drop: number) => {
+      const grade = e.lengthM > 0 ? Math.abs(drop) / e.lengthM : 0;
+      if (grade > DEFAULT_GRAPH_CONSTANTS.flatGradeMax) return;
+      if (Math.abs(drop) > DEFAULT_GRAPH_CONSTANTS.maxTraverseClimb) return;
+      if (havePair.has(`${e.to}>${e.from}`)) return;
+      havePair.add(`${e.to}>${e.from}`);
+      const reverse = [...geom].reverse();
+      const { skeletonArm: _a, spineDuplicate: _d, ...rest } = e as GraphEdge & {
+        skeletonArm?: boolean;
+        spineDuplicate?: boolean;
+      };
+      levelled.push({
+        ...rest,
+        id: `${e.id}rev`,
+        from: e.to,
+        to: e.from,
+        kind: 'connector',
+        connectorKind: 'flat_traverse',
+        geometry: reverse,
+        dropM: 0,
+        gradient: 0,
+      });
+    };
     edges = edges
       .map((e): GraphEdge | null => {
         if (!corr.has(e.from) && !corr.has(e.to)) return e;
@@ -266,8 +314,11 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
         }
         // A piste (or skiable_down connector) now pointing uphill is flipped to descend.
         if (drop > 0 && (e.kind === 'piste' || e.connectorKind === 'skiable_down')) {
-          return { ...e, from: e.to, to: e.from, geometry: [...geom].reverse(), dropM: -Math.abs(drop) };
+          const flipped: GraphEdge = { ...e, from: e.to, to: e.from, geometry: [...geom].reverse(), dropM: -Math.abs(drop) };
+          if (flipped.kind === 'piste') addFlatReverse(flipped, flipped.geometry, -Math.abs(drop));
+          return flipped;
         }
+        if (e.kind === 'piste') addFlatReverse(e, geom, drop);
         return { ...e, geometry: geom, dropM: -Math.abs(drop) };
       })
       .filter((e): e is GraphEdge => e !== null)

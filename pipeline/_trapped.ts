@@ -14,10 +14,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ResortGraph } from '../src/types/domain';
+import { loadOverrides } from './lib/overrides';
 import { basinLabel, findTrappedBasins } from './lib/trappedBasins';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
+const OVERRIDES_DIR = path.join(ROOT, 'pipeline', 'overrides');
 
 function loadGraph(id: string): ResortGraph {
   const p = path.join(ROOT, 'public', 'resorts', id, 'graph.json');
@@ -63,8 +65,23 @@ function main(): void {
   const canReachLift = bfs(rev, liftStations); // can get FROM node TO a lift
   const reachableFromLift = bfs(fwd, liftStations); // can get FROM a lift TO node
 
-  const trapped = graph.nodes.filter((n) => !canReachLift.has(n.id));
-  const orphan = graph.nodes.filter((n) => !reachableFromLift.has(n.id));
+  const ov = loadOverrides(id, OVERRIDES_DIR);
+  // Dead ends a human signed off. Same contract as `acceptedBasins`: the graph is untouched, the
+  // nodes are only taken out of the counts and reported separately, so a resort whose dead ends
+  // are all understood can reach `ok` instead of reporting REVIEW forever.
+  const acceptedNodes = new Map<string, string>();
+  for (const a of ov?.acceptedDeadEnds ?? []) {
+    for (const n of a.nodes) acceptedNodes.set(n, a.why);
+  }
+  const accepted = (n: { id: string }) => acceptedNodes.has(n.id);
+
+  const trappedAll = graph.nodes.filter((n) => !canReachLift.has(n.id));
+  const orphanAll = graph.nodes.filter((n) => !reachableFromLift.has(n.id));
+  const trapped = trappedAll.filter((n) => !accepted(n));
+  const orphan = orphanAll.filter((n) => !accepted(n));
+  const acceptedSeen = new Set(
+    [...trappedAll, ...orphanAll].filter(accepted).map((n) => n.id),
+  );
 
   const label = (nid: string): string => {
     const p = graph.points.find((x) => x.nodeId === nid);
@@ -82,7 +99,11 @@ function main(): void {
   if (orphan.length > 30) console.log(`  â€¦ and ${orphan.length - 30} more`);
 
   // Trapped basins: terrain you can ski into that can never get back to the main mountain.
-  const report = findTrappedBasins(graph, id);
+  // `acceptedBasins` MUST be passed here. Without it this check re-litigates every basin a human
+  // has already signed off, and because `check:resort` reads the summary line below it kept
+  // reporting REVIEW for a resort whose basins were all resolved — the exact noise the sign-off
+  // mechanism exists to remove (see lib/trappedBasins.ts).
+  const report = findTrappedBasins(graph, id, ov?.acceptedBasins);
   console.log(
     `\ntrapped basins (ski in, no way back to the main body): ${report.significant.length}` +
       ` â€” ${report.significantNodes} stranded node(s)` +
@@ -102,6 +123,40 @@ function main(): void {
   });
   if (report.significant.length > 15)
     console.log(`  â€¦ and ${report.significant.length - 15} more`);
+
+  if (report.accepted.length) {
+    console.log(
+      `\naccepted (signed off in overrides/${id}.json, not counted above): ${report.accepted.length}`,
+    );
+    report.accepted.forEach((b) => {
+      console.log(`  - ${String(b.nodes.length).padStart(4)} node(s) â€” ${basinLabel(b)}`);
+    });
+  }
+  for (const s of report.staleAccepted) {
+    console.log(
+      `\nWARN acceptedBasins entry matched no basin (${s.nodes.join(', ')}) â€” ` +
+        'either it is fixed now, or a refresh retired those ids.',
+    );
+  }
+
+  if (acceptedSeen.size) {
+    console.log(
+      `\naccepted dead ends (signed off in overrides/${id}.json, not counted above): ${acceptedSeen.size}`,
+    );
+    for (const nid of acceptedSeen) {
+      console.log(`  - ${label(nid)} â€” ${acceptedNodes.get(nid)}`);
+    }
+  }
+  // A sign-off that no longer matches anything is worse than none: it silently stops covering the
+  // thing it was written for. Same warning `acceptedBasins` gets, for the same reason.
+  for (const [nid, why] of acceptedNodes) {
+    if (acceptedSeen.has(nid)) continue;
+    const exists = nodeById.has(nid);
+    console.log(
+      `\nWARN acceptedDeadEnds node ${nid} is ${exists ? 'no longer trapped or orphan' : 'not in the graph'}` +
+        ` â€” ${exists ? 'it may be fixed now' : 'a refresh probably retired the id'} (${why})`,
+    );
+  }
 
   console.log(
     `\nsummary: trapped=${trapped.length} orphan=${orphan.length}` +

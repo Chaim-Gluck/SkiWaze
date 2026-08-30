@@ -1,4 +1,4 @@
-﻿// SkiWaze data pipeline orchestrator.
+// SkiWaze data pipeline orchestrator.
 // Usage: tsx pipeline/build.ts <resortId|all>
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,11 +17,13 @@ import { applyOverrides, loadOverrides } from './lib/overrides';
 import { applyCorrectionsGuarded, proposeElevationCorrections } from './lib/elevationConsensus';
 import { pruneRedundantArms } from './lib/pruneArms';
 import { dropOutOfAreaSpill } from './lib/bboxSpill';
+import { dropInertFragments } from './lib/inertFragments';
+import { linkLiftBaseSkiIns } from './lib/liftSkiIn';
 import { weldCoincidentNodes } from './lib/weldCoincident';
 import { markSpineDuplicates } from './lib/spineDuplicates';
 import { printReport, reachableFromLiftStations, validateGraph } from './lib/validate';
 import { emitResort } from './lib/emit';
-import { auditGraph, auditSummary } from './_phantoms';
+import { auditGraph, auditSummary, acceptedDeadEndNodes } from './_phantoms';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -120,9 +122,15 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
   if (!process.argv.includes('--no-elevation-consensus')) {
     const pinned = new Set((ov?.setNodeElevation ?? []).map((e) => e.node));
     const proposed = await proposeElevationCorrections(graph, ov?.ignoreReversals ?? []);
-    const { sampled, flips } = proposed;
+    const { sampled, flips, steep } = proposed;
     const corrections = proposed.corrections.filter((c) => !pinned.has(c.node));
     if (corrections.length) {
+      // Which way each piste points BEFORE the repair. A correction can legitimately reverse a run
+      // (applyOverrides re-orients an edge that ends up climbing), and that changes which way a
+      // skier is routed — so it must be announced, not buried in a node-height list.
+      const orientBefore = new Map(
+        graph.edges.filter((e) => e.kind === 'piste' && !e.area).map((e) => [e.id, e.from]),
+      );
       const guarded = applyCorrectionsGuarded(
         graph,
         corrections,
@@ -132,9 +140,20 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
       graph = guarded.graph;
       if (guarded.kept.length) {
         console.log(
-          `  elevation consensus: repaired ${guarded.kept.length} node(s) of ${flips} suspect(s) (${sampled} sampled)`,
+          `  elevation consensus: repaired ${guarded.kept.length} node(s) of ${flips + steep} suspect(s)` +
+            `${steep ? `, ${steep} from an impossible gradient` : ''} (${sampled} sampled)`,
         );
         for (const c of guarded.kept) console.log(`    ${c.node} -> ${c.ele}m  (${c.why})`);
+        const reversed = graph.edges.filter(
+          (e) => e.kind === 'piste' && !e.area && orientBefore.has(e.id) && orientBefore.get(e.id) !== e.from,
+        );
+        if (reversed.length) {
+          console.log(`  elevation consensus: ${reversed.length} piste edge(s) now ski the OTHER WAY — review on the map:`);
+          for (const e of reversed)
+            console.log(
+              `    ${e.id} ${e.pisteName ?? '(unnamed)'} ${e.color ?? ''} ${Math.round(e.lengthM)}m  now ${e.from} -> ${e.to}  way=${e.srcWayId ?? ''}`,
+            );
+        }
       }
       if (guarded.reverted.length) {
         console.warn(
@@ -142,6 +161,21 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
             guarded.reverted.map((c) => c.node).join(', '),
         );
       }
+    }
+  }
+
+  // A lift base you can ski away from but never ski to. This must run AFTER the overrides and the
+  // elevation consensus, because both re-derive edge direction — see liftSkiIn.ts for why its twin
+  // (the lift-TOP ski-out) can live inside buildResortGraph and this one cannot.
+  {
+    const skiIn = linkLiftBaseSkiIns(graph, DEFAULT_GRAPH_CONSTANTS);
+    if (skiIn.linked.length) {
+      graph = skiIn.graph;
+      console.log(`  ski-in: linked ${skiIn.linked.length} lift base(s) that had no way in:`);
+      for (const l of skiIn.linked)
+        console.log(
+          `    ${l.liftName ?? '(unnamed lift)'} base ${l.base} <- ${l.onto} (${Math.round(l.distM)} m, ${l.twoWay ? 'two-way' : 'one-way down'})`,
+        );
     }
   }
 
@@ -178,12 +212,20 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
     console.log(`  dropped out-of-area fragment: ${d.nodes} node(s) — ${d.label}`);
   }
 
+  // After spill, because a fragment can be BOTH another resort's and inert, and the out-of-area
+  // reason is the more informative one to print. See inertFragments.ts.
+  const inert = dropInertFragments(graph);
+  graph = inert.graph;
+  for (const d of inert.dropped) {
+    console.log(`  dropped inert fragment: ${d.nodes} node(s) / ${d.lengthM} m — ${d.label}`);
+  }
+
   const report = validateGraph(graph);
   printReport(report);
 
   // Surface likely data issues (false-elevation reversals / non-skiable long connections)
   // so they're caught when adding or refreshing a resort. Review with: npm run check:audit <id>
-  const summary = auditSummary(auditGraph(graph));
+  const summary = auditSummary(auditGraph(graph, acceptedDeadEndNodes(resort.id)));
   if (summary) console.warn(`  audit: ${summary} to review â€” run: npm run check:audit ${resort.id}`);
 
   const areaPolys = pistes
@@ -204,7 +246,13 @@ function writeIndex(built: Resort[]): void {
   fs.writeFileSync(
     path.join(dir, 'index.json'),
     JSON.stringify(
-      built.map((r) => ({ id: r.id, name: r.name, country: r.country, center: r.center })),
+      built.map((r) => ({
+        id: r.id,
+        name: r.name,
+        ...(r.shortName ? { shortName: r.shortName } : {}),
+        country: r.country,
+        center: r.center,
+      })),
       null,
       2,
     ),
