@@ -89,6 +89,31 @@ function checkResort(id: string): { stale: number; verify: number } {
     const minDiff = Math.min(...nbrs.map((e) => Math.abs(e - s.ele)));
     if (minDiff > NEIGHBOUR_MAX) issues.push({ text: `  setNodeElevation ${s.node}=${s.ele}${nm(s.node)}: ${Math.round(minDiff)} m from its nearest neighbour elevation (>${NEIGHBOUR_MAX}) — WRONG NODE?`, stale: true });
   }
+  // Two entries for the same node: the LAST one silently wins (applyOverrides builds a Map), so a
+  // new reading added at the top of the file does nothing and the build looks like it ignored you.
+  // Cost us a full rebuild cycle at the Prodains top, where a rationale-free `n10722198686: 1765`
+  // lower in the file beat a freshly-written 1760. Conflicting values are an error; an exact
+  // duplicate is only clutter.
+  {
+    const byNode = new Map<string, number[]>();
+    for (const s of ov.setNodeElevation ?? []) {
+      if (!byNode.has(s.node)) byNode.set(s.node, []);
+      byNode.get(s.node)!.push(s.ele);
+    }
+    for (const [node, eles] of byNode) {
+      if (eles.length < 2) continue;
+      const uniq = [...new Set(eles)];
+      issues.push({
+        text:
+          `  setNodeElevation ${node}${nm(node)}: ${eles.length} entries (${eles.join(', ')} m) — ` +
+          (uniq.length > 1
+            ? `CONFLICTING, the LAST (${eles[eles.length - 1]} m) wins and the others are dead`
+            : 'exact duplicate, remove the extras'),
+        stale: uniq.length > 1,
+      });
+    }
+  }
+
   for (const grp of ov.mergeNodes ?? []) {
     const pts = grp.map((x) => nb.get(x)).filter(Boolean);
     if (pts.length < 2) continue;

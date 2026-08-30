@@ -38,11 +38,13 @@ export interface NormPiste {
    * `patrolled=no`, `piste:grooming=backcountry` and `note="Off-piste. Under your responsability."`,
    * i.e. three explicit warnings we ignored.
    *
-   * The trigger is **difficulty only**. `piste:grooming=backcountry` on its own is how mappers tag a
+   * The trigger is **difficulty**, plus one conjunction. `piste:grooming=backcountry` on its own is
+   * how mappers tag a
    * signposted *ski route* (an itinéraire — marked and part of the advertised network, just ungroomed
    * and unpatrolled); it covers 169 fleet ways and 17% of St. Anton, whose Skirouten are real terrain
    * the user has already reviewed and kept. Freeride/extreme is 205 ways (2.5%) and means "this is
-   * not a piste". Measured with offpiste-census.
+   * not a piste". Measured with offpiste-census. The single exception is `expert` **together with**
+   * `backcountry` — see `isExpertBackcountry`.
    */
   offPiste?: boolean;
   points: NormPoint[];
@@ -151,16 +153,41 @@ function toPoints(w: RawWay): NormPoint[] {
 
 const OFF_PISTE_DIFFICULTIES = new Set(['freeride', 'extreme']);
 
+/**
+ * `expert` is the one difficulty that means different things on its own and in company.
+ * Alone it is just "the hardest graded run here" — a legitimate marked black. Combined with
+ * `piste:grooming=backcountry` it is how mappers record high-alpine terrain: 29 ways fleet-wide
+ * (tignes 12, paradiski 10, les-deux-alpes 4, then singles) against 182 backcountry-without-expert,
+ * which are the signposted Skirouten/itinéraires the comment above says must never trigger.
+ * Found via Verbier's Rosablanche, where a single ski-mountaineering glacier descent is mapped as
+ * two ways: the lower half `extreme` (correctly hidden) and the upper half off the summit
+ * `expert` + `backcountry`, which we drew and routed as an ordinary black piste.
+ */
+function isExpertBackcountry(tags: Record<string, string>): boolean {
+  return tags['piste:difficulty'] === 'expert' && tags['piste:grooming'] === 'backcountry';
+}
+
 export function normalizePiste(w: RawWay): NormPiste {
   const difficulty = w.tags['piste:difficulty'];
+  const offPiste =
+    difficulty === undefined
+      ? undefined
+      : OFF_PISTE_DIFFICULTIES.has(difficulty) || isExpertBackcountry(w.tags);
   return {
     wayId: w.id,
     color: colorFor(w.tags),
-    name: w.tags['name'] || w.tags['piste:name'],
+    // `piste:name` wins over `name`, exactly as `piste:ref` wins over `ref` below.
+    // Many runs are mapped on top of a road or track, which carries the ROAD's name:
+    // the Avoriaz->Les Lindarets blue is `name=Route des Lindarets` + `ref=D 228` but
+    // `piste:name=Parchets`, so we were labelling a piste with a departmental road
+    // number and it read as a service road rather than a run. Fleet-wide 143 of the
+    // 256 downhill ways carrying both tags disagree (Zermatt "Moosstrasse" vs "Moos",
+    // Alpe d'Huez "Lac Blanc" vs "Retour 1800"). The skiing name is the right one.
+    name: w.tags['piste:name'] || w.tags['name'],
     ref: w.tags['piste:ref'] || w.tags['ref'],
     area: isPisteArea(w),
     levelKey: levelKeyFor(w.tags),
-    offPiste: difficulty ? OFF_PISTE_DIFFICULTIES.has(difficulty) : undefined,
+    offPiste,
     points: toPoints(w),
   };
 }
