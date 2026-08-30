@@ -17,14 +17,14 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.mayrhofner-bergbahnen.com/en/"
   },
-  "generatedAt": "2026-08-28T03:07:35.712Z",
+  "generatedAt": "2026-08-30T19:51:43.088Z",
   "stats": {
     "resortId": "mayrhofen",
     "nodeCount": 524,
-    "edgeCount": 1370,
+    "edgeCount": 1373,
     "pisteEdges": 512,
     "liftEdges": 77,
-    "connectorEdges": 781,
+    "connectorEdges": 784,
     "meaningfulPoints": 193,
     "reachableFromLifts": 523,
     "unreachableNodes": 1,

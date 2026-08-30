@@ -1,7 +1,8 @@
 {
   "resort": {
     "id": "val-thorens-3vallees",
-    "name": "Val Thorens – Les 3 Vallées",
+    "name": "Les 3 Vallées (Val Thorens · Méribel · Courchevel)",
+    "shortName": "Les 3 Vallées",
     "country": "France",
     "center": {
       "lon": 6.58,
@@ -17,17 +18,17 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.valthorens.com/en/"
   },
-  "generatedAt": "2026-08-28T03:05:15.577Z",
+  "generatedAt": "2026-08-30T19:49:24.703Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
-    "nodeCount": 4832,
-    "edgeCount": 15133,
+    "nodeCount": 4831,
+    "edgeCount": 15131,
     "pisteEdges": 5082,
     "liftEdges": 246,
-    "connectorEdges": 9805,
-    "meaningfulPoints": 927,
-    "reachableFromLifts": 4825,
-    "unreachableNodes": 7,
+    "connectorEdges": 9803,
+    "meaningfulPoints": 922,
+    "reachableFromLifts": 4823,
+    "unreachableNodes": 8,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 61,
@@ -1238,7 +1239,7 @@
     },
     {
       "code": "unreachable_component",
-      "message": "7 node(s) unreachable from the main lift network.",
+      "message": "8 node(s) unreachable from the main lift network.",
       "refs": [
         "n678964724",
         "n678964733",
@@ -1246,7 +1247,8 @@
         "n2754232379",
         "n9853753103",
         "n1000000008172",
-        "sn3281771216"
+        "sn3281771216",
+        "bn343472316"
       ]
     }
   ]

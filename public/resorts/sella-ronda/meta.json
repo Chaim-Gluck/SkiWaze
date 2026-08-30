@@ -1,7 +1,7 @@
 {
   "resort": {
     "id": "sella-ronda",
-    "name": "Sella Ronda (Canazei)",
+    "name": "Sella Ronda (Dolomites)",
     "country": "Italy",
     "center": {
       "lon": 11.808,
@@ -31,17 +31,17 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-08-28T03:04:08.675Z",
+  "generatedAt": "2026-08-30T19:48:32.906Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1940,
-    "edgeCount": 5445,
-    "pisteEdges": 1739,
+    "nodeCount": 1926,
+    "edgeCount": 5435,
+    "pisteEdges": 1740,
     "liftEdges": 384,
-    "connectorEdges": 3322,
-    "meaningfulPoints": 823,
-    "reachableFromLifts": 1908,
-    "unreachableNodes": 32,
+    "connectorEdges": 3311,
+    "meaningfulPoints": 822,
+    "reachableFromLifts": 1909,
+    "unreachableNodes": 17,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 2,
@@ -1127,20 +1127,14 @@
     },
     {
       "code": "unreachable_component",
-      "message": "32 node(s) unreachable from the main lift network.",
+      "message": "17 node(s) unreachable from the main lift network.",
       "refs": [
         "n2532518825",
         "n1149155677",
         "n2610898952",
         "n338808035",
-        "n2610899019",
         "n278478692",
         "n338808037",
-        "n2610898994",
-        "n12009588137",
-        "n12009588131",
-        "n12009588156",
-        "n864651065",
         "n1149155667",
         "n6511621009",
         "n6511621012",
@@ -1148,7 +1142,10 @@
         "n9691438681",
         "n9691438680",
         "n526850304",
-        "n12282189507"
+        "n12282189507",
+        "n13572040925",
+        "n13904660729",
+        "n13904660712"
       ]
     }
   ]

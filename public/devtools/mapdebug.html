@@ -181,10 +181,13 @@ function applyToggles(){
 // A curated list of polygons to eyeball, so a review round needs no hand-typed ids or pasted
 // URLs (link fragments do not survive every browser embedding).
 //
-// The list lives in `public/devtools/overlays/review-list.json`. It is written by
-// `npm run check:basins` (NOT hand-written — this comment used to claim it was), and it only ever
-// holds the *unsigned* basins, so once the last one is signed off in `acceptedBasins` a run has
-// nothing to write. `_basins.ts` therefore refuses to write an empty list: blanking it takes this
+// The list lives in `public/devtools/overlays/review-list.json`. `npm run check:basins` OWNS it
+// whenever there is an unsigned basin: it overwrites the whole file, and it only ever holds the
+// *unsigned* basins, so once the last one is signed off in `acceptedBasins` a run has nothing to
+// write. Between those rounds the file may be hand-written for any other review round (trapped /
+// orphan nodes, spines, elevation candidates) — but expect a basin run to blow those entries away,
+// so record the reasoning in the override or a checkpoint, never only here.
+// `_basins.ts` refuses to write an empty list: blanking it takes this
 // prev/next reviewer off the tool with no error anywhere (the box only shows when the file loads
 // non-empty). Keep it committed, and keep at least one entry as a schema example. Entry shape:
 //   { label, resort, way?, node?, center: [lon,lat], zoom?, note? }

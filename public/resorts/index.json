@@ -1,7 +1,17 @@
 [
   {
+    "id": "les-deux-alpes",
+    "name": "Les 2 Alpes",
+    "country": "France",
+    "center": {
+      "lon": 6.16,
+      "lat": 45
+    }
+  },
+  {
     "id": "madonna-di-campiglio",
-    "name": "Madonna di Campiglio",
+    "name": "Madonna di Campiglio · Pinzolo · Folgarida-Marilleva",
+    "shortName": "Madonna di Campiglio",
     "country": "Italy",
     "center": {
       "lon": 10.826,
@@ -10,8 +20,9 @@
   },
   {
     "id": "cervinia-zermatt",
-    "name": "Cervinia–Zermatt",
-    "country": "Italy / Switzerland",
+    "name": "Zermatt – Cervinia (Matterhorn Ski Paradise)",
+    "shortName": "Zermatt – Cervinia",
+    "country": "Switzerland / Italy",
     "center": {
       "lon": 7.71,
       "lat": 45.958
@@ -19,7 +30,7 @@
   },
   {
     "id": "sella-ronda",
-    "name": "Sella Ronda (Canazei)",
+    "name": "Sella Ronda (Dolomites)",
     "country": "Italy",
     "center": {
       "lon": 11.808,
@@ -28,7 +39,8 @@
   },
   {
     "id": "val-thorens-3vallees",
-    "name": "Val Thorens – Les 3 Vallées",
+    "name": "Les 3 Vallées (Val Thorens · Méribel · Courchevel)",
+    "shortName": "Les 3 Vallées",
     "country": "France",
     "center": {
       "lon": 6.58,
@@ -55,7 +67,8 @@
   },
   {
     "id": "st-anton-arlberg",
-    "name": "St. Anton am Arlberg",
+    "name": "Ski Arlberg (St. Anton · Lech · Zürs · Warth)",
+    "shortName": "Ski Arlberg",
     "country": "Austria",
     "center": {
       "lon": 10.2,
@@ -117,21 +130,39 @@
     }
   },
   {
-    "id": "les-deux-alpes",
-    "name": "Les 2 Alpes",
-    "country": "France",
-    "center": {
-      "lon": 6.16,
-      "lat": 45
-    }
-  },
-  {
     "id": "monterosa-ski",
     "name": "Monterosa Ski",
     "country": "Italy",
     "center": {
       "lon": 7.83,
       "lat": 45.845
+    }
+  },
+  {
+    "id": "passo-tonale",
+    "name": "Pontedilegno–Tonale",
+    "country": "Italy",
+    "center": {
+      "lon": 10.531,
+      "lat": 46.251
+    }
+  },
+  {
+    "id": "verbier-4vallees",
+    "name": "Verbier – 4 Vallées",
+    "country": "Switzerland",
+    "center": {
+      "lon": 7.28,
+      "lat": 46.12
+    }
+  },
+  {
+    "id": "portes-du-soleil",
+    "name": "Portes du Soleil",
+    "country": "France / Switzerland",
+    "center": {
+      "lon": 6.76,
+      "lat": 46.2
     }
   }
 ]

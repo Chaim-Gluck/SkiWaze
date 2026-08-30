@@ -1,13 +1,123 @@
 [
   {
-    "label": "sella-ronda: Seiseralmbahn/Panorama/Mont Sëuc +91 (175 nodes, 23 lift(s), gap 290m, exit +27m, frees 175/175)",
-    "resort": "sella-ronda",
-    "node": "n366182231",
+    "label": "FIXED 1/2 - AVORIAZ: the whole sunken shelf is now pinned by hand (17 nodes)",
+    "resort": "portes-du-soleil",
+    "node": "n7012682590",
     "center": [
-      11.672846,
-      46.574271
+      6.7787,
+      46.1875
+    ],
+    "zoom": 17,
+    "note": "YOUR AVORIAZ READINGS ARE IN. 17 nodes pinned from the contours, because BOTH sources are wrong here: our provider read this shelf 5-76 m too LOW and the second DEM reads it 3-9 m too HIGH (it is sampling the tops of the apartment blocks). WHAT TO CHECK, flow arrows + satellite, no overlay: (1) Stade and Lac-Intrets are now BIDIRECTIONAL between their bases (your complaint 5/6); (2) Surf sits ~8 m above them and drains DOWN to Stade; (3) the Prodains Express 3S top n4578135789 now has every run leaving it, none pointing in; (4) Bleue d'Arare and Retour Chavanette drain east instead of ponding in the middle. The pipeline's automatic pass had DECLINED this whole patch as unrepairable, and after your pins it has nothing left to decline. Portes du Soleil is now 0 trapped basins / 0 stranded nodes."
+  },
+  {
+    "label": "FIXED 2/2 - paradiski Kamikaze junction: n1000000001983 raised 1998 -> 2014 m",
+    "resort": "paradiski",
+    "node": "n1000000001983",
+    "center": [
+      6.68751,
+      45.48164
+    ],
+    "zoom": 18,
+    "note": "YOUR THREE Xs FROM THE SECOND SCREENSHOT. The junction read 16 m BELOW the second DEM, which pointed Kamikaze uphill into it. It was hidden from the ski-sink detector by a polygon skeleton arm that CLIMBS 8 m out of the node - counted as a way out, so the node never looked like a sink. Now fixed as a general rule (an edge that climbs is not a way out). AFTER: e1927 Kamikaze skis 2014 -> 2002 away from the junction (your X #2), and e4896/e4897 ski 2014 -> 2006 toward the purple dot n2328038825 (your X #1, no longer bidirectional). Bozelet e1215 unchanged - that was your check mark. Hara Kiri's double arrow (your X #3) is LEFT ALONE at your instruction: it is polygon plumbing, deliberately two-way."
+  },
+  {
+    "label": "FIXED - Fornet top station n1650096130 raised 2193 -> 2211 m (above Avoriaz)",
+    "resort": "portes-du-soleil",
+    "node": "n270740419",
+    "center": [
+      6.79379,
+      46.16527
+    ],
+    "zoom": 17,
+    "note": "FIXED with your reading. The Fornet CHAIRLIFT TOP n1650096130 read 2193 m; you put it at 2211 m, level with the junction n270740419 87 m SW. Both DEMs sample 2192/2193 there because they hit the ground beside the raised arrival deck - the same error as the Prodains 3S top. WHAT THIS FIXED: at 2193 the only way in to n270740419 was an 18 m lift-access CLIMB, which is exactly the shape check:elevation flags as a suspect elevation - it was the resort's only reversal candidate. Now the 120 m Fornet link between deck and junction is level and BIDIRECTIONAL (e222 / e223), and the flag is gone on its own with no ignoreReversals sign-off needed. WHAT TO CHECK on the map: the deck and the junction should read the same height, the link between them double-headed, and Fornet (101 m to 2185 m) plus Snowcross Marmottes (1572 m to 1854 m) still leaving downhill. Portes du Soleil: 0 disagreeing nodes, 0 reversing edges, 0 trapped basins, 0 stranded. NOTE this entry's centre used to point 4.3 km away - it is now correct."
+  },
+  {
+    "label": "FIXED - Les Gets Trappeurs junction n13535054703 was a PHANTOM dip (detector bug, your slope was fine)",
+    "resort": "portes-du-soleil",
+    "node": "n13535054703",
+    "center": [
+      6.6877,
+      46.14454
+    ],
+    "zoom": 18,
+    "note": "YOU WERE RIGHT - nothing was wrong with this slope, the DETECTOR was wrong. It reported a 7 m climb-out at n13535054703 @1515 m. The 7 m came entirely from e3141/e3142, a POLYGON SKELETON ARM - a link the app invents for connectivity, not real terrain. The search climbed e3142 (+7 m) to n13535054709 @1522, saw e3141 'descending' from there, and called that the place the descent resumes. But e3141 descends STRAIGHT BACK INTO n13535054703 - it is a loop, not an escape. So the app used its own invention as proof your mountain was broken, while never finding the honest way out: 110 m down e1423 to n13534998799 @1513, on to the Grand Cry station n3232360220 @1513, where Piste des Indiens really does continue down to 1495 m. FIXED GENERICALLY in _phantoms.ts: skeleton arms are excluded from both the escape walk and the resume test, and a resume that returns to the origin is not an escape. FLEET EFFECT: 35 -> 19 pothole sinks, so 16 of 35 were phantom. Nothing to check here - shown only so you can see the arms that caused it."
+  },
+  {
+    "label": "FIXED - Les Gets Turche/Vorosses plateau n1000000000439 was also PHANTOM (same arm bug)",
+    "resort": "portes-du-soleil",
+    "node": "n1000000000439",
+    "center": [
+      6.67069,
+      46.13909
+    ],
+    "zoom": 18,
+    "note": "GONE, same cause as the Trappeurs junction - a polygon skeleton arm faked the climb-out. This was the one I called MOST SUSPECT (8 m deep hollow surrounded by lift tops: Vorosses 1509, Melese 1503, Turche 1505, Perrieres Express 1530). It turned out to be no hollow at all. Note the lesson: the shape looked impossible for real ground, and it WAS impossible - but the impossible part was the app's own plumbing, not the elevation. NO READING NEEDED from you. Kept in the list only as a record."
+  },
+  {
+    "label": "FIXED - Les Crosets base plaza n1000000000003 was also PHANTOM (same arm bug)",
+    "resort": "portes-du-soleil",
+    "node": "n1000000000003",
+    "center": [
+      6.83384,
+      46.18349
+    ],
+    "zoom": 18,
+    "note": "GONE, same cause. This was the Les Crosets base plaza, 45 m from the Mossettes station, and I had guessed it was a genuine base-plaza dip. It was neither genuine nor a dip - a skeleton arm faked it. NOTE a NEIGHBOUR now reports instead, n1000000000529 @1684 m, 40 m from Crosets (bottom) 1682 m - see the next entry. NO READING NEEDED here."
+  },
+  {
+    "label": "FIXED - D 228 Route des Lindarets n3346682763: 3 m claim was BELOW the noise floor",
+    "resort": "portes-du-soleil",
+    "node": "n3346682763",
+    "center": [
+      6.77354,
+      46.2103
+    ],
+    "zoom": 18,
+    "note": "NOTHING TO CHECK - cleared without touching your data. The whole accusation was a 3 m climb-out, but Vmerge (the pipeline's own rule for 'these two heights are the same place, merge them') is 4 m. The detector was firing BELOW the noise floor the builder itself uses, so it flagged a difference buildGraph would have erased. POTHOLE_CLIMB_TOL is now derived from Vmerge instead of being a hard-coded 3, and this node no longer reports. Separately, its OSM tags settled the 'is this a real slope?' question: w327863778 and w420518195 carry piste:type=downhill + piste:difficulty=easy + piste:name (Parchets / Village des Lindarets), and w327863773 adds access:conditional = no @ (Oct-Apr) - cars banned all winter. It is a deliberately mapped winter blue. It LOOKED like a road because normalize.ts preferred the road's `name` over `piste:name`; that is fixed too (143 of 256 such ways fleet-wide were mislabelled), and will show as 'Parchets' after the next data refresh."
+  },
+  {
+    "label": "POTHOLE 1/1 in PdS - Morzine valley floor by Pre Favre / Le Chamois, n363738232 @1163 m (climb-out 7 m) - PROBABLY GENUINE",
+    "resort": "portes-du-soleil",
+    "node": "n363738232",
+    "center": [
+      6.70814,
+      46.1641
+    ],
+    "zoom": 18,
+    "note": "STILL REPORTED after the skeleton-arm fix, so not a phantom. NOTE the climb-out grew 4 m -> 7 m: the old 4 m figure was itself measured through invented plumbing, so this is the first honest number for this spot. Unnamed junction on the MORZINE VALLEY FLOOR at 1163 m. Two short runs drop into it (48 m from n2843303161 @1168, 98 m from n672941041 @1167) and the only non-synthetic way out, e1027, climbs 4 m straight back up the way you came. Every surrounding lift base is ABOVE it: Pre Favre (bottom) 1174 m at 96 m away, Le Chamois (bottom) 1182 m at 95 m, Retour des Nants (top) 1189 m; only Fys (bottom) 1158 m at 214 m is lower. Both DEMs agree (1163 vs 1162). WHAT TO CHECK: is this genuinely the low point of the valley floor, where you skate up to a lift? If yes I will sign it off. If the contours put it higher, give me the reading."
+  },
+  {
+    "label": "FIXED - Les Crosets plaza n1000000000529: cleared by the min-resume fix, never a defect",
+    "resort": "portes-du-soleil",
+    "node": "n1000000000529",
+    "center": [
+      6.8343,
+      46.18328
+    ],
+    "zoom": 18,
+    "note": "NOTHING TO CHECK. This was reported only because the flat-escape walk used to `break` at the FIRST node offering a descent and report that node's height, so the verdict was decided by edge storage order rather than by the mountain. The walk now takes the LOWEST resume in the whole frontier - a pothole is by definition a dip you can only leave by climbing, so the honest measure is the least climb available. The plaza sits level at 1682-1685 m, exactly as a base area should, and it no longer reports."
+  },
+  {
+    "label": "VERBIER - Leytegeon + L'Eteygeon: ONE trapped sector, 17 nodes, 1556-2034 m",
+    "resort": "verbier-4vallees",
+    "node": "n1",
+    "center": [
+      7.3,
+      46.09
+    ],
+    "zoom": 14,
+    "note": "PARKED from an earlier round, still awaiting your map review. Use the node finder rather than this centre."
+  },
+  {
+    "label": "SCHEMA EXAMPLE - NOT a defect (Teleski de Lourtier, already signed off)",
+    "resort": "verbier-4vallees",
+    "node": "n1",
+    "center": [
+      7.271,
+      46.052
     ],
     "zoom": 15,
-    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the best candidate link. Exit n366182231 (unnamed, 1218 m) -> n329644544 (1245 m), 290 m away and 27 m higher. A link there would free 175 of the 175 trapped node(s) (all of them: the basin drains to this point). Wrong station height -> setNodeElevation; a real short walk or unmapped link -> addConnectors; wrong resort / a separate ski area -> tighten the bbox."
+    "note": "Kept only so this file never goes empty and never loses its shape - check:basins refuses to write an empty list for the same reason. Not something to review."
   }
 ]

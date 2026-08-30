@@ -1,8 +1,9 @@
 {
   "resort": {
     "id": "cervinia-zermatt",
-    "name": "Cervinia–Zermatt",
-    "country": "Italy / Switzerland",
+    "name": "Zermatt – Cervinia (Matterhorn Ski Paradise)",
+    "shortName": "Zermatt – Cervinia",
+    "country": "Switzerland / Italy",
     "center": {
       "lon": 7.71,
       "lat": 45.958
@@ -17,16 +18,16 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-08-28T03:03:53.285Z",
+  "generatedAt": "2026-08-30T19:48:20.792Z",
   "stats": {
     "resortId": "cervinia-zermatt",
-    "nodeCount": 840,
-    "edgeCount": 2240,
-    "pisteEdges": 847,
+    "nodeCount": 841,
+    "edgeCount": 2244,
+    "pisteEdges": 848,
     "liftEdges": 112,
-    "connectorEdges": 1281,
-    "meaningfulPoints": 335,
-    "reachableFromLifts": 832,
+    "connectorEdges": 1284,
+    "meaningfulPoints": 334,
+    "reachableFromLifts": 833,
     "unreachableNodes": 8,
     "warningsByCode": {
       "coincident_nodes_unified": 1,

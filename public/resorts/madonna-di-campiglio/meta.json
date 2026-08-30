@@ -1,7 +1,8 @@
 {
   "resort": {
     "id": "madonna-di-campiglio",
-    "name": "Madonna di Campiglio",
+    "name": "Madonna di Campiglio · Pinzolo · Folgarida-Marilleva",
+    "shortName": "Madonna di Campiglio",
     "country": "Italy",
     "center": {
       "lon": 10.826,
@@ -17,16 +18,16 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.campigliodolomiti.it/en/"
   },
-  "generatedAt": "2026-08-28T03:03:23.897Z",
+  "generatedAt": "2026-08-30T19:47:51.897Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
-    "nodeCount": 389,
-    "edgeCount": 978,
-    "pisteEdges": 388,
+    "nodeCount": 392,
+    "edgeCount": 987,
+    "pisteEdges": 391,
     "liftEdges": 81,
-    "connectorEdges": 509,
+    "connectorEdges": 515,
     "meaningfulPoints": 235,
-    "reachableFromLifts": 389,
+    "reachableFromLifts": 392,
     "unreachableNodes": 0,
     "warningsByCode": {
       "missing_opening_hours": 61,

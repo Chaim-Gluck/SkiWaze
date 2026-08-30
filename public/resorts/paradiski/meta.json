@@ -25,15 +25,15 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.paradiski.com/"
   },
-  "generatedAt": "2026-08-28T03:06:58.719Z",
+  "generatedAt": "2026-08-30T19:51:19.003Z",
   "stats": {
     "resortId": "paradiski",
     "nodeCount": 2946,
-    "edgeCount": 8889,
-    "pisteEdges": 3119,
+    "edgeCount": 8891,
+    "pisteEdges": 3120,
     "liftEdges": 220,
-    "connectorEdges": 5550,
-    "meaningfulPoints": 730,
+    "connectorEdges": 5551,
+    "meaningfulPoints": 725,
     "reachableFromLifts": 2944,
     "unreachableNodes": 2,
     "warningsByCode": {

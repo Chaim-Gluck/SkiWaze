@@ -34,5 +34,11 @@
   "label": "Uphill piste edges (bug)",
   "file": "uphill-pistes.json",
   "description": "Piste edges that point uphill because a T-junction split was never re-oriented. The router can use them as a free lift. Red = climbs, blue = the correctly-descending other half, orange = the app-added split node."
+ },
+ {
+  "id": "pothole-sinks",
+  "label": "Pothole sinks (false dips mid-run)",
+  "file": "pothole-sinks.json",
+  "description": "A node every descending piste ARRIVES at, where every way onward CLIMBS - so a skier reaches it and has to climb 3-8 m to carry on. Red = climb-out 6 m or more, amber = under 6 m; green = the descending pistes that feed the dip. These are candidates, not certainties: both DEMs usually AGREE at these nodes, so there is no source disagreement to appeal to and only the contours or a human eye can say whether the ground really dips (a road hollow or a village base plaza is genuine). Regenerate with npm run check:audit."
  }
 ]

@@ -1,7 +1,8 @@
 {
   "resort": {
     "id": "st-anton-arlberg",
-    "name": "St. Anton am Arlberg",
+    "name": "Ski Arlberg (St. Anton · Lech · Zürs · Warth)",
+    "shortName": "Ski Arlberg",
     "country": "Austria",
     "center": {
       "lon": 10.2,
@@ -25,16 +26,16 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.stantonamarlberg.com/en/"
   },
-  "generatedAt": "2026-08-28T03:07:29.142Z",
+  "generatedAt": "2026-08-30T19:51:39.805Z",
   "stats": {
     "resortId": "st-anton-arlberg",
-    "nodeCount": 1082,
-    "edgeCount": 2789,
-    "pisteEdges": 1206,
+    "nodeCount": 1084,
+    "edgeCount": 2794,
+    "pisteEdges": 1208,
     "liftEdges": 140,
-    "connectorEdges": 1443,
+    "connectorEdges": 1446,
     "meaningfulPoints": 579,
-    "reachableFromLifts": 1077,
+    "reachableFromLifts": 1079,
     "unreachableNodes": 5,
     "warningsByCode": {
       "coincident_nodes_unified": 1,

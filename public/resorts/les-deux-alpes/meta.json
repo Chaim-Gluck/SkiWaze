@@ -17,16 +17,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.les2alpes.com/en/"
   },
-  "generatedAt": "2026-08-28T03:08:14.540Z",
+  "generatedAt": "2026-08-30T19:53:08.329Z",
   "stats": {
     "resortId": "les-deux-alpes",
-    "nodeCount": 500,
-    "edgeCount": 1333,
-    "pisteEdges": 523,
+    "nodeCount": 501,
+    "edgeCount": 1335,
+    "pisteEdges": 524,
     "liftEdges": 67,
-    "connectorEdges": 743,
+    "connectorEdges": 744,
     "meaningfulPoints": 212,
-    "reachableFromLifts": 500,
+    "reachableFromLifts": 501,
     "unreachableNodes": 0,
     "warningsByCode": {
       "coincident_nodes_unified": 1,

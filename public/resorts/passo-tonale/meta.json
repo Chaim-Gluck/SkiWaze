@@ -1,0 +1,187 @@
+{
+  "resort": {
+    "id": "passo-tonale",
+    "name": "Pontedilegno–Tonale",
+    "country": "Italy",
+    "center": {
+      "lon": 10.531,
+      "lat": 46.251
+    },
+    "bbox": {
+      "minLon": 10.462,
+      "minLat": 46.2,
+      "maxLon": 10.6,
+      "maxLat": 46.302
+    },
+    "defaultZoom": 12.5,
+    "timezone": "Europe/Rome",
+    "infoUrl": "https://www.pontedilegnotonale.com/en/"
+  },
+  "generatedAt": "2026-08-30T19:52:13.095Z",
+  "stats": {
+    "resortId": "passo-tonale",
+    "nodeCount": 204,
+    "edgeCount": 492,
+    "pisteEdges": 205,
+    "liftEdges": 40,
+    "connectorEdges": 247,
+    "meaningfulPoints": 116,
+    "reachableFromLifts": 204,
+    "unreachableNodes": 0,
+    "warningsByCode": {
+      "coincident_nodes_unified": 1,
+      "missing_opening_hours": 32,
+      "inferred_connector": 4
+    }
+  },
+  "warnings": [
+    {
+      "code": "coincident_nodes_unified",
+      "message": "Unified 1 duplicate OSM node(s) at 1 spot(s) where ways meet but do not share a node."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Roccolo Ventura\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Bleis\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ghiacciaio Presena\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Teleferica Enel\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Colonia Vigili - Tonale\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Sozzine\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Valbiolo\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Cadì Sit\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Tre Larici\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Serodine\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Scoiattolo\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Vittoria\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Alpe Alta\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Valena\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Nigritella\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Seggiovia Malga Valbiolo\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Seggiovia Passo Contrabbandieri\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Valbione\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Doss delle Pertiche\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Santa Giulia\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"La Croce\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Angelo\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Corno d'Aola\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Casola\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ponte di Legno - Colonia Vigili\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Ghiacciaio Presena\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Paradiso\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Campo Scuola Cida\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"713185844\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Presanella\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Progetto Cabinovia\" has no opening_hours in OSM."
+    },
+    {
+      "code": "missing_opening_hours",
+      "message": "Lift \"Progetto\" has no opening_hours in OSM."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Snapped 28 dead-end run(s) onto a nearby piste line (T-junction)."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Inferred 74 skiable/flat connector(s) to bridge stuck nodes."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 70 flat-junction traverse(s) bridging dangling run ends across level areas."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Added 6 plateau traverse(s) linking hub nodes on the same level apron."
+    }
+  ]
+}
