@@ -156,7 +156,23 @@ and apply identically to **every** resort — there is no per-resort graph code.
   `chord² / (2·area) ≤ 2` **and** `chord ≤ 250 m`, the termini come from the two farthest-apart
   gateways instead. The gate is **shape, not size** — the two known corridors differ by ~10× in area,
   and one ribbon that must never qualify is smaller than one corridor that must. Ribbons measure
-  3.3–16 on that ratio; nothing observed sits between 2 and 3.3. 46 of ~1076 polygons qualify.
+  3.3–16 on that ratio; nothing observed sits between 2 and 3.3. Measured Aug 2026 over 18 resorts:
+  **97 of ~1375 polygons pass the two shape gates, and 33 actually adopt the gateway termini** — the
+  gap is by design, since the override only fires in the synthesis branch and only when two gateways
+  sit ≥35% of the chord apart, so a squat polygon that already has a real centreline never reaches
+  it. (An older "46 of ~1076" here was stale and contradicted the code's own "84 of 1076"; re-measure
+  rather than trust either.)
+- **A corridor must be graded gateway-to-gateway too, or the checker punishes it for its own design.**
+  `check:spines` grades a spine on `drop` (descent over the polygon's fall line) and `cover` (extent
+  over the polygon's long axis). Both presume the polygon **is a run** — precisely what a corridor is
+  not. Measured before the fix: corridors scored a median `cover` of **0.74** against **0.96** for
+  every other polygon, and 5 of 33 fell under 0.55, escaping the report only because they were too
+  short to clear the 150 m axis gate — luck, not a clean bill of health. A corridor therefore gets
+  **neither** test; it is judged on `gwCover`, how much of its gateway-to-gateway span the spine
+  covers (`gatewayCoverage` in `_spinecheck.ts`, span gate `MIN_GW_SPAN_M` 30 m, below which the two
+  gateways are the same place and the ratio is noise). On that yardstick the same corridors mean
+  **0.976** with **none** under 0.75 — better than ribbons — which is the proof the old number was
+  measuring the wrong thing rather than catching defects. `SPINEDUMP=1` dumps every row as CSV.
 - **Spine fragments are stitched, and the stitch is routed, smoothed and anchored.** A polygon's
   spine often arrives in disconnected pieces. The stitch pass is a **minimum spanning forest** over
   those pieces: a short chord (`STITCH_MAX_M` 30 m) when one fits inside the ring, otherwise a
@@ -244,7 +260,7 @@ npm run routetest <id>       # routing smoke test from the summit. NOTE: it plan
                              #   time-of-day dependent. Only ever compare A/B at the SAME moment
                              #   (swap in the other graph.json, run, restore) — a recorded baseline
                              #   from another hour is meaningless.
-npm run check:spines <id|all>  # per-polygon spine health, two independent complaints:
+npm run check:spines <id|all>  # per-polygon spine health, three independent complaints:
                              #   drop  — spine descends over the polygon's own top-to-bottom drop
                              #   cover — the UNION of the spine pieces (plus stitches and way
                              #           bridges) over the polygon extent, both projected onto the
@@ -257,6 +273,10 @@ npm run check:spines <id|all>  # per-polygon spine health, two independent compl
                              #   Still blind to twisting polygons: a spine can score 99% while
                              #           visibly missing a lobe, so never guard or validate on the
                              #           axis projection alone.
+                             #   gwCover — CORRIDORS ONLY, and they get neither test above. A corridor
+                             #           is the join between its neighbours, not a run, so it is
+                             #           judged on how much of its gateway-to-gateway span the spine
+                             #           covers. `SPINEDUMP=1` dumps every row as CSV.
 
 # Diagnostics (report-only; none of them write data)
 npm run probe:spineparts <id> <wayId...>  # answers "*where* is the gap": the polygon's spine pieces
@@ -319,6 +339,16 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 > server). Resort + investigation-overlay dropdowns, OpenTopoMap/OSM/satellite base, area fills,
 > flow-direction arrows (double-headed ⟺ = bidirectional), piste-name labels, and a node finder —
 > the main way to eyeball routing/elevation questions.
+>
+> **Never send the user to this map without a complete recipe.** A bare "go look at X" makes them ask
+> which controls to touch, every single time. State all four, always, even when the answer is "leave
+> it alone": (1) **Base map** — topo / OSM / **Satellite** (satellite for "is this real terrain?",
+> topo for shape and gradient); (2) **Investigation overlay** — name it, or say **none** explicitly;
+> (3) **exactly which checkboxes**, by their on-screen labels — `areas`, `pistes`, `connectors`,
+> `lifts`, `spines`, `arms`, `arrows`, `names`, `overlay`; (4) **what each possible answer looks
+> like**, so the verdict is a thing they can see rather than a judgement they have to reverse-engineer
+> from the code. A deep link `#lon,lat,zoom,resort,wID` frames and highlights the way, but it does
+> **not** set any of the four — they are sticky UI state, so say them anyway.
 >
 > **Spines are a permanent layer, emitted by the pipeline.** `emitResort` writes
 > `public/resorts/<id>/spines.json` from the `PolyResult[]` that `build.ts` already has in hand, and

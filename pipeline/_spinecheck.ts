@@ -22,6 +22,13 @@
  * Elevations come from the built graph's own nodes, sampled at the ring: the same numbers the router
  * uses, so a complaint here is a complaint about shipped data rather than about a second DEM.
  *
+ * TWO YARDSTICKS, because there are two kinds of polygon. Everything above assumes the polygon IS a
+ * run, with a top, a bottom and a length to be covered. A CORRIDOR is not: it is the join between
+ * its neighbours, and the builder deliberately spines it gateway-to-gateway rather than end-to-end.
+ * Judging one on `drop` and axis `cover` marks it down for obeying its own design, so a corridor
+ * gets neither test -- it is judged on `gwCover` instead, how much of its gateway-to-gateway span
+ * the spine actually covers. See `gatewayCoverage`.
+ *
  * Usage: npx tsx pipeline/_spinecheck.ts <resortId|all> [dropThreshold]
  */
 import { RESORTS } from '../src/config/resorts';
@@ -31,6 +38,7 @@ import { normalizeLift, normalizePiste } from './lib/normalize';
 import { enrichElevations } from './lib/elevation';
 import { buildResortGraph } from './lib/buildGraph';
 import { buildSkeletons } from './lib/areaSkeleton';
+import { SKEL_COLORS } from './lib/skelColors';
 
 const M_PER_DEG = 111_320;
 
@@ -45,7 +53,13 @@ interface Row {
   spanFrac: number;
   cover: number;
   axisM: number;
+  /** Coverage measured gateway-to-gateway instead of end-to-end. Corridors only; 0 elsewhere. */
+  coverGw: number;
+  /** Distance between the two farthest-apart gateways. Corridors only; 0 elsewhere. */
+  gwSpanM: number;
   synth: boolean;
+  /** The builder took this spine's termini from the gateway pair, not the extremity sweep. */
+  corridor: boolean;
   lenM: number;
   at: [number, number];
 }
@@ -145,6 +159,70 @@ function axisCoverage(
   return { cover: covered / axisM, axisM };
 }
 
+/**
+ * The corridor yardstick: coverage measured gateway-to-gateway, not end-to-end.
+ *
+ * `axisCoverage` above asks "does the spine run the length of the polygon", which is the right
+ * question for a ribbon and the wrong one for a corridor. A corridor is not a run in its own right,
+ * it is the join between its neighbours, and the builder deliberately terminates its spine at the
+ * two farthest-apart GATEWAYS rather than at the rim extremities -- because ending at a rim corner
+ * would make a skier crossing it detour out to the corner and back. Grading that spine against the
+ * long axis therefore penalises it for obeying its own design: measured over the fleet, corridors
+ * score a median 0.74 against 0.96 for every other polygon, and five of 33 land under 0.55, escaping
+ * the report only because they are too short to clear the axis-length gate. That is luck, not a
+ * clean bill of health.
+ *
+ * So judge a corridor against what it was built to do: project onto the axis joining its two
+ * farthest gateways, and ask how much of THAT span the spine covers. Same merged-interval treatment
+ * as above, for the same reason -- fragmentation must stay visible.
+ */
+function gatewayCoverage(
+  gateways: [number, number][],
+  pieces: [number, number][][],
+): { cover: number; spanM: number } {
+  if (gateways.length < 2) return { cover: 0, spanM: 0 };
+  const k = Math.cos((gateways[0][1] * Math.PI) / 180);
+  let a = gateways[0];
+  let b = gateways[1];
+  let bd = -1;
+  for (let i = 0; i < gateways.length; i++)
+    for (let j = i + 1; j < gateways.length; j++) {
+      const d = Math.hypot((gateways[i][0] - gateways[j][0]) * k, gateways[i][1] - gateways[j][1]);
+      if (d > bd) { bd = d; a = gateways[i]; b = gateways[j]; }
+    }
+  const spanM = bd * M_PER_DEG;
+  if (spanM <= 0) return { cover: 0, spanM: 0 };
+  const ux = ((b[0] - a[0]) * k) / bd;
+  const uy = (b[1] - a[1]) / bd;
+  const proj = (lon: number, lat: number) => ((lon - a[0]) * k * ux + (lat - a[1]) * uy) * M_PER_DEG;
+  const iv: [number, number][] = [];
+  for (const piece of pieces) {
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const [lon, lat] of piece) {
+      // Clamped to the gateway span: a spine overshooting a gateway is not extra coverage, and left
+      // unclamped a long arm past one end would mask a hole in the middle.
+      const t = Math.max(0, Math.min(spanM, proj(lon, lat)));
+      if (t < lo) lo = t;
+      if (t > hi) hi = t;
+    }
+    if (hi > lo) iv.push([lo, hi]);
+  }
+  if (!iv.length) return { cover: 0, spanM };
+  iv.sort((x, y) => x[0] - y[0]);
+  let covered = 0;
+  let [cs, ce] = iv[0];
+  for (let i = 1; i < iv.length; i++) {
+    if (iv[i][0] <= ce) ce = Math.max(ce, iv[i][1]);
+    else {
+      covered += ce - cs;
+      [cs, ce] = iv[i];
+    }
+  }
+  covered += ce - cs;
+  return { cover: covered / spanM, spanM };
+}
+
 async function run(id: string): Promise<Row[]> {
   const resort = RESORTS.find((r) => r.id === id);
   if (!resort) return [];
@@ -212,6 +290,12 @@ async function run(id: string): Promise<Row[]> {
     const spineDropM = sHi && sLo ? sHiE - sLoE : 0;
     const dropRatio = polyDropM > 0 ? spineDropM / polyDropM : 0;
     const { cover, axisM } = axisCoverage(ring, coverPieces);
+    const gw = r.corridor
+      ? gatewayCoverage(
+          r.points.filter((p) => p.color === SKEL_COLORS.gateway).map((p) => p.at),
+          coverPieces,
+        )
+      : { cover: 0, spanM: 0 };
     let angleDeg = 0;
     if (sHi && sLo) {
       const fx = (lo.lon - hi.lon) * k;
@@ -234,7 +318,10 @@ async function run(id: string): Promise<Row[]> {
       spanFrac: r.spanFrac,
       cover,
       axisM,
+      coverGw: gw.cover,
+      gwSpanM: gw.spanM,
       synth: r.synth,
+      corridor: r.corridor,
       lenM,
       at: sHi ?? [hi.lon, hi.lat],
     });
@@ -253,13 +340,25 @@ const MIN_POLY_DROP_M = 15;
 // Coverage is only meaningful on a polygon long enough for "stops short" to mean anything.
 const MIN_AXIS_M = 150;
 const COVER_THRESH = 0.55;
+// A corridor's gateways can sit as little as 35% of a short chord apart, so the 150 m axis gate that
+// guards the ribbon test would exclude essentially every corridor from being checked at all. Below
+// this the two gateways are effectively in the same place and the ratio is noise, not a verdict.
+const MIN_GW_SPAN_M = 30;
 const scored = all.filter((r) => r.polyDropM >= MIN_POLY_DROP_M);
-const bad = scored.filter((r) => r.dropRatio < thresh).sort((a, b) => a.dropRatio - b.dropRatio);
+// Corridors are judged separately, below. Both lists here measure a spine against the polygon's own
+// fall line and long axis, which presumes the polygon IS a run -- exactly what a corridor is not.
+const ribbons = scored.filter((r) => !r.corridor);
+const bad = ribbons.filter((r) => r.dropRatio < thresh).sort((a, b) => a.dropRatio - b.dropRatio);
 // Deliberately a separate list: these spines descend fine, so the drop test is happy with them. They
 // simply do not reach far enough, which is invisible to every other number here.
-const short = scored
+const short = ribbons
   .filter((r) => r.dropRatio >= thresh && r.axisM >= MIN_AXIS_M && r.cover < COVER_THRESH)
   .sort((a, b) => a.cover - b.cover);
+// Corridors: no drop test at all (a join between neighbours has no fall line to disagree with), and
+// coverage taken gateway-to-gateway. Not filtered by `polyDropM` for the same reason.
+const badGw = all
+  .filter((r) => r.corridor && r.gwSpanM >= MIN_GW_SPAN_M && r.coverGw < COVER_THRESH)
+  .sort((a, b) => a.coverGw - b.coverGw);
 
 const fmt = (r: Row) =>
   `  ${r.resort} w${r.wayId} drop=${r.dropRatio.toFixed(2)} cover=${r.cover.toFixed(2)}` +
@@ -267,23 +366,50 @@ const fmt = (r: Row) =>
   ` angle=${r.angleDeg.toFixed(0)}° len=${r.lenM.toFixed(0)}m` +
   `${r.synth ? ' synth' : ''}  ${r.label}  @${r.at[0].toFixed(5)},${r.at[1].toFixed(5)}`;
 
+const fmtGw = (r: Row) =>
+  `  ${r.resort} w${r.wayId} gwCover=${r.coverGw.toFixed(2)}` +
+  ` (${(r.coverGw * r.gwSpanM).toFixed(0)}m of ${r.gwSpanM.toFixed(0)}m gateway span)` +
+  ` len=${r.lenM.toFixed(0)}m  ${r.label}  @${r.at[0].toFixed(5)},${r.at[1].toFixed(5)}`;
+
+// Report-only escape hatch: every row as CSV, for asking distribution questions this tool's own
+// summary cannot answer (e.g. how corridors score against ribbons). SPINEDUMP=1 npm run check:spines
+if (process.env.SPINEDUMP) {
+  console.log('resort,wayId,corridor,synth,dropRatio,cover,axisM,coverGw,gwSpanM,polyDropM,lenM,spanFrac');
+  for (const r of all)
+    console.log(
+      `${r.resort},${r.wayId},${r.corridor ? 1 : 0},${r.synth ? 1 : 0},${r.dropRatio.toFixed(3)},` +
+        `${r.cover.toFixed(3)},${r.axisM.toFixed(0)},${r.coverGw.toFixed(3)},${r.gwSpanM.toFixed(0)},` +
+        `${r.polyDropM.toFixed(1)},${r.lenM.toFixed(0)},${r.spanFrac.toFixed(3)}`,
+    );
+}
+
 console.log(`=== check:spines ${arg} ===`);
-console.log(`polygons=${all.length} with a real drop=${scored.length}`);
-if (scored.length) {
-  const med = [...scored].sort((a, b) => a.dropRatio - b.dropRatio)[Math.floor(scored.length / 2)];
-  const mc = [...scored].sort((a, b) => a.cover - b.cover)[Math.floor(scored.length / 2)];
+console.log(`polygons=${all.length} with a real drop=${scored.length} of which corridors=${all.filter((r) => r.corridor).length}`);
+if (ribbons.length) {
+  const med = [...ribbons].sort((a, b) => a.dropRatio - b.dropRatio)[Math.floor(ribbons.length / 2)];
+  const mc = [...ribbons].sort((a, b) => a.cover - b.cover)[Math.floor(ribbons.length / 2)];
   console.log(`median drop ratio=${med.dropRatio.toFixed(2)} median cover=${mc.cover.toFixed(2)}`);
   // The median is far too coarse to see a partial-coverage regression: a spine can stop 400 m short
   // of the end of a 2 km ribbon and still score a perfectly healthy 0.77, which is above both the
   // median and the flag threshold. Report the tail of the distribution, on the polygons big enough
   // for coverage to mean anything.
-  const big = scored.filter((r) => r.axisM >= MIN_AXIS_M);
+  const big = ribbons.filter((r) => r.axisM >= MIN_AXIS_M);
   if (big.length) {
     const under = (t: number): number => big.filter((r) => r.cover < t).length;
     const mean = big.reduce((s, r) => s + r.cover, 0) / big.length;
     console.log(
       `coverage over ${big.length} polygons with axis >= ${MIN_AXIS_M}m:` +
         ` mean=${mean.toFixed(3)}  <0.9: ${under(0.9)}  <0.75: ${under(0.75)}  <0.6: ${under(0.6)}`,
+    );
+  }
+}
+{
+  const gws = all.filter((r) => r.corridor && r.gwSpanM >= MIN_GW_SPAN_M);
+  if (gws.length) {
+    const mean = gws.reduce((s, r) => s + r.coverGw, 0) / gws.length;
+    console.log(
+      `gateway coverage over ${gws.length} corridors with span >= ${MIN_GW_SPAN_M}m: mean=${mean.toFixed(3)}` +
+        `  <0.9: ${gws.filter((r) => r.coverGw < 0.9).length}  <0.75: ${gws.filter((r) => r.coverGw < 0.75).length}`,
     );
   }
 }
@@ -295,3 +421,9 @@ if (bad.length > 40) console.log(`  … and ${bad.length - 40} more`);
 console.log(`\n--- descends but stops short (cover < ${COVER_THRESH}, axis >= ${MIN_AXIS_M}m): ${short.length} ---`);
 for (const r of short.slice(0, 40)) console.log(fmt(r));
 if (short.length > 40) console.log(`  … and ${short.length - 40} more`);
+
+console.log(
+  `\n--- corridor spine misses its gateways (gwCover < ${COVER_THRESH}, span >= ${MIN_GW_SPAN_M}m): ${badGw.length} ---`,
+);
+for (const r of badGw.slice(0, 40)) console.log(fmtGw(r));
+if (badGw.length > 40) console.log(`  … and ${badGw.length - 40} more`);
