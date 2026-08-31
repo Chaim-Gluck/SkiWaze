@@ -464,7 +464,8 @@ function potholeOverlay(marks: PotholeMark[]): { lines: unknown[]; points: unkno
  * the file cannot accumulate stale marks either.
  *
  * The empty guard keys on "did we EXAMINE anything", not "did we FIND anything" - the two are not
- * the same claim, and `_areaskel.ts`/`_basins.ts` (which refuse on no-findings) cost us the spine
+ * the same claim, and `_basins.ts` (which refuses on no-findings, as the deleted `_areaskel.ts` did)
+ * cost us the spine
  * overlay once by conflating them. A run that loaded 18 graphs and found no dip has produced a
  * RESULT, and suppressing it is actively harmful: it pins the reviewer's map to the last non-empty
  * state, so every fixed node keeps its marker and gets clicked again. That is precisely how six

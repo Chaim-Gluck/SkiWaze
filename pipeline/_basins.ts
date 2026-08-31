@@ -170,7 +170,7 @@ function main(): void {
   review.sort((a, b) => (b as { size: number }).size - (a as { size: number }).size);
   for (const r of review) delete (r as { size?: number }).size;
 
-  // Refuse to overwrite good overlays with nothing — the same trap `_areaskel.ts` already guards.
+  // Refuse to overwrite good overlays with nothing — the same trap the deleted `_areaskel.ts` guarded.
   // These two files ARE generated here (mapdebug's comment used to claim review-list.json was
   // hand-written; it never was), and they only ever contain the *unsigned* basins. So the moment
   // the last basin gets a sign-off in `acceptedBasins` this run legitimately produces zero rows,

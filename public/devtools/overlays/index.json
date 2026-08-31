@@ -1,11 +1,5 @@
 [
  {
-  "id": "area-skeletons",
-  "label": "Area skeletons (proposed)",
-  "file": "area-skeletons.json",
-  "description": "Report-only preview of the polygon-centreline plan for classes A and B'. Blue = the run's existing centreline, reused as the spine. Pink = synthesised fan-out arms, routed through an interior 12 m grid so they never leave the polygon. Orange = portals (they do not move); red = a portal the grid could not reach. Grey = the rim these would replace."
- },
- {
   "id": "over-rim-arcs",
   "label": "Over-rim critical arcs",
   "file": "over-rim-arcs.json",

@@ -111,6 +111,20 @@ and apply identically to **every** resort — there is no per-resort graph code.
 - **Areas** (OSM `area=yes` pistes): **kept in the routing graph** (open bowls need them for
   connectivity) but **excluded from the render lines** and emitted separately as polygon fills.
   Never drop areas from the graph — it disconnects bowls.
+- **A polygon's class is decided per polygon, and a B′ rim is never deleted.** `area=yes` polygons
+  are classified **A** (a real centreline already runs under the whole shape), **B** (a corridor
+  with no centreline, so one is synthesised), **B′** (a *partial* twin — a centreline exists but the
+  rim wanders off it where the ribbon widens), **C** (genuinely open terrain, below `BOWL_RATIO`;
+  currently matches nothing) or **D** (inert — a closed ring sharing no node with any other way
+  collapses to a self-loop that `segmentWay` drops, so it paints as a fill but the router could
+  never enter it). Full definitions live in `pipeline/lib/areaSkeleton.ts`'s header. Two rules:
+  **(a)** the call is made **per polygon, never per edge** — one ring's edges sit at legitimately
+  very different distances from the centreline (a wide polygon's far side is 100 m+ away), so an
+  edge-by-edge decision deletes half a ring and fragments the graph. **(b)** a **B′** polygon looks
+  like an A and must not be treated as one: measured across all 73 of them the arc the centreline
+  *doesn't* cover **always** carries portals — 371 in total, **zero exceptions** — so deleting that
+  rim strands real connections. B′ is handled like B, except the existing centreline is reused as
+  the spine rather than a second line being synthesised beside it.
 - **Polygon spines are adopted by geometry, never by run name.** A polygon's centreline candidates
   are the piste lines that physically lie **inside** the ring (`insideLenM` ≥ max(15 m, 10% of the
   polygon's length)), not the ways sharing the polygon's `ref`/`name`. Name matching failed two ways:
@@ -304,20 +318,46 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 > Debug map tool: `public/devtools/mapdebug.html` (served at `/devtools/mapdebug.html` by the dev
 > server). Resort + investigation-overlay dropdowns, OpenTopoMap/OSM/satellite base, area fills,
 > flow-direction arrows (double-headed ⟺ = bidirectional), piste-name labels, and a node finder —
-> the main way to eyeball routing/elevation questions. It also has a **review list** (dropdown +
+> the main way to eyeball routing/elevation questions.
+>
+> **Spines are a permanent layer, emitted by the pipeline.** `emitResort` writes
+> `public/resorts/<id>/spines.json` from the `PolyResult[]` that `build.ts` already has in hand, and
+> the map has `spines` / `arms` checkboxes beside areas/pistes/connectors. Three things about this
+> are deliberate:
+> - **It is emitted by the builder, not re-derived by a script.** A spine view that re-derives from
+>   OSM cannot see `build.ts`'s synthesis passes — that is exactly how the deleted `check:areaskel`
+>   ended up classifying every polygon class `D`. Emitting from `build.ts` means what
+>   you look at is what shipped, and it can never drift.
+> - **It is a sibling file, not part of `geo.json`.** `geo.json` is downloaded by every real user on
+>   a phone; this is a review artifact (12.5 MB fleet-wide) that only the debug tool ever fetches.
+> - **Colours come from the file, not the tool.** The builder is the authority on which line is an
+>   adopted centreline: `#1560ff` adopted OSM centreline (class A/B'), `#4da3ff` synthesised spine
+>   (class B), `#00e0d0` stitch, `#e11d9c`/`#7c3aed`/`#0ea5a4` arms, `#7ddb4a` gateway, `#ff8c1a`
+>   portal, `#e11` stranded portal. `mapdebug` maps colour → `role` only to split spines from arms
+>   into two toggles. The rim is dropped — the `areas` layer already draws it.
+>
+> The file is absent until a resort is rebuilt, and the tool treats a 404 as an empty layer rather
+> than failing to load.
+>
+> It also has a **review list** (dropdown +
 > prev/next) driven by `public/devtools/overlays/review-list.json`, which `npm run check:basins`
 > writes (AGENTS and the tool's own comment both used to call it hand-written — it never was). It
 > holds only the **unsigned** basins, so the moment the last one is signed off in `acceptedBasins`
 > a run legitimately produces nothing, and writing that `[]` takes the reviewer off the tool with
 > no error anywhere (the box only renders when the file loads non-empty). `_basins.ts` therefore
-> **refuses to write an empty list or an empty overlay**, same guard as `_areaskel.ts`. Keep both
-> files committed, and keep one entry as a schema example.
+> **refuses to write an empty list or an empty overlay** — the guard `_areaskel.ts` used to carry
+> before it was deleted, and the reason that deletion was safe only once the spine layer replaced
+> it. Keep both files committed, and keep one entry as a schema example.
 >
-> **`check:areaskel` and `check:areaclass` are retired.** They re-derive polygons straight from OSM
-> via `buildResortGraph` and so never see `build.ts`'s synthesis passes — today they classify every
-> polygon class `D` and produce nothing. `check:spines` is the live gate. `_areaskel.ts` now refuses
-> to write an empty overlay, because running it once silently truncated the committed 10.6 MB
-> `area-skeletons.json` and took the spine overlay off the debug map.
+> **`check:areaskel` and `check:areaclass` are deleted.** Both re-derived polygons straight
+> from OSM via `buildResortGraph` and so never saw `build.ts`'s synthesis passes — they classified
+> every polygon class `D` and produced nothing. `check:spines` is the live gate, and the **`spines`
+> layer** above replaced `_areaskel.ts`'s `area-skeletons.json` overlay: same geometry, same
+> colours, but emitted by the builder for all 18 resorts instead of frozen at the commit a retired
+> script last ran. Keeping the stale overlay beside the live layer was the real hazard — two
+> similarly-named spine views on one map, one of them silently wrong. `_areaclass.ts`'s findings
+> were not lost with it: the class taxonomy moved to `areaSkeleton.ts`'s header and its two
+> invariants to the polygon-class bullet above.
 > If your machine needs a private npm registry, put it in a **git-ignored `.npmrc`**.
 > External contributors just use public npm; the CI build resolves from public npm.
 

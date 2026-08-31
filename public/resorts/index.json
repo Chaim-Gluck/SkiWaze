@@ -1,11 +1,11 @@
 [
   {
-    "id": "les-deux-alpes",
-    "name": "Les 2 Alpes",
-    "country": "France",
+    "id": "portes-du-soleil",
+    "name": "Portes du Soleil",
+    "country": "France / Switzerland",
     "center": {
-      "lon": 6.16,
-      "lat": 45
+      "lon": 6.76,
+      "lat": 46.2
     }
   },
   {
@@ -130,6 +130,15 @@
     }
   },
   {
+    "id": "les-deux-alpes",
+    "name": "Les 2 Alpes",
+    "country": "France",
+    "center": {
+      "lon": 6.16,
+      "lat": 45
+    }
+  },
+  {
     "id": "monterosa-ski",
     "name": "Monterosa Ski",
     "country": "Italy",
@@ -154,15 +163,6 @@
     "center": {
       "lon": 7.28,
       "lat": 46.12
-    }
-  },
-  {
-    "id": "portes-du-soleil",
-    "name": "Portes du Soleil",
-    "country": "France / Switzerland",
-    "center": {
-      "lon": 6.76,
-      "lat": 46.2
     }
   }
 ]

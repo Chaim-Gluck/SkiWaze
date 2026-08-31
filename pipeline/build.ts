@@ -237,7 +237,7 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
       wayId: p.wayId,
       coordinates: p.points.map((pt) => [pt.lon, pt.lat] as [number, number]),
     }));
-  emitResort(resort, graph, report, PUBLIC_DIR, areaPolys);
+  emitResort(resort, graph, report, PUBLIC_DIR, areaPolys, skels);
 }
 
 function writeIndex(built: Resort[]): void {

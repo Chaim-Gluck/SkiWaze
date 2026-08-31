@@ -2,8 +2,32 @@
  * Interior-skeleton synthesis for `area=yes` piste polygons â€” the engine behind plan Â§3.
  *
  * An `area=yes` piste is a polygon, so the only thing the router can follow is its *perimeter*:
- * crossing a bowl means skiing around its rim. This module replaces that rim with an interior
+ * crossing a bowl means skiing around its rim. That is not merely ugly — the rim is often
+ * *straighter* than the real run, so it **wins on cost**, and where a centreline also exists the
+ * route visibly zig-zags between the two. This module replaces that rim with an interior
  * **spine** plus **arms** that carry every boundary portal in to it.
+ *
+ * ## Polygon classes
+ *
+ * `PolyResult.cls` reports which of these a polygon fell into. The call is made **per polygon,
+ * never per edge**: one ring's edges are legitimately at very different distances from the run's
+ * centreline (a wide polygon's far side is 100 m+ away), so deciding edge by edge would delete
+ * half a ring and fragment the graph.
+ *
+ *   A   a real centreline for the same run already exists under the WHOLE polygon
+ *       -> the rim is pure duplication; delete it and attach its portals to the real line.
+ *   B   a corridor (a ribbon of skiable width) with no centreline at all
+ *       -> a centreline has to be SYNTHESISED before the rim can go.
+ *   B'  a PARTIAL twin: a centreline exists, but the rim wanders off it where the ribbon widens.
+ *       Tempting to treat as A. Do not — see the invariant below. Handled like B, except the
+ *       existing centreline is reused as the spine instead of synthesising a second line beside it.
+ *   C   genuinely open terrain (aspect ratio below `BOWL_RATIO`)
+ *       -> no single line represents it; leave exactly as today. Currently matches nothing.
+ *   D   inert: contributes no graph edge at all. A closed ring sharing no node with any other way
+ *       collapses to a self-loop and `segmentWay` drops it (it requires `fromCanon !== toCanon`).
+ *       Such a polygon still paints as an area fill, but the router has never been able to enter
+ *       or cross it, so it is neither a defect to fix nor a candidate for synthesis — there are no
+ *       portals to connect.
  *
  * The arms are *routed through an interior sampling grid*, never drawn as straight connectors.
  * That is the whole point: a routed arm only ever touches points that passed a point-in-polygon
@@ -17,12 +41,13 @@
  * Elevation is deliberately absent: the search is purely 2D (centredness, not gradient). Real
  * elevation is fetched for the final vertices by the caller, never interpolated (plan Â§4b).
  *
- * `pipeline/_areaskel.ts` renders this to a mapdebug overlay; `pipeline/build.ts` feeds it into
- * the graph as synthetic pistes.
+ * `pipeline/build.ts` feeds this into the graph as synthetic pistes, and emits the same geometry to
+ * `spines.json` for the debug map's `spines`/`arms` layers.
  */
 import type { GeoPoint, GraphEdge, ResortGraph } from '../../src/types/domain';
 import type { NormPiste } from './normalize';
 import { sharedRimChains, pinchNodes } from './sharedRim';
+import { SKEL_COLORS } from './skelColors';
 
 const R = 6371000;
 const toRad = (d: number): number => (d * Math.PI) / 180;
@@ -1421,7 +1446,7 @@ function skeleton(
   const lines: OverlayLine[] = [];
   const points: OverlayPoint[] = [];
   const skel: SkelGeom = { synthSpines: [], spinePieces: [], stitches: [], wayBridges: [], arms: [] };
-  lines.push({ coords: ring.map(([lon, lat]) => [lon, lat]), color: '#9aa4b2', width: 1 });
+  lines.push({ coords: ring.map(([lon, lat]) => [lon, lat]), color: SKEL_COLORS.rim, width: 1 });
   // Clip each centreline to the ring properly. Filtering to inside *vertices* is wrong twice over:
   // OSM vertices can be 100 m+ apart, so a stretch that is genuinely inside gets dropped whenever
   // neither of its endpoints is (making the blue line look short and the arms look like they stop
@@ -1445,7 +1470,7 @@ function skeleton(
     let run: XY[] = [];
     const flush = (): void => {
       if (run.length >= 2) {
-        lines.push({ coords: run.map(toLL), color: '#1560ff', width: 4 });
+        lines.push({ coords: run.map(toLL), color: SKEL_COLORS.spine, width: 4 });
         skel.spinePieces.push(run.map(toLL));
         clipSrc.push(segIdx);
       }
@@ -1481,13 +1506,13 @@ function skeleton(
   // Synthesised spine (case B). Drawn in a lighter blue so it is obvious which polygons have a real
   // OSM centreline and which are carrying an invented one.
   if (synth) {
-    lines.push({ coords: synth.map(toLL), color: '#4da3ff', width: 4 });
+    lines.push({ coords: synth.map(toLL), color: SKEL_COLORS.spineSynth, width: 4 });
     skel.synthSpines.push(synth.map(toLL));
     skel.spinePieces.push(synth.map(toLL));
   }
   // Tail extensions are synthesised too, so they carry the same lighter blue.
   for (const t of tails) {
-    lines.push({ coords: t.map(toLL), color: '#4da3ff', width: 4 });
+    lines.push({ coords: t.map(toLL), color: SKEL_COLORS.spineSynth, width: 4 });
     skel.synthSpines.push(t.map(toLL));
     skel.spinePieces.push(t.map(toLL));
   }
@@ -1510,9 +1535,9 @@ function skeleton(
     const src: number[] = [];
     let clipN = 0;
     for (const l of lines) {
-      if (l.color !== '#1560ff' && l.color !== '#4da3ff') continue;
+      if (l.color !== SKEL_COLORS.spine && l.color !== SKEL_COLORS.spineSynth) continue;
       pieces.push(l.coords.map(([lo, la]) => toXY(lo, la)));
-      src.push(l.color === '#1560ff' ? clipSrc[clipN++] : -1);
+      src.push(l.color === SKEL_COLORS.spine ? clipSrc[clipN++] : -1);
     }
     // Closest approach between two polylines, plus the two points that realise it.
     const approach = (A: XY[], B: XY[]): { d: number; a: XY; b: XY } => {
@@ -1623,7 +1648,7 @@ function skeleton(
         anchor(c.a, false);
       }
       par[a] = b;
-      lines.push({ coords: link.map(toLL), color: '#00e0d0', width: 4 });
+      lines.push({ coords: link.map(toLL), color: SKEL_COLORS.stitch, width: 4 });
       skel.stitches.push(link.map(toLL));
       stitches++;
     }
@@ -1644,7 +1669,7 @@ function skeleton(
   // exactly on it looked like a 73 m hole. Phase 6 attaches to the real piste geometry, which is
   // there whether or not the clip drew it.
   const spineXY = lines
-    .filter((l) => l.color === '#4da3ff' || l.color === '#00e0d0')
+    .filter((l) => l.color === SKEL_COLORS.spineSynth || l.color === SKEL_COLORS.stitch)
     .map((l) => l.coords.map(([lo, la]) => toXY(lo, la)))
     .concat(spine.map((seg) => seg.map((v) => toXY(v.lon, v.lat))));
   const nearestOnSpine = (p: XY): { at: XY; d: number; li: number; si: number; t: number } => {
@@ -1729,7 +1754,7 @@ function skeleton(
           `    diag ${p.id} samples=${gridCount} step=${Math.round(step)}m nearest=${Math.round(bd)}m visFrac=${(ins / (n - 1)).toFixed(2)} portalInside=${inside(q, rXY)}`,
         );
       }
-      points.push({ at: [p.lon, p.lat], color: '#e11', r: 13, label: `stranded portal ${p.id}` });
+      points.push({ at: [p.lon, p.lat], color: SKEL_COLORS.stranded, r: 13, label: `stranded portal ${p.id}` });
       continue;
     }
     const raw: XY[] = [];
@@ -1861,7 +1886,7 @@ function skeleton(
       if (em.length >= 2)
         lines.push({
           coords: em.map(toLL),
-          color: !targets.length ? '#0ea5a4' : localHubs.has(last) ? '#7c3aed' : '#e11d9c',
+          color: !targets.length ? SKEL_COLORS.armNoTarget : localHubs.has(last) ? SKEL_COLORS.armHub : SKEL_COLORS.arm,
           width: 3,
         });
       // A one-point "arm" means the portal already sits on the spine. It still has to be reported, or
@@ -1891,7 +1916,7 @@ function skeleton(
       console.log(`    armless ${p.gateway ? 'gateway' : 'portal'} ${p.id} w${tag} outsideBy=${distToRing({ x: nx[pi], y: ny[pi] }).toFixed(2)}m inside=${inside({ x: nx[pi], y: ny[pi] }, rXY)} ${seatDiag.get(pi) ?? 'seated'}`);
     points.push({
       at: [p.lon, p.lat],
-      color: p.gateway ? '#7ddb4a' : '#ff8c1a',
+      color: p.gateway ? SKEL_COLORS.gateway : SKEL_COLORS.portal,
       r: 11,
       label: p.gateway ? `gateway ${p.id}` : `portal ${p.id}`,
     });
@@ -1933,7 +1958,7 @@ function skeleton(
 export const BOWL_RATIO = 3;
 
 /**
- * Ribbon length and aspect ratio, using `_areaclass.ts`'s definitions verbatim: width is the
+ * Ribbon length and aspect ratio. Width is the
  * equivalent-rectangle width `2A/P`, and length is derived as `A/width` rather than measured along
  * the ring, so a hairpin corridor does not read as "short and fat" just because its ends double
  * back. Any deviation here silently reclassifies polygons â€” an earlier `2A/(P/2)` halved every

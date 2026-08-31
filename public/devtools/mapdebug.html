@@ -63,6 +63,8 @@
     <label><input type="checkbox" id="t-pistes" checked> pistes</label>
     <label><input type="checkbox" id="t-connectors"> connectors</label>
     <label><input type="checkbox" id="t-lifts" checked> lifts</label>
+    <label><input type="checkbox" id="t-spines"> spines</label>
+    <label><input type="checkbox" id="t-arms"> arms</label>
     <label><input type="checkbox" id="t-arrows" checked> arrows</label>
     <label><input type="checkbox" id="t-names"> names</label>
     <label><input type="checkbox" id="t-overlay" checked> overlay</label>
@@ -73,6 +75,13 @@
     <div class="lg"><span class="sw" style="border-color:#1560ff"></span> piste (by colour)</div>
     <div class="lg"><span class="sw" style="border-top-style:dashed;border-color:#666"></span> connector</div>
     <div class="lg"><span class="sw" style="border-top-style:dashed;border-color:#111"></span> lift</div>
+    <div class="lg"><span class="sw" style="border-color:#1560ff"></span> spine — adopted OSM centreline</div>
+    <div class="lg"><span class="sw" style="border-color:#4da3ff"></span> spine — synthesised (class B)</div>
+    <div class="lg"><span class="sw" style="border-color:#00e0d0"></span> spine stitch</div>
+    <div class="lg"><span class="sw" style="border-color:#e11d9c"></span> arm — portal to spine</div>
+    <div class="lg"><span class="sw" style="border-color:#7c3aed"></span> arm — via local hub</div>
+    <div class="lg"><span class="sw" style="border-color:#0ea5a4"></span> arm — no target found</div>
+    <div class="lg"><span class="dot" style="background:#7ddb4a"></span> gateway · <span class="dot" style="background:#ff8c1a"></span> portal · <span class="dot" style="background:#e11"></span> stranded</div>
     <div class="lg"><span class="sw"></span> overlay line</div>
     <div class="lg"><span class="dot" style="background:#1560ff"></span> overlay point</div>
     <div class="lg">➤ one-way flow · ⟺ bidirectional (double-headed, green)</div>
@@ -136,6 +145,19 @@ function addResortLayers(geo){
   // guessing. Stamp each one with its run label and OSM way id, the same id the finder box takes.
   if(!map.getLayer('r-areas-labels')) map.addLayer({id:'r-areas-labels',type:'symbol',source:'r-areas',layout:{'text-field':['concat',['coalesce',['get','ref'],['get','name'],'?'],'\n w',['to-string',['coalesce',['get','wayId'],'?']]],'text-size':13,'text-font':['Noto Sans Regular'],'text-allow-overlap':false,'visibility':'none'},paint:{'text-color':'#7a1fa2','text-halo-color':'#fff','text-halo-width':2}});
 }
+// Polygon skeletons (spines / stitches / arms), emitted by the pipeline into spines.json so what is
+// drawn here is always what actually shipped. Colours come from the file, not from this tool: the
+// builder is the authority on which line is an adopted centreline and which is invented.
+function addSpineLayers(sp){
+  const lines={type:'FeatureCollection',features:sp.features.filter(f=>f.properties.role!=='point')};
+  const pts={type:'FeatureCollection',features:sp.features.filter(f=>f.properties.role==='point')};
+  const src=(id,data)=>{ if(map.getSource(id)) map.getSource(id).setData(data); else map.addSource(id,{type:'geojson',data}); };
+  src('r-spines',lines); src('r-spine-pts',pts);
+  const isArm=['==',['get','role'],'arm'];
+  if(!map.getLayer('r-arms')) map.addLayer({id:'r-arms',type:'line',source:'r-spines',filter:isArm,layout:{visibility:'none'},paint:{'line-color':['get','color'],'line-width':['get','width'],'line-opacity':0.85}});
+  if(!map.getLayer('r-spines')) map.addLayer({id:'r-spines',type:'line',source:'r-spines',filter:['!',isArm],layout:{visibility:'none'},paint:{'line-color':['get','color'],'line-width':['get','width']}});
+  if(!map.getLayer('r-spine-pts')) map.addLayer({id:'r-spine-pts',type:'circle',source:'r-spine-pts',layout:{visibility:'none'},paint:{'circle-radius':['*',['coalesce',['get','r'],6],0.5],'circle-color':['get','color'],'circle-stroke-color':'#fff','circle-stroke-width':1}});
+}
 // Flow arrows are drawn from graph.json (true per-edge directions) so bidirectional links show a
 // double-headed arrow; geo.json can't express this because it dedupes bidirectional connectors.
 function buildFlow(graph){
@@ -171,6 +193,8 @@ function applyToggles(){
   vis('r-areas-fill',el('t-areas').checked); vis('r-areas-line',el('t-areas').checked);
   vis('r-pistes',el('t-pistes').checked); vis('r-conns',el('t-connectors').checked);
   vis('r-lifts',el('t-lifts').checked);
+  vis('r-spines',el('t-spines').checked); vis('r-spine-pts',el('t-spines').checked);
+  vis('r-arms',el('t-arms').checked);
   vis('flow-arrows-p',el('t-arrows').checked); vis('flow-arrows-c',el('t-arrows').checked && el('t-connectors').checked);
   vis('r-pistes-labels',el('t-names').checked);
   vis('r-areas-labels',el('t-names').checked && el('t-areas').checked);
@@ -212,14 +236,19 @@ async function loadResort(id){
   curResort=id;
   if(nodePin){ nodePin.remove(); nodePin=null; }
   el('findnode').value='';
-  const [geo, graph]=await Promise.all([
+  const [geo, graph, spines]=await Promise.all([
     fetch(`/resorts/${id}/geo.json`).then(r=>r.json()),
     fetch(`/resorts/${id}/graph.json`).then(r=>r.json()).catch(()=>({nodes:[]})),
+    // Absent until the resort has been rebuilt since the spine layer landed — an empty layer is
+    // the honest result, and must not take the whole tool down.
+    fetch(`/resorts/${id}/spines.json`).then(r=>r.ok?r.json():{type:'FeatureCollection',features:[]})
+      .catch(()=>({type:'FeatureCollection',features:[]})),
   ]);
   curNodes=new Map(graph.nodes.map(n=>[n.id,n]));
   const dl=el('nodelist'); dl.innerHTML='';
   graph.nodes.forEach(n=>{ const o=document.createElement('option'); o.value=n.id; dl.appendChild(o); });
   addResortLayers(geo);
+  addSpineLayers(spines);
   addFlowArrows(graph);
   await drawOverlay();
   applyToggles();
