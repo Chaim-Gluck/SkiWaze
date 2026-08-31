@@ -365,6 +365,16 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 >   (class B), `#00e0d0` stitch, `#e11d9c`/`#7c3aed`/`#0ea5a4` arms, `#7ddb4a` gateway, `#ff8c1a`
 >   portal, `#e11` stranded portal. `mapdebug` maps colour → `role` only to split spines from arms
 >   into two toggles. The rim is dropped — the `areas` layer already draws it.
+> - **Spine blue and blue-piste blue are the same hex, so spines are drawn CASED.** `SKEL_COLORS.spine`
+>   and the tool's `COL.blue` are both `#1560ff`. With `pistes` ticked an adopted spine and an ordinary
+>   blue run were indistinguishable, and that collision produced a wrong reading during a polygon
+>   review — a run was reported as a spine. Recolouring was rejected: the colours are the builder's and
+>   they read well. The discriminator is line **structure** instead — `r-spines-case` draws a dark
+>   `#0b1b3a` line 3.5 px wider *underneath* `r-spines`, and no piste, connector or lift is cased, so
+>   **an outlined line is always a spine whatever colour it is**. Casing must be added before the
+>   coloured layer (MapLibre draws in insertion order) and must follow the same `spines` checkbox.
+>   Near-miss to watch for the same reason: `SKEL_COLORS.stranded '#e11'` vs piste red `#e11d1d` vs the
+>   area fill `#e11`.
 >
 > The file is absent until a resort is rebuilt, and the tool treats a 404 as an empty layer rather
 > than failing to load.

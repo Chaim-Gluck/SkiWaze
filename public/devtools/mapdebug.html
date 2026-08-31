@@ -23,6 +23,9 @@
   .toggles label{display:flex;align-items:center;gap:5px;font-weight:500;margin:0}
   .lg{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:12px}
   .sw{width:20px;height:0;border-top:5px solid #e11;border-radius:3px}
+  /* Spines are drawn cased on the map so they can never be confused with a same-coloured piste;
+     mirror that here, or the legend teaches the wrong thing. */
+  .sw.cased{box-shadow:0 0 0 2px #0b1b3a}
   .dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #999}
   .fill{width:16px;height:12px;border-radius:3px;opacity:.5}
   .notes{margin-top:9px;font-size:12px;color:#222;line-height:1.4;border-top:1px solid #ddd;padding-top:7px}
@@ -75,9 +78,10 @@
     <div class="lg"><span class="sw" style="border-color:#1560ff"></span> piste (by colour)</div>
     <div class="lg"><span class="sw" style="border-top-style:dashed;border-color:#666"></span> connector</div>
     <div class="lg"><span class="sw" style="border-top-style:dashed;border-color:#111"></span> lift</div>
-    <div class="lg"><span class="sw" style="border-color:#1560ff"></span> spine — adopted OSM centreline</div>
-    <div class="lg"><span class="sw" style="border-color:#4da3ff"></span> spine — synthesised (class B)</div>
-    <div class="lg"><span class="sw" style="border-color:#00e0d0"></span> spine stitch</div>
+    <div class="lg"><span class="sw cased" style="border-color:#1560ff"></span> spine — adopted OSM centreline</div>
+    <div class="lg"><span class="sw cased" style="border-color:#4da3ff"></span> spine — synthesised (class B)</div>
+    <div class="lg"><span class="sw cased" style="border-color:#00e0d0"></span> spine stitch</div>
+    <div class="lg" style="opacity:.75">↳ spines are the only <b>cased</b> (dark-outlined) lines — adopted spine blue is the same blue as a blue piste, so read the outline, not the colour</div>
     <div class="lg"><span class="sw" style="border-color:#e11d9c"></span> arm — portal to spine</div>
     <div class="lg"><span class="sw" style="border-color:#7c3aed"></span> arm — via local hub</div>
     <div class="lg"><span class="sw" style="border-color:#0ea5a4"></span> arm — no target found</div>
@@ -148,6 +152,14 @@ function addResortLayers(geo){
 // Polygon skeletons (spines / stitches / arms), emitted by the pipeline into spines.json so what is
 // drawn here is always what actually shipped. Colours come from the file, not from this tool: the
 // builder is the authority on which line is an adopted centreline and which is invented.
+//
+// Spines get a dark CASING under them, and it is not decoration. An adopted spine is '#1560ff',
+// which is bit-identical to the blue-piste colour in COL below, so with `pistes` ticked a spine and
+// an ordinary blue run were indistinguishable -- that collision already produced one wrong reading
+// during a review. Recolouring was rejected (the colours are the builder's, and they read well), so
+// the discriminator is line STRUCTURE instead: no piste, connector or lift is cased, so an outlined
+// line is always a spine whatever colour it happens to be. Casing must be added before the coloured
+// layer, since MapLibre draws in insertion order.
 function addSpineLayers(sp){
   const lines={type:'FeatureCollection',features:sp.features.filter(f=>f.properties.role!=='point')};
   const pts={type:'FeatureCollection',features:sp.features.filter(f=>f.properties.role==='point')};
@@ -155,6 +167,7 @@ function addSpineLayers(sp){
   src('r-spines',lines); src('r-spine-pts',pts);
   const isArm=['==',['get','role'],'arm'];
   if(!map.getLayer('r-arms')) map.addLayer({id:'r-arms',type:'line',source:'r-spines',filter:isArm,layout:{visibility:'none'},paint:{'line-color':['get','color'],'line-width':['get','width'],'line-opacity':0.85}});
+  if(!map.getLayer('r-spines-case')) map.addLayer({id:'r-spines-case',type:'line',source:'r-spines',filter:['!',isArm],layout:{visibility:'none','line-cap':'round','line-join':'round'},paint:{'line-color':'#0b1b3a','line-width':['+',['coalesce',['get','width'],3],3.5],'line-opacity':0.8}});
   if(!map.getLayer('r-spines')) map.addLayer({id:'r-spines',type:'line',source:'r-spines',filter:['!',isArm],layout:{visibility:'none'},paint:{'line-color':['get','color'],'line-width':['get','width']}});
   if(!map.getLayer('r-spine-pts')) map.addLayer({id:'r-spine-pts',type:'circle',source:'r-spine-pts',layout:{visibility:'none'},paint:{'circle-radius':['*',['coalesce',['get','r'],6],0.5],'circle-color':['get','color'],'circle-stroke-color':'#fff','circle-stroke-width':1}});
 }
@@ -193,7 +206,7 @@ function applyToggles(){
   vis('r-areas-fill',el('t-areas').checked); vis('r-areas-line',el('t-areas').checked);
   vis('r-pistes',el('t-pistes').checked); vis('r-conns',el('t-connectors').checked);
   vis('r-lifts',el('t-lifts').checked);
-  vis('r-spines',el('t-spines').checked); vis('r-spine-pts',el('t-spines').checked);
+  vis('r-spines-case',el('t-spines').checked); vis('r-spines',el('t-spines').checked); vis('r-spine-pts',el('t-spines').checked);
   vis('r-arms',el('t-arms').checked);
   vis('flow-arrows-p',el('t-arrows').checked); vis('flow-arrows-c',el('t-arrows').checked && el('t-connectors').checked);
   vis('r-pistes-labels',el('t-names').checked);
