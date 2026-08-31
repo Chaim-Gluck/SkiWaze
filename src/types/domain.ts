@@ -308,6 +308,16 @@ export type SkillLevel = 'cautious' | 'average' | 'advanced' | 'expert';
 export type RouteObjective = 'fastest' | 'fewest_lifts' | 'preferred' | 'longest_ab';
 
 /**
+ * A badge on a route card. This is a KEY, never display text.
+ *
+ * It used to be the English string ("Fastest", "Alternative"), and `reconcileLabels` in plan.ts
+ * compares badges to decide which card wins a badge — so the display string was load-bearing
+ * routing logic. Translating it would have silently broken reconciliation rather than failing
+ * loudly. Routing emits keys; only the UI turns a key into words (see utils/routeLabels.ts).
+ */
+export type RouteLabel = RouteObjective | 'alternative';
+
+/**
  * What the "Find route" flow returns. `balanced` (default) shows one best route per objective
  * (deduped); the others each show up to 3 distinct routes optimised for that single objective.
  */
@@ -410,8 +420,8 @@ export interface DisplayStep {
 export interface Route {
   id: string;
   objective: RouteObjective;
-  /** Objective badges to show on the card (e.g. ["Fastest", "Fewest lifts"] when deduped). */
-  labels?: string[];
+  /** Objective badge KEYS to show on the card (e.g. ["fastest", "fewest_lifts"] when deduped). */
+  labels?: RouteLabel[];
   legs: RouteLeg[];
   /** Grouped, readable steps derived from `legs` (presentation only). */
   steps: DisplayStep[];

@@ -1,4 +1,4 @@
-import type { GraphEdge, MeaningfulPoint, Preferences, Route, RouteRequest, ResortGraph, PisteColor, RouteObjective } from '../types/domain';
+import type { GraphEdge, MeaningfulPoint, Preferences, Route, RouteRequest, ResortGraph, PisteColor, RouteObjective, RouteLabel } from '../types/domain';
 import { PISTE_COLOR_ORDER } from '../types/domain';
 import { GraphIndex } from './graphIndex';
 import { alternativeRoutes } from './alternatives';
@@ -129,14 +129,14 @@ function nearestSkiDestination(
   return { skiable: false, suggestion: best ? { name: best.name, nodeId: best.nodeId } : undefined };
 }
 
-const OBJECTIVE_LABEL: Record<RouteObjective, string> = {
-  fastest: 'Fastest',
-  fewest_lifts: 'Fewest lifts',
-  preferred: 'Preferred runs',
-  longest_ab: 'Longest',
-};
-
-/** True when the skier actually restricts preferred colors (so a "preferred" route can differ). */
+/**
+ * A route's badge is its objective KEY. There is deliberately no English here: `reconcileLabels`
+ * below compares badges, so a display string would make this routing logic that breaks when the UI
+ * is translated. Words are attached in `utils/routeLabels.ts`.
+ */
+/**
+ * True when the skier actually restricts preferred colors (so a "preferred" route can differ).
+ */
 function hasColorPreference(prefs: Preferences): boolean {
   const all: PisteColor[] = ['green', 'blue', 'red', 'black'];
   return all.some((c) => !prefs.preferredColors.includes(c));
@@ -171,21 +171,21 @@ function noRouteResult(closedEdgeIds: ReadonlySet<string>): PlanResult {
  * see is not a contradiction, and re-badging on it would just make the ordering look random.
  */
 function reconcileLabels(routes: Route[]): void {
-  const move = (label: string, better: (a: Route, b: Route) => boolean) => {
+  const move = (label: RouteLabel, better: (a: Route, b: Route) => boolean) => {
     const holder = routes.find((r) => r.labels?.includes(label));
     if (!holder) return;
     let winner = holder;
     for (const r of routes) if (r !== holder && better(r, winner)) winner = r;
     if (winner === holder) return;
     holder.labels = (holder.labels ?? []).filter((l) => l !== label);
-    if (holder.labels.length === 0) holder.labels = ['Alternative'];
-    winner.labels = [label, ...(winner.labels ?? []).filter((l) => l !== label && l !== 'Alternative')];
+    if (holder.labels.length === 0) holder.labels = ['alternative'];
+    winner.labels = [label, ...(winner.labels ?? []).filter((l) => l !== label && l !== 'alternative')];
   };
   const mins = (r: Route) => Math.round(r.stats.totalDurationS / 60);
   const skiHm = (r: Route) => Math.round(pisteMetres(r) / 100);
-  move(OBJECTIVE_LABEL.fastest, (a, b) => mins(a) < mins(b));
-  move(OBJECTIVE_LABEL.fewest_lifts, (a, b) => a.stats.liftCount < b.stats.liftCount);
-  move(OBJECTIVE_LABEL.longest_ab, (a, b) => skiHm(a) > skiHm(b));
+  move('fastest', (a, b) => mins(a) < mins(b));
+  move('fewest_lifts', (a, b) => a.stats.liftCount < b.stats.liftCount);
+  move('longest_ab', (a, b) => skiHm(a) > skiHm(b));
 }
 
 /**
@@ -339,12 +339,12 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
       const r = finalize(maximiseBetweenLifts(withLift), 'longest_ab', 'route-1');
       // Just "Longest" — the card already shows a lift icon and count, so spelling out "(needs a
       // lift)" in the badge only repeats what is printed right below it.
-      r.labels = [OBJECTIVE_LABEL.longest_ab];
+      r.labels = ['longest_ab'];
       return { routes: [r] };
     }
     const routes = distinctTerrain(longRoutes.sort(makeRouteComparator('longest_ab', prefs)))
       .slice(0, 3)
-      .map((r, i) => { r.id = `route-${i + 1}`; r.labels = [OBJECTIVE_LABEL.longest_ab]; return r; });
+      .map((r, i) => { r.id = `route-${i + 1}`; r.labels = ['longest_ab']; return r; });
     return { routes };
   }
 
@@ -361,15 +361,15 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
 
   if (routeType === 'balanced') {
     const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3, 0.7, allowForLongest), 'longest_ab');
-    const byKey = new Map<string, { route: Route; objective: RouteObjective; labels: string[]; order: number }>();
+    const byKey = new Map<string, { route: Route; objective: RouteObjective; labels: RouteLabel[]; order: number }>();
     const consider = (route: Route | undefined, objective: RouteObjective, order: number) => {
       if (!route) return;
       const key = terrainKey(route);
       const existing = byKey.get(key);
       if (existing) {
-        if (!existing.labels.includes(OBJECTIVE_LABEL[objective])) existing.labels.push(OBJECTIVE_LABEL[objective]);
+        if (!existing.labels.includes(objective)) existing.labels.push(objective);
       } else {
-        byKey.set(key, { route, objective, labels: [OBJECTIVE_LABEL[objective]], order });
+        byKey.set(key, { route, objective, labels: [objective], order });
       }
     };
 
@@ -405,7 +405,7 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
         .find((r) => !shown.has(terrainKey(r)));
       if (alt) {
         alt.objective = 'fastest';
-        alt.labels = ['Alternative'];
+        alt.labels = ['alternative'];
         routes.push(alt);
       }
     }
@@ -418,6 +418,6 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
   const objective: RouteObjective = routeType;
   const routes = distinctTerrain(pool.slice().sort(makeRouteComparator(objective, prefs)))
     .slice(0, 3)
-    .map((r, i) => { r.id = `route-${i + 1}`; r.objective = objective; r.labels = [OBJECTIVE_LABEL[objective]]; return r; });
+    .map((r, i) => { r.id = `route-${i + 1}`; r.objective = objective; r.labels = [objective]; return r; });
   return withSkiNote(routes);
 }

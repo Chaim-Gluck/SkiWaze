@@ -35,6 +35,10 @@ function hav(a: { lon: number; lat: number }, b: { lon: number; lat: number }): 
 
 let violations = 0;
 let planned = 0;
+// How many plans actually carried each badge. A badge key that never matches would make this
+// probe report a serene "0 violations" while testing nothing — the failure mode AGENTS warns
+// about, and a live risk here because these keys are matched as strings. Asserted at the end.
+const badged = { fastest: 0, longest_ab: 0 };
 
 for (const id of ids) {
   let graph: ResortGraph;
@@ -72,8 +76,9 @@ for (const id of ids) {
     const routes = res.routes ?? [];
     if (routes.length < 2) continue;
     planned++;
-    const fastest = routes.find((r) => r.labels?.includes('Fastest'));
+    const fastest = routes.find((r) => r.labels?.includes('fastest'));
     if (fastest) {
+      badged.fastest++;
       const quicker = routes.find((r) => r !== fastest && mins(r) < mins(fastest));
       if (quicker) {
         violations++;
@@ -83,8 +88,9 @@ for (const id of ids) {
         );
       }
     }
-    const longest = routes.find((r) => r.labels?.includes('Longest'));
+    const longest = routes.find((r) => r.labels?.includes('longest_ab'));
     if (longest) {
+      badged.longest_ab++;
       const longer = routes.find((r) => r !== longest && km(pisteMetres(r)) > km(pisteMetres(longest)));
       if (longer) {
         violations++;
@@ -99,4 +105,9 @@ for (const id of ids) {
 }
 
 console.log(`badges: ${violations} violation(s) over ${planned} multi-option plans`);
-process.exitCode = violations > 0 ? 1 : 0;
+console.log(`badges seen: fastest=${badged.fastest} longest_ab=${badged.longest_ab}`);
+// A run that planned real routes but never saw a badge means the keys stopped matching, not that
+// the app got perfect. Fail, rather than report a clean bill of health for an untested invariant.
+const blind = planned > 0 && badged.fastest === 0 && badged.longest_ab === 0;
+if (blind) console.log('badges: FAIL — no badge key ever matched, so nothing was actually checked');
+process.exitCode = violations > 0 || blind ? 1 : 0;

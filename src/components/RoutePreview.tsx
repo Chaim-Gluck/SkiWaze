@@ -1,5 +1,6 @@
 import type { Route } from '../types/domain';
 import { fmtDistance, fmtDuration } from '../utils/format';
+import { routeLabelText } from '../utils/routeLabels';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -69,7 +70,7 @@ export function RoutePreview({ routes, selectedIndex, onSelect, onStart, onDetai
         {r.labels && r.labels.length > 0 && (
           <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end', alignSelf: 'center' }}>
             {r.labels.map((label) => (
-              <Chip key={label} size="small" color="primary" variant="outlined" label={label} sx={{ height: 20 }} />
+              <Chip key={label} size="small" color="primary" variant="outlined" label={routeLabelText(label)} sx={{ height: 20 }} />
             ))}
           </Box>
         )}
