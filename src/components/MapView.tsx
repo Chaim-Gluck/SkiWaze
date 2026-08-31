@@ -1080,7 +1080,15 @@ export function MapView({
   return (
     <div className="map-shell">
       <div ref={containerRef} className="map-canvas" />
-      <Box sx={{ position: 'absolute', top: 10, left: 10, zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start', maxWidth: 'calc(100% - 20px)' }}>
+      <Box sx={{
+        position: 'absolute', top: 10, left: 10, zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start',
+        // Stop short of the map's right-hand Fab column instead of running under it. The locate Fab
+        // is size="small" (40px) at right:12, so it owns the last 52px; 10px left inset + 10px gap
+        // gives 72. Without this the expanded Layers panel grows until it collides with the Fab on a
+        // phone -- it wraps to three rows once there are five layer checkboxes. The Legend below is
+        // capped at 240px of its own, so it is unaffected at any phone width.
+        maxWidth: 'calc(100% - 72px)',
+      }}>
       <Paper
         elevation={3}
         sx={{
