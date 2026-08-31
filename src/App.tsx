@@ -85,6 +85,7 @@ import { ClosedPanel } from './components/ClosedPanel';
 import { LongestRunPanel } from './components/LongestRunPanel';
 import { RoutePreview } from './components/RoutePreview';
 import { Logo } from './components/Logo';
+import { LanguagePicker } from './components/LanguagePicker';
 import './App.css';
 
 const DEFAULT_RESORT_ID = 'madonna-di-campiglio';
@@ -1114,6 +1115,7 @@ export default function App() {
               {resortMenuItems}
             </Select>
           </FormControl>
+          <LanguagePicker />
           <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
             <IconButton onClick={toggleTheme} aria-label="Toggle light/dark theme">
               {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}

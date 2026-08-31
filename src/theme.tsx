@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeModeContext, type ThemeMode, type ThemeModeCtxValue } from './theme-context';
+import { useLanguage } from './i18n/language-context';
 
 /**
  * Single source of truth for the app's colours. The MUI theme is built from these, AND they
@@ -33,9 +34,10 @@ const TOKENS: Record<ThemeMode, Record<string, string>> = {
   },
 };
 
-function makeTheme(mode: ThemeMode) {
+function makeTheme(mode: ThemeMode, direction: 'ltr' | 'rtl') {
   const t = TOKENS[mode];
   return createTheme({
+    direction,
     palette: {
       mode,
       primary: { main: t.primary },
@@ -76,11 +78,12 @@ function initialMode(): ThemeMode {
 /** Wraps the app in the MUI theme + CssBaseline and keeps the CSS vars / storage in sync. */
 export function ThemeModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<ThemeMode>(initialMode);
+  const { rtl } = useLanguage();
   useEffect(() => {
     applyCssVars(mode);
     try { localStorage.setItem(STORAGE_KEY, mode); } catch { /* ignore */ }
   }, [mode]);
-  const theme = useMemo(() => makeTheme(mode), [mode]);
+  const theme = useMemo(() => makeTheme(mode, rtl ? 'rtl' : 'ltr'), [mode, rtl]);
   const value = useMemo<ThemeModeCtxValue>(() => ({ mode, toggle: () => setMode((m) => (m === 'dark' ? 'light' : 'dark')) }), [mode]);
   return (
     <ThemeModeContext.Provider value={value}>

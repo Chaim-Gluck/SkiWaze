@@ -1,0 +1,9 @@
+{
+  "app": {
+    "name": "SkiWaze",
+    "tagline": "navigate the slopes"
+  },
+  "lang": {
+    "picker": "Language"
+  }
+}
