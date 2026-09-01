@@ -1479,6 +1479,7 @@ export default function App() {
             globalView={globalView}
             onEnterGlobalView={handleEnterGlobalView}
             resortFrameSeq={resortFrameSeq}
+            allowOffPiste={prefs.allowOffPiste}
           />
           {globalView && (
             <div className="pin-hint" dir={dir} data-testid="global-view-hint">

@@ -28,7 +28,7 @@
     "arriveAtDestination": "arrive at destination",
     "remaining": "{{distance}} · {{time}} left",
     "acquiringGps": "Acquiring GPS…",
-    "enRoute": "En route",
+    "enRoute": "On your way",
     "reroute": "Re-route",
     "exit": "Exit",
     "devSim": "DEV sim",
@@ -39,7 +39,7 @@
     "runBadge": "run"
   },
   "link": {
-    "intro": "Draw a skiable link the map is missing. Pick both ends from the list, or pin them anywhere on the map (even mid-slope) — pinned points become custom junctions.",
+    "intro": "Draw a skiable link the map is missing. Pick both ends from the list, or pin them anywhere on the map (even mid-slope) - pinned points become custom junctions.",
     "from": "Link from",
     "to": "Link to",
     "pinAnywhere": "Pin anywhere",
@@ -97,7 +97,7 @@
       "longest": "Longest run"
     },
     "routeTypeHelp": {
-      "balanced": "One best route for each goal — fastest, fewest lifts, and so on.",
+      "balanced": "One best route for each goal - fastest, fewest lifts, and so on.",
       "fastest": "Your 3 quickest options.",
       "fewest_lifts": "3 options that ride the fewest lifts.",
       "preferred": "3 options that stay on your preferred colours.",
@@ -113,7 +113,7 @@
     },
     "hide": "Hide",
     "speedHelpLink": "How are times estimated?",
-    "speedHelpBody": "We estimate your real speed on each run colour, then add the extra distance your turns create — steeper runs mean more turns — so times reflect real skiing, not a straight line. Your \"skiing speed\" above tunes it (better skiers keep more speed on steep runs).",
+    "speedHelpBody": "We estimate your real speed on each run colour, then add the extra distance your turns create - steeper runs mean more turns - so times reflect real skiing, not a straight line. Your \"skiing speed\" above tunes it (better skiers keep more speed on steep runs).",
     "speedChip": "{{color}} ~{{value}} km/h",
     "usingMeasured": "Currently using your measured speeds.",
     "preferredColors": "Preferred slope colors",
@@ -131,7 +131,7 @@
       "alternative": "Alternative"
     },
     "liftDownhill": "This route rides a lift downhill",
-    "inferredWarning": "Uses an app-added bridge (dotted magenta) — verify it's actually skiable",
+    "inferredWarning": "Uses an app-added bridge (dotted magenta) - verify it's actually skiable",
     "usesCustom": "Uses one of your custom links (dotted cyan)",
     "descent": "{{distance}} descent",
     "lifts_one": "{{count}} lift",
@@ -165,7 +165,7 @@
     "next": "Next run",
     "position": "#{{index}} of {{total}} longest",
     "descent": "{{distance}} descent",
-    "inferredWarning": "Uses an app-added bridge (dotted magenta) — verify it's actually skiable",
+    "inferredWarning": "Uses an app-added bridge (dotted magenta) - verify it's actually skiable",
     "toStart": "To start",
     "toEnd": "To end"
   },
@@ -189,7 +189,7 @@
     },
     "pistes": "Pistes",
     "lifts": "Lifts",
-    "areas": "Areas",
+    "areas": "Polygons",
     "offPiste": "Off-piste",
     "labels": "Labels"
   },
@@ -200,8 +200,8 @@
     "rows": {
       "piste-multi": "Piste: green / blue / red / black",
       "piste-unrated": "Unrated / connection piste",
-      "piste-offpiste": "Off-piste / freeride — unpatrolled (toggle on)",
-      "lift": "Lift (up; gondolas also down)",
+      "piste-offpiste": "Off-piste / freeride - unpatrolled (toggle on)",
+      "lift": "Lift (up, gondolas also down)",
       "connector": "Flat link / cat-track",
       "synthetic": "App-added bridge (verify)",
       "custom": "Your custom link",
@@ -210,7 +210,7 @@
   },
   "speeds": {
     "title": "My measured speeds",
-    "intro": "Your real GPS speed vs our estimate of it (both are real move speeds). Turns are accounted for separately, so this stays honest. Apply to use your measured speeds for ETAs.",
+    "intro": "Your real GPS speed vs our estimate of it (both are real move speeds). The extra distance you cover carving side to side is handled separately, so the two are compared on the same basis. Apply to use your measured speeds for ETAs.",
     "colour": "Colour",
     "estimated": "Estimated",
     "measured": "Measured",
@@ -222,21 +222,21 @@
   },
   "app": {
     "notice": {
-      "followingOn": "Showing your location — following you. Tap the button again to stop.",
-      "followingRecentered": "Recentered — following you again. Tap the button again to stop.",
+      "followingOn": "Showing your location - following you. Tap the button again to stop.",
+      "followingRecentered": "Recentered - following you again. Tap the button again to stop.",
       "followingOff": "Stopped following your location.",
       "navNoRoute": "Find and pick a route first, then start navigation.",
-      "speedsNotEnough": "Not enough measured data yet — ski a bit on each colour while navigating.",
+      "speedsNotEnough": "Not enough measured data yet - ski a bit on each colour while navigating.",
       "speedsOn": "Using your measured speeds. Turn off in preferences to go back to the model.",
       "geoUnavailable": "Geolocation is not available in this browser.",
       "geoFailedPick": "Could not get your location. Pick a point or pin on the map instead.",
       "pickBoth": "Pick both a start and a destination first.",
-      "shareCopied": "Message + link copied to clipboard — send it to a friend.",
+      "shareCopied": "Message + link copied to clipboard - send it to a friend.",
       "geoFailedShare": "Could not get your location to share.",
       "sharePlaceFailed": "Could not place the shared location on this resort.",
-      "geoUnavailableFrom": "Geolocation is not available — pick a start point (From), then Find routes.",
-      "geoPlaceFailedFrom": "Could not place your location on this resort — pick a start point (From).",
-      "geoFailedFrom": "Could not get your location — pick a start point (From), then Find routes.",
+      "geoUnavailableFrom": "Geolocation is not available - pick a start point (From), then Find routes.",
+      "geoPlaceFailedFrom": "Could not place your location on this resort - pick a start point (From).",
+      "geoFailedFrom": "Could not get your location - pick a start point (From), then Find routes.",
       "linkPickBoth": "Pick both a \"Link from\" and a \"Link to\" point for the link.",
       "linkPickDistinct": "Pick two different points for the link.",
       "longestNone": "No lift-free run found for your level. Try raising your max difficulty.",
@@ -247,7 +247,7 @@
       "linkDirBoth": "both ways",
       "linkAdded": "Added a {{color}} link ({{direction}}). Press \"Find routes\" to use it.",
       "longestDestSet": "Destination set to the start of the longest run ({{name}}). Pick your start point A (or tap \"My location\"), then press Find routes.",
-      "closedMarked": "Marked \"{{label}}\" closed — routes will avoid it. Reopen it in the \"Closed today\" panel."
+      "closedMarked": "Marked \"{{label}}\" closed - routes will avoid it. Reopen it in the \"Closed today\" panel."
     },
     "resort": "Resort",
     "tagline": "NAVIGATE THE SLOPES",
@@ -259,7 +259,7 @@
     "showControls": "Show controls",
     "dragToClose": "Drag down to close",
     "openLink": "Open ↗",
-    "globalHint": "Zoomed out — click a resort flag (or pick one from the list) to open it",
+    "globalHint": "Zoomed out - click a resort flag (or pick one from the list) to open it",
     "pinHintPoint": "Click the map to set the {{which}} point",
     "pinHintLink": "Click the map to place the link's {{which}} point (anywhere)",
     "graphStats": "{{nodes}} nodes · {{edges}} edges · {{points}} named points",
@@ -271,7 +271,7 @@
     },
     "statusNotice": {
       "title": "Lift & slope status",
-      "text": "Shown as OPEN by default — in early or late season some lifts and runs may actually be closed.",
+      "text": "Shown as OPEN by default - in early or late season some lifts and runs may actually be closed.",
       "hrefLabel": "Check the resort’s live status ↗",
       "tip": "Tip: mark a closed lift or run (⊘ on a route step) and Find Route will avoid it."
     },
@@ -314,7 +314,7 @@
     },
     "locate": {
       "show": "Show my location",
-      "following": "Following you — tap to stop",
+      "following": "Following you - tap to stop",
       "recenter": "Recenter on me"
     },
     "point": {
@@ -342,15 +342,15 @@
       "toDest": "Share the “To” destination",
       "toDestNamed": "Share the “To” destination: {{name}}",
       "thisSpot": "this spot",
-      "msgHere": "📍 Meet me at {{place}} — open this SkiWaze link to navigate there:",
+      "msgHere": "📍 Meet me at {{place}} - open this SkiWaze link to navigate there:",
       "msgMe": "📍 Come meet me on the slopes! Open this SkiWaze link and it'll route you to my location:"
     },
     "sharePrompt": {
-      "text": "A location was shared with you — set as your destination. Navigate there?",
+      "text": "A location was shared with you - set as your destination. Navigate there?",
       "navigate": "Navigate"
     },
     "notes": {
-      "missingHours": "Some lifts have no opening-hours data — closing-time warnings may be missing.",
+      "missingHours": "Some lifts have no opening-hours data - closing-time warnings may be missing.",
       "defaultWait": "Default lift wait times were used (no measured data).",
       "defaultSpeed": "Default ski speeds were used for some runs (unknown difficulty)."
     },
@@ -400,8 +400,8 @@
     "defaultSpeed": "Using a default ski speed (piste color unknown).",
     "hours": "Opening hours unknown for this lift.",
     "hoursNamed": "Opening hours unknown for {{name}}.",
-    "closing": "Lift closes in ~{{min}} min — hurry!",
-    "closingNamed": "{{name}} closes in ~{{min}} min — hurry!",
+    "closing": "Lift closes in ~{{min}} min - hurry!",
+    "closingNamed": "{{name}} closes in ~{{min}} min - hurry!",
     "defaultWait": "Using a default wait time for this lift.",
     "defaultWaitNamed": "Using a default wait time for {{name}}."
   },
@@ -409,7 +409,7 @@
     "error": {
       "noStart": "Start point not found.",
       "noDest": "Destination not found.",
-      "noneClosures": "No route found — some lifts/runs on the way are marked closed. Try reopening one, or relax difficulty / lift types.",
+      "noneClosures": "No route found - some lifts/runs on the way are marked closed. Try reopening one, or relax difficulty / lift types.",
       "nonePrefs": "No route found with your current preferences (try relaxing difficulty, lift types, or turning off \"Avoid app-added bridges\")."
     }
   }

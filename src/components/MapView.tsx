@@ -345,12 +345,18 @@ interface MapViewProps {
   onEnterGlobalView?: () => void;
   /** Bumped by App on every resort selection, so re-picking the current resort still re-frames. */
   resortFrameSeq?: number;
+  /**
+   * The router's off-piste opt-in. Only used to *follow* it: flipping the preference pushes the
+   * off-piste layer to match, so opting in can never leave the router crossing terrain the map
+   * isn't drawing. The user is still free to toggle the layer afterwards.
+   */
+  allowOffPiste?: boolean;
 }
 
 export function MapView({
   center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, fitRequest, onMapClick,
   userPosition, following, nav, navHeadingUp, resorts, selectedResortId, onSelectResort,
-  globalView = false, onEnterGlobalView, resortFrameSeq = 0,
+  globalView = false, onEnterGlobalView, resortFrameSeq = 0, allowOffPiste = false,
 }: MapViewProps) {
   const { t } = useTranslation();
   // The map shell is pinned LTR, so the panels that hold prose have to ask for the reading
@@ -372,9 +378,16 @@ export function MapView({
   const [showAreas, setShowAreas] = useState(false);
   // Off-piste defaults OFF so the map agrees with the router, which refuses these edges unless
   // `allowOffPiste` is set. Drawing unpatrolled freeride terrain by default would advertise it.
-  const [showOffPiste, setShowOffPiste] = useState(false);
+  const [showOffPiste, setShowOffPiste] = useState(allowOffPiste);
   const [showLabels, setShowLabels] = useState(true);
   const [controlsOpen, setControlsOpen] = useState(false);
+
+  // One-way sync: the preference drives the layer, never the reverse. Opting into off-piste routing
+  // reveals the terrain (otherwise the route line crosses snow with no run drawn under it); opting
+  // back out hides it again. Keyed on the preference alone, so toggling the layer by hand sticks.
+  useEffect(() => {
+    setShowOffPiste(allowOffPiste);
+  }, [allowOffPiste]);
 
   // Live location + navigation are driven by props (shared hook lives in App).
   const userMarker = useRef<maplibregl.Marker | null>(null);
@@ -1127,15 +1140,32 @@ export function MapView({
                 <LayersIcon fontSize="small" /> {t('layers.title')}
               </Typography>
             </Box>
-            <ToggleButtonGroup exclusive size="small" value={base} onChange={(_, v) => v && setBase(v)}>
-              <ToggleButton value="standard" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.standard')}</ToggleButton>
-              <ToggleButton value="topo" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.topo')}</ToggleButton>
-              <ToggleButton value="satellite" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.satellite')}</ToggleButton>
-            </ToggleButtonGroup>
+            {/* Two separate exclusive groups sharing one row: the base map is a tile source, 2D/3D is
+                terrain relief. Merging them into one ToggleButtonGroup would make 3D deselect the
+                base map. Pushed to opposite ends, which also reads as "different question" — the
+                panel is dir-aware, so in RTL they swap sides on their own. The row wraps if a
+                translation ever outgrows the panel's width cap, and space-between then collapses to
+                a normal gap. */}
+            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 0.75 }}>
+              <ToggleButtonGroup exclusive size="small" value={base} onChange={(_, v) => v && setBase(v)}>
+                <ToggleButton value="standard" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.standard')}</ToggleButton>
+                <ToggleButton value="topo" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.topo')}</ToggleButton>
+                <ToggleButton value="satellite" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.satellite')}</ToggleButton>
+              </ToggleButtonGroup>
+              {/* Naming both states beats a lone "3D" toggle, whose meaning depends on whether the
+                  user can tell it is selected. "2D"/"3D" read the same in every language. */}
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={is3D ? '3d' : '2d'}
+                onChange={(_, v) => v && setIs3D(v === '3d')}
+                title={t('layers.toggle3d')}
+              >
+                <ToggleButton value="2d" sx={{ px: 1.25, py: 0.25 }}>2D</ToggleButton>
+                <ToggleButton value="3d" sx={{ px: 1.25, py: 0.25 }}>3D</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.25 }}>
-              <ToggleButton value="3d" selected={is3D} size="small" onClick={() => setIs3D((v) => !v)} title={t('layers.toggle3d')} sx={{ px: 1, py: 0.25, mr: 0.5 }}>
-                3D
-              </ToggleButton>
               {([['pistes', showPistes, setShowPistes], ['lifts', showLifts, setShowLifts], ['areas', showAreas, setShowAreas], ['offPiste', showOffPiste, setShowOffPiste], ['labels', showLabels, setShowLabels]] as const).map(
                 ([key, checked, setter]) => (
                   <FormControlLabel
