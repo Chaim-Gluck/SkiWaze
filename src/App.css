@@ -26,6 +26,37 @@ body {
   color: var(--text);
 }
 
+/*
+ * Hebrew type correction — no webfont, system faces only.
+ *
+ * Hebrew has no case, so it carries none of the visual variety that lets a Latin heading absorb
+ * 700-800 without shouting. The fix that actually does the work is the face swap in `theme.tsx`
+ * (the only thing MUI's components read); this rule covers the plain elements outside MUI.
+ *
+ * The 600 cap below is a no-op wherever Arial wins the stack: Arial ships Regular and Bold only,
+ * so 600 rounds up to Bold (measured: Arial/600 and Arial/700 are the same width to the pixel).
+ * It is kept because it does bite on faces that carry a real Semibold — Segoe UI, and the
+ * `system-ui` fallback on platforms without Arial.
+ *
+ * Keyed on `:lang`, not `[dir]`, so it follows the language rather than the writing direction, and
+ * `!important` because these weights are set per-component through `sx` (emotion), which otherwise
+ * outranks any stylesheet rule.
+ */
+body:lang(he) {
+  font-family: Arial, 'Segoe UI', system-ui, sans-serif;
+}
+
+:lang(he) .MuiTypography-h4,
+:lang(he) .MuiTypography-h5,
+:lang(he) .MuiTypography-h6,
+:lang(he) .MuiButton-root,
+:lang(he) .MuiChip-label,
+:lang(he) .MuiTypography-caption,
+:lang(he) .MuiTypography-subtitle1,
+:lang(he) .MuiTypography-subtitle2 {
+  font-weight: 600 !important;
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -51,6 +82,9 @@ body {
   color: transparent;
 }
 .logo-tag { font-weight: 700; font-size: 12px; letter-spacing: 4px; color: var(--muted); margin-top: 3px; }
+/* Hebrew has no tracked-caps convention and 4px just looks broken. Keyed on :lang, not [dir],
+   because the header is deliberately pinned dir="ltr". */
+.logo-tag:lang(he) { letter-spacing: 1px; font-size: 13px; }
 
 .body {
   display: flex;
@@ -64,7 +98,7 @@ body {
   padding: 12px;
   overflow-y: auto;
   background: var(--bg);
-  border-right: 1px solid var(--line);
+  border-inline-end: 1px solid var(--line);
 }
 
 .map-wrap { flex: 1; position: relative; min-width: 0; }
@@ -81,11 +115,11 @@ body {
 
 /* Navigation (Phase 2) */
 .nav-arrow { filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)); }
-.pbadge { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 21px; padding: 0 5px; border-radius: 6px; color: #fff; font-weight: 800; font-size: 13px; border: 1.5px solid rgba(255, 255, 255, 0.85); vertical-align: middle; margin-right: 5px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.25); }
-.pbadge.big { min-width: 32px; height: 28px; font-size: 16px; border-radius: 7px; margin-right: 7px; }
+.pbadge { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 21px; padding: 0 5px; border-radius: 6px; color: #fff; font-weight: 800; font-size: 13px; border: 1.5px solid rgba(255, 255, 255, 0.85); vertical-align: middle; margin-inline-end: 5px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.25); }
+.pbadge.big { min-width: 32px; height: 28px; font-size: 16px; border-radius: 7px; margin-inline-end: 7px; }
 .pbadge.lift { background: #37475a; border-color: rgba(255, 255, 255, 0.6); }
-.pdot { display: inline-block; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.85); vertical-align: middle; margin-right: 6px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.25); }
-.pdot.big { width: 22px; height: 22px; margin-right: 7px; }
+.pdot { display: inline-block; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.85); vertical-align: middle; margin-inline-end: 6px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.25); }
+.pdot.big { width: 22px; height: 22px; margin-inline-end: 7px; }
 .nav-speed-circle { width: 66px; height: 66px; border-radius: 50%; border: 2px solid #16a34a; background: rgba(22, 163, 74, 0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; color: var(--text); }
 .ns-num { font-size: 25px; font-weight: 800; }
 .ns-unit { font-size: 10px; font-weight: 700; color: #16a34a; margin-top: 2px; }
@@ -112,7 +146,7 @@ body {
     max-height: 82vh;
     padding: 10px 12px calc(16px + 56px + env(safe-area-inset-bottom, 0px));
     background: var(--panel);
-    border-right: none;
+    border-inline-end: none;
     border-top: 1px solid var(--line);
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;

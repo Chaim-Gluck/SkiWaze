@@ -30,6 +30,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const rtl = isRtlLanguage(language);
 
   useEffect(() => {
+    // The formatters' unit words follow this via i18next's own `languageChanged` event (see
+    // config.ts) — doing it here would read the outgoing language, since changeLanguage is async.
     void i18n.changeLanguage(language);
     document.documentElement.dir = rtl ? 'rtl' : 'ltr';
     document.documentElement.lang = language;

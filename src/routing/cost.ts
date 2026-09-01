@@ -117,7 +117,9 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
   if (edge.offPiste) {
     warnings.push({
       code: 'off_piste',
-      message: `${edge.pisteName ?? 'This section'} is off-piste (freeride): unmarked, ungroomed and unpatrolled.`,
+      message: edge.pisteName
+        ? { key: 'warn.offPisteNamed', params: { name: edge.pisteName } }
+        : { key: 'warn.offPiste' },
     });
   }
 
@@ -143,11 +145,13 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
       if (objective === 'preferred') weight += PREFERRED_OFF_COLOR_PENALTY * distanceM;
       warnings.push({
         code: 'above_preferred_color',
-        message: `${edge.pisteName ?? 'Run'} is ${edge.color}, outside your preferred colors.`,
+        message: edge.pisteName
+          ? { key: 'warn.colorNamed', params: { name: edge.pisteName, color: { key: `color.${edge.color}` } } }
+          : { key: 'warn.color', params: { color: { key: `color.${edge.color}` } } },
       });
     }
     if (usedDefault) {
-      warnings.push({ code: 'using_default_speed', message: 'Using a default ski speed (piste color unknown).' });
+      warnings.push({ code: 'using_default_speed', message: { key: 'warn.defaultSpeed' } });
     }
     return { allowed: true, seconds, distanceM, descentM, ascentM, weight, warnings };
   }
@@ -164,13 +168,20 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
       return { allowed: false, seconds: 0, distanceM, descentM, ascentM, weight: Infinity, warnings };
     }
     if (!edge.openingHours) {
-      warnings.push({ code: 'missing_opening_hours', message: `Opening hours unknown for ${edge.liftName ?? 'this lift'}.` });
+      warnings.push({
+        code: 'missing_opening_hours',
+        message: edge.liftName
+          ? { key: 'warn.hoursNamed', params: { name: edge.liftName } }
+          : { key: 'warn.hours' },
+      });
     } else {
       const untilClose = minutesUntilClose(windows, arrival);
       if (untilClose != null && untilClose <= CLOSING_SOON_MIN) {
         warnings.push({
           code: 'lift_closing_soon',
-          message: `${edge.liftName ?? 'Lift'} closes in ~${Math.round(untilClose)} min \u2014 hurry!`,
+          message: edge.liftName
+            ? { key: 'warn.closingNamed', params: { name: edge.liftName, min: Math.round(untilClose) } }
+            : { key: 'warn.closing', params: { min: Math.round(untilClose) } },
         });
       }
     }
@@ -180,7 +191,12 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
     const waitCfg = edge.liftType ? prefs.speeds.liftWaitByType[edge.liftType] : undefined;
     const wait = waitCfg ?? prefs.speeds.fallbackLiftWait;
     if (waitCfg == null) {
-      warnings.push({ code: 'using_default_wait', message: `Using a default wait time for ${edge.liftName ?? 'this lift'}.` });
+      warnings.push({
+        code: 'using_default_wait',
+        message: edge.liftName
+          ? { key: 'warn.defaultWaitNamed', params: { name: edge.liftName } }
+          : { key: 'warn.defaultWait' },
+      });
     }
     // Prefer the operator's published ride time (OSM `aerialway:duration`) over our per-type speed
     // estimate: it is a measured fact and already includes the terminal acceleration/deceleration

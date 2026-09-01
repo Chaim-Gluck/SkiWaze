@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Route } from '../types/domain';
 import { fmtClock, fmtDistance, fmtDuration } from '../utils/format';
-import { routeLabelText } from '../utils/routeLabels';
+import { routeLabelKey } from '../utils/routeLabels';
+import { tr } from '../utils/text';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -61,6 +63,7 @@ function RouteCard({
   onStepClick: (routeIndex: number, fromLeg: number, toLeg: number) => void;
   onMarkClosed: (key: string, label: string) => void;
 }) {
+  const { t } = useTranslation();
   const [showSteps, setShowSteps] = useState(false);
   const s = route.stats;
   const colorParts = Object.entries(s.colorBreakdownM).filter(([, m]) => (m ?? 0) > 0);
@@ -86,34 +89,36 @@ function RouteCard({
         {route.labels && route.labels.length > 0 && (
           <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {route.labels.map((label) => (
-              <Chip key={label} size="small" color="primary" variant="outlined" label={routeLabelText(label)} sx={{ height: 20 }} />
+              <Chip key={label} size="small" color="primary" variant="outlined" label={t(routeLabelKey(label))} sx={{ height: 20 }} />
             ))}
           </Box>
         )}
       </Box>
 
-      {usesLiftDownhill && <Alert severity="warning" icon={false} sx={{ py: 0, my: 0.5 }}>🚠⬇ This route rides a lift downhill</Alert>}
-      {usesInferred && <Alert severity="warning" sx={{ py: 0, my: 0.5 }}>Uses an app-added bridge (dotted magenta) — verify it's actually skiable</Alert>}
-      {usesCustom && <Alert severity="info" icon={false} sx={{ py: 0, my: 0.5 }}>★ Uses one of your custom links (dotted cyan)</Alert>}
+      {usesLiftDownhill && <Alert severity="warning" icon={false} sx={{ py: 0, my: 0.5 }}>🚠⬇ {t('route.liftDownhill')}</Alert>}
+      {usesInferred && <Alert severity="warning" sx={{ py: 0, my: 0.5 }}>{t('route.inferredWarning')}</Alert>}
+      {usesCustom && <Alert severity="info" icon={false} sx={{ py: 0, my: 0.5 }}>★ {t('route.usesCustom')}</Alert>}
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 0.75 }}>
-        <Typography variant="body2">⬇ {fmtDistance(s.descentM)} descent</Typography>
-        <Typography variant="body2">🚠 {s.liftCount} lift{s.liftCount === 1 ? '' : 's'}</Typography>
-        <Typography variant="body2">🎿 longest run {fmtDistance(s.longestDownhillStreakM)}</Typography>
+        <Typography variant="body2">⬇ {t('route.descent', { distance: fmtDistance(s.descentM) })}</Typography>
+        <Typography variant="body2">🚠 {t('route.lifts', { count: s.liftCount })}</Typography>
+        <Typography variant="body2">🎿 {t('route.longestRun', { distance: fmtDistance(s.longestDownhillStreakM) })}</Typography>
       </Box>
 
       {colorParts.length > 0 && (
         <Box sx={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', mt: 0.75 }}>
           {colorParts.map(([c, m]) => (
-            <Box key={c} sx={{ flex: m ?? 0, bgcolor: SLOPE_HEX[c] ?? '#ff9800' }} title={`${c}: ${fmtDistance(m ?? 0)}`} />
+            <Box key={c} sx={{ flex: m ?? 0, bgcolor: SLOPE_HEX[c] ?? '#ff9800' }} title={`${t(`color.${c}`)}: ${fmtDistance(m ?? 0)}`} />
           ))}
         </Box>
       )}
 
       {(s.startTime || s.arriveTime) && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-          Depart <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{fmtClock(s.startTime)}</Box>
-          {' → arrive '}
+          {t('route.departAt')}{' '}
+          <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{fmtClock(s.startTime)}</Box>
+          {' · '}
+          {t('route.arriveAt')}{' '}
           <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{fmtClock(s.arriveTime)}</Box>
         </Typography>
       )}
@@ -122,14 +127,14 @@ function RouteCard({
         <Box component="ul" sx={{ pl: 2, my: 0.5 }}>
           {route.warnings.slice(0, 4).map((w, i) => (
             <Typography key={i} component="li" variant="body2" color={w.code === 'lift_closing_soon' ? 'error' : 'warning.main'}>
-              {w.message}
+              {tr(t, w.message)}
             </Typography>
           ))}
         </Box>
       )}
 
       <Button size="small" onClick={(e) => { e.stopPropagation(); setShowSteps((v) => !v); }}>
-        {showSteps ? 'Hide steps' : `Show ${route.steps.length} step${route.steps.length === 1 ? '' : 's'}`}
+        {showSteps ? t('route.hideSteps') : t('route.showSteps', { count: route.steps.length })}
       </Button>
 
       {showSteps && (
@@ -146,8 +151,8 @@ function RouteCard({
                 disableGutters
                 secondaryAction={
                   step.closureKey ? (
-                    <IconButton edge="end" size="small" title={`Mark "${step.closureLabel}" closed`}
-                      onClick={(e) => { e.stopPropagation(); onMarkClosed(step.closureKey!, step.closureLabel!); }}>
+                    <IconButton edge="end" size="small" title={t('route.markClosed', { name: tr(t, step.closureLabel!) })}
+                      onClick={(e) => { e.stopPropagation(); onMarkClosed(step.closureKey!, tr(t, step.closureLabel!)); }}>
                       <BlockIcon fontSize="small" />
                     </IconButton>
                   ) : undefined
@@ -159,7 +164,7 @@ function RouteCard({
                   onClick={(e) => { e.stopPropagation(); onStepClick(index, step.fromLeg, step.toLeg); }}
                 >
                   <ListItemText
-                    primary={<><Box component="span" sx={{ mr: 0.5 }}>{icon}</Box>{step.label}</>}
+                    primary={<><Box component="span" sx={{ mr: 0.5 }}>{icon}</Box>{tr(t, step.label)}</>}
                     secondary={`${fmtDistance(step.distanceM)} · ${fmtDuration(step.durationS)}`}
                     slotProps={{ primary: { variant: 'body2' }, secondary: { variant: 'caption' } }}
                   />

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from './i18n/language-context';
+import { tr } from './utils/text';
+import { bidiName } from './utils/format';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
@@ -156,16 +160,32 @@ interface ResortOption {
   country: string;
 }
 
-/** A transient bottom notice: primary text, optional title, a trailing link, and a tip line. */
+/**
+ * A transient bottom notice: primary text, optional title, a trailing link, and a tip line.
+ * `severity` is carried explicitly — it used to be sniffed by regex-matching English words in
+ * `text`, which silently degrades to "info" the moment the copy is translated.
+ */
 interface PopupNotice {
   text: string;
+  severity?: 'warning' | 'success' | 'info';
   title?: string;
   href?: string;
   hrefLabel?: string;
   tip?: string;
 }
 
+/** Loading/error banner state. See the `status` state for why this isn't a plain string. */
+type StatusState =
+  | null
+  | { kind: 'loadingResorts' | 'loadingResort' }
+  | { kind: 'errorResorts' | 'errorResort'; detail: string };
+
 export default function App() {
+  const { t } = useTranslation();
+  // The map shell is pinned LTR (see the <main> comment), so prose drawn over it has to be handed
+  // the document direction back explicitly.
+  const { rtl } = useLanguage();
+  const dir = rtl ? 'rtl' : 'ltr';
   const [deepLink] = useState(parseDeepLink);
   const [index, setIndex] = useState<ResortIndexEntry[] | null>(null);
   const [resortId, setResortId] = useState<string>(deepLink.resortId ?? DEFAULT_RESORT_ID);
@@ -200,7 +220,16 @@ export default function App() {
   const [selectedRoute, setSelectedRoute] = useState(0);
   const [selectedRange, setSelectedRange] = useState<[number, number] | null>(null);
   const [popup, setPopup] = useState<string | PopupNotice | null>(null);
-  const [status, setStatus] = useState<string>('Loading resorts…');
+  /** Show a transient notice. Severity is passed explicitly so it survives translation. */
+  const notify = useCallback(
+    (text: string, severity: 'warning' | 'success' | 'info' = 'info') => setPopup({ text, severity }),
+    [],
+  );
+  /**
+   * Held as a key + optional detail rather than a finished sentence, so a language switch
+   * re-renders it in the new language instead of freezing whatever was current when it was set.
+   */
+  const [status, setStatus] = useState<StatusState>({ kind: 'loadingResorts' });
   const [focusGeometry, setFocusGeometry] = useState<[number, number][] | null>(null);
   const [fitRequest, setFitRequest] = useState<{ coords: [number, number][]; seq: number } | null>(null);
   const fitSeq = useRef(0);
@@ -236,7 +265,7 @@ export default function App() {
         setResortId(
           linked ? deepLink.resortId! : hasDefault ? DEFAULT_RESORT_ID : entries[0]?.id ?? DEFAULT_RESORT_ID,
         );
-        setStatus('');
+        setStatus(null);
         if (!linked && !geolocated.current && 'geolocation' in navigator) {
           geolocated.current = true;
           navigator.geolocation.getCurrentPosition(
@@ -252,7 +281,7 @@ export default function App() {
           );
         }
       })
-      .catch((e) => setStatus(`Could not load resorts: ${String(e)}`));
+      .catch((e) => setStatus({ kind: 'errorResorts', detail: String(e) }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -276,14 +305,14 @@ export default function App() {
     const cl = loadClosures(resortId);
     setClosedKeys(cl);
     closedRef.current = cl;
-    setStatus('Loading resort data…');
+    setStatus({ kind: 'loadingResort' });
     Promise.all([loadResortGraph(resortId), loadResortGeo(resortId)])
       .then(([g, ge]) => {
         setGraph(g);
         setGeo(ge);
-        setStatus('');
+        setStatus(null);
       })
-      .catch((e) => setStatus(`Could not load resort: ${String(e)}`));
+      .catch((e) => setStatus({ kind: 'errorResort', detail: String(e) }));
   }, [resortId]);
 
   // Graph + geo including any user-added custom nodes/links.
@@ -351,14 +380,16 @@ export default function App() {
               alt=""
               sx={{ width: 18, height: 12, borderRadius: '2px', flexShrink: 0 }}
             />
-            {o.country}
+            <bdi>{o.country}</bdi>
           </ListSubheader>,
         );
         lastCountry = o.country;
       }
+      // Indent via inline style, not `sx`: the RTL emotion plugin rewrites padding-left to
+      // padding-right, which would indent from the wrong side inside this LTR-pinned menu.
       items.push(
-        <MenuItem key={`${o.country}-${o.id}`} value={o.id} sx={{ pl: 3 }}>
-          {o.name}
+        <MenuItem key={`${o.country}-${o.id}`} value={o.id} style={{ paddingLeft: 24 }}>
+          <bdi>{o.name}</bdi>
         </MenuItem>,
       );
     }
@@ -380,12 +411,13 @@ export default function App() {
   useEffect(() => {
     if (!resortId || !shouldShowStatusNotice(resortId)) return;
     setPopup({
-      title: 'Lift & slope status',
-      text: 'Shown as OPEN by default — in early or late season some lifts and runs may actually be closed.',
+      title: t('app.statusNotice.title'),
+      text: t('app.statusNotice.text'),
       href: getResort(resortId)?.infoUrl,
-      hrefLabel: 'Check the resort\u2019s live status \u2197',
-      tip: 'Tip: mark a closed lift or run (\u2298 on a route step) and Find Route will avoid it.',
+      hrefLabel: t('app.statusNotice.hrefLabel'),
+      tip: t('app.statusNotice.tip'),
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resortId]);
   const center: LonLat =
     deepLinkActive && deepLink.lon != null && deepLink.lat != null
@@ -478,21 +510,21 @@ export default function App() {
     if (!live.tracking && !simPos) {
       live.start();
       setFollowing(true);
-      setPopup('Showing your location — following you. Tap the button again to stop.');
+      notify(t('app.notice.followingOn'), 'info');
     } else if (!following) {
       setFollowing(true);
-      setPopup('Recentered — following you again. Tap the button again to stop.');
+      notify(t('app.notice.followingRecentered'), 'info');
     } else {
       live.stop();
       setSimPos(null);
       setFollowing(false);
-      setPopup('Stopped following your location.');
+      notify(t('app.notice.followingOff'), 'info');
     }
   };
 
   const startNav = () => {
     if (!selected) {
-      setPopup('Find and pick a route first, then start navigation.');
+      notify(t('app.notice.navNoRoute'), 'warning');
       return;
     }
     setNavRoute(selected);
@@ -529,7 +561,7 @@ export default function App() {
       closedKeys: closedRef.current,
     });
     if (result.error || !result.routes.length) {
-      setPopup(result.error || 'No route from your current position.');
+      setPopup(result.error ? { text: tr(t, result.error), severity: 'warning' } : { text: t('app.notice.navNoRouteHere'), severity: 'warning' });
       return;
     }
     setPlan(result);
@@ -580,7 +612,7 @@ export default function App() {
     const avg = measuredAverages(measured, MIN_SAMPLES);
     const colors = Object.keys(avg) as SpeedColor[];
     if (!colors.length) {
-      setPopup('Not enough measured data yet — ski a bit on each colour while navigating.');
+      notify(t('app.notice.speedsNotEnough'), 'warning');
       return;
     }
     setPrefs((p) => {
@@ -590,7 +622,7 @@ export default function App() {
       for (const c of colors) if (avg[c] != null) skiSpeedByColor[c] = measuredTrueToProgressMps(avg[c] as number, c);
       return { ...p, useMeasuredSpeeds: true, speeds: { ...p.speeds, skiSpeedByColor } };
     });
-    setPopup('Using your measured speeds. Turn off in preferences to go back to the model.');
+    notify(t('app.notice.speedsOn'), 'success');
   };
   const resetMeasured = () => {
     const m = emptyMeasured();
@@ -651,24 +683,24 @@ export default function App() {
 
   const pickLocationFor = (which: 'from' | 'to') => {
     if (!effectiveGraph || !('geolocation' in navigator)) {
-      setPopup('Geolocation is not available in this browser.');
+      notify(t('app.notice.geoUnavailable'), 'warning');
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const n = nearestNode(effectiveGraph, pos.coords.longitude, pos.coords.latitude);
         if (!n) return;
-        if (which === 'from') { setFromNodeId(n.id); setFromCustom('My location'); }
-        else { setToNodeId(n.id); setToCustom('My location'); }
+        if (which === 'from') { setFromNodeId(n.id); setFromCustom(t('app.point.myLocation')); }
+        else { setToNodeId(n.id); setToCustom(t('app.point.myLocation')); }
       },
-      () => setPopup('Could not get your location. Pick a point or pin on the map instead.'),
+      () => notify(t('app.notice.geoFailedPick'), 'warning'),
       { timeout: 5000 },
     );
   };
 
   const doPlan = (fromId: string | null = fromNodeId, toId: string | null = toNodeId) => {
     if (!effectiveGraph || !fromId || !toId) {
-      setPopup('Pick both a start and a destination first.');
+      notify(t('app.notice.pickBoth'), 'warning');
       return;
     }
     const result = planRoutes(effectiveGraph, {
@@ -690,7 +722,7 @@ export default function App() {
     setOpenSection('routes');
     setPreviewDismissed(false);
     if (result.error) {
-      setPopup(result.error);
+      notify(tr(t, result.error), 'warning');
       return;
     }
     // Frame the route we're about to show, the way the longest-run finder does. Without this the
@@ -709,10 +741,10 @@ export default function App() {
     }
     const codes = new Set(result.routes.flatMap((r) => r.warnings.map((w) => w.code)));
     const notes: string[] = [];
-    if (codes.has('missing_opening_hours')) notes.push('Some lifts have no opening-hours data — closing-time warnings may be missing.');
-    if (codes.has('using_default_wait')) notes.push('Default lift wait times were used (no measured data).');
-    if (codes.has('using_default_speed')) notes.push('Default ski speeds were used for some runs (unknown difficulty).');
-    if (notes.length) setPopup(notes.join('\n'));
+    if (codes.has('missing_opening_hours')) notes.push(t('app.notes.missingHours'));
+    if (codes.has('using_default_wait')) notes.push(t('app.notes.defaultWait'));
+    if (codes.has('using_default_speed')) notes.push(t('app.notes.defaultSpeed'));
+    if (notes.length) notify(notes.join('\n'));
   };
 
   // ---- Share a location ------------------------------------------------------------------
@@ -731,7 +763,7 @@ export default function App() {
       try { await navigator.share({ title: 'SkiWaze', text: message, url }); }
       catch { /* user cancelled the share sheet */ }
     } else if (navigator.clipboard?.writeText) {
-      try { await navigator.clipboard.writeText(`${message}\n${url}`); setPopup('Message + link copied to clipboard — paste it to a friend.'); }
+      try { await navigator.clipboard.writeText(`${message}\n${url}`); notify(t('app.notice.shareCopied'), 'success'); }
       catch { setPopup(`${message}\n${url}`); }
     } else {
       setPopup(`${message}\n${url}`);
@@ -740,12 +772,13 @@ export default function App() {
 
   const shareMyLocation = () => {
     setShareAnchor(null);
-    const msg = "📍 Come meet me on the slopes! Open this SkiWaze link and it'll route you to my location:";
-    if (userPos) { void shareCoord({ lon: userPos.lon, lat: userPos.lat }, 'My location', msg); return; }
-    if (!('geolocation' in navigator)) { setPopup('Geolocation is not available in this browser.'); return; }
+    const msg = t('app.share.msgMe');
+    const me = t('app.point.myLocation');
+    if (userPos) { void shareCoord({ lon: userPos.lon, lat: userPos.lat }, me, msg); return; }
+    if (!('geolocation' in navigator)) { notify(t('app.notice.geoUnavailable'), 'warning'); return; }
     navigator.geolocation.getCurrentPosition(
-      (p) => void shareCoord({ lon: p.coords.longitude, lat: p.coords.latitude }, 'My location', msg),
-      () => setPopup('Could not get your location to share.'),
+      (p) => void shareCoord({ lon: p.coords.longitude, lat: p.coords.latitude }, me, msg),
+      () => notify(t('app.notice.geoFailedShare'), 'warning'),
       { timeout: 5000 },
     );
   };
@@ -760,7 +793,7 @@ export default function App() {
     if (deepLink.resortId && resortId !== deepLink.resortId) return;
     sharedApplied.current = true;
     const dest = nearestNode(effectiveGraph, deepLink.toLon, deepLink.toLat);
-    if (!dest) { setPopup('Could not place the shared location on this resort.'); return; }
+    if (!dest) { notify(t('app.notice.sharePlaceFailed'), 'warning'); return; }
     setToNodeId(dest.id);
     setToCustom(deepLink.toName ? `📍 ${deepLink.toName}` : '📍 Shared location');
     setOpenSection('plan');
@@ -774,18 +807,18 @@ export default function App() {
     setSharePrompt(false);
     if (!toId) return;
     if (!('geolocation' in navigator)) {
-      setPopup('Geolocation is not available — pick a start point (From), then Find routes.');
+      notify(t('app.notice.geoUnavailableFrom'), 'warning');
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const n = effectiveGraph ? nearestNode(effectiveGraph, pos.coords.longitude, pos.coords.latitude) : null;
-        if (!n) { setPopup('Could not place your location on this resort — pick a start point (From).'); return; }
+        if (!n) { notify(t('app.notice.geoPlaceFailedFrom'), 'warning'); return; }
         setFromNodeId(n.id);
-        setFromCustom('My location');
+        setFromCustom(t('app.point.myLocation'));
         doPlan(n.id, toId);
       },
-      () => setPopup('Could not get your location — pick a start point (From), then Find routes.'),
+      () => notify(t('app.notice.geoFailedFrom'), 'warning'),
       { timeout: 5000 },
     );
   };
@@ -832,13 +865,13 @@ export default function App() {
 
   const addCustomLink = (color: LinkColor, direction: LinkDirection) => {
     if (!linkFrom || !linkTo) {
-      setPopup('Pick both a "Link from" and a "Link to" point for the link.');
+      notify(t('app.notice.linkPickBoth'), 'warning');
       return;
     }
     const a = resolveLinkEnd(linkFrom);
     const b = resolveLinkEnd(linkTo);
     if (!a || !b || a.id === b.id) {
-      setPopup('Pick two different points for the link.');
+      notify(t('app.notice.linkPickDistinct'), 'warning');
       return;
     }
     const len = distance3dM(a.point, b.point);
@@ -872,7 +905,13 @@ export default function App() {
     saveCustomEdges(resortId, next);
     setLinkFrom(null);
     setLinkTo(null);
-    setPopup(`Added a ${color === 'none' ? 'flat' : color} link (${direction === 'both' ? 'both ways' : direction.toUpperCase()}). Press "Find routes" to use it.`);
+    notify(
+      t('app.notice.linkAdded', {
+        color: color === 'none' ? t('app.notice.linkColorFlat') : t(`color.${color}`),
+        direction: direction === 'both' ? t('app.notice.linkDirBoth') : direction.toUpperCase(),
+      }),
+      'success',
+    );
   };
 
   /** Drop custom nodes no longer referenced by any custom edge. */
@@ -903,13 +942,15 @@ export default function App() {
 
   const nodeLabelFor = (nodeId: string): string => {
     const p = graph?.points.find((x) => x.nodeId === nodeId);
-    if (p) return p.name;
+    if (p) return bidiName(p.name);
     if (nodeId.startsWith('cn-')) {
       const cn = customNodes.find((n) => n.id === nodeId);
-      return cn?.point.ele != null ? `📍 map point · ${Math.round(cn.point.ele)} m` : '📍 map point';
+      return cn?.point.ele != null
+        ? t('app.point.mapPointEle', { ele: Math.round(cn.point.ele) })
+        : t('app.point.mapPoint');
     }
     const n = nodeMap.get(nodeId);
-    if (n?.name) return n.name;
+    if (n?.name) return bidiName(n.name);
     // Fall back to the nearest named point ("near X") so unnamed graph nodes read meaningfully.
     if (n && graph) {
       let best: (typeof graph.points)[number] | undefined;
@@ -923,11 +964,12 @@ export default function App() {
       }
       if (best && bestD <= 250) {
         const ele = n.point.ele != null ? ` · ${Math.round(n.point.ele)} m` : '';
+        const named = bidiName(`${best.name}${ele}`);
         // Same spot (different node id) reads better without the "near" qualifier.
-        return bestD <= 20 ? `${best.name}${ele}` : `near ${best.name}${ele}`;
+        return bestD <= 20 ? named : t('app.point.near', { name: named });
       }
     }
-    if (n?.point.ele != null) return `Point at ${Math.round(n.point.ele)} m`;
+    if (n?.point.ele != null) return t('app.point.at', { ele: Math.round(n.point.ele) });
     return nodeId;
   };
 
@@ -936,7 +978,7 @@ export default function App() {
     const res = findLongestRuns(effectiveGraph, prefs, 3);
     if (!res.length) {
       setLongestRuns(null);
-      setPopup('No lift-free run found for your level. Try raising your max difficulty.');
+      notify(t('app.notice.longestNone'), 'warning');
       return;
     }
     const named = res.map((r) => ({
@@ -972,9 +1014,7 @@ export default function App() {
     setToNodeId(currentLongest.startNodeId);
     setToCustom(currentLongest.startName);
     setFocusGeometry(null);
-    setPopup(
-      `Destination set to the start of the longest run (${currentLongest.startName}). Pick your start point A (or tap "My location"), then press Find routes.`,
-    );
+    notify(t('app.notice.longestDestSet', { name: currentLongest.startName }));
   };
 
   const navigateToLongestEnd = () => {
@@ -1015,7 +1055,7 @@ export default function App() {
   const markClosed = (key: string, label: string) => {
     if (closedRef.current.includes(key)) return;
     applyClosures([...closedRef.current, key]);
-    setPopup(`Marked "${label}" closed — routes will avoid it. Reopen it in the "Closed today" panel.`);
+    notify(t('app.notice.closedMarked', { label }), 'success');
   };
 
   const reopenClosure = (key: string) => applyClosures(closedRef.current.filter((k) => k !== key));
@@ -1025,26 +1065,29 @@ export default function App() {
     if (!effectiveGraph) return;
     const coords = geometryForClosure(effectiveGraph, key);
     if (coords.length >= 2) setFocusGeometry(coords);
-    else setPopup('Could not locate this closure on the map.');
+    else notify(t('app.notice.closureLocateFailed'), 'warning');
   };
 
   const points = graph?.points ?? [];
 
   const fromLabel = fromCustom ?? (fromNodeId ? nodeLabelFor(fromNodeId) : null);
   const toLabel = toCustom ?? (toNodeId ? nodeLabelFor(toNodeId) : null);
-  const planSummary = fromLabel || toLabel ? `${fromLabel ?? 'From'} → ${toLabel ?? 'To'}` : 'Pick start & end';
+  const planSummary =
+    fromLabel || toLabel
+      ? `${fromLabel ?? t('app.plan.from')} → ${toLabel ?? t('app.plan.to')}`
+      : t('app.summary.pickStartEnd');
   const longestSummary = currentLongest
     ? `${currentLongest.startName} → ${currentLongest.endName}`
-    : 'Find longest descents';
+    : t('app.summary.findLongest');
   const linkGroupCount = useMemo(
     () => new Set(customEdges.map((e) => e.id.split('-').slice(0, 2).join('-'))).size,
     [customEdges],
   );
-  const linksSummary = linkGroupCount ? `${linkGroupCount} link${linkGroupCount === 1 ? '' : 's'}` : 'None yet';
-  const closedSummary = closedKeys.length ? `${closedKeys.length} closed` : 'All open';
+  const linksSummary = linkGroupCount ? t('app.summary.links', { count: linkGroupCount }) : t('app.summary.noneYet');
+  const closedSummary = closedKeys.length ? t('app.summary.closed', { count: closedKeys.length }) : t('app.summary.allOpen');
   const { mode, toggle: toggleTheme } = useThemeMode();
   const locateActive = live.tracking || !!simPos;
-  const locateTip = !locateActive ? 'Show my location' : following ? 'Following you — tap to stop' : 'Recenter on me';
+  const locateTip = !locateActive ? t('app.locate.show') : following ? t('app.locate.following') : t('app.locate.recenter');
 
   // Mobile bottom navigation. "Route options" is folded into the Plan tab, giving 5 fixed tabs.
   const mobileTab = openSection === 'routes' ? 'plan' : openSection;
@@ -1083,11 +1126,14 @@ export default function App() {
   return (
     <div className="app">
       <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
-        <Toolbar sx={{ gap: 1, minHeight: 60, px: { xs: 1, sm: 2 } }}>
+        {/* Pinned LTR: the header is chrome, not prose. The brand lockup stays on the left and the
+            resort / language / theme controls on the right in every language, which is also what
+            keeps it consistent with the map controls below. */}
+        <Toolbar dir="ltr" sx={{ gap: 1, minHeight: 60, px: { xs: 1, sm: 2 } }}>
           <IconButton
             edge="start"
             onClick={() => setPanelOpen((o) => !o)}
-            aria-label={panelOpen ? 'Hide controls' : 'Show controls'}
+            aria-label={panelOpen ? t('app.hideControls') : t('app.showControls')}
             sx={{ display: 'none' }}
           >
             <MenuIcon />
@@ -1096,18 +1142,23 @@ export default function App() {
             <Logo className="logo-mark" />
           </Box>
           {status && (
-            <Typography variant="body2" color="text.secondary" noWrap sx={{ display: { xs: 'none', sm: 'block' }, ml: 1 }}>
-              {status}
+            <Typography variant="body2" color="text.secondary" noWrap dir={dir} sx={{ display: { xs: 'none', sm: 'block' } }}>
+              {'detail' in status
+                ? t(`app.status.${status.kind}`, { detail: status.detail })
+                : t(`app.status.${status.kind}`)}
             </Typography>
           )}
           <Box sx={{ flex: 1 }} />
           <FormControl size="small" sx={{ minWidth: 170, maxWidth: 280 }}>
-            <InputLabel id="resort-picker-label">Resort</InputLabel>
+            <InputLabel id="resort-picker-label">{t('app.resort')}</InputLabel>
             <Select
               labelId="resort-picker-label"
-              label="Resort"
+              label={t('app.resort')}
               value={index ? resortId : ''}
-              renderValue={() => resortEntry?.shortName ?? resortEntry?.name ?? ''}
+              // Resort and country names are never translated, so the menu stays left-aligned even
+              // in Hebrew — a column of Latin names ragged-right is harder to scan than ragged-left.
+              MenuProps={{ slotProps: { paper: { dir: 'ltr' } } }}
+              renderValue={() => <bdi>{resortEntry?.shortName ?? resortEntry?.name ?? ''}</bdi>}
               onChange={(e) => {
                 selectResort(e.target.value);
               }}
@@ -1116,8 +1167,8 @@ export default function App() {
             </Select>
           </FormControl>
           <LanguagePicker />
-          <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-            <IconButton onClick={toggleTheme} aria-label="Toggle light/dark theme">
+          <Tooltip title={mode === 'dark' ? t('app.themeLight') : t('app.themeDark')}>
+            <IconButton onClick={toggleTheme} aria-label={t('app.themeToggle')}>
               {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
           </Tooltip>
@@ -1133,20 +1184,20 @@ export default function App() {
             onPointerMove={onSheetMove}
             onPointerUp={onSheetUp}
             onPointerCancel={onSheetUp}
-            aria-label="Drag down to close"
+            aria-label={t('app.dragToClose')}
           />
           {showSec('plan') && (
           <AccordionSection
-            title="Plan a route"
+            title={t('app.plan.title')}
             icon={<SearchIcon fontSize="small" />}
             summary={planSummary}
             open={openSection === 'plan'}
             onToggle={() => toggleSection('plan')}
           >
           <div className="panel">
-            <h3>Plan a route</h3>
+            <h3>{t('app.plan.title')}</h3>
             <PointPicker
-              label="From"
+              label={t('app.plan.from')}
               accent="#2e7d32"
               points={points}
               valueNodeId={fromNodeId}
@@ -1157,7 +1208,7 @@ export default function App() {
               pinActive={pinMode === 'from'}
             />
             <PointPicker
-              label="To"
+              label={t('app.plan.to')}
               accent="#c62828"
               points={points}
               valueNodeId={toNodeId}
@@ -1170,7 +1221,7 @@ export default function App() {
 
             <Box sx={{ mb: 1.5 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                When
+                {t('app.plan.when')}
               </Typography>
               <ToggleButtonGroup
                 exclusive
@@ -1178,8 +1229,8 @@ export default function App() {
                 value={timingMode}
                 onChange={(_, v) => v && setTimingMode(v)}
               >
-                <ToggleButton value="now">Now</ToggleButton>
-                <ToggleButton value="arrive_by">Arrive by</ToggleButton>
+                <ToggleButton value="now">{t('app.plan.now')}</ToggleButton>
+                <ToggleButton value="arrive_by">{t('app.plan.arriveBy')}</ToggleButton>
               </ToggleButtonGroup>
               {timingMode === 'arrive_by' && (
                 <TextField
@@ -1201,9 +1252,8 @@ export default function App() {
               onClick={() => doPlan()}
               disabled={!graph}
             >
-              Find routes
+              {t('app.plan.find')}
             </Button>
-
             <Button
               variant="outlined"
               size="large"
@@ -1212,21 +1262,21 @@ export default function App() {
               onClick={(e) => setShareAnchor(e.currentTarget)}
               sx={{ mt: 1 }}
             >
-              Share a location
+              {t('app.share.button')}
             </Button>
             <Menu anchorEl={shareAnchor} open={!!shareAnchor} onClose={() => setShareAnchor(null)}>
-              <MenuItem onClick={shareMyLocation}>Share my current location</MenuItem>
+              <MenuItem onClick={shareMyLocation}>{t('app.share.myLocationItem')}</MenuItem>
               <MenuItem
                 disabled={!toNodeId}
                 onClick={() => {
                   setShareAnchor(null);
                   const coord = pointFor(toNodeId);
-                  if (!coord) { setPopup('Pick a destination (To) first, then share it.'); return; }
-                  const place = toLabel ?? 'this spot';
-                  void shareCoord(coord, place, `📍 Meet me at ${place} — open this SkiWaze link to navigate there:`);
+                  if (!coord) { notify(t('app.notice.shareNoDest'), 'warning'); return; }
+                  const place = toLabel ?? t('app.share.thisSpot');
+                  void shareCoord(coord, place, t('app.share.msgHere', { place }));
                 }}
               >
-                {toLabel ? `Share the “To” destination: ${toLabel}` : 'Share the “To” destination'}
+                {toLabel ? t('app.share.toDestNamed', { name: toLabel }) : t('app.share.toDest')}
               </MenuItem>
             </Menu>
           </div>
@@ -1235,18 +1285,18 @@ export default function App() {
 
           {showSec('routes') && plan && (plan.noLiftFreeRoute || plan.routes.length > 0) && (
             <AccordionSection
-              title="Route options"
+              title={t('app.routes.title')}
               icon={<AltRouteIcon fontSize="small" />}
-              summary={plan.routes.length ? `${plan.routes.length} option${plan.routes.length === 1 ? '' : 's'}` : 'No route'}
+              summary={plan.routes.length ? t('app.summary.options', { count: plan.routes.length }) : t('app.summary.noRoute')}
               open={openSection === 'routes'}
               onToggle={() => toggleSection('routes')}
             >
               {plan.noLiftFreeRoute && (
                 <Alert severity="warning" sx={{ mb: 1 }}>
-                  <strong>No lift-free route to this point at your level.</strong>
+                  <strong>{t('app.routes.noLiftFree')}</strong>
                   {plan.nearestSkiDestination ? (
                     <>
-                      {' '}Nearest ski-down destination:{' '}
+                      {' '}{t('app.routes.nearestDest')}{' '}
                       <Box
                         component="button"
                         type="button"
@@ -1256,12 +1306,12 @@ export default function App() {
                         }}
                         sx={{ background: 'none', border: 0, p: 0, color: 'primary.main', cursor: 'pointer', font: 'inherit', textDecoration: 'underline' }}
                       >
-                        {plan.nearestSkiDestination.name}
+                        <bdi>{plan.nearestSkiDestination.name}</bdi>
                       </Box>{' '}
-                      (tap to set as destination, then Find routes).
+                      {t('app.routes.tapToSet')}
                     </>
                   ) : (
-                    ' Try a lower difficulty or a different destination.'
+                    ` ${t('app.routes.tryLower')}`
                   )}
                 </Alert>
               )}
@@ -1277,8 +1327,8 @@ export default function App() {
                 />
               )}
               {plan.routes.length > 0 && !navRoute && (
-                <Button variant="contained" color="success" fullWidth startIcon={<PlayArrowIcon />} onClick={startNav} sx={{ mt: 1 }}>
-                  Start navigation
+                <Button variant="contained" color="success" fullWidth startIcon={<PlayArrowIcon style={{ transform: rtl ? 'scaleX(-1)' : undefined }} />} onClick={startNav} sx={{ mt: 1 }}>
+                  {t('app.routes.startNav')}
                 </Button>
               )}
             </AccordionSection>
@@ -1286,7 +1336,7 @@ export default function App() {
 
           {showSec('longest') && (
           <AccordionSection
-            title="Longest runs"
+            title={t('app.longest.title')}
             icon={<EmojiEventsIcon fontSize="small" />}
             summary={longestSummary}
             open={openSection === 'longest'}
@@ -1312,7 +1362,7 @@ export default function App() {
 
           {showSec('links') && (
           <AccordionSection
-            title="Custom links"
+            title={t('app.links.title')}
             icon={<LinkIcon fontSize="small" />}
             summary={linksSummary}
             open={openSection === 'links'}
@@ -1342,7 +1392,7 @@ export default function App() {
 
           {showSec('closed') && (
           <AccordionSection
-            title="Closed today"
+            title={t('app.closed.title')}
             icon={<DoNotDisturbOnIcon fontSize="small" />}
             summary={closedSummary}
             open={openSection === 'closed'}
@@ -1359,9 +1409,9 @@ export default function App() {
 
           {showSec('prefs') && (
           <AccordionSection
-            title="Skiing preferences"
+            title={t('app.prefs.title')}
             icon={<TuneIcon fontSize="small" />}
-            summary="Level & lift filters"
+            summary={t('app.prefs.summary')}
             open={openSection === 'prefs'}
             onToggle={() => toggleSection('prefs')}
           >
@@ -1372,12 +1422,19 @@ export default function App() {
 
           {!isMobile && graph && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', py: 1 }}>
-              {effectiveGraph?.nodes.length} nodes · {effectiveGraph?.edges.length} edges · {points.length} named points
+              {t('app.graphStats', {
+                nodes: effectiveGraph?.nodes.length ?? 0,
+                edges: effectiveGraph?.edges.length ?? 0,
+                points: points.length,
+              })}
             </Typography>
           )}
         </aside>
 
-        <main className="map-wrap">
+        {/* The map is geography, not prose: north is up and west is left in every language. Pinning
+            it LTR also keeps our MUI overlays (Fabs, layer/legend buttons) on the same side as
+            MapLibre's own controls, whose stylesheet the emotion RTL plugin never sees. */}
+        <main className="map-wrap" dir="ltr">
           <MapView
             center={center}
             zoom={deepLinkActive && deepLink.zoom != null ? deepLink.zoom : 12}
@@ -1403,13 +1460,19 @@ export default function App() {
             resortFrameSeq={resortFrameSeq}
           />
           {globalView && (
-            <div className="pin-hint" data-testid="global-view-hint">
-              Zoomed out — click a resort flag (or pick one from the list) to open it
+            <div className="pin-hint" dir={dir} data-testid="global-view-hint">
+              {t('app.globalHint')}
             </div>
           )}
-          {pinMode && <div className="pin-hint">Click the map to set the {pinMode === 'from' ? 'From' : 'To'} point</div>}
-          {linkPinMode && <div className="pin-hint">Click the map to place the link's {linkPinMode === 'from' ? '"from"' : '"to"'} point (anywhere)</div>}
-          <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {pinMode && <div className="pin-hint" dir={dir}>{t('app.pinHintPoint', { which: pinMode === 'from' ? t('app.plan.from') : t('app.plan.to') })}</div>}
+          {linkPinMode && <div className="pin-hint" dir={dir}>{t('app.pinHintLink', { which: linkPinMode === 'from' ? t('app.link.fromWord') : t('app.link.toWord') })}</div>}
+          {/* Positioned with an inline style, not `sx`: the RTL emotion plugin rewrites left/right in
+              generated CSS whatever the container's dir is, and these buttons must stay put in
+              Hebrew — MapLibre's own controls (its stylesheet, which the plugin never sees) do. */}
+          <Box
+            style={{ position: 'absolute', top: 12, right: 12 }}
+            sx={{ zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1 }}
+          >
             <Tooltip title={locateTip} placement="left">
               <Fab
                 size="small"
@@ -1422,10 +1485,10 @@ export default function App() {
               </Fab>
             </Tooltip>
             {!isMobile && (
-              <Tooltip title="Plan a route" placement="left">
+              <Tooltip title={t('app.plan.title')} placement="left">
                 <Fab
                   size="small"
-                  aria-label="Plan a route"
+                  aria-label={t('app.plan.title')}
                   onClick={() => { setOpenSection('plan'); setPanelOpen(true); }}
                   sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
                 >
@@ -1434,10 +1497,10 @@ export default function App() {
               </Tooltip>
             )}
             {!isMobile && plan && plan.routes.length > 0 && (
-              <Tooltip title="Route options" placement="left">
+              <Tooltip title={t('app.routes.title')} placement="left">
                 <Fab
                   size="small"
-                  aria-label="Route options"
+                  aria-label={t('app.routes.title')}
                   onClick={() => { setOpenSection('routes'); setPanelOpen(true); }}
                   sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
                 >
@@ -1447,27 +1510,31 @@ export default function App() {
             )}
           </Box>
           {navRoute && (
-            <NavOverlay
-              step={navData?.step}
-              remaining={navData?.rem}
-              speedMps={userPos?.speed ?? null}
-              offRoute={navData?.offRoute ?? false}
-              waiting={!userPos}
-              onExit={exitNav}
-              onReroute={rerouteFromHere}
-              sim={import.meta.env.DEV ? { path: navPath, onSim: setSimPos } : undefined}
-            />
+            <div dir={dir}>
+              <NavOverlay
+                step={navData?.step}
+                remaining={navData?.rem}
+                speedMps={userPos?.speed ?? null}
+                offRoute={navData?.offRoute ?? false}
+                waiting={!userPos}
+                onExit={exitNav}
+                onReroute={rerouteFromHere}
+                sim={import.meta.env.DEV ? { path: navPath, onSim: setSimPos } : undefined}
+              />
+            </div>
           )}
           {plan && plan.routes.length > 0 && !navRoute && !previewDismissed && (!isMobile || !panelOpen) && (
-            <RoutePreview
-              routes={plan.routes}
-              selectedIndex={selectedRoute}
-              onSelect={(i) => { setSelectedRoute(i); setSelectedRange(null); }}
-              onStart={startNav}
-              onDetails={() => { setOpenSection('routes'); setPanelOpen(true); }}
-              onDismiss={() => setPreviewDismissed(true)}
-              bottom={isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : 16}
-            />
+            <div dir={dir}>
+              <RoutePreview
+                routes={plan.routes}
+                selectedIndex={selectedRoute}
+                onSelect={(i) => { setSelectedRoute(i); setSelectedRange(null); }}
+                onStart={startNav}
+                onDetails={() => { setOpenSection('routes'); setPanelOpen(true); }}
+                onDismiss={() => setPreviewDismissed(true)}
+                bottom={isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : 16}
+              />
+            </div>
           )}
         </main>
       </div>
@@ -1484,17 +1551,17 @@ export default function App() {
           >
             <BottomNavigationAction
               value="plan"
-              label="Plan"
+              label={t('app.tabs.plan')}
               icon={
                 <Badge color="primary" badgeContent={plan?.routes.length ?? 0} invisible={!(plan && plan.routes.length)}>
                   <SearchIcon />
                 </Badge>
               }
             />
-            <BottomNavigationAction value="longest" label="Longest" icon={<EmojiEventsIcon />} />
-            <BottomNavigationAction value="links" label="Links" icon={<LinkIcon />} />
-            <BottomNavigationAction value="closed" label="Closed" icon={<DoNotDisturbOnIcon />} />
-            <BottomNavigationAction value="prefs" label="Filters" icon={<TuneIcon />} />
+            <BottomNavigationAction value="longest" label={t('app.tabs.longest')} icon={<EmojiEventsIcon />} />
+            <BottomNavigationAction value="links" label={t('app.tabs.links')} icon={<LinkIcon />} />
+            <BottomNavigationAction value="closed" label={t('app.tabs.closed')} icon={<DoNotDisturbOnIcon />} />
+            <BottomNavigationAction value="prefs" label={t('app.tabs.prefs')} icon={<TuneIcon />} />
           </BottomNavigation>
         </Paper>
       )}
@@ -1517,13 +1584,7 @@ export default function App() {
           <Alert
             onClose={() => setPopup(null)}
             icon={structured ? false : undefined}
-            severity={
-              /could not|couldn't|no route|not available|no lift-free|not enough|pick both|pick two|pick a|first\b/i.test(noticeText)
-                ? 'warning'
-                : /applied|added|marked|✓/i.test(noticeText)
-                  ? 'success'
-                  : 'info'
-            }
+            severity={typeof popup === 'string' ? 'info' : (popup.severity ?? 'info')}
             variant="filled"
             sx={{ whiteSpace: 'pre-line', maxWidth: 'min(480px, calc(100vw - 24px))', boxShadow: 6 }}
           >
@@ -1546,7 +1607,7 @@ export default function App() {
                       }}
                       sx={{ color: 'inherit', fontWeight: 700, textDecorationColor: 'currentColor' }}
                     >
-                      {noticeHrefLabel ?? 'Open \u2197'}
+                      {noticeHrefLabel ?? t('app.openLink')}
                     </Link>
                   </Box>
                 )}
@@ -1576,16 +1637,16 @@ export default function App() {
             action={
               <>
                 <Button color="inherit" size="small" onClick={() => navigateToShared(toNodeId)}>
-                  Navigate
+                  {t('app.sharePrompt.navigate')}
                 </Button>
-                <IconButton size="small" color="inherit" aria-label="Dismiss" onClick={() => setSharePrompt(false)}>
+                <IconButton size="small" color="inherit" aria-label={t('common.dismiss')} onClick={() => setSharePrompt(false)}>
                   <CloseIcon fontSize="small" />
                 </IconButton>
               </>
             }
             sx={{ boxShadow: 6, maxWidth: 'min(480px, calc(100vw - 24px))' }}
           >
-            A location was shared with you — set as your destination. Navigate there?
+            {t('app.sharePrompt.text')}
           </Alert>
         </Snackbar>
       )}

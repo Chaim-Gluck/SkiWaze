@@ -7,38 +7,62 @@ import type {
   RouteStats,
   RouteWarning,
   DisplayStep,
+  TextRef,
 } from '../types/domain';
 import type { GraphIndex } from './graphIndex';
 import { edgeCost } from './cost';
 import { liftClosureKey, pisteClosureKey } from './closures';
+import { bidiName } from '../utils/format';
 
-function pisteLabel(edge: GraphEdge): string {
-  const ref = edge.pisteRef;
-  const name = edge.pisteName;
-  if (ref && name) return `${ref} \u00b7 ${name}`;
-  if (ref) return `piste ${ref}`;
-  if (name) return `"${name}"`;
-  return 'run';
+/**
+ * How a run is named in prose: "12 · Ruggenhof", "piste 12", "\"Ruggenhof\"", or just "run".
+ * The run's own name is never translated (it has to match the signage on the mountain);
+ * only the wrapper words around it are.
+ */
+function pisteLabel(edge: GraphEdge): TextRef {
+  // Isolated, because a Latin run name dropped into a Hebrew sentence otherwise has its brackets
+  // mirrored by the bidi algorithm.
+  const ref = bidiName(edge.pisteRef);
+  const name = bidiName(edge.pisteName);
+  if (ref && name) return { key: 'step.piste.refName', params: { ref, name } };
+  if (ref) return { key: 'step.piste.ref', params: { ref } };
+  if (name) return { key: 'step.piste.name', params: { name } };
+  return { key: 'step.piste.any' };
 }
 
-function legDescription(edge: GraphEdge, index: GraphIndex): string {
+function liftLabel(edge: GraphEdge): TextRef {
+  return edge.liftName ? { key: 'step.lift.name', params: { name: bidiName(edge.liftName) } } : { key: 'step.lift.any' };
+}
+
+/** Lift type as a word ("chair lift"), falling back to a generic "lift" when untagged. */
+function liftTypeLabel(edge: GraphEdge): TextRef {
+  return edge.liftType ? { key: `liftType.${edge.liftType}` } : { key: 'step.lift.any' };
+}
+
+function legDescription(edge: GraphEdge, index: GraphIndex): TextRef {
   const dist = Math.round(edge.lengthM);
   if (edge.kind === 'piste') {
-    return `Ski ${pisteLabel(edge)} (${edge.color ?? 'unknown'}) \u2013 ${dist} m`;
+    return {
+      key: 'leg.ski',
+      params: { piste: pisteLabel(edge), color: { key: `color.${edge.color ?? 'unknown'}` }, dist },
+    };
   }
   if (edge.kind === 'lift') {
-    const name = edge.liftName ? `"${edge.liftName}"` : 'lift';
-    const dir = edge.isDownload ? 'down' : 'up';
-    return `Take ${name} (${(edge.liftType ?? 'lift').replace('_', ' ')}) ${dir} \u2013 ${dist} m`;
+    return {
+      key: edge.isDownload ? 'leg.liftDown' : 'leg.liftUp',
+      params: { name: liftLabel(edge), liftType: liftTypeLabel(edge), dist },
+    };
   }
-  const toName = index.node(edge.to)?.name;
+  const toName = bidiName(index.node(edge.to)?.name);
   if (edge.connectorKind === 'flat_traverse') {
     if (edge.pisteName || edge.pisteRef) {
-      return `Traverse ${pisteLabel(edge)} \u2013 ${dist} m`;
+      return { key: 'leg.traverseNamed', params: { piste: pisteLabel(edge), dist } };
     }
-    return `Traverse flat section \u2013 ${dist} m${toName ? ` to ${toName}` : ''}`;
+    return toName
+      ? { key: 'leg.traverseFlatTo', params: { dist, to: toName } }
+      : { key: 'leg.traverseFlat', params: { dist } };
   }
-  return `Ski connector \u2013 ${dist} m`;
+  return { key: 'leg.connector', params: { dist } };
 }
 
 /**
@@ -90,12 +114,12 @@ export function buildRoute(
     if (edge.custom) {
       routeWarnings.push({
         code: 'custom_edge',
-        message: 'This route uses one of your custom links (dotted cyan on the map).',
+        message: { key: 'warn.customEdge' },
       });
     } else if (edge.synthetic) {
       routeWarnings.push({
         code: 'questionable_edge',
-        message: 'This route uses an app-added bridge across a mapped gap (dotted magenta) that may not be exactly skiable.',
+        message: { key: 'warn.syntheticEdge' },
       });
     }
 
@@ -133,10 +157,10 @@ export function buildRoute(
     arriveTime: arriveDate.toISOString(),
   };
 
-  // Deduplicate warnings by code+message.
+  // Deduplicate warnings by code + resolved text (key and params).
   const seen = new Set<string>();
   const warnings = routeWarnings.filter((w) => {
-    const k = `${w.code}:${w.message}`;
+    const k = `${w.code}:${w.message.key}:${JSON.stringify(w.message.params ?? {})}`;
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
@@ -153,23 +177,30 @@ function stepKeyForEdge(e: GraphEdge): string {
   return 'conn';
 }
 
-function stepLabelForEdge(e: GraphEdge): string {
-  if (e.kind === 'piste') return `Ski ${pisteLabel(e)} (${e.color ?? 'unknown'})`;
-  if (e.kind === 'lift') {
-    const name = e.liftName ? `"${e.liftName}"` : 'lift';
-    return `Take ${name} (${(e.liftType ?? 'lift').replace('_', ' ')}) ${e.isDownload ? 'down' : 'up'}`;
+function stepLabelForEdge(e: GraphEdge): { label: TextRef; short: TextRef } {
+  if (e.kind === 'piste') {
+    const piste = pisteLabel(e);
+    return {
+      label: { key: 'step.ski', params: { piste, color: { key: `color.${e.color ?? 'unknown'}` } } },
+      short: { key: 'step.skiShort', params: { piste } },
+    };
   }
-  return 'Traverse';
+  if (e.kind === 'lift') {
+    const params = { name: liftLabel(e), liftType: liftTypeLabel(e) };
+    const key = e.isDownload ? 'step.liftDown' : 'step.liftUp';
+    return { label: { key, params }, short: { key, params } };
+  }
+  return { label: { key: 'step.traverse' }, short: { key: 'step.traverse' } };
 }
 
-function closureForEdge(e: GraphEdge): { key: string | null; label: string | null } {
+function closureForEdge(e: GraphEdge): { key: string | null; label: TextRef | null } {
   if (e.kind === 'lift') {
     const key = liftClosureKey(e);
-    if (key) return { key, label: `Lift: ${e.liftName}` };
+    if (key) return { key, label: { key: 'closure.lift', params: { name: bidiName(e.liftName ?? '') } } };
   }
   if (e.kind === 'piste') {
     const key = pisteClosureKey(e);
-    if (key) return { key, label: `Run: ${pisteLabel(e)}` };
+    if (key) return { key, label: { key: 'closure.run', params: { piste: pisteLabel(e) } } };
   }
   return { key: null, label: null };
 }
@@ -195,13 +226,16 @@ function groupSteps(edges: GraphEdge[], legs: RouteLeg[]): DisplayStep[] {
       cur.custom = cur.custom || !!e.custom;
     } else {
       const cl = closureForEdge(e);
+      const lab = stepLabelForEdge(e);
       cur = {
         kind: e.kind,
-        label: stepLabelForEdge(e),
+        label: lab.label,
+        labelShort: lab.short,
+        name: bidiName(e.kind === 'lift' ? e.liftName : e.pisteName),
         distanceM: legs[i].distanceM,
         durationS: legs[i].durationS,
         color: e.color,
-        ref: e.pisteRef,
+        ref: bidiName(e.pisteRef),
         isDownload: e.isDownload,
         synthetic: !!e.synthetic,
         custom: !!e.custom,

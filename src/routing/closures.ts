@@ -1,4 +1,4 @@
-import type { GraphEdge, ResortGraph } from '../types/domain';
+import type { GraphEdge, ResortGraph, TextRef } from '../types/domain';
 
 /** Canonical closure key for a piste (ref + name so different runs sharing a ref stay distinct). */
 export function pisteClosureKey(edge: GraphEdge): string | null {
@@ -55,9 +55,12 @@ export function geometryForClosure(graph: ResortGraph, key: string): [number, nu
   return coords;
 }
 
-/** Human label for a closure key. */
-export function closureLabel(key: string): string {
-  if (key.startsWith('lift:')) return `Lift: ${key.slice(5)}`;
-  if (key.startsWith('piste:')) return `Run: ${key.slice(6).replace('~', ' · ')}`;
-  return 'Segment';
+/**
+ * Human label for a closure key, as a catalogue key + params. The run/lift name inside it is
+ * never translated; only the "Lift:" / "Run:" prefix is.
+ */
+export function closureLabel(key: string): TextRef {
+  if (key.startsWith('lift:')) return { key: 'closure.lift', params: { name: key.slice(5) } };
+  if (key.startsWith('piste:')) return { key: 'closure.run', params: { piste: key.slice(6).replace('~', ' \u00b7 ') } };
+  return { key: 'closure.segment' };
 }

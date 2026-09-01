@@ -1,4 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { closureLabel } from '../routing/closures';
+import { tr } from '../utils/text';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -18,21 +20,22 @@ interface Props {
 
 /** Lists lifts/runs the user marked closed, with reopen + locate. */
 export function ClosedPanel({ closedKeys, onReopen, onReopenAll, onLocate }: Props) {
+  const { t } = useTranslation();
   return (
     <Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        Statuses are assumed open. Mark a run or lift closed (⊘ on a route step) and routes will avoid it.
+        {t('closed.intro')}
       </Typography>
 
       {closedKeys.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          Nothing marked closed.
+          {t('closed.empty')}
         </Typography>
       ) : (
         <>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant="body2" color="text.secondary">{closedKeys.length} closed</Typography>
-            <Button size="small" onClick={onReopenAll}>Reopen all</Button>
+            <Typography variant="body2" color="text.secondary">{t('closed.count', { count: closedKeys.length })}</Typography>
+            <Button size="small" onClick={onReopenAll}>{t('closed.reopenAll')}</Button>
           </Box>
           <List dense disablePadding>
             {closedKeys.map((key) => (
@@ -40,14 +43,14 @@ export function ClosedPanel({ closedKeys, onReopen, onReopenAll, onLocate }: Pro
                 key={key}
                 disableGutters
                 secondaryAction={
-                  <IconButton edge="end" size="small" title="Reopen (remove closure)" onClick={() => onReopen(key)}>
+                  <IconButton edge="end" size="small" title={t('closed.reopen')} onClick={() => onReopen(key)}>
                     <CloseIcon fontSize="small" />
                   </IconButton>
                 }
               >
-                <ListItemButton sx={{ borderRadius: 1 }} onClick={() => onLocate(key)} title="Show on map">
+                <ListItemButton sx={{ borderRadius: 1 }} onClick={() => onLocate(key)} title={t('common.showOnMap')}>
                   <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'error.main', mr: 1, flexShrink: 0 }} />
-                  <ListItemText primary={closureLabel(key)} slotProps={{ primary: { variant: 'body2' } }} />
+                  <ListItemText primary={tr(t, closureLabel(key))} slotProps={{ primary: { variant: 'body2' } }} />
                 </ListItemButton>
               </ListItem>
             ))}

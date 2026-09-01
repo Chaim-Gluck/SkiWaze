@@ -1214,6 +1214,56 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   already only ~30 px across. The route line is deliberately *not* gated — it stays readable when
   zoomed out, and hiding it could blank a long route that "fit to route" had just framed.
 
+## Internationalisation (English + Hebrew/RTL)
+- **Stack:** i18next + react-i18next. `src/i18n/config.ts` (catalogue registration, `LANGUAGES`,
+  `RTL_LANGUAGES`, browser detection), `src/i18n/LanguageProvider.tsx` (owns the language, the
+  emotion cache and `document.dir`), `src/locales/{en,he}.json`. The provider sits **outside**
+  `ThemeModeProvider` in `main.tsx`: the RTL emotion cache must wrap MUI's `ThemeProvider` or the
+  style plugin never sees MUI's styles.
+- **Names are never translated.** Piste, lift and resort names come from OSM and must match the sign
+  at the top of the run. Only the app's own wrapper words are translated. Base-map `attribution`
+  strings (legal text), `Logo.tsx` (brand) and `ErrorBoundary.tsx` (it renders *after* React has
+  crashed — calling into i18n there could fail twice) are deliberately left alone too.
+- **Routing modules emit keys, not prose.** `buildRoute`/`cost`/`closures`/`plan` are pure and also
+  run under Node in the pipeline probes, where there is no `t()` and no language. They therefore
+  return a `TextRef { key, params }` (`src/types/domain.ts`) and only the UI turns it into words,
+  via `tr(t, ref)` in `src/utils/text.ts`. A param may itself be a `TextRef` (a run's label nested
+  inside a leg sentence), resolved one level at a time — that keeps the catalogue flat instead of
+  exploding combinatorially, while still letting Hebrew reorder the sentence around the name.
+- **A discrete fact must never be recovered from display prose.** Three separate bugs were this one
+  mistake, and each silently degrades the moment the prose is translated:
+  1. Route badges were the English words on the card, so `reconcileLabels` compared display text —
+     hence `RouteLabel` keys.
+  2. The notice Snackbar picked its `severity` by regex-matching English words in the message
+     (`/could not|no route/` → warning) — hence an explicit `severity` field on `PopupNotice`.
+  3. `NavOverlay.stepText()` stripped a trailing `(blue)` with a regex over the colour names —
+     hence `DisplayStep.labelShort` (colour-free, built in routing) and `DisplayStep.name` (the raw
+     mapped name, which `pisteNumber()` reads instead of scraping the label).
+  A fourth instance would look the same: state held as a finished English sentence. The
+  loading/error banner was exactly that, and is now a `StatusState` discriminated union translated
+  at render.
+- **The map is pinned `dir="ltr"`.** Geography does not mirror — north is up and west is left in
+  every language — and `stylis-plugin-rtl` only rewrites *emotion* CSS, so our MUI overlays would
+  flip while MapLibre's own controls (its stylesheet) would not, putting them on top of each other.
+  The prose drawn over the map (`.pin-hint`, `NavOverlay`, `RoutePreview`) is handed the document
+  direction back explicitly with `dir={dir}` in `App.tsx`.
+- **Plain CSS needs logical properties.** `src/App.css` is not emotion, so the RTL plugin never sees
+  it: use `border-inline-end` / `margin-inline-end`, never `border-right` / `margin-right`. Inside
+  MUI `sx` the physical props are fine — the plugin flips those.
+- **Measurements are LTR-isolated at the source.** `src/utils/format.ts` wraps every result in
+  U+2066…U+2069 when the document is RTL, otherwise the bidi algorithm reorders "5 m – 3 km" against
+  the dash. The unit words are **injected** (`setUnitLabels`, called from `LanguageProvider`) rather
+  than imported, because these helpers also run under Node in the probes — where the guard on
+  `document` also keeps the isolate characters out of probe comparisons.
+- **Hebrew has a dual.** `Intl.PluralRules('he')` returns `one` / `two` / `other`, so every counted
+  string needs a `_two` variant as well; a missing one is easy to overlook because English never has it.
+- **Guarding it:** `npm run probe:badges all` must stay **0 violations / 1834 plans** after anything
+  touching labels or ranking. There is no automated catalogue check yet — the useful ad-hoc one
+  compares flattened `en.json` vs `he.json` for missing keys, extra keys and `{{param}}` drift.
+- **Known gap:** the named-point labels in `graph.points` (`"Grostè (top) · 2496 m"`) are composed
+  **by the pipeline** in English, so they stay English in Hebrew. Fixing it means emitting the parts
+  structurally (`name` + `side` + `ele`) and composing them in the UI, plus a data rebuild.
+
 ## Outstanding follow-ups (not in v1)
 
 ### Iconic circuits (Sella Ronda clockwise/anti-clockwise, and friends)

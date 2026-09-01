@@ -318,6 +318,18 @@ export type RouteObjective = 'fastest' | 'fewest_lifts' | 'preferred' | 'longest
 export type RouteLabel = RouteObjective | 'alternative';
 
 /**
+ * A translatable string produced by a pure routing module: a catalogue key plus its
+ * interpolation params. Same seam as `RouteLabel` above — routing never builds a finished
+ * sentence, because these modules also run under Node in the pipeline probes, where there is
+ * no `t()` and no language. Params may nest another TextRef (a piste label inside a leg
+ * description); `utils/text.ts` resolves them.
+ */
+export interface TextRef {
+  key: string;
+  params?: Record<string, string | number | TextRef>;
+}
+
+/**
  * What the "Find route" flow returns. `balanced` (default) shows one best route per objective
  * (deduped); the others each show up to 3 distinct routes optimised for that single objective.
  */
@@ -346,7 +358,7 @@ export interface RouteLeg {
   kind: EdgeKind;
   fromNodeId: string;
   toNodeId: string;
-  description: string;
+  description: TextRef;
   distanceM: number;
   durationS: number;
   color?: PisteColor;
@@ -374,7 +386,7 @@ export interface RouteWarning {
     | 'questionable_edge'
     | 'off_piste'
     | 'custom_edge';
-  message: string;
+  message: TextRef;
 }
 
 export interface RouteStats {
@@ -400,7 +412,16 @@ export interface RouteStats {
  */
 export interface DisplayStep {
   kind: EdgeKind;
-  label: string;
+  /** Full label, including the slope colour. */
+  label: TextRef;
+  /**
+   * The same label without the colour, for the turn-by-turn banner where the colour is
+   * already shown as a badge. Carried explicitly because the banner used to strip
+   * "(blue)" off `label` with an English-only regex.
+   */
+  labelShort: TextRef;
+  /** Raw run/lift name as mapped (never translated) — the badge reads its slope number from it. */
+  name?: string;
   distanceM: number;
   durationS: number;
   color?: PisteColor;
@@ -414,7 +435,7 @@ export interface DisplayStep {
   toLeg: number;
   /** Key to mark this run/lift closed, or null when not directly closable. */
   closureKey: string | null;
-  closureLabel: string | null;
+  closureLabel: TextRef | null;
 }
 
 export interface Route {

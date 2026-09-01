@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../i18n/language-context';
 import maplibregl, { type StyleSpecification, type FilterSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import rtlTextPluginUrl from '@mapbox/mapbox-gl-rtl-text/mapbox-gl-rtl-text.min.js?url';
@@ -350,6 +352,11 @@ export function MapView({
   userPosition, following, nav, navHeadingUp, resorts, selectedResortId, onSelectResort,
   globalView = false, onEnterGlobalView, resortFrameSeq = 0,
 }: MapViewProps) {
+  const { t } = useTranslation();
+  // The map shell is pinned LTR, so the panels that hold prose have to ask for the reading
+  // direction back explicitly.
+  const { rtl } = useLanguage();
+  const dir = rtl ? 'rtl' : 'ltr';
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -1080,8 +1087,13 @@ export function MapView({
   return (
     <div className="map-shell">
       <div ref={containerRef} className="map-canvas" />
-      <Box sx={{
-        position: 'absolute', top: 10, left: 10, zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start',
+      {/* Positioned with an inline style, not `sx`: the RTL emotion plugin rewrites left/right in
+          generated CSS whatever the container's dir is, and these controls must stay put in Hebrew
+          — MapLibre's own controls (its stylesheet, which the plugin never sees) do. */}
+      <Box
+        style={{ position: 'absolute', top: 10, left: 10 }}
+        sx={{
+        zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start',
         // Stop short of the map's right-hand Fab column instead of running under it. The locate Fab
         // is size="small" (40px) at right:12, so it owns the last 52px; 10px left inset + 10px gap
         // gives 72. Without this the expanded Layers panel grows until it collides with the Fab on a
@@ -1091,6 +1103,7 @@ export function MapView({
       }}>
       <Paper
         elevation={3}
+        dir={dir}
         sx={{
           p: 0.75, borderRadius: 2,
           display: 'flex', flexDirection: 'column', gap: 0.75, bgcolor: 'var(--glass)',
@@ -1098,35 +1111,38 @@ export function MapView({
         }}
       >
         {!controlsOpen ? (
-          <IconButton size="small" onClick={() => setControlsOpen(true)} aria-label="Show map layers" title="Map layers">
+          <IconButton size="small" onClick={() => setControlsOpen(true)} aria-label={t('layers.show')} title={t('layers.title')}>
             <LayersIcon fontSize="small" />
           </IconButton>
         ) : (
           <>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="caption" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <LayersIcon fontSize="small" /> Layers
-              </Typography>
-              <IconButton size="small" onClick={() => setControlsOpen(false)} aria-label="Collapse map layers" sx={{ p: 0.25 }}>
+            {/* The header is pinned LTR so the close X lands on the panel's top-left corner — the
+                exact spot the collapsed icon occupied — in every language. Opening and closing is
+                then one thumb position rather than two. */}
+            <Box dir="ltr" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5 }}>
+              <IconButton size="small" onClick={() => setControlsOpen(false)} aria-label={t('layers.collapse')} sx={{ p: 0.25 }}>
                 <CloseIcon fontSize="small" />
               </IconButton>
+              <Typography dir={dir} variant="caption" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <LayersIcon fontSize="small" /> {t('layers.title')}
+              </Typography>
             </Box>
             <ToggleButtonGroup exclusive size="small" value={base} onChange={(_, v) => v && setBase(v)}>
-              <ToggleButton value="standard" sx={{ px: 1.25, py: 0.25 }}>Map</ToggleButton>
-              <ToggleButton value="topo" sx={{ px: 1.25, py: 0.25 }}>Topo</ToggleButton>
-              <ToggleButton value="satellite" sx={{ px: 1.25, py: 0.25 }}>Sat</ToggleButton>
+              <ToggleButton value="standard" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.standard')}</ToggleButton>
+              <ToggleButton value="topo" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.topo')}</ToggleButton>
+              <ToggleButton value="satellite" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.satellite')}</ToggleButton>
             </ToggleButtonGroup>
             <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.25 }}>
-              <ToggleButton value="3d" selected={is3D} size="small" onClick={() => setIs3D((v) => !v)} title="Toggle 3D terrain" sx={{ px: 1, py: 0.25, mr: 0.5 }}>
+              <ToggleButton value="3d" selected={is3D} size="small" onClick={() => setIs3D((v) => !v)} title={t('layers.toggle3d')} sx={{ px: 1, py: 0.25, mr: 0.5 }}>
                 3D
               </ToggleButton>
-              {([['Pistes', showPistes, setShowPistes], ['Lifts', showLifts, setShowLifts], ['Areas', showAreas, setShowAreas], ['Off-piste', showOffPiste, setShowOffPiste], ['Labels', showLabels, setShowLabels]] as const).map(
-                ([label, checked, setter]) => (
+              {([['pistes', showPistes, setShowPistes], ['lifts', showLifts, setShowLifts], ['areas', showAreas, setShowAreas], ['offPiste', showOffPiste, setShowOffPiste], ['labels', showLabels, setShowLabels]] as const).map(
+                ([key, checked, setter]) => (
                   <FormControlLabel
-                    key={label}
+                    key={key}
                     sx={{ m: 0, mr: 0.5 }}
                     control={<Checkbox size="small" sx={{ p: 0.25 }} checked={checked} onChange={(e) => setter(e.target.checked)} />}
-                    label={label}
+                    label={t(`layers.${key}`)}
                     slotProps={{ typography: { variant: 'caption' } }}
                   />
                 ),

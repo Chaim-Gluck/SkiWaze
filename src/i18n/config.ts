@@ -11,6 +11,8 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from '../locales/en.json';
+import he from '../locales/he.json';
+import { setUnitLabels } from '../utils/format';
 
 /** Supported languages (code -> native label shown in the picker). */
 export const LANGUAGES = { en: 'English', he: 'עברית' } as const;
@@ -44,11 +46,32 @@ export function detectLanguage(): Language {
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
+    he: { translation: he },
   },
   lng: 'en',
   fallbackLng: 'en',
   interpolation: { escapeValue: false }, // React already escapes
   returnNull: false,
 });
+
+/**
+ * Keep the plain formatting module's unit words in step with the active language.
+ *
+ * This is driven off i18next's own event rather than from the React provider, because
+ * `changeLanguage` is asynchronous: reading `t('units.short.km')` on the line after calling it
+ * still answers for the OUTGOING language. A returning Hebrew visitor therefore got English units
+ * baked in on the first render and kept them until they switched language a second time.
+ */
+function syncUnitLabels(): void {
+  setUnitLabels({
+    hour: i18n.t('units.short.hour'),
+    minuteShort: i18n.t('units.short.minuteShort'),
+    minute: i18n.t('units.short.minute'),
+    km: i18n.t('units.short.km'),
+    metre: i18n.t('units.short.metre'),
+  });
+}
+i18n.on('languageChanged', syncUnitLabels);
+syncUnitLabels();
 
 export default i18n;

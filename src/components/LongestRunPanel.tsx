@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../i18n/language-context';
 import { fmtDistance } from '../utils/format';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -40,30 +42,32 @@ export function LongestRunPanel({
   onNavigateStart,
   onNavigateEnd,
 }: Props) {
+  const { t } = useTranslation();
+  const { rtl } = useLanguage();
   const run = runs && runs.length ? runs[index] : null;
   const total = runs?.length ?? 0;
 
   return (
     <Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        The longest possible descents without taking a lift (top to bottom), for your level.
+        {t('longest.intro')}
       </Typography>
       <Button variant="outlined" fullWidth onClick={onFind}>
-        Find the longest runs
+        {t('longest.find')}
       </Button>
 
       {run && (
         <Box sx={{ mt: 1.5 }}>
           {total > 1 && (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 0.5 }}>
-              <IconButton size="small" onClick={onPrev} aria-label="Previous run"><ChevronLeftIcon /></IconButton>
-              <Typography variant="body2" color="text.secondary">#{index + 1} of {total} longest</Typography>
-              <IconButton size="small" onClick={onNext} aria-label="Next run"><ChevronRightIcon /></IconButton>
+              <IconButton size="small" onClick={onPrev} aria-label={t('longest.prev')}>{rtl ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
+              <Typography variant="body2" color="text.secondary">{t('longest.position', { index: index + 1, total })}</Typography>
+              <IconButton size="small" onClick={onNext} aria-label={t('longest.next')}>{rtl ? <ChevronLeftIcon /> : <ChevronRightIcon />}</IconButton>
             </Box>
           )}
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
             <Typography variant="h5" sx={{ fontWeight: 700 }}>{fmtDistance(run.distanceM)}</Typography>
-            <Typography variant="body2" color="text.secondary">⬇ {fmtDistance(run.descentM)} descent</Typography>
+            <Typography variant="body2" color="text.secondary">⬇ {t('longest.descent', { distance: fmtDistance(run.descentM) })}</Typography>
           </Box>
           <Typography variant="body2" sx={{ my: 0.5 }}>
             <Box component="span" sx={{ color: 'success.main', fontWeight: 600 }}>{run.startName}</Box>
@@ -72,13 +76,13 @@ export function LongestRunPanel({
           </Typography>
           {run.usesInferred && (
             <Alert severity="warning" sx={{ py: 0, my: 0.5 }}>
-              Uses an app-added bridge (dotted magenta) — verify it's actually skiable
+              {t('longest.inferredWarning')}
             </Alert>
           )}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-            <Button size="small" variant="outlined" startIcon={<MapIcon />} onClick={onShowOnMap}>Show on map</Button>
-            <Button size="small" variant="outlined" startIcon={<MyLocationIcon />} onClick={onNavigateStart}>To start</Button>
-            <Button size="small" variant="outlined" startIcon={<DownhillSkiingIcon />} onClick={onNavigateEnd}>To end</Button>
+            <Button size="small" variant="outlined" startIcon={<MapIcon />} onClick={onShowOnMap}>{t('common.showOnMap')}</Button>
+            <Button size="small" variant="outlined" startIcon={<MyLocationIcon />} onClick={onNavigateStart}>{t('longest.toStart')}</Button>
+            <Button size="small" variant="outlined" startIcon={<DownhillSkiingIcon />} onClick={onNavigateEnd}>{t('longest.toEnd')}</Button>
           </Box>
         </Box>
       )}

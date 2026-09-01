@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../i18n/language-context';
 import type { Route } from '../types/domain';
 import { fmtDistance, fmtDuration } from '../utils/format';
-import { routeLabelText } from '../utils/routeLabels';
+import { routeLabelKey } from '../utils/routeLabels';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -32,6 +34,8 @@ interface Props {
  * the map area so it centres over the map on both desktop and mobile.
  */
 export function RoutePreview({ routes, selectedIndex, onSelect, onStart, onDetails, onDismiss, bottom }: Props) {
+  const { t } = useTranslation();
+  const { rtl } = useLanguage();
   const n = routes.length;
   const r = routes[selectedIndex];
   if (!r) return null;
@@ -49,16 +53,18 @@ export function RoutePreview({ routes, selectedIndex, onSelect, onStart, onDetai
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <IconButton size="small" onClick={() => cycle(-1)} disabled={n < 2} aria-label="Previous option">
-          <ChevronLeftIcon />
+        {/* Chevrons are direction glyphs, not layout: in Hebrew "previous" points right. The flex
+            row already mirrors the buttons' positions, so only the arrowheads need swapping. */}
+        <IconButton size="small" onClick={() => cycle(-1)} disabled={n < 2} aria-label={t('preview.prev')}>
+          {rtl ? <ChevronRightIcon /> : <ChevronLeftIcon />}
         </IconButton>
         <Typography variant="caption" sx={{ fontWeight: 700, flex: 1, textAlign: 'center' }}>
-          Option {selectedIndex + 1} of {n}
+          {t('preview.option', { index: selectedIndex + 1, total: n })}
         </Typography>
-        <IconButton size="small" onClick={() => cycle(1)} disabled={n < 2} aria-label="Next option">
-          <ChevronRightIcon />
+        <IconButton size="small" onClick={() => cycle(1)} disabled={n < 2} aria-label={t('preview.next')}>
+          {rtl ? <ChevronLeftIcon /> : <ChevronRightIcon />}
         </IconButton>
-        <IconButton size="small" onClick={onDismiss} aria-label="Dismiss">
+        <IconButton size="small" onClick={onDismiss} aria-label={t('common.dismiss')}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
@@ -66,11 +72,11 @@ export function RoutePreview({ routes, selectedIndex, onSelect, onStart, onDetai
       <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.25, flexWrap: 'wrap', mt: 0.25 }}>
         <Typography sx={{ fontWeight: 800 }} variant="h6">{fmtDuration(s.totalDurationS)}</Typography>
         <Typography variant="body2" color="text.secondary">{fmtDistance(s.totalDistanceM)}</Typography>
-        <Typography variant="body2" color="text.secondary">🚠 {s.liftCount} lift{s.liftCount === 1 ? '' : 's'}</Typography>
+        <Typography variant="body2" color="text.secondary">🚠 {t('route.lifts', { count: s.liftCount })}</Typography>
         {r.labels && r.labels.length > 0 && (
           <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end', alignSelf: 'center' }}>
             {r.labels.map((label) => (
-              <Chip key={label} size="small" color="primary" variant="outlined" label={routeLabelText(label)} sx={{ height: 20 }} />
+              <Chip key={label} size="small" color="primary" variant="outlined" label={t(routeLabelKey(label))} sx={{ height: 20 }} />
             ))}
           </Box>
         )}
@@ -79,23 +85,26 @@ export function RoutePreview({ routes, selectedIndex, onSelect, onStart, onDetai
       {colorParts.length > 0 && (
         <Box sx={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', mt: 0.75 }}>
           {colorParts.map(([c, m]) => (
-            <Box key={c} sx={{ flex: m ?? 0, bgcolor: SLOPE_HEX[c] ?? '#ff9800' }} title={`${c}: ${fmtDistance(m ?? 0)}`} />
+            <Box key={c} sx={{ flex: m ?? 0, bgcolor: SLOPE_HEX[c] ?? '#ff9800' }} title={`${t(`color.${c}`)}: ${fmtDistance(m ?? 0)}`} />
           ))}
         </Box>
       )}
 
       {usesLiftDownhill && (
         <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
-          🚠⬇ This route rides a lift downhill
+          🚠⬇ {t('route.liftDownhill')}
         </Typography>
       )}
 
       <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
         <Button variant="outlined" color="inherit" onClick={onDetails} sx={{ flex: '0 0 auto', textTransform: 'none', borderColor: 'divider', color: 'text.secondary' }}>
-          Details
+          {t('preview.details')}
         </Button>
-        <Button variant="contained" color="success" startIcon={<PlayArrowIcon />} onClick={onStart} sx={{ flex: 1, textTransform: 'none', fontWeight: 700 }}>
-          Start
+        {/* The play triangle here means "go", not "play media", so it mirrors with the text. Set
+            inline: the RTL emotion plugin rewrites transforms, and this one must not be touched
+            twice. (NavOverlay's play/pause is a genuine media control and stays unmirrored.) */}
+        <Button variant="contained" color="success" startIcon={<PlayArrowIcon style={{ transform: rtl ? 'scaleX(-1)' : undefined }} />} onClick={onStart} sx={{ flex: 1, textTransform: 'none', fontWeight: 700 }}>
+          {t('preview.start')}
         </Button>
       </Box>
     </Paper>

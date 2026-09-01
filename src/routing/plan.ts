@@ -1,4 +1,4 @@
-import type { GraphEdge, MeaningfulPoint, Preferences, Route, RouteRequest, ResortGraph, PisteColor, RouteObjective, RouteLabel } from '../types/domain';
+import type { GraphEdge, MeaningfulPoint, Preferences, Route, RouteRequest, ResortGraph, PisteColor, RouteObjective, RouteLabel, TextRef } from '../types/domain';
 import { PISTE_COLOR_ORDER } from '../types/domain';
 import { GraphIndex } from './graphIndex';
 import { alternativeRoutes } from './alternatives';
@@ -10,8 +10,8 @@ import { haversineM } from '../utils/geo';
 
 export interface PlanResult {
   routes: Route[];
-  /** Present when no route could be found. */
-  error?: string;
+  /** Present when no route could be found. A catalogue key, not a sentence — see TextRef. */
+  error?: TextRef;
   /** True when no lift-free ski route to the destination exists at the user's level. */
   noLiftFreeRoute?: boolean;
   /** Nearest ski-reachable (lift-free) named destination, suggested when noLiftFreeRoute. */
@@ -152,8 +152,8 @@ function noRouteResult(closedEdgeIds: ReadonlySet<string>): PlanResult {
   return {
     routes: [],
     error: anyClosed
-      ? 'No route found — some lifts/runs on the way are marked closed. Try reopening one, or relax difficulty / lift types.'
-      : 'No route found with your current preferences (try relaxing difficulty, lift types, or turning off "Avoid app-added bridges").',
+      ? { key: 'plan.error.noneClosures' }
+      : { key: 'plan.error.nonePrefs' },
   };
 }
 
@@ -198,8 +198,8 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
   const { fromNodeId, toNodeId, prefs, timing } = request;
   const closedEdgeIds = resolveClosedEdgeIds(graph, request.closedKeys ?? []);
 
-  if (!index.node(fromNodeId)) return { routes: [], error: 'Start point not found.' };
-  if (!index.node(toNodeId)) return { routes: [], error: 'Destination not found.' };
+  if (!index.node(fromNodeId)) return { routes: [], error: { key: 'plan.error.noStart' } };
+  if (!index.node(toNodeId)) return { routes: [], error: { key: 'plan.error.noDest' } };
 
   const now = new Date();
   const target = timing.mode === 'arrive_by' && timing.time ? new Date(timing.time) : null;

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { DisplayStep } from '../types/domain';
 import type { LivePosition } from '../hooks/useLiveLocation';
 import { posAtS, type RoutePath } from '../routing/navigation';
+import { tr } from '../utils/text';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -32,41 +35,51 @@ interface Props {
   sim?: { path: RoutePath | null; onSim: (p: LivePosition | null) => void };
 }
 
-function fmtDist(m: number): string {
-  return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`;
+function fmtDist(m: number, t: TFunction): string {
+  return m >= 1000
+    ? t('units.km', { value: (m / 1000).toFixed(1) })
+    : t('units.m', { value: Math.round(m / 10) * 10 });
 }
-function fmtTime(s: number): string {
+function fmtTime(s: number, t: TFunction): string {
   const min = Math.round(s / 60);
-  return min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`;
+  return min >= 60
+    ? t('units.hourMin', { hours: Math.floor(min / 60), minutes: min % 60 })
+    : t('units.min', { value: min });
 }
-function stepText(st?: DisplayStep): string {
-  // The colored number shield already conveys the difficulty, so drop a redundant
-  // trailing "(blue)" / "(red)" etc. from the label.
-  return (st?.label ?? '—').replace(/\s*\((?:green|blue|red|black|unknown)\)\s*$/i, '');
+/**
+ * Banner text for a step. The coloured number shield already conveys the difficulty, so this
+ * uses the step's `labelShort` (built without the colour) rather than stripping "(blue)" off
+ * the full label — that strip was an English-only regex and would have quietly stopped
+ * working in any other language.
+ */
+function stepText(t: TFunction, st?: DisplayStep): string {
+  return st ? tr(t, st.labelShort) : '—';
 }
 
 const COLOR_HEX: Record<string, string> = {
   green: '#2e7d32', blue: '#1565c0', red: '#d32f2f', black: '#111111', unknown: '#ff9800',
 };
-/** First slope number in a step label ("Ski 50 · …" -> "50"), or null. */
-function pisteNumber(label?: string): string | null {
-  const m = label?.match(/(\d+)/);
+/** First slope number in a run's mapped name ("50 · Ruggenhof" -> "50"), or null. */
+function pisteNumber(name?: string): string | null {
+  const m = name?.match(/(\d+)/);
   return m ? m[1] : null;
 }
 /** Waze-style piste "shield": colored badge with the slope number, a colored difficulty dot
  * when the piste has no number (common — many resorts don't number pistes), or a lift glyph. */
 function StepBadge({ step, big }: { step?: DisplayStep; big?: boolean }) {
+  const { t } = useTranslation();
   if (!step) return null;
   const cls = big ? 'pbadge big' : 'pbadge';
-  if (step.kind === 'lift') return <span className={`${cls} lift`} title="lift">🚡</span>;
+  if (step.kind === 'lift') return <span className={`${cls} lift`} title={t('nav.liftBadge')}>🚡</span>;
   if (step.kind === 'connector') return null;
   const bg = COLOR_HEX[step.color ?? 'unknown'] ?? COLOR_HEX.unknown;
-  const num = step.ref ?? pisteNumber(step.label);
+  const num = step.ref ?? pisteNumber(step.name);
   if (num) return <span className={cls} style={{ background: bg }}>{num}</span>;
-  return <span className={big ? 'pdot big' : 'pdot'} style={{ background: bg }} title={step.color ?? 'run'} />;
+  return <span className={big ? 'pdot big' : 'pdot'} style={{ background: bg }} title={step.color ? t(`color.${step.color}`) : t('nav.runBadge')} />;
 }
 
 export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExit, onReroute, sim }: Props) {
+  const { t } = useTranslation();
   // Dev simulator state
   const [, setSimS] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -105,21 +118,21 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           }}
         >
           {waiting ? (
-            <Typography sx={{ fontWeight: 800, fontSize: 18 }}>Waiting for your location…</Typography>
+            <Typography sx={{ fontWeight: 800, fontSize: 18 }}>{t('nav.waitingLocation')}</Typography>
           ) : offRoute ? (
             <>
-              <Typography sx={{ fontWeight: 800, fontSize: 18 }}>⚠ You're off the route</Typography>
-              <Typography variant="body2">Ski back to the blue line, or re-route.</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: 18 }}>⚠ {t('nav.offRoute')}</Typography>
+              <Typography variant="body2">{t('nav.offRouteHint')}</Typography>
             </>
           ) : (
             <>
               <Typography sx={{ fontWeight: 800, fontSize: 18, display: 'flex', alignItems: 'center' }}>
-                <StepBadge step={step?.current} big /> {stepText(step?.current)}
+                <StepBadge step={step?.current} big /> {stepText(t, step?.current)}
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.25 }} color={offRoute ? 'inherit' : 'text.secondary'}>
-                {step && step.distToNextM > 5 ? `in ${fmtDist(step.distToNextM)} → ` : 'Then '}
+                {step && step.distToNextM > 5 ? t('nav.inDistance', { distance: fmtDist(step.distToNextM, t) }) : t('nav.then')}
                 <StepBadge step={step?.next} />
-                {step?.next ? stepText(step.next) : 'arrive at destination'}
+                {step?.next ? stepText(t, step.next) : t('nav.arriveAtDestination')}
               </Typography>
             </>
           )}
@@ -136,18 +149,18 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
       >
         {sim && (
           <Paper elevation={4} sx={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 2 }}>
-            <Typography variant="caption" sx={{ fontWeight: 700 }}>DEV sim</Typography>
-            <IconButton size="small" onClick={() => setPlaying((p) => !p)} aria-label={playing ? 'Pause' : 'Play'}>
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>{t('nav.devSim')}</Typography>
+            <IconButton size="small" onClick={() => setPlaying((p) => !p)} aria-label={playing ? t('nav.pause') : t('nav.play')}>
               {playing ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
             </IconButton>
             <IconButton
               size="small"
-              aria-label="Reset simulator"
+              aria-label={t('nav.resetSim')}
               onClick={() => { setPlaying(false); setSimS(0); sim.onSim(null); }}
             >
               <ReplayIcon fontSize="small" />
             </IconButton>
-            <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>{speed} m/s</Typography>
+            <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>{t('units.mps', { value: speed })}</Typography>
             <Slider size="small" min={3} max={25} value={speed} onChange={(_, v) => setSpeed(v as number)} sx={{ width: 110 }} />
           </Paper>
         )}
@@ -163,17 +176,17 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           {!waiting && speedMps != null && speedMps >= 0 && (
             <div className="nav-speed-circle">
               <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
-              <span className="ns-unit">km/h</span>
+              <span className="ns-unit">{t('units.kmhShort')}</span>
             </div>
           )}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {remaining ? (
               <Typography sx={{ fontWeight: 800, fontSize: 17 }} color={offRoute ? 'inherit' : 'primary.main'}>
-                {fmtDist(remaining.distM)} · {fmtTime(remaining.timeS)} left
+                {t('nav.remaining', { distance: fmtDist(remaining.distM, t), time: fmtTime(remaining.timeS, t) })}
               </Typography>
             ) : (
               <Typography variant="body2" color={offRoute ? 'inherit' : 'text.secondary'}>
-                {waiting ? 'Acquiring GPS…' : 'En route'}
+                {waiting ? t('nav.acquiringGps') : t('nav.enRoute')}
               </Typography>
             )}
           </Box>
@@ -184,7 +197,7 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               onClick={onReroute}
               sx={{ borderRadius: 5, textTransform: 'none', fontWeight: 700, px: 2, boxShadow: 2, flexShrink: 0 }}
             >
-              Re-route
+              {t('nav.reroute')}
             </Button>
           )}
           <Button
@@ -199,7 +212,7 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
                 : { borderColor: 'divider', color: 'text.secondary' }),
             }}
           >
-            Exit
+            {t('nav.exit')}
           </Button>
         </Paper>
       </Box>

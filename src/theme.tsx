@@ -34,6 +34,14 @@ const TOKENS: Record<ThemeMode, Record<string, string>> = {
   },
 };
 
+const LATIN_FONTS = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+/**
+ * `system-ui` resolves to Segoe UI on Windows, whose Hebrew is markedly heavier and blockier than
+ * its Latin at the same weight. Arial's Hebrew is the most neutral face that ships everywhere, so
+ * Hebrew gets its own stack rather than a webfont download.
+ */
+const HEBREW_FONTS = "Arial, 'Segoe UI', system-ui, sans-serif";
+
 function makeTheme(mode: ThemeMode, direction: 'ltr' | 'rtl') {
   const t = TOKENS[mode];
   return createTheme({
@@ -46,7 +54,7 @@ function makeTheme(mode: ThemeMode, direction: 'ltr' | 'rtl') {
       divider: t.line,
     },
     shape: { borderRadius: 10 },
-    typography: { fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" },
+    typography: { fontFamily: direction === 'rtl' ? HEBREW_FONTS : LATIN_FONTS },
     components: {
       MuiPaper: { defaultProps: { elevation: 0 }, styleOverrides: { root: { backgroundImage: 'none' } } },
       MuiButton: {
