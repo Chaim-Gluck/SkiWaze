@@ -1,21 +1,21 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CacheProvider } from '@emotion/react';
-import i18n, { detectLanguage, isLanguage, isRtlLanguage, type Language } from './config';
+import i18n, { DEFAULT_LANGUAGE, isLanguage, isRtlLanguage, type Language } from './config';
 import { LanguageContext, type LanguageCtxValue } from './language-context';
 import { rtlCache, ltrCache } from '../rtlCache';
 
 const STORAGE_KEY = 'skiwaze-language';
 
 /**
- * A stored choice always wins; the browser is consulted only for a first-time visitor. Getting
- * that order wrong would keep silently overriding someone who had deliberately switched back.
+ * A stored choice always wins; everyone else starts in English. The browser locale is deliberately
+ * not consulted — see DEFAULT_LANGUAGE.
  */
 function initialLanguage(): Language {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (isLanguage(saved)) return saved;
   } catch { /* ignore */ }
-  return detectLanguage();
+  return DEFAULT_LANGUAGE;
 }
 
 /**

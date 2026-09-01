@@ -27,21 +27,15 @@ export function isLanguage(v: unknown): v is Language {
 }
 
 /**
- * Best language for a first-time visitor, taken from the browser. A Hebrew speaker who cannot read
- * the UI would otherwise have to find the language picker before being able to read anything, so
- * detection makes the picker a correction rather than a discovery. Only consulted when nothing has
- * been stored — an explicit choice always wins.
+ * Language for a first-time visitor.
+ *
+ * Deliberately NOT taken from the browser. English is the language of the mountain here: piste,
+ * lift and resort names are never translated because they have to match the signage, so an
+ * all-Hebrew shell around Latin names reads worse than a consistently English one. A Hebrew
+ * speaker switches once and the choice is stored, so detection would only ever save one tap while
+ * surprising everyone whose device locale does not match how they want to read a map.
  */
-export function detectLanguage(): Language {
-  const tags = typeof navigator !== 'undefined' ? (navigator.languages ?? [navigator.language]) : [];
-  for (const tag of tags) {
-    const base = String(tag).toLowerCase().split('-')[0];
-    // 'iw' is the legacy ISO code for Hebrew and is still emitted by some platforms.
-    const code = base === 'iw' ? 'he' : base;
-    if (isLanguage(code)) return code;
-  }
-  return 'en';
-}
+export const DEFAULT_LANGUAGE: Language = 'en';
 
 i18n.use(initReactI18next).init({
   resources: {

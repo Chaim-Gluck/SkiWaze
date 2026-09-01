@@ -90,6 +90,7 @@ import { LongestRunPanel } from './components/LongestRunPanel';
 import { RoutePreview } from './components/RoutePreview';
 import { Logo } from './components/Logo';
 import { LanguagePicker } from './components/LanguagePicker';
+import { AppBarOverflow } from './components/AppBarOverflow';
 import './App.css';
 
 const DEFAULT_RESORT_ID = 'madonna-di-campiglio';
@@ -212,6 +213,11 @@ export default function App() {
   const [pinMode, setPinMode] = useState<'from' | 'to' | null>(null);
   const [previewDismissed, setPreviewDismissed] = useState(false);
   const isMobile = useMediaQuery('(max-width:820px)');
+  // Narrower than the tablet breakpoint: this is the width at which the AppBar itself runs out of
+  // room, which is a different question from whether the controls become a bottom sheet.
+  // 480px is where the measured content (brand 213 + picker 96 + two 40px buttons + 48 of padding
+  // and gaps = 445) stops fitting, so below it language and theme collapse into one menu.
+  const isNarrow = useMediaQuery('(max-width:479px)');
 
   const [timingMode, setTimingMode] = useState<'now' | 'arrive_by'>('now');
   const [arriveTime, setArriveTime] = useState<string>(() => nowLocalDatetime());
@@ -1149,7 +1155,14 @@ export default function App() {
             </Typography>
           )}
           <Box sx={{ flex: 1 }} />
-          <FormControl size="small" sx={{ minWidth: 170, maxWidth: 280 }}>
+          <FormControl
+            size="small"
+            // Fluid, not stepped: the picker takes whatever the brand and the buttons leave over,
+            // so a 430px phone gets a wider picker than a 360px one without another breakpoint.
+            // It shares the slack with the spacer above and freezes at maxWidth, after which the
+            // spacer absorbs the rest.
+            sx={{ flex: '1 1 auto', minWidth: { xs: 88, sm: 170 }, maxWidth: 280 }}
+          >
             <InputLabel id="resort-picker-label">{t('app.resort')}</InputLabel>
             <Select
               labelId="resort-picker-label"
@@ -1166,12 +1179,20 @@ export default function App() {
               {resortMenuItems}
             </Select>
           </FormControl>
-          <LanguagePicker />
-          <Tooltip title={mode === 'dark' ? t('app.themeLight') : t('app.themeDark')}>
-            <IconButton onClick={toggleTheme} aria-label={t('app.themeToggle')}>
-              {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-            </IconButton>
-          </Tooltip>
+          {/* Below sm the bar cannot hold both icon buttons beside the brand and the resort
+              picker, so they collapse into one overflow menu. See AppBarOverflow. */}
+          {isNarrow ? (
+            <AppBarOverflow />
+          ) : (
+            <>
+              <LanguagePicker />
+              <Tooltip title={mode === 'dark' ? t('app.themeLight') : t('app.themeDark')}>
+                <IconButton onClick={toggleTheme} aria-label={t('app.themeToggle')}>
+                  {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
         </Toolbar>
       </AppBar>
 

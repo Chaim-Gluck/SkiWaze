@@ -86,6 +86,14 @@ body:lang(he) {
    because the header is deliberately pinned dir="ltr". */
 .logo-tag:lang(he) { letter-spacing: 1px; font-size: 13px; }
 
+/* The tagline is what sets the lockup's width (measured: 170px of ink against the wordmark's 138)
+   and it is the only part of the header carrying no information, so it is the first thing to go —
+   but only once it actually stops fitting. With it the bar needs 397px (brand 213 + picker 88 +
+   one 40px button + 48 of padding and gaps); below 400 that no longer holds. */
+@media (max-width: 399px) {
+  .logo-tag { display: none; }
+}
+
 .body {
   display: flex;
   flex: 1;
