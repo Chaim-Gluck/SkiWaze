@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MeasuredSpeeds, SpeedColor } from '../state/measuredSpeeds';
 import { measuredAverages } from '../state/measuredSpeeds';
@@ -5,6 +6,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Collapse from '@mui/material/Collapse';
+import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
 import TableHead from '@mui/material/TableHead';
 import TableBody from '@mui/material/TableBody';
@@ -23,17 +26,31 @@ interface Props {
   onReset: () => void;
 }
 
-/** Shows the skier's own measured average speed per color (recorded live while navigating). */
+/**
+ * Shows the skier's own measured average speed per color (recorded live while navigating).
+ *
+ * Collapsed by default: this is a diagnostics readout, not a filter, and for a skier who has not
+ * navigated yet every row reads "—". Left open it was 375px of the Preferences section's 825px —
+ * on a phone that alone pushed the sheet past every height it could have.
+ */
 export function MeasuredSpeedsPanel({ measured, estimatedByColor, minSamples, onApply, onReset }: Props) {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
   const avg = measuredAverages(measured, minSamples);
   const ready = Object.keys(avg).length > 0;
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Divider sx={{ mb: 1.5 }} />
-      <Typography sx={{ fontWeight: 700, mb: 0.5 }}>{t('speeds.title')}</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+      <Divider sx={{ mb: 1 }} />
+      <Link
+        component="button" type="button" underline="hover" color="inherit"
+        onClick={() => setOpen((v) => !v)}
+        sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 700 }}
+      >
+        {t('speeds.title')} {open ? '▲' : '▼'}
+      </Link>
+      <Collapse in={open}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1, mt: 0.5 }}>
         {t('speeds.intro')}
       </Typography>
       <Table size="small" sx={{ '& td, & th': { px: 1, py: 0.5 } }}>
@@ -73,6 +90,7 @@ export function MeasuredSpeedsPanel({ measured, estimatedByColor, minSamples, on
           {t('speeds.unlockHint', { count: minSamples })}
         </Typography>
       )}
+      </Collapse>
     </Box>
   );
 }

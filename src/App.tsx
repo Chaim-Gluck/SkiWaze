@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './i18n/language-context';
 import { tr } from './utils/text';
@@ -38,6 +37,7 @@ import Badge from '@mui/material/Badge';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
+import { PanelShell } from './components/PanelShell';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import Box from '@mui/material/Box';
@@ -725,6 +725,8 @@ export default function App() {
     setSelectedRange(null);
     setFocusGeometry(null);
     setPanelOpen(false);
+    // Bring the results into view: on mobile this selects the Plan tab (which carries the results);
+    // on desktop the form and results are pinned open, so this only closes any secondary section.
     setOpenSection('routes');
     setPreviewDismissed(false);
     if (result.error) {
@@ -1104,30 +1106,18 @@ export default function App() {
     setOpenSection(v);
     setPanelOpen(true);
   };
+  // The sheet carries a single title instead of the per-section accordion headers the desktop
+  // column uses. Falls back to Plan so the header is never blank mid-transition.
+  const sectionHeader = ({
+    plan: { title: t('app.plan.title'), icon: <SearchIcon fontSize="small" /> },
+    longest: { title: t('app.longest.title'), icon: <EmojiEventsIcon fontSize="small" /> },
+    links: { title: t('app.links.title'), icon: <LinkIcon fontSize="small" /> },
+    closed: { title: t('app.closed.title'), icon: <DoNotDisturbOnIcon fontSize="small" /> },
+    prefs: { title: t('app.prefs.title'), icon: <TuneIcon fontSize="small" /> },
+  } as Record<string, { title: string; icon: ReactNode }>)[mobileTab]
+    ?? { title: t('app.plan.title'), icon: <SearchIcon fontSize="small" /> };
 
-  // Mobile bottom sheet: drag the handle downwards to dismiss.
-  const sheetRef = useRef<HTMLElement | null>(null);
-  const sheetDrag = useRef<{ y: number; dy: number } | null>(null);
-  const onSheetDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    sheetDrag.current = { y: e.clientY, dy: 0 };
-    if (sheetRef.current) sheetRef.current.style.transition = 'none';
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onSheetMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!sheetDrag.current) return;
-    const dy = Math.max(0, e.clientY - sheetDrag.current.y);
-    sheetDrag.current.dy = dy;
-    if (sheetRef.current) sheetRef.current.style.transform = `translateY(${dy}px)`;
-  };
-  const onSheetUp = () => {
-    const d = sheetDrag.current;
-    sheetDrag.current = null;
-    if (sheetRef.current) {
-      sheetRef.current.style.transition = '';
-      sheetRef.current.style.transform = '';
-    }
-    if (d && d.dy > 80) setPanelOpen(false);
-  };
+  // The sheet's open/close, backdrop and swipe-to-dismiss now belong to PanelShell's MUI drawer.
 
   return (
     <div className="app">
@@ -1197,21 +1187,21 @@ export default function App() {
       </AppBar>
 
       <div className="body">
-        {panelOpen && <div className="backdrop" onClick={() => setPanelOpen(false)} />}
-        <aside ref={sheetRef} className={panelOpen ? 'sidebar open' : 'sidebar'}>
-          <div
-            className="sheet-handle"
-            onPointerDown={onSheetDown}
-            onPointerMove={onSheetMove}
-            onPointerUp={onSheetUp}
-            onPointerCancel={onSheetUp}
-            aria-label={t('app.dragToClose')}
-          />
+        <PanelShell
+          isMobile={isMobile}
+          open={panelOpen}
+          onClose={() => setPanelOpen(false)}
+          onOpen={() => setPanelOpen(true)}
+          title={sectionHeader.title}
+          icon={sectionHeader.icon}
+        >
           {showSec('plan') && (
           <AccordionSection
             title={t('app.plan.title')}
             icon={<SearchIcon fontSize="small" />}
             summary={planSummary}
+            bare={isMobile}
+            pinned
             open={openSection === 'plan'}
             onToggle={() => toggleSection('plan')}
           >
@@ -1309,6 +1299,8 @@ export default function App() {
               title={t('app.routes.title')}
               icon={<AltRouteIcon fontSize="small" />}
               summary={plan.routes.length ? t('app.summary.options', { count: plan.routes.length }) : t('app.summary.noRoute')}
+              bare={isMobile}
+              pinned
               open={openSection === 'routes'}
               onToggle={() => toggleSection('routes')}
             >
@@ -1360,6 +1352,7 @@ export default function App() {
             title={t('app.longest.title')}
             icon={<EmojiEventsIcon fontSize="small" />}
             summary={longestSummary}
+            bare={isMobile}
             open={openSection === 'longest'}
             onToggle={() => toggleSection('longest')}
           >
@@ -1386,6 +1379,7 @@ export default function App() {
             title={t('app.links.title')}
             icon={<LinkIcon fontSize="small" />}
             summary={linksSummary}
+            bare={isMobile}
             open={openSection === 'links'}
             onToggle={() => toggleSection('links')}
           >
@@ -1416,6 +1410,7 @@ export default function App() {
             title={t('app.closed.title')}
             icon={<DoNotDisturbOnIcon fontSize="small" />}
             summary={closedSummary}
+            bare={isMobile}
             open={openSection === 'closed'}
             onToggle={() => toggleSection('closed')}
           >
@@ -1433,6 +1428,7 @@ export default function App() {
             title={t('app.prefs.title')}
             icon={<TuneIcon fontSize="small" />}
             summary={t('app.prefs.summary')}
+            bare={isMobile}
             open={openSection === 'prefs'}
             onToggle={() => toggleSection('prefs')}
           >
@@ -1450,7 +1446,7 @@ export default function App() {
               })}
             </Typography>
           )}
-        </aside>
+        </PanelShell>
 
         {/* The map is geography, not prose: north is up and west is left in every language. Pinning
             it LTR also keeps our MUI overlays (Fabs, layer/legend buttons) on the same side as
@@ -1564,7 +1560,9 @@ export default function App() {
       {isMobile && !navRoute && (
         <Paper
           elevation={8}
-          sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 30, borderTop: 1, borderColor: 'divider', pb: 'env(safe-area-inset-bottom, 0px)' }}
+          // Above the sheet's drawer (MUI's default 1200): the bar is how you switch sections, so
+          // it has to stay reachable while the sheet is up.
+          sx={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: (theme) => theme.zIndex.drawer + 2, borderTop: 1, borderColor: 'divider', pb: 'env(safe-area-inset-bottom, 0px)' }}
         >
           <BottomNavigation
             showLabels

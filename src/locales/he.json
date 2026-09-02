@@ -262,7 +262,6 @@
     "more": "עוד",
     "hideControls": "הסתר פקדים",
     "showControls": "הצג פקדים",
-    "dragToClose": "גרור מטה כדי לסגור",
     "openLink": "פתח ↖",
     "globalHint": "התרחקת - לחץ על דגל של אתר סקי (או בחר אחד מהרשימה) כדי לפתוח אותו",
     "pinHintPoint": "לחץ על המפה כדי לקבוע את נקודת {{which}}",
@@ -384,13 +383,13 @@
     "traverse": "חצה"
   },
   "leg": {
-    "ski": "גלוש ב{{piste}} ({{color}}) – {{dist}} מ'",
-    "liftUp": "עלה ב{{name}} ({{liftType}}) – {{dist}} מ'",
-    "liftDown": "רד ב{{name}} ({{liftType}}) – {{dist}} מ'",
-    "traverseNamed": "חצה את {{piste}} – {{dist}} מ'",
-    "traverseFlat": "חצה קטע מישורי – {{dist}} מ'",
-    "traverseFlatTo": "חצה קטע מישורי – {{dist}} מ' אל {{to}}",
-    "connector": "גלוש בקטע מקשר – {{dist}} מ'"
+    "ski": "גלוש ב{{piste}} ({{color}}) - {{dist}} מ'",
+    "liftUp": "עלה ב{{name}} ({{liftType}}) - {{dist}} מ'",
+    "liftDown": "רד ב{{name}} ({{liftType}}) - {{dist}} מ'",
+    "traverseNamed": "חצה את {{piste}} - {{dist}} מ'",
+    "traverseFlat": "חצה קטע מישורי - {{dist}} מ'",
+    "traverseFlatTo": "חצה קטע מישורי - {{dist}} מ' אל {{to}}",
+    "connector": "גלוש בקטע מקשר - {{dist}} מ'"
   },
   "closure": {
     "lift": "רכבל: {{name}}",

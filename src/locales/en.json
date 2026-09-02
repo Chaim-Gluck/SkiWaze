@@ -257,7 +257,6 @@
     "more": "More",
     "hideControls": "Hide controls",
     "showControls": "Show controls",
-    "dragToClose": "Drag down to close",
     "openLink": "Open ↗",
     "globalHint": "Zoomed out - click a resort flag (or pick one from the list) to open it",
     "pinHintPoint": "Click the map to set the {{which}} point",
@@ -377,13 +376,13 @@
     "traverse": "Traverse"
   },
   "leg": {
-    "ski": "Ski {{piste}} ({{color}}) – {{dist}} m",
-    "liftUp": "Take {{name}} ({{liftType}}) up – {{dist}} m",
-    "liftDown": "Take {{name}} ({{liftType}}) down – {{dist}} m",
-    "traverseNamed": "Traverse {{piste}} – {{dist}} m",
-    "traverseFlat": "Traverse flat section – {{dist}} m",
-    "traverseFlatTo": "Traverse flat section – {{dist}} m to {{to}}",
-    "connector": "Ski connector – {{dist}} m"
+    "ski": "Ski {{piste}} ({{color}}) - {{dist}} m",
+    "liftUp": "Take {{name}} ({{liftType}}) up - {{dist}} m",
+    "liftDown": "Take {{name}} ({{liftType}}) down - {{dist}} m",
+    "traverseNamed": "Traverse {{piste}} - {{dist}} m",
+    "traverseFlat": "Traverse flat section - {{dist}} m",
+    "traverseFlatTo": "Traverse flat section - {{dist}} m to {{to}}",
+    "connector": "Ski connector - {{dist}} m"
   },
   "closure": {
     "lift": "Lift: {{name}}",
