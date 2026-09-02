@@ -1110,6 +1110,19 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   keys a route by its ordered sequence of named pistes and lifts, skipping connectors and collapsing
   consecutive legs of one run. Differing solely in which bridge or gap-fill is crossed is not a
   choice a skier can act on, so those options dedupe to one.
+- **A long step list is usually an OSM naming artifact, not too many traverses.** Val Thorens
+  averaged 24.9 steps per 13 km route, of which only **4.9** were traverses — `groupSteps` in
+  `buildRoute.ts` already absorbs connectors under `SHORT_CONNECTOR_M` (40 m) and merges consecutive
+  ones. The real cause was that OSM names a run way by way, so one descent arrived as
+  `<unnamed> | 60 Menuires | <unnamed>` — three steps of ~60 m. `sameRunMissingName()` merges a
+  piste step into its neighbour when exactly one side is unnamed **and the colour matches** (colour
+  is the safety-bearing half of the label; an unnamed edge of a different colour is a different run),
+  adopting whichever name exists. `bridgesSameRun()` additionally absorbs a traverse that leaves a
+  run and rejoins **the same** run. Effect: 24.1 → 18.5 mean steps, same-run sandwiches 51 → 0,
+  Sölden unchanged at 10.6 because it is fully named in OSM — same code, no data gap. Two things
+  this must never do: **merge across different runs** (a traverse between two runs is often the only
+  link and hiding it hides a required move), and drop the `fromLeg`/`toLeg` span, which is what lets
+  a merged step still highlight all its edges on the map.
 - **An objective badge is suppressed when its margin is noise.** Balanced only offers the `longest`
   candidate when its piste metres beat the best pool route's by more than the ranking layer's own
   skiing tolerance (`skiingTolerance`, 100 m or 5%) — otherwise a 40 m hop gets badged "Longest".
@@ -1195,7 +1208,46 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   nav banner, legend + layer selector, Snackbar/Dialog). **MapLibre visuals stay tokenized CSS**
   (location puck, on-map arrows, route lines, piste badges, pin hints) — they must read over the
   unchanging map tiles in both themes, so don't tie them to the light panel colour.
-- Mobile = **bottom sheet** (≤820px), not a bottom-nav bar.
+- **The panel's two primary sections are pinned open; only the secondary four collapse.** The route
+  form and its results are the panel's whole job, so they are `pinned` (header, no chevron, never
+  collapses) and Longest runs / Custom links / Closed today / Preferences stay a normal exclusive
+  accordion set below them. Before this, all six were peers in one exclusive set, so **finding a
+  route closed the form that found it** — `setOpenSection('routes')` after a search was not a bug
+  in itself, it was exclusivity applied to two things that must be visible together. Note the
+  secondary four keep their collapsed one-line summaries ("All open", "None yet"): those carry
+  state, so replacing that strip with bare icons would cost information to save ~150 px.
+- Mobile (≤820px) = **bottom nav bar + bottom sheet**, and the two are not alternatives: the nav
+  bar is the *only* navigator (5 fixed tabs; re-tapping the active tab closes the sheet) and the
+  sheet is only a *container* for whichever section it selected. Both are MUI —
+  `BottomNavigation` plus `PanelShell` (`SwipeableDrawer`). Three things there are load-bearing:
+  - **The sheet has a fixed height, not `max-height`.** Content-driven height meant the panel
+    jumped 458 px between tabs and the map behind it went 95 px → 537 px. There is exactly **one**
+    height (`SHEET_VH`, 68), so switching tabs moves nothing at all. It started as two — a peek
+    plus a tall one for Preferences, which needed ~930 px — and collapsing that section's
+    measured-speeds diagnostics table removed the need for the second. If a section ever cannot
+    fit, prefer a disclosure **inside** the section over a second sheet height: the second height
+    is the thing that makes the panel jump. Preferences still scrolls ~54 px, deliberately —
+    sizing the sheet to its densest section would cost every other tab 66 px of map.
+  - **The sheet is non-modal, and sits ON the nav bar rather than behind it.** A sheet that stops
+    short of the top exists so you can still work the map above it, so there is no backdrop. A MUI
+    Modal's root covers the viewport even with `hideBackdrop`, so the root gets
+    `pointerEvents:'none'` and the paper takes them back — without that the map is dead under a
+    backdrop that isn't drawn. Anchoring the paper at `bottom: NAV_H` (rather than 0, with padding
+    added back inside) reclaims 72 px that were permanently under an opaque bar.
+  - **The nav bar sits at `zIndex.drawer + 2`.** A Drawer defaults to 1200 and would bury the bar,
+    i.e. bury the navigator.
+  On mobile the accordion header is dropped (`AccordionSection`'s `bare` prop): the tab you just
+  tapped already names the section, so the header is a second copy of it above a chevron that
+  expands something already expanded.
+- **i18next must be initialised WITH the stored language — a provider effect is too late.**
+  `changeLanguage` is async, so initialising `lng:'en'` and letting `LanguageProvider` correct it
+  leaves a window in which `t()` still answers in English. Anything resolving a string *eagerly*
+  during that window keeps the English copy for the whole visit: the once-a-day "statuses assumed
+  open" notice freezes its text into React state on mount, so a Hebrew user saw it in English on the
+  landing resort and correctly in Hebrew only after changing resort. `config.ts` now exports
+  `storedLanguage()` and both `init({ lng })` and the provider's `useState` read it, so React and
+  i18next agree on the first render. This is the *third* instance of the same bug (unit labels were
+  the first) — when adding anything that captures a translated string outside render, check it.
 - **Global vs resort is an explicit MODE, not a zoom range** (`globalView` in `App.tsx`, threshold
   `RESORT_MARKER_MAXZOOM` in `MapView.tsx`). Zooming out past the threshold enters global view; the
   **only** ways out are picking a resort from the list or clicking its flag. Driving it off zoom
