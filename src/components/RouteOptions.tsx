@@ -113,15 +113,25 @@ function RouteCard({
         </Box>
       )}
 
-      {(s.startTime || s.arriveTime) && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-          {t('route.departAt')}{' '}
-          <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{fmtClock(s.startTime)}</Box>
-          {' · '}
-          {t('route.arriveAt')}{' '}
-          <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{fmtClock(s.arriveTime)}</Box>
-        </Typography>
-      )}
+      {(s.startTime || s.arriveTime) &&
+        (s.timingMode === 'arrive_by' ? (
+          // In arrive-by mode the departure time IS the answer, so it cannot be one more grey
+          // number under the colour bar next to an arrival the user typed in themselves.
+          <Alert severity="info" icon={false} sx={{ py: 0, my: 0.5 }}>
+            {t('route.leaveBy')}{' '}
+            <Box component="span" sx={{ fontWeight: 800 }}>{fmtClock(s.startTime)}</Box>
+            {' · '}
+            {t('route.arriveAt')} {fmtClock(s.arriveTime)}
+          </Alert>
+        ) : (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+            {t('route.departAt')}{' '}
+            <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{fmtClock(s.startTime)}</Box>
+            {' · '}
+            {t('route.arriveAt')}{' '}
+            <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{fmtClock(s.arriveTime)}</Box>
+          </Typography>
+        ))}
 
       {route.warnings.length > 0 && (
         <Box component="ul" sx={{ pl: 2, my: 0.5 }}>

@@ -210,7 +210,9 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     if (target) {
       const probe = buildRoute(index, edges, prefs, target, objective, id);
       const start = new Date(target.getTime() - probe.stats.totalDurationS * 1000);
-      return buildRoute(index, edges, prefs, start, objective, id);
+      const route = buildRoute(index, edges, prefs, start, objective, id);
+      route.stats.timingMode = 'arrive_by';
+      return route;
     }
     return buildRoute(index, edges, prefs, now, objective, id);
   };

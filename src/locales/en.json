@@ -138,6 +138,7 @@
     "lifts_other": "{{count}} lifts",
     "longestRun": "longest run {{distance}}",
     "departAt": "Depart",
+    "leaveBy": "Leave by",
     "arriveAt": "arrive",
     "hideSteps": "Hide steps",
     "showSteps_one": "Show {{count}} step",
@@ -149,7 +150,9 @@
     "prev": "Previous option",
     "next": "Next option",
     "details": "Details",
-    "start": "Start"
+    "start": "Start",
+    "eta": "ETA {{time}}",
+    "leave": "Leave {{time}}"
   },
   "picker": {
     "customLocation": "Custom location",
@@ -398,6 +401,7 @@
     "colorNamed": "{{name}} is {{color}}, outside your preferred colors.",
     "defaultSpeed": "Using a default ski speed (piste color unknown).",
     "hours": "Opening hours unknown for this lift.",
+    "hoursAll": "Opening hours are unknown for every lift on this route.",
     "hoursNamed": "Opening hours unknown for {{name}}.",
     "closing": "Lift closes in ~{{min}} min - hurry!",
     "closingNamed": "{{name}} closes in ~{{min}} min - hurry!",

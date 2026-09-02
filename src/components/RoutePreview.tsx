@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../i18n/language-context';
 import type { Route } from '../types/domain';
-import { fmtDistance, fmtDuration } from '../utils/format';
+import { fmtClock, fmtDistance, fmtDuration } from '../utils/format';
 import { routeLabelKey } from '../utils/routeLabels';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -73,6 +73,20 @@ export function RoutePreview({ routes, selectedIndex, onSelect, onStart, onDetai
         <Typography sx={{ fontWeight: 800 }} variant="h6">{fmtDuration(s.totalDurationS)}</Typography>
         <Typography variant="body2" color="text.secondary">{fmtDistance(s.totalDistanceM)}</Typography>
         <Typography variant="body2" color="text.secondary">🚠 {t('route.lifts', { count: s.liftCount })}</Typography>
+        {/* The preview is the card most people act on, so the clock has to be here and not only in
+            the details panel. Which clock depends on the question asked: under "arrive by" the
+            departure time is the whole answer, otherwise it is the ETA. */}
+        {s.timingMode === 'arrive_by' && s.startTime ? (
+          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            {t('preview.leave', { time: fmtClock(s.startTime) })}
+          </Typography>
+        ) : (
+          s.arriveTime && (
+            <Typography variant="body2" color="text.secondary">
+              {t('preview.eta', { time: fmtClock(s.arriveTime) })}
+            </Typography>
+          )
+        )}
         {r.labels && r.labels.length > 0 && (
           <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end', alignSelf: 'center' }}>
             {r.labels.map((label) => (

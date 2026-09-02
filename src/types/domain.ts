@@ -404,6 +404,12 @@ export interface RouteStats {
   startTime?: string;
   /** ISO arrival time when computed. */
   arriveTime?: string;
+  /**
+   * Which question this route answers. Recorded on the route rather than read from the app's
+   * current toggle so a later flip of that toggle cannot relabel a route that was already planned:
+   * under `arrive_by` the *departure* time is the answer, under `now` it is the arrival.
+   */
+  timingMode?: TimingMode;
 }
 
 /**
