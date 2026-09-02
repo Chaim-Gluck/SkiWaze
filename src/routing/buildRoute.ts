@@ -205,10 +205,44 @@ function closureForEdge(e: GraphEdge): { key: string | null; label: TextRef | nu
   return { key: null, label: null };
 }
 
+const pisteId = (e: GraphEdge): string => e.pisteRef ?? e.pisteName ?? '';
+
 /**
- * Consolidate consecutive legs into readable steps: merge same-run / same-lift legs, and
- * absorb short (<40 m) connectors into the current step. Display-only; leg indices are
- * preserved via [fromLeg, toLeg] so a step can still highlight its edges on the map.
+ * Is this piste edge the same descent as the step we are already writing, only missing its name?
+ *
+ * OSM names a run way by way, so one continuous descent routinely arrives as
+ * `<unnamed> | 60 Menuires | <unnamed>` and used to print as three steps of ~60 m each. It is the
+ * same snow at the same grade, so we merge and adopt whichever name exists. The colour must match:
+ * that is the safety-bearing half of the label, and an unnamed edge of a *different* colour is a
+ * different run whatever OSM forgot to tag.
+ */
+function sameRunMissingName(cur: DisplayStep, curKey: string, e: GraphEdge): boolean {
+  if (cur.kind !== 'piste' || e.kind !== 'piste') return false;
+  if ((cur.color ?? '') !== (e.color ?? '')) return false;
+  const curNamed = curKey.split('|')[1] !== '';
+  const eNamed = pisteId(e) !== '';
+  return curNamed !== eNamed;
+}
+
+/**
+ * A traverse that leaves a run and rejoins the *same* run is not a move the skier has to make a
+ * decision about — they simply keep going — so it is absorbed instead of splitting the run in
+ * three. Only the same run counts: a traverse between two *different* runs is often the only link
+ * between them and must stay visible.
+ */
+function bridgesSameRun(edges: GraphEdge[], i: number, cur: DisplayStep, curKey: string): boolean {
+  if (edges[i].kind !== 'connector' || cur.kind !== 'piste') return false;
+  let j = i;
+  while (j < edges.length && edges[j].kind === 'connector') j++;
+  const next = edges[j];
+  if (!next || next.kind !== 'piste') return false;
+  return stepKeyForEdge(next) === curKey || sameRunMissingName(cur, curKey, next);
+}
+
+/**
+ * Consolidate consecutive legs into readable steps: merge same-run / same-lift legs, absorb short
+ * (<40 m) connectors into the current step, and apply the two merges above. Display-only; leg
+ * indices are preserved via [fromLeg, toLeg] so a step can still highlight all its edges on the map.
  */
 function groupSteps(edges: GraphEdge[], legs: RouteLeg[]): DisplayStep[] {
   const steps: DisplayStep[] = [];
@@ -218,12 +252,30 @@ function groupSteps(edges: GraphEdge[], legs: RouteLeg[]): DisplayStep[] {
   edges.forEach((e, i) => {
     const shortConnector = e.kind === 'connector' && e.lengthM < SHORT_CONNECTOR_M;
     const key = stepKeyForEdge(e);
-    if (cur && (shortConnector || key === curKey)) {
+    const adoptName = !!cur && sameRunMissingName(cur, curKey, e) && pisteId(e) !== '';
+    const merge =
+      !!cur &&
+      (shortConnector ||
+        key === curKey ||
+        sameRunMissingName(cur, curKey, e) ||
+        bridgesSameRun(edges, i, cur, curKey));
+    if (cur && merge) {
       cur.distanceM += legs[i].distanceM;
       cur.durationS += legs[i].durationS;
       cur.toLeg = i;
       cur.synthetic = cur.synthetic || !!e.synthetic;
       cur.custom = cur.custom || !!e.custom;
+      if (adoptName) {
+        const lab = stepLabelForEdge(e);
+        const cl = closureForEdge(e);
+        cur.label = lab.label;
+        cur.labelShort = lab.short;
+        cur.name = bidiName(e.pisteName);
+        cur.ref = bidiName(e.pisteRef);
+        cur.closureKey = cl.key;
+        cur.closureLabel = cl.label;
+        curKey = key;
+      }
     } else {
       const cl = closureForEdge(e);
       const lab = stepLabelForEdge(e);
