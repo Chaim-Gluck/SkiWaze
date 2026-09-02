@@ -37,12 +37,31 @@ export function isLanguage(v: unknown): v is Language {
  */
 export const DEFAULT_LANGUAGE: Language = 'en';
 
+export const LANGUAGE_STORAGE_KEY = 'skiwaze-language';
+
+/**
+ * A stored choice always wins; everyone else starts in English (see DEFAULT_LANGUAGE).
+ *
+ * This is read HERE, at init, and not only by the React provider: `changeLanguage` is async, so a
+ * provider effect leaves a window in which `t()` still answers in English. Anything that resolves a
+ * string eagerly during that window — the once-a-day "statuses assumed open" notice freezes its
+ * text into state on mount — kept the English copy for the rest of the visit, and only looked right
+ * after a later resort change re-ran it. Same failure mode as the unit labels below.
+ */
+export function storedLanguage(): Language {
+  try {
+    const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (isLanguage(saved)) return saved;
+  } catch { /* ignore */ }
+  return DEFAULT_LANGUAGE;
+}
+
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
     he: { translation: he },
   },
-  lng: 'en',
+  lng: storedLanguage(),
   fallbackLng: 'en',
   interpolation: { escapeValue: false }, // React already escapes
   returnNull: false,
