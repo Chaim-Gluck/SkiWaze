@@ -549,9 +549,27 @@ export default function App() {
     setFocusGeometry(null);
     setPreviewDismissed(false);
   };
+  /**
+   * Start over: drop both the inputs and everything computed from them in one action.
+   *
+   * `exitNav` above does the *outputs* half and deliberately keeps From/To so re-planning is one
+   * tap; this is the other intent — clear the form too. It stops at plan-owned state: the map
+   * highlight (`focusGeometry`) belongs to the Longest-runs section, and planning already nulls it,
+   * so there is never a stale route highlight left behind for this to clean up.
+   */
+  const clearPlan = () => {
+    setFromNodeId(null);
+    setToNodeId(null);
+    setFromCustom(null);
+    setToCustom(null);
+    setPinMode(null);
+    setPlan(null);
+    setSelectedRoute(0);
+    setSelectedRange(null);
+    setPreviewDismissed(false);
+  };
   // On mobile the bottom sheet must never overlap the navigation overlay.
-  useEffect(() => { if (navRoute) setPanelOpen(false); }, [navRoute]);
-  const rerouteFromHere = () => {
+  useEffect(() => { if (navRoute) setPanelOpen(false); }, [navRoute]);  const rerouteFromHere = () => {
     if (!effectiveGraph || !userPos || !toNodeId) return;
     const near = nearestNode(effectiveGraph, userPos.lon, userPos.lat);
     if (!near) return;
@@ -1256,15 +1274,31 @@ export default function App() {
               )}
             </Box>
 
-            <Button
-              variant="contained"
-              size="large"
-              fullWidth
-              onClick={() => doPlan()}
-              disabled={!graph}
-            >
-              {t('app.plan.find')}
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                onClick={() => doPlan()}
+                disabled={!graph}
+                sx={{ flex: 1 }}
+              >
+                {t('app.plan.find')}
+              </Button>
+              {/* Only shown when there is actually something to clear: a permanently disabled
+                  button is clutter on the first screen a user ever sees. */}
+              {(fromNodeId || toNodeId || pinMode || plan) && (
+                <Button
+                  variant="outlined"
+                  size="large"
+                  color="inherit"
+                  onClick={clearPlan}
+                  sx={{ flex: '0 0 auto', borderColor: 'divider', color: 'text.secondary' }}
+                >
+                  {t('app.plan.clear')}
+                </Button>
+              )}
+            </Box>
             <Button
               variant="outlined"
               size="large"

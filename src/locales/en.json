@@ -284,7 +284,8 @@
       "when": "When",
       "now": "Now",
       "arriveBy": "Arrive by",
-      "find": "Find routes"
+      "find": "Find routes",
+      "clear": "Clear"
     },
     "routes": {
       "title": "Route options",
