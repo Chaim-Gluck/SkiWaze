@@ -1110,6 +1110,25 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   keys a route by its ordered sequence of named pistes and lifts, skipping connectors and collapsing
   consecutive legs of one run. Differing solely in which bridge or gap-fill is crossed is not a
   choice a skier can act on, so those options dedupe to one.
+- **A route must answer the question that was asked, on the card the user is looking at.**
+  `arrive_by` was fully implemented in the router — `plan.ts` back-solves `start = target −
+  duration` — and looked broken because the answer never reached the eye: the floating preview card
+  showed no clock at all, and the details card printed "Depart · Arrive" in identical grey in both
+  modes, so the one number the user asked for sat next to an arrival time they had typed in
+  themselves. The mode is recorded as `RouteStats.timingMode` **on the route**, not read from the
+  app's toggle, so flipping the toggle after planning cannot relabel a route that already exists.
+  Under `arrive_by` the departure is promoted (an `Alert`, and "Leave 15:10" on the preview);
+  otherwise the preview shows the ETA. Before concluding a feature "does nothing", check whether it
+  is the computation or the presentation that is missing — here it was entirely the latter.
+- **Naming each lift with unknown opening hours is only useful as a contrast.** Only **63 of 2163**
+  lifts fleet-wide (2.9%) carry `opening_hours`, so "hours unknown for X" was usually emitted once
+  per lift on the route, saying the same thing 4 times — and since the card renders at most **four**
+  warnings, those copies pushed out the ones that matter (a lift closing soon, a synthetic bridge).
+  `buildRoute` collapses them to a single `warn.hoursAll` when **no** lift on the route has hours.
+  Two deliberate limits: it needs **more than one** lift (with a single unknown lift the name is
+  strictly more informative), and it never fires when *any* lift's hours are known — that is the
+  case where naming the others is the whole point. Verified across 376 routes on three resorts: 0
+  violations, and Sölden's single-lift routes correctly keep the name.
 - **A long step list is usually an OSM naming artifact, not too many traverses.** Val Thorens
   averaged 24.9 steps per 13 km route, of which only **4.9** were traverses — `groupSteps` in
   `buildRoute.ts` already absorbs connectors under `SHORT_CONNECTOR_M` (40 m) and merges consecutive
