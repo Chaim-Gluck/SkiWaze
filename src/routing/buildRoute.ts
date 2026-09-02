@@ -159,12 +159,27 @@ export function buildRoute(
 
   // Deduplicate warnings by code + resolved text (key and params).
   const seen = new Set<string>();
-  const warnings = routeWarnings.filter((w) => {
+  let warnings = routeWarnings.filter((w) => {
     const k = `${w.code}:${w.message.key}:${JSON.stringify(w.message.params ?? {})}`;
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
   });
+
+  // Naming each lift whose hours we don't know is only useful as a CONTRAST — "these are the ones
+  // we can't vouch for". When we know the hours of none of them there is no contrast to draw, just
+  // the same sentence N times, and since the card shows at most four warnings those copies push out
+  // the ones that matter (a lift closing soon, a synthetic bridge). So say it once.
+  const liftEdges = edges.filter((e) => e.kind === 'lift');
+  if (liftEdges.length > 1 && liftEdges.every((e) => !e.openingHours)) {
+    let kept = false;
+    warnings = warnings.flatMap((w) => {
+      if (w.code !== 'missing_opening_hours') return [w];
+      if (kept) return [];
+      kept = true;
+      return [{ code: w.code, message: { key: 'warn.hoursAll' } }];
+    });
+  }
 
   return { id, objective, legs, steps: groupSteps(edges, legs), stats, warnings };
 }
