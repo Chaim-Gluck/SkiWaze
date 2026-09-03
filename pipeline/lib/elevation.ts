@@ -5,27 +5,56 @@ import { getCachedElevation, setCachedElevation, saveElevationCache } from './ca
  * Namespace for cached samples. Bump this whenever the provider chain below changes
  * so a rebuild re-samples instead of reusing the previous DEM's values.
  */
-export const ELEVATION_SOURCE = 'eudem25m+srtm30m';
+export const ELEVATION_SOURCE = 'median3:eudem25m+srtm30m+cop90.v2';
 
 type Provider =
   | { id: string; kind: 'opentopodata'; dataset: string; delayMs: number }
+  | { id: string; kind: 'open-meteo'; url: string; delayMs: number }
   | { id: string; kind: 'open-elevation'; url: string; delayMs: number };
 
 /**
- * Elevation providers in priority order.
+ * Elevation is resolved by CONSENSUS: every provider below is asked for every point and
+ * the median is taken. A single DEM's local failure therefore cannot decide anything.
  *
- * open-elevation was the original primary and is now the last resort: across the Alps it
- * returns long runs of one repeated value, which flattens real relief into shelves and
- * concentrates the whole drop into single vertices. Downstream that reads as a piste which
- * is level for 300 m, plunges at -100%, then *climbs* back — phantom bumps that make the
- * routing and longest-run scorers reject perfectly good runs.
+ * This replaced a first-answer-wins chain headed by EU-DEM 25 m, which was measured
+ * catastrophically wrong over glacier: against OpenTopoMap contours and OSM spot heights
+ * at five points on the Plateau Rosa icefield it scored 14.3 m mean absolute error while
+ * srtm30m scored 2.6 m, Copernicus 90 m 3.4 m and aster30m 4.6 m — and it was the lone
+ * outlier at every single point, always low. Because its error was NOT a uniform offset
+ * (-27 m to +13 m across eleven adjacent nodes) it flipped edges: it manufactured a
+ * mid-run node that two runs left and none arrived at, reversed the head of a red run so
+ * it pointed away from the rest of itself, and compressed a 21 m / 14% red pitch into
+ * 7 m / 4.7%, which is under `flatGradeMax` and so earned a reverse traverse — letting
+ * the router send a skier UP a red run.
  *
- * EU-DEM 25 m is markedly more faithful over Europe; SRTM 30 m covers what falls outside
- * its footprint (Gudauri, Mount Hermon) and backstops nodata holes.
+ * None of our guards caught any of it: `check:elevation` compares against one second
+ * opinion at a ±40 m threshold, and exactly 1 node in that whole resort cleared that bar.
+ * A median needs no ground truth to be right and degrades gracefully, which is why it is
+ * preferred over simply promoting whichever DEM won this particular contest.
+ *
+ * The three are deliberately from DIFFERENT sensors/products (fused EU-DEM, SRTM radar,
+ * TanDEM-X) so their errors are not correlated, and Copernicus comes from a different
+ * host so two of the three do not share opentopodata's 1000-call/day public cap.
  */
-const PROVIDERS: Provider[] = [
+const CONSENSUS: Provider[] = [
   { id: 'eudem25m', kind: 'opentopodata', dataset: 'eudem25m', delayMs: 1100 },
   { id: 'srtm30m', kind: 'opentopodata', dataset: 'srtm30m', delayMs: 1100 },
+  {
+    id: 'copernicus90',
+    kind: 'open-meteo',
+    url: 'https://api.open-meteo.com/v1/elevation',
+    delayMs: 400,
+  },
+];
+
+/**
+ * Last resort for points no consensus provider can answer at all. open-elevation returns
+ * long runs of one repeated value across the Alps, which flattens real relief into shelves
+ * and concentrates a whole descent into single vertices — phantom bumps that make the
+ * routing and longest-run scorers reject good runs. It must never outvote the others; it
+ * only fills holes none of them could.
+ */
+const FALLBACK: Provider[] = [
   {
     id: 'open-elevation',
     kind: 'open-elevation',
@@ -47,6 +76,32 @@ type Loc = { latitude: number; longitude: number };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function fetchFrom(p: Provider, locs: Loc[]): Promise<(number | null)[]> {
+  // open-meteo is a GET with parallel latitude/longitude lists; the others are POST.
+  if (p.kind === 'open-meteo') {
+    const qs =
+      `?latitude=${locs.map((l) => l.latitude).join(',')}` +
+      `&longitude=${locs.map((l) => l.longitude).join(',')}`;
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const res = await fetch(p.url + qs, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as { elevation?: (number | null)[] };
+        if (!json.elevation || json.elevation.length !== locs.length) {
+          throw new Error('elevation result count mismatch');
+        }
+        await sleep(p.delayMs);
+        return json.elevation.map((v) => (typeof v === 'number' ? v : null));
+      } catch (err) {
+        lastErr = err;
+        // open-meteo limits per MINUTE, so a sub-second backoff just burns retries and
+        // silently drops this provider's vote out of the median. Wait it out instead.
+        await sleep(String(err).includes('429') ? 20_000 : p.delayMs * (attempt + 2));
+      }
+    }
+    throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+  }
+
   const url = p.kind === 'opentopodata' ? `https://api.opentopodata.org/v1/${p.dataset}` : p.url;
   const body =
     p.kind === 'opentopodata'
@@ -79,16 +134,50 @@ async function fetchFrom(p: Provider, locs: Loc[]): Promise<(number | null)[]> {
   throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
 }
 
+let degradedPoints = 0;
+
+function median(vals: number[]): number {  const s = [...vals].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
 /**
- * Resolve a batch, falling through the provider chain for any location the previous
- * provider could not answer (nodata holes and out-of-footprint points).
+ * Resolve a batch by CONSENSUS: ask every provider for every point and take the median of
+ * the answers, so no single DEM's local failure can decide an elevation. Points that no
+ * consensus provider can answer (outside every footprint, or a nodata hole in all three)
+ * fall through to FALLBACK.
  */
 async function lookupBatch(locations: Loc[]): Promise<(number | null)[]> {
   const out: (number | null)[] = locations.map(() => null);
-  let pending = locations.map((_, i) => i);
+  const votes: number[][] = locations.map(() => []);
   let lastErr: unknown;
 
-  for (const p of PROVIDERS) {
+  for (const p of CONSENSUS) {
+    let got: (number | null)[];
+    try {
+      got = await fetchFrom(p, locations);
+    } catch (err) {
+      // A provider being down must not silently degrade the median — say so.
+      lastErr = err;
+      console.warn(`\n  elevation: provider ${p.id} failed (${String(err)}), continuing`);
+      continue;
+    }
+    got.forEach((v, i) => {
+      if (v != null) votes[i].push(v);
+    });
+  }
+
+  let pending = locations.map((_, i) => i).filter((i) => votes[i].length === 0);
+  for (let i = 0; i < locations.length; i++) {
+    if (votes[i].length > 0) {
+      out[i] = median(votes[i]);
+      // A median of two is a mean, which splits the difference with a bad DEM instead of
+      // outvoting it — the whole point of the pass. Count it so it cannot pass unnoticed.
+      if (votes[i].length < CONSENSUS.length) degradedPoints += 1;
+    }
+  }
+
+  for (const p of FALLBACK) {
     if (pending.length === 0) break;
     let got: (number | null)[];
     try {
@@ -108,6 +197,7 @@ async function lookupBatch(locations: Loc[]): Promise<(number | null)[]> {
     });
     pending = next;
   }
+
   if (pending.length > 0) {
     console.warn(
       `  elevation: ${pending.length} point(s) unresolved by all providers${
@@ -181,6 +271,12 @@ export async function enrichElevations(allPoints: NormPoint[][]): Promise<number
     if (i % (BATCH * 20) === 0) saveElevationCache();
   }
   if (toLookup.length > 0) process.stdout.write('\n');
+  if (degradedPoints > 0) {
+    console.warn(
+      `  elevation: ${degradedPoints} point(s) resolved by fewer than ${CONSENSUS.length} providers`,
+    );
+    degradedPoints = 0;
+  }
   saveElevationCache();
   return missing;
 }
