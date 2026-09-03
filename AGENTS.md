@@ -498,6 +498,13 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   the damage is now local and `npm run check:overrides` names it, instead of every id shifting at once.
   Verified by rebuilding all 13 resorts (`check:graphdiff` → identical) and by reshuffling a resort's
   Overpass input order and confirming every id and edge came out the same.
+  - **EXCEPTION — polygon-skeleton `n1000000000…` ids are NOT stable.** They come from an
+    order-dependent counter, so the same id denotes a *different physical point* between builds.
+    Any probe that joins two builds on node id must therefore also require the coordinates to match
+    (~1 m) and report how many pairs it excluded. Skipping that guard made `dirdiff.mts` report 3
+    piste "direction flips" involving elevation moves of **200–340 m** — not DEM disagreement but
+    two unrelated places wearing one id. The tell is implausibility; the guard removed 10 pairs and
+    2 of the 3 flips.
   - *Historical note (why this matters):* ids used to be a global counter, so any refresh silently
     repointed override entries. Past `addConnectors` became multi-km "teleport" links (e.g. a 12 km
     flat traverse in Madonna) that quietly corrupted routing. **`npm run check:overrides`** still
@@ -629,6 +636,31 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   Same family as the `node -e` quoting trap: **if a command embeds quotes, put it in a file.**
 - **Longest-run "doubling-back"** was winding piste edges (descend-then-climb) over-rewarded by
   raw length; fixed by scoring straight-line progress and penalizing internal uphill.
+- **The longest-runs search optimises DESCENT SCORE while the card ranks and labels by LENGTH.**
+  That gap is one defect behind two separate user reports. `makeDescentScorer` measures straight-line
+  descent *progress* on purpose (that is the doubling-back fix above), so two branches spanning the
+  same pair of points score identically however much extra real skiing one holds — and the tie falls
+  to the **shorter** line. Proof from the app's own A→B search: `n11191566777 → n650868757` returned
+  `0.56 km via 7` **ahead of** `1.51 km via 6, 7a`, same −183 m drop, zero climb. Sölden's run 7 forks
+  to a longer 7a three times and only the lower two were taken; Zermatt–Cervinia's Plateau Breithorn
+  is the top of both a 15.58 km descent to Zermatt and a 13.59 km one to Cervinia, and only the
+  score-maximal one was ever *generated*. Fixed **without touching the scorer** — the pool already
+  ranks by length and already gates on quality, so the search merely had to stop being forced into
+  one answer per start: `VARIANTS_PER_START = 3` diverse re-solves reusing `longestDownhillPaths`'s
+  0.55 diversity penalty. Effects: Les Deux Alpes slots 2–3 went 5.40/4.66 km → 11.11/8.48 km.
+  Two traps inside it:
+  - **The penalty must be sign-aware.** `scoreOf` goes negative on a climbing leg, so multiplying by
+    0.55 makes it *less* negative — penalising an uphill leg would make it look **better**. Hence
+    `s >= 0 ? s * p : s / p`. Any future penalty on this scorer needs the same treatment.
+  - **Overlap must be measured in METRES, not legs.** A leg count treats a 2 km motorway edge and a
+    12 m junction stub as equal votes, so two variants sharing the entire upper mountain read as
+    "40% different" and both got a slot. The threshold is **0.35 of shared metres against the union
+    of already-accepted runs**, and it sits in a measured gap: runner-up twins scored 54/55/54%
+    across Sölden, Cervinia and Val Thorens while genuinely distinct runs scored 0–15%, with nothing
+    between 15% and 33%. Val Thorens legitimately *loses* an 11.53 km run to this — it shared 54%
+    with the winner (same lower half, same finish node) and was replaced by a distinct 10.63 km one.
+    Note `longdiag.mts` prints **pairwise** overlap while the live gate compares against the
+    **union**, so a candidate can pass one and fail the other.
 - **Islands / one-way sub-areas**: find via strongly-connected-component analysis, not just
   dead-end leaf checks; fix with `overrides/<id>.json` connectors. Some islands are legitimate
   (e.g. only reachable by a ski bus) and should be left disconnected.
@@ -724,6 +756,32 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   or they silently keep serving data fetched by the old query.
 - The OSM cache is keyed by **resort id, not bbox** — after changing a bbox you must
   `data:refresh` to actually re-fetch.
+- **Elevation comes from a MEDIAN of three DEMs, not from a priority chain.** EU-DEM 25 m was our
+  first-answer-wins primary and is badly wrong over the Plateau Rosa glacier — **14.3 m MAE** against
+  the user's contour readings, vs 2.6 m for srtm30m — which reversed pistes and manufactured false
+  bidirectional sections on Cervinia's runs 6 and 80. `pipeline/lib/elevation.ts` now samples
+  `CONSENSUS = [eudem25m, srtm30m, copernicus90]` and takes the median (3.0 m MAE on the same
+  points), with open-elevation kept as `FALLBACK` hole-filling only. Design constraints, each earned:
+  - The three must be **independent products** (fused / SRTM radar / TanDEM-X). **mapzen was rejected
+    as a vote** — it returned values identical to srtm30m at all 12 sampled points, so over the Alps
+    it is SRTM-derived and would just double one opinion.
+  - Copernicus is taken from **open-meteo**, a different host, so two of three votes don't share
+    opentopodata's 1000-call/day cap. open-meteo limits **per minute**, so its original sub-second
+    backoff merely burned retries and silently dropped its vote; it is now 5 attempts with a 20 s
+    backoff on 429.
+  - **A median of two is a mean**, which splits the difference with the bad DEM instead of outvoting
+    it. Hence the `degradedPoints` counter that warns when any point was resolved by fewer than 3
+    providers — the first Cervinia build had ~200 such points and was thrown away rather than measured.
+  - `ELEVATION_SOURCE` is a **cache namespace**: bump it on any provider change or the rebuild
+    silently reuses the previous DEM's values.
+  **It is an improvement, not a cure, and the aggregate is not the evidence.** On Cervinia it fixed
+  2 of 3 diagnosed false bidirectionals with no override, freed a trapped node (`probe:trappeddiff`
+  10→9, no regressions) and made **6 of 14** `setNodeElevation` overrides redundant — but 5 remain
+  load-bearing, because the median can never be better than the *second-best* DEM (at `n563317811` it
+  reads 3440 m against a ~3451 m ground truth). The direction churn was near-symmetric (34 BI→ONEWAY
+  vs 30 ONEWAY→BI), which by our own rule is what noise looks like; only the **targeted** check on
+  the specific known-wrong sections is decisive. These edges sit near the 6% `flatGradeMax` line
+  where a metre tips them either way.
 - **False-elevation reversals** (arrows/ski-direction wrong): a mis-sampled DEM elevation at a
   junction flips a piste segment. `npm run check:audit` flags them as "reversal candidates"
   (a piste starts at a node reachable only via an *uphill* flat); fix with `setNodeElevation`
@@ -1069,6 +1127,18 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   avalanche-control and dismantled lifts. `isPassengerLift` in `pipeline/lib/overpass.ts` now filters
   `NON_PASSENGER_AERIALWAYS` + `access=private|no` (`permissive`/`customers` stay — a resort lift *is*
   "customers only"). This removed **401 bogus lifts** fleet-wide.
+- **Nor is every `railway=funicular` a lift — `service=*` means a works track.** OSM's
+  `service=yard|siding|spur|crossover` marks a non-revenue track that exists to move equipment, so it
+  can never be a ski lift. Above Perrères in Cervinia the 600 mm dam-construction incline
+  *Piano Inclinato* (`w167161897`) and two unnamed siblings are tagged `railway=funicular`, so the
+  `disused`/`abandoned` ways drawn beside them — which we already skip — did **not** catch them; they
+  arrived as three unnamed 0.9–1.6 km "lifts" in lift purple with direction arrows, touching no piste
+  at all. Fleet census: `service=*` matches **exactly those 3 of 64** rail-lift ways, leaving every
+  named passenger funicular (Funival, Sunnegga, Les Arcs' Express, Gardena Ronda Express, Rasciesa)
+  untouched. Deliberately **not** keyed on `usage=industrial` (real funiculars carry `usage=tourism`,
+  and it would take an unreviewed Verbier way) nor on `gauge=600` (coincidental — the genuine ones
+  here run 1200–2000 mm). Note the filter runs on the **cached** raw ways, so a plain
+  `npm run data <id>` applies it; no `--refresh` needed.
 - **`aerialway=station` on a WAY is a building outline, not a line you travel along** — 322 of those
   401. Beware the second-order effect: a station polygon shares nodes with both the lift end and the
   pistes outside it, so it acts as **accidental glue**. Dropping it can orphan a fragment, and
@@ -1083,6 +1153,14 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   against the resort bbox *before* reaching for `addConnectors` (this was Tignes' Le Fornet sector).
 - **Piste names are not stored on graph edges' `name`** — grepping edges by piste name silently
   returns nothing. Names live on `pisteName`/`liftName` and in `graph.points`.
+- **A dead glyph host fails with a 200, not a 404.** `fonts.openmaptiles.org` now answers every
+  `{fontstack}/{range}.pbf` with an **HTML landing page under HTTP 200**, so MapLibre parsed HTML as
+  protobuf and logged `Unable to load glyph range … Error: Unimplemented type: 4` once per codepoint,
+  then silently drew every map label with its local fallback instead of the real font. The style now
+  points at `https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf`, which serves the same Noto
+  stacks as real `application/x-protobuf` including the Hebrew range (1280-1535) the RTL locale needs.
+  When a tile/font URL "works" but the renderer complains, **check `content_type`, not just the
+  status code**.
 - **Never write temp probe scripts into the repo while `npm run dev` is running.** Vite's watcher
   dies with `EBUSY: resource busy or locked, watch '…/pipeline/_tmp*.ts'` and takes the dev server
   with it. Put throwaway scripts in the session artifacts folder and `process.chdir()` to the repo.
