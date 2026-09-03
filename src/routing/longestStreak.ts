@@ -394,11 +394,23 @@ export function longestDownhillRuns(
   const scoreOf = makeDescentScorer(index);
   const localTurn = makeLocalBearings(index).turn;
   const turnPenalty = makeTurnPenalty(localTurn);
-  const runDp = (dag: { dagOut: Map<string, GraphEdge[]>; finished: string[] }) => {
+  // `penalties` shrinks the value of edges an earlier variant from the same start already used,
+  // so a re-solve diverges onto different terrain. A penalty must always make an edge *less*
+  // attractive, and scoreOf goes negative on a leg that climbs — so multiply a positive score
+  // and divide a negative one, or penalising an uphill leg would make it look better.
+  const runDp = (
+    dag: { dagOut: Map<string, GraphEdge[]>; finished: string[] },
+    penalties?: Map<string, number>,
+  ) => {
     const dpEdge = new Map<string, number>(); // best score of a descent *beginning with* this edge
     const nextOf = new Map<string, GraphEdge>();
     const dp = new Map<string, number>(); // best score of a descent starting at this node
     const choice = new Map<string, GraphEdge>();
+    const valueOf = (e: GraphEdge): number => {
+      const s = scoreOf(e);
+      const p = penalties?.get(e.id) ?? 1;
+      return p === 1 ? s : s >= 0 ? s * p : s / p;
+    };
     for (const id of dag.finished) {
       let bestNode = 0;
       let bestFirst: GraphEdge | undefined;
@@ -412,7 +424,7 @@ export function longestDownhillRuns(
             bestNext = f;
           }
         }
-        const val = scoreOf(e) + bestTail;
+        const val = valueOf(e) + bestTail;
         dpEdge.set(e.id, val);
         if (bestNext) nextOf.set(e.id, bestNext);
         if (val > bestNode) {
@@ -618,12 +630,50 @@ export function longestDownhillRuns(
     .slice(0, CANDIDATE_STARTS)
     .map(([id]) => id);
 
+  /**
+   * Variants re-solved per start. One chain per start is what made this search contradict its
+   * own label, in two different ways that turned out to be the same bug:
+   *
+   *  - Sölden's run 7 forks to a longer 7a three times. The middle and lower loops are taken, the
+   *    upper one is not — and asking the A→B search for the two nodes that loop spans returns
+   *    `0.56 km via 7` ahead of `1.51 km via 6, 7a`, at the SAME drop (-183 m) with no climb.
+   *    `makeDescentScorer` measures straight-line descent progress on purpose (that is what stopped
+   *    the doubling-back bug), so two branches between the same pair of points score the same
+   *    however much extra real skiing one of them holds, and the tie falls to the shorter line.
+   *  - Zermatt–Cervinia's Plateau Breithorn is the top of BOTH a 15.58 km descent north to Zermatt
+   *    and a 13.59 km one south to Cervinia. Only the score-maximal one was ever generated, so the
+   *    card filled slots 2 and 3 with 10.68 km and 8.99 km runs from other starts while the app's
+   *    own A→B planner would happily plan the 13.59 km one.
+   *
+   * Re-solving with `longestDownhillPaths`'s diversity penalty fixes both without touching the
+   * scorer, because the pool below already ranks by LENGTH and already gates on quality — the
+   * search simply had to stop being forced into a single answer per start.
+   */
+  const VARIANTS_PER_START = 3;
+
   const candidates: { chain: GraphEdge[]; score: number }[] = [];
   for (const s of starts) {
-    const solved = runDp(buildDag([s]));
-    const chain = trimToHighPoint(smoothFlats(reconstruct(s, solved)));
-    if (chain.length === 0) continue;
-    candidates.push({ chain, score: chain.reduce((t, e) => t + scoreOf(e), 0) });
+    // The DAG depends on the start (it orients the flats) but not on the penalties, so it is
+    // built once and re-solved.
+    const dag = buildDag([s]);
+    const penalties = new Map<string, number>();
+    const seen = new Set<string>();
+    for (let v = 0; v < VARIANTS_PER_START; v++) {
+      const walked = reconstruct(s, runDp(dag, penalties));
+      if (walked.length === 0) break;
+      const chain = trimToHighPoint(smoothFlats(walked));
+      const key = chain.map((e) => e.id).join(',');
+      if (chain.length > 0 && !seen.has(key)) {
+        seen.add(key);
+        // Scored UNPENALISED: the penalty exists to steer the next search, and the quality gate
+        // below must judge the run itself, not how many variants preceded it.
+        candidates.push({ chain, score: chain.reduce((t, e) => t + scoreOf(e), 0) });
+      }
+      // Penalise what was walked, not the trimmed/smoothed result — the trunk it walked is what
+      // the next variant needs to diverge from. Partial (0.55), so a variant sharing a common top
+      // can still reuse it and split off lower down.
+      for (const e of walked) penalties.set(e.id, (penalties.get(e.id) ?? 1) * 0.55);
+    }
   }
   // Rank by distance — that is what the card promises and what the user reads. Score is used as a
   // quality *gate* rather than the ranking, because the two are anti-correlated: score discounts
@@ -644,10 +694,22 @@ export function longestDownhillRuns(
   const usedEdges = new Set<string>();
   for (const { chain } of pool) {
     if (runs.length >= k) break;
-    let overlap = 0;
-    for (const e of chain) if (usedEdges.has(e.id)) overlap++;
-    // Reject near-duplicates (mostly sub-chains of an already-chosen run).
-    if (runs.length > 0 && overlap / chain.length > 0.6) continue;
+    // Overlap is measured in METRES, not legs. A leg count treats a 2 km motorway edge and a 12 m
+    // junction stub as equal votes, so two variants that share the entire upper mountain and differ
+    // only in which loop of one run they take came out "40% different" and both got a slot — the
+    // card then showed three versions of one descent. Metres is also what `longestDownhillPaths`
+    // uses for the same job. The threshold still has to admit a genuine second run from the same
+    // top: Plateau Breithorn heads BOTH 15.6 km north to Zermatt and 13.6 km south to Cervinia,
+    // sharing only the glacier above the col.
+    //
+    // 0.35 sits in a measured gap, not a guessed one. Across Sölden, Zermatt–Cervinia and Val
+    // Thorens the runner-up candidate was a twin of the winner at 54%, 55% and 54% respectively,
+    // while every genuinely different run scored 0-15% against the runs already accepted. Nothing
+    // observed lands between 15% and 33%.
+    const chainLen = chain.reduce((s, e) => s + e.lengthM, 0) || 1;
+    let shared = 0;
+    for (const e of chain) if (usedEdges.has(e.id)) shared += e.lengthM;
+    if (runs.length > 0 && shared / chainLen > 0.35) continue;
     runs.push(chain);
     for (const e of chain) usedEdges.add(e.id);
   }
