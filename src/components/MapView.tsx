@@ -21,7 +21,12 @@ import { resortFlagCode, flagImageData } from '../utils/flags';
 
 const BASE_STYLE: StyleSpecification = {
   version: 8,
-  glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
+  // fonts.openmaptiles.org stopped serving glyphs: it now answers every {fontstack}/{range}.pbf
+  // with an HTML landing page under a 200, so MapLibre parsed HTML as protobuf and logged
+  // "Unable to load glyph range … Error: Unimplemented type: 4" once per codepoint, then drew each
+  // label with its local fallback instead of the real font. OpenFreeMap serves the same Noto stacks
+  // as real application/x-protobuf, including the Hebrew range (1280-1535) the RTL locale needs.
+  glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
   sources: {
     osm: {
       type: 'raster',
