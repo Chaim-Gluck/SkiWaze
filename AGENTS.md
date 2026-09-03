@@ -1267,6 +1267,19 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   `storedLanguage()` and both `init({ lng })` and the provider's `useState` read it, so React and
   i18next agree on the first render. This is the *third* instance of the same bug (unit labels were
   the first) — when adding anything that captures a translated string outside render, check it.
+- **A native `datetime-local`/`date`/`time` input is untranslatable and unthemeable — never ship one
+  in a localized UI.** The calendar/clock popup is drawn by the browser, not by us: it takes its
+  language from the **OS/browser locale**, so a Hebrew user got an English calendar, and no MUI
+  theme or CSS of ours reaches it (it also looked nothing like the rest of the app on mobile).
+  Anything the user must read has to be React we render. `ArriveTimePicker.tsx` replaces it with two
+  MUI `Select`s and quick chips. Two details that are not obvious: the hour:minute row is pinned
+  `dir="ltr"` because a clock reads HH:MM in every language and would otherwise mirror in Hebrew;
+  and the minute list is 5-minute steps **plus the current value if it is off-grid**, because the
+  default (now + 1 h) and the chips are relative to the clock, and snapping would silently change a
+  time the user picked. The **date was dropped on purpose** — you plan an arrival while standing on
+  the mountain, so it is always today, or tomorrow when the chosen time has already passed (the
+  picker resolves that itself and says so). The wire format stays a `datetime-local` string, so the
+  two `planRoutes` call sites are untouched.
 - **Global vs resort is an explicit MODE, not a zoom range** (`globalView` in `App.tsx`, threshold
   `RESORT_MARKER_MAXZOOM` in `MapView.tsx`). Zooming out past the threshold enters global view; the
   **only** ways out are picking a resort from the list or clicking its flag. Driving it off zoom

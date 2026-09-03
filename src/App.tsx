@@ -4,7 +4,6 @@ import { useLanguage } from './i18n/language-context';
 import { tr } from './utils/text';
 import { bidiName } from './utils/format';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -81,6 +80,7 @@ import {
 import { progressSpeedMps, measuredTrueToProgressMps, SNAKE_FACTOR } from './config/speedModel';
 import { MapView, type LonLat, type RouteFeatureCollection } from './components/MapView';
 import { PointPicker } from './components/PointPicker';
+import { ArriveTimePicker } from './components/ArriveTimePicker';
 import { AccordionSection } from './components/AccordionSection';
 import { PreferencesPanel } from './components/PreferencesPanel';
 import { RouteOptions } from './components/RouteOptions';
@@ -1262,15 +1262,7 @@ export default function App() {
                 <ToggleButton value="arrive_by">{t('app.plan.arriveBy')}</ToggleButton>
               </ToggleButtonGroup>
               {timingMode === 'arrive_by' && (
-                <TextField
-                  type="datetime-local"
-                  size="small"
-                  fullWidth
-                  value={arriveTime}
-                  onChange={(e) => setArriveTime(e.target.value)}
-                  sx={{ mt: 1 }}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
+                <ArriveTimePicker value={arriveTime} onChange={setArriveTime} />
               )}
             </Box>
 

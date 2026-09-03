@@ -285,6 +285,12 @@
       "now": "Now",
       "arriveBy": "Arrive by",
       "find": "Find routes",
+      "hour": "Hour",
+      "minute": "Min",
+      "plus30": "+30 min",
+      "plus1h": "+1 hr",
+      "plus2h": "+2 hr",
+      "tomorrow": "Tomorrow",
       "clear": "Clear"
     },
     "routes": {
