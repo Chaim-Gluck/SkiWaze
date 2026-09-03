@@ -654,13 +654,28 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     `s >= 0 ? s * p : s / p`. Any future penalty on this scorer needs the same treatment.
   - **Overlap must be measured in METRES, not legs.** A leg count treats a 2 km motorway edge and a
     12 m junction stub as equal votes, so two variants sharing the entire upper mountain read as
-    "40% different" and both got a slot. The threshold is **0.35 of shared metres against the union
-    of already-accepted runs**, and it sits in a measured gap: runner-up twins scored 54/55/54%
-    across Sölden, Cervinia and Val Thorens while genuinely distinct runs scored 0–15%, with nothing
-    between 15% and 33%. Val Thorens legitimately *loses* an 11.53 km run to this — it shared 54%
-    with the winner (same lower half, same finish node) and was replaced by a distinct 10.63 km one.
-    Note `longdiag.mts` prints **pairwise** overlap while the live gate compares against the
-    **union**, so a candidate can pass one and fail the other.
+    "40% different" and both got a slot. Overlap is compared against the **union of already-accepted
+    runs**, not pairwise — `longdiag.mts` prints pairwise, so a candidate can pass one and fail the
+    other.
+  - **The shared FRACTION is the wrong gate, however it is tuned — what decides is CONTIGUITY.**
+    Two years of this were spent moving one number (0.35 → 0.50 and back) before measuring the
+    *shape* of what each threshold admitted. Val Thorens' runner-up repeats **40%** of the winner and
+    Cervinia's repeats **47%** — adjacent numbers, opposite value. Val Thorens' is 6.33 km of its own
+    terrain in **one block** that then merges onto the valley exit (there is one way down the valley,
+    so sharing it is unavoidable and not a defect). Cervinia's is a **weave**: own stretches of
+    1.54/2.07/3.08/0.38/0.18 km interleaved with the winner's the whole way, sharing the entire
+    4.6 km run-out — one line with wobbles, shown twice — and admitting it displaced a genuinely
+    separate 8.79 km descent of the Italian side down a slot. What makes a second card worth showing
+    is not how much it repeats but whether the part that **differs** is one stretch a skier can go
+    and ski. Hence `MIN_OWN_BLOCK_FRACTION = 0.35`: the largest *contiguous* unshared stretch must be
+    ≥ 35% of the candidate's own length, with `MAX_SHARED_FRACTION = 0.5` kept only as a loose outer
+    bound. The two classes separate with room to spare (VT 58%, Cervinia 22%) where the shared
+    fraction puts them 7 points apart. Fleet effect: 8 of 18 resorts drop exactly one slot each, all
+    weaves — Les Deux Alpes interleaves six times (largest own block 26%), Paradiski shares a 5.36 km
+    middle (29%), Sölden a 4.62 km middle (25%), Tignes 24%. Val Thorens changes not at all, which
+    was the test. The one marginal call is **Gudauri at 34.9%** — two own blocks of 2.24 and 2.43 km,
+    not really a weave, merely chopped in the middle; reviewed and deliberately left rejected,
+    because 29% → 35% is where the shape actually changes and 0.30 exists only to save that one run.
 - **Islands / one-way sub-areas**: find via strongly-connected-component analysis, not just
   dead-end leaf checks; fix with `overrides/<id>.json` connectors. Some islands are legitimate
   (e.g. only reachable by a ski bus) and should be left disconnected.

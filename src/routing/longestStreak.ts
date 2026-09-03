@@ -651,6 +651,14 @@ export function longestDownhillRuns(
    */
   const VARIANTS_PER_START = 3;
 
+  /** Loose outer bound on how much of an accepted run a further candidate may repeat. */
+  const MAX_SHARED_FRACTION = 0.5;
+  /**
+   * The real gate: the candidate's largest CONTIGUOUS stretch of its own terrain, as a fraction of
+   * its length. See the measured cases where this is applied below.
+   */
+  const MIN_OWN_BLOCK_FRACTION = 0.35;
+
   const candidates: { chain: GraphEdge[]; score: number }[] = [];
   for (const s of starts) {
     // The DAG depends on the start (it orients the flats) but not on the penalties, so it is
@@ -702,18 +710,35 @@ export function longestDownhillRuns(
     // top: Plateau Breithorn heads BOTH 15.6 km north to Zermatt and 13.6 km south to Cervinia,
     // sharing only the glacier above the col.
     //
-    // 0.35 sits in a measured gap, not a guessed one. Across Sölden, Zermatt–Cervinia and Val
-    // Thorens the runner-up candidate was a twin of the winner at 54%, 55% and 54% respectively,
-    // while every genuinely different run scored 0-15% against the runs already accepted. Nothing
-    // observed lands between 15% and 33%.
-    // The bar is deliberately set just under the observed twin cluster rather than in the middle of
-    // the gap: a candidate that repeats up to half of a run already on the card is still worth a
-    // slot, because the half it does NOT repeat is real terrain the skier would otherwise never be
-    // offered. Anything above that is a re-run of a descent already shown.
+    // The shared FRACTION alone cannot decide this, and tuning it was a dead end. Measured on the
+    // real candidates: Val Thorens' second-best repeats 40% of the winner and Cervinia's repeats
+    // 47% — adjacent numbers, opposite value. Val Thorens' is 6.33 km of its own terrain in ONE
+    // block that then merges onto the valley exit (there is only one way down the valley, so
+    // sharing it is unavoidable and not a defect). Cervinia's is a weave: own stretches of
+    // 1.54/2.07/3.08/0.38/0.18 km interleaved with the winner's all the way down, sharing the whole
+    // 4.6 km run-out — one line with wobbles, shown twice, and it displaced a genuinely separate
+    // 8.79 km descent of the Italian side down a slot.
+    //
+    // What makes a second card worth showing is therefore not how much it repeats, but whether the
+    // part that DIFFERS is one stretch a skier can go and ski. So the gate is the largest
+    // CONTIGUOUS unshared stretch. That separates the two cases with room to spare (VT 58% of its
+    // own length in one block, Cervinia 22%) where the shared fraction puts them 7 points apart.
+    // The fraction is kept only as a loose outer bound.
     const chainLen = chain.reduce((s, e) => s + e.lengthM, 0) || 1;
     let shared = 0;
-    for (const e of chain) if (usedEdges.has(e.id)) shared += e.lengthM;
-    if (runs.length > 0 && shared / chainLen > 0.5) continue;
+    let block = 0;
+    let longestBlock = 0;
+    for (const e of chain) {
+      if (usedEdges.has(e.id)) {
+        shared += e.lengthM;
+        block = 0;
+      } else {
+        block += e.lengthM;
+        if (block > longestBlock) longestBlock = block;
+      }
+    }
+    if (runs.length > 0 && shared / chainLen > MAX_SHARED_FRACTION) continue;
+    if (runs.length > 0 && longestBlock / chainLen < MIN_OWN_BLOCK_FRACTION) continue;
     runs.push(chain);
     for (const e of chain) usedEdges.add(e.id);
   }
