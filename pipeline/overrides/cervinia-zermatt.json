@@ -12,7 +12,22 @@
     {
       "node": "sn1004274415",
       "ele": 3065
-    }
+    },
+    {
+      "_why": "Plateau Rosa / Testa Grigia glacier plateau. EU-DEM 25m (our primary provider) is badly wrong over this ice: measured against OpenTopoMap contours and OSM spot heights at 5 points here it scores 14.3 m mean absolute error, while srtm30m and mapzen both score 2.6 m. The error is NOT a uniform offset (-27 to +13), so edges flipped: run 80 Testa Grigia gained a phantom mid-run source that two runs left and none arrived at, and the head of run 6 Plateau Rosa - Bontadini pointed south, away from its own run. Values below are the mean of srtm30m and mapzen, i.e. DERIVED not hand-typed, so they should become redundant once the provider chain is fixed fleet-wide - check with `npm run probe:elevoverrides`.",
+      "node": "n253338760",
+      "ele": 3441
+    },
+    { "node": "n563317811", "ele": 3457 },
+    { "node": "n240324408", "ele": 3447 },
+    { "node": "n12094696179", "ele": 3445 },
+    { "node": "n12094696180", "ele": 3454 },
+    { "node": "n1175674844", "ele": 3426 },
+    { "node": "on1175674844", "ele": 3426 },
+    { "node": "n12839698348", "ele": 3413 },
+    { "node": "n360479961", "ele": 3459 },
+    { "node": "n3400152764", "ele": 3461 },
+    { "node": "sn12094696179", "ele": 3445 }
   ],
   "_comment_zermatt_village": "n253323900 <-> n240240207: Zermatt village. The runs and paths ending on the Moosstrasse / Zen Steckenstrasse side of the village (16 nodes, incl. the Zmutt ski route) had no link to the Matterhorn Express base 100 m away and 9 m higher, so the whole lower-village side was a trapped basin. Zermatt is car-free and skiers routinely walk or skate the last block between a run-out and a lift station, so this is a flat traverse both ways.",
   "addConnectors": [
