@@ -18,21 +18,21 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-09-03T06:42:17.872Z",
+  "generatedAt": "2026-09-03T08:28:45.616Z",
   "stats": {
     "resortId": "cervinia-zermatt",
-    "nodeCount": 841,
-    "edgeCount": 2240,
-    "pisteEdges": 854,
-    "liftEdges": 112,
-    "connectorEdges": 1274,
-    "meaningfulPoints": 334,
-    "reachableFromLifts": 833,
+    "nodeCount": 859,
+    "edgeCount": 2322,
+    "pisteEdges": 861,
+    "liftEdges": 106,
+    "connectorEdges": 1355,
+    "meaningfulPoints": 337,
+    "reachableFromLifts": 851,
     "unreachableNodes": 8,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
-      "suspicious_merge": 2,
-      "missing_opening_hours": 82,
+      "suspicious_merge": 1,
+      "missing_opening_hours": 79,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
@@ -40,20 +40,13 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 61 duplicate OSM node(s) at 50 spot(s) where ways meet but do not share a node."
+      "message": "Unified 54 duplicate OSM node(s) at 48 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
       "message": "Node n1109869943 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n1109869943"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
-      "message": "Node n1109895214 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n1109895214"
       ]
     },
     {
@@ -274,10 +267,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"167161897\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Findelbahn (Eja-Sunnegga)\" has no opening_hours in OSM."
     },
     {
@@ -354,14 +343,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"1050990481\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"1050992341\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"1266342298\" has no opening_hours in OSM."
     },
     {
@@ -386,19 +367,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 115 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 143 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 365 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 388 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 284 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 323 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 38 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 37 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -406,7 +387,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 5 unreachable zone(s) to the nearest point a skier can already get to (3 onto a piste line)."
+      "message": "Linked 3 unreachable zone(s) to the nearest point a skier can already get to (2 onto a piste line)."
     },
     {
       "code": "unreachable_component",

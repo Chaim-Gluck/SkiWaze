@@ -176,6 +176,18 @@ export function isPassengerLift(w: RawWay): boolean {
   // aerialway=station note above) — around Schröcken they produced a stranded orphan node.
   if (w.tags['building'] && w.tags['building'] !== 'no') return false;
   if (w.tags['public_transport'] === 'station') return false;
+  // A non-revenue railway track. OSM's `service=yard|siding|spur|crossover` marks a track that
+  // exists to move equipment around a works, never passengers, so it can never be a ski lift.
+  // Above Perrères in Cervinia this is the 600 mm dam-construction incline "Piano Inclinato"
+  // (`w167161897`) plus two unnamed siblings: all three are `railway=funicular`, so the `disused`
+  // and `abandoned` ways beside them that we already skip did NOT catch them, and they arrived as
+  // unnamed 0.9-1.6 km "lifts" drawn in lift purple with direction arrows, touching no piste at all.
+  // Measured over the fleet this matches exactly those 3 of 64 rail-lift ways — every named
+  // passenger funicular (Funival, Sunnegga, Les Arcs' Express, Gardena Ronda Express, Rasciesa)
+  // is untouched. Deliberately NOT keyed on `usage=industrial` (it would also take an unreviewed
+  // Verbier way, and real funiculars carry `usage=tourism`) nor on `gauge=600` (coincidental —
+  // genuine funiculars here run 1200-2000 mm).
+  if (RAIL_LIFT_TYPES.has(w.tags['railway']) && w.tags['service']) return false;
   return true;
 }
 
