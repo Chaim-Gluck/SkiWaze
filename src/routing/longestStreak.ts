@@ -706,10 +706,14 @@ export function longestDownhillRuns(
     // Thorens the runner-up candidate was a twin of the winner at 54%, 55% and 54% respectively,
     // while every genuinely different run scored 0-15% against the runs already accepted. Nothing
     // observed lands between 15% and 33%.
+    // The bar is deliberately set just under the observed twin cluster rather than in the middle of
+    // the gap: a candidate that repeats up to half of a run already on the card is still worth a
+    // slot, because the half it does NOT repeat is real terrain the skier would otherwise never be
+    // offered. Anything above that is a re-run of a descent already shown.
     const chainLen = chain.reduce((s, e) => s + e.lengthM, 0) || 1;
     let shared = 0;
     for (const e of chain) if (usedEdges.has(e.id)) shared += e.lengthM;
-    if (runs.length > 0 && shared / chainLen > 0.35) continue;
+    if (runs.length > 0 && shared / chainLen > 0.5) continue;
     runs.push(chain);
     for (const e of chain) usedEdges.add(e.id);
   }

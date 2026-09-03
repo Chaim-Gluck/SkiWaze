@@ -146,11 +146,20 @@ function median(vals: number[]): number {  const s = [...vals].sort((a, b) => a 
  * the answers, so no single DEM's local failure can decide an elevation. Points that no
  * consensus provider can answer (outside every footprint, or a nodata hole in all three)
  * fall through to FALLBACK.
+ *
+ * `trusted` is false when a consensus provider **errored** for this batch — it is down, or we
+ * have hit its daily cap. That is categorically different from a provider returning null because
+ * it genuinely has no data at a point: the outage is transient, so the answer must not be written
+ * to the elevation cache, where a two-vote mean would silently outlive the outage and poison every
+ * future build of that resort.
  */
-async function lookupBatch(locations: Loc[]): Promise<(number | null)[]> {
+async function lookupBatch(
+  locations: Loc[],
+): Promise<{ values: (number | null)[]; trusted: boolean }> {
   const out: (number | null)[] = locations.map(() => null);
   const votes: number[][] = locations.map(() => []);
   let lastErr: unknown;
+  let outages = 0;
 
   for (const p of CONSENSUS) {
     let got: (number | null)[];
@@ -159,6 +168,7 @@ async function lookupBatch(locations: Loc[]): Promise<(number | null)[]> {
     } catch (err) {
       // A provider being down must not silently degrade the median — say so.
       lastErr = err;
+      outages += 1;
       console.warn(`\n  elevation: provider ${p.id} failed (${String(err)}), continuing`);
       continue;
     }
@@ -205,7 +215,7 @@ async function lookupBatch(locations: Loc[]): Promise<(number | null)[]> {
       }`,
     );
   }
-  return out;
+  return { values: out, trusted: outages === 0 };
 }
 
 /**
@@ -225,6 +235,7 @@ export async function enrichElevations(allPoints: NormPoint[][]): Promise<number
   }
   const unique = [...byId.entries()];
   let missing = 0;
+  let untrusted = 0;
 
   // First, satisfy from the persistent elevation cache; only look up the rest.
   const toLookup: [number, NormPoint[]][] = [];
@@ -249,7 +260,8 @@ export async function enrichElevations(allPoints: NormPoint[][]): Promise<number
       latitude: pts[0].lat,
       longitude: pts[0].lon,
     }));
-    const elevations = await lookupBatch(locations);
+    const { values: elevations, trusted } = await lookupBatch(locations);
+    if (!trusted) untrusted += slice.length;
     slice.forEach(([, pts], idx) => {
       const raw = elevations[idx];
       // opentopodata returns sub-metre floats; the graph and all tuned thresholds
@@ -257,7 +269,7 @@ export async function enrichElevations(allPoints: NormPoint[][]): Promise<number
       const ele = raw == null ? null : Math.round(raw);
       if (ele == null) {
         missing += 1;
-      } else {
+      } else if (trusted) {
         setCachedElevation(pts[0].lat, pts[0].lon, ele, ELEVATION_SOURCE);
       }
       for (const p of pts) p.ele = ele;
@@ -278,5 +290,14 @@ export async function enrichElevations(allPoints: NormPoint[][]): Promise<number
     degradedPoints = 0;
   }
   saveElevationCache();
+  // Stop rather than emit a resort whose elevations rest on a provider outage. Nothing untrusted
+  // was cached, so re-running resumes from the trusted points already stored and costs only the
+  // remainder — which is what makes a fleet-wide refresh survivable against a daily API cap.
+  if (untrusted > 0) {
+    throw new Error(
+      `elevation: ${untrusted} point(s) resolved while a consensus provider was down or rate-limited. ` +
+        `They were NOT cached. Re-run this resort later to finish it (already-fetched points are cached).`,
+    );
+  }
   return missing;
 }
