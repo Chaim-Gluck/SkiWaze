@@ -163,6 +163,8 @@
   },
   "longest": {
     "intro": "The longest possible descents without taking a lift (top to bottom), for your level.",
+    "allowPoling": "Allow a bit of poling",
+    "allowPolingHint": "Counts flat stretches of a named run as skiing, so a longer, gentler descent can win.",
     "find": "Find the longest runs",
     "prev": "Previous run",
     "next": "Next run",

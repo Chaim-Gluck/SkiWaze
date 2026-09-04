@@ -50,6 +50,7 @@ export function findLongestRuns(graph: ResortGraph, prefs: Preferences, k = 3): 
     colorRank(prefs.maxDifficulty),
     k,
     (e) => (prefs.allowOffPiste || !e.offPiste) && !(prefs.avoidSyntheticBridges && e.synthetic && !e.custom),
+    prefs.allowPoling,
   );
   return chains.map((chain) => {
     let distanceM = 0;
@@ -331,7 +332,7 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
 
   // Longest is a special lift-free DAG search — handle it on its own.
   if (routeType === 'longest') {
-    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3, 0.7, allowForLongest), 'longest_ab');
+    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3, 0.7, allowForLongest, prefs.allowPoling), 'longest_ab');
     if (longRoutes.length === 0) {
       // B can't be reached lift-free, so a lift is unavoidable. Take the fewest-lifts chain and
       // then maximise the descent on each side of every lift it rides — "longest" should still mean
@@ -362,7 +363,7 @@ export function planRoutes(graph: ResortGraph, request: RouteRequest): PlanResul
     routes.slice().sort(makeRouteComparator(objective, prefs))[0];
 
   if (routeType === 'balanced') {
-    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3, 0.7, allowForLongest), 'longest_ab');
+    const longRoutes = toRoutes(longestDownhillPaths(index, fromNodeId, toNodeId, maxRank, 3, 0.7, allowForLongest, prefs.allowPoling), 'longest_ab');
     const byKey = new Map<string, { route: Route; objective: RouteObjective; labels: RouteLabel[]; order: number }>();
     const consider = (route: Route | undefined, objective: RouteObjective, order: number) => {
       if (!route) return;

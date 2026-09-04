@@ -1385,6 +1385,13 @@ export default function App() {
           <LongestRunPanel
             runs={longestRuns}
             index={longestIdx}
+            allowPoling={prefs.allowPoling}
+            onAllowPolingChange={(value) => {
+              setPrefs((p) => ({ ...p, allowPoling: value }));
+              // The shown runs were scored under the old setting, so they no longer answer the
+              // question the checkbox now asks. Clear them rather than leave a stale answer on screen.
+              setLongestRuns(null);
+            }}
             onFind={computeLongestRun}
             onPrev={() => stepLongest(-1)}
             onNext={() => stepLongest(1)}

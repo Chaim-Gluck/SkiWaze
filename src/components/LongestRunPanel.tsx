@@ -5,6 +5,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -24,6 +26,9 @@ export interface LongestRunView {
 interface Props {
   runs: LongestRunView[] | null;
   index: number;
+  /** "Allow a bit of poling" — whether a shallow named piste still counts as skiing. */
+  allowPoling: boolean;
+  onAllowPolingChange: (value: boolean) => void;
   onFind: () => void;
   onPrev: () => void;
   onNext: () => void;
@@ -35,6 +40,8 @@ interface Props {
 export function LongestRunPanel({
   runs,
   index,
+  allowPoling,
+  onAllowPolingChange,
   onFind,
   onPrev,
   onNext,
@@ -52,6 +59,22 @@ export function LongestRunPanel({
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
         {t('longest.intro')}
       </Typography>
+      <FormControlLabel
+        sx={{ mb: 0.5 }}
+        control={
+          <Checkbox
+            size="small"
+            checked={allowPoling}
+            onChange={(e) => onAllowPolingChange(e.target.checked)}
+          />
+        }
+        label={
+          <Box>
+            <Typography variant="body2">{t('longest.allowPoling')}</Typography>
+            <Typography variant="caption" color="text.secondary">{t('longest.allowPolingHint')}</Typography>
+          </Box>
+        }
+      />
       <Button variant="outlined" fullWidth onClick={onFind}>
         {t('longest.find')}
       </Button>

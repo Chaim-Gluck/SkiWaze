@@ -83,6 +83,10 @@ export const DEFAULT_PREFERENCES: Preferences = {
   // Off-piste stays OFF by default: freeride terrain is unmarked, ungroomed and unpatrolled, so a
   // skier has to ask for it rather than be routed onto it.
   allowOffPiste: false,
+  // Poling stays ON by default: the whole point of "Longest run" is length, and scoring a shallow
+  // named piste as padding rejects genuine signposted terrain (Paradiski's 18.7 km Vallée de
+  // l'Arc / Villaroger descent). A skier who only counts the pitch can turn it off.
+  allowPoling: true,
   preferSkiing: false,
   // Balanced by default: one best route per objective, deduped.
   routeType: 'balanced',

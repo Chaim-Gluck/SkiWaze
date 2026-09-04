@@ -19,7 +19,7 @@ import { DEFAULT_GRAPH_CONSTANTS } from '../config/graphConstants';
  *
  * Penalised edges stay usable for connectivity — they just don't inflate the score.
  */
-function makeDescentScorer(index: GraphIndex): (e: GraphEdge) => number {
+function makeDescentScorer(index: GraphIndex, allowPoling = false): (e: GraphEdge) => number {
   const mBetween = (a: { lon: number; lat: number }, b: { lon: number; lat: number }) =>
     Math.hypot((a.lon - b.lon) * Math.cos((a.lat * Math.PI) / 180) * 111320, (a.lat - b.lat) * 110540);
   const straightOf = new Map<string, number>();
@@ -97,12 +97,45 @@ function makeDescentScorer(index: GraphIndex): (e: GraphEdge) => number {
   // glide. That keeps the penalty aimed at what it was built for — level junction meshes and
   // traverses used as padding — while a piste that actually descends always scores its length.
   const SKI_GRADE_FULL = 0.02;
+  /**
+   * Is this edge a real, named run — as opposed to plumbing?
+   *
+   * The gradient rule above cannot tell *what kind of line* it is looking at; it only asks how
+   * steeply the line drops. That is right for the thing it was built to stop — the dense meshes of
+   * level link-lines OSM maps around lift bases and plateaus, which the search used to weave through
+   * banking distance without skiing anywhere — and wrong for a genuine valley piste that simply runs
+   * shallow.
+   *
+   * So when the skier opts into poling, credit is decided by what the line *is*: a named piste that
+   * does not climb counts fully as skiing, however shallow. Everything the project already knows to
+   * be invented plumbing — connectors, synthetic bridges, polygon arms, spine duplicates — is
+   * excluded and keeps paying the flat penalty in both settings, so the padding cheat stays closed
+   * whichever way the preference is set. Requiring a *name* is the conservative half of the test:
+   * an unnamed level line is exactly the junction scrap this must never reward.
+   *
+   * **Do not credit this with saving Paradiski — it was measured and it does not.** The scoring half
+   * of the poling preference was written on the theory that the 18.7 km Vallée de l'Arc / Villaroger
+   * line lost because ~1.16 km of it read as padding. Disabling this branch fleet-wide moves exactly
+   * one number (St. Anton option 2, 6.23 → 6.18 km) and leaves Paradiski at 18.48 km. The line is
+   * recovered by the *other* half of the preference, in `usableFrom`, which lets a named run roll
+   * over a rise. This branch is kept because the two halves are one preference and must agree: with
+   * it off, a flat the skier has explicitly opted into poling across still scores as negative
+   * padding, so the search would be penalising the very terrain the checkbox just allowed.
+   */
+  const isNamedRun = (e: GraphEdge): boolean =>
+    e.kind === 'piste' &&
+    !!e.pisteName &&
+    !e.synthetic &&
+    !e.skeletonArm &&
+    !e.spineDuplicate &&
+    e.dropM <= 0;
   return (e: GraphEdge): number => {
     const straight = straightOf.get(e.id) ?? e.lengthM;
     const wind = Math.max(0, e.lengthM - straight); // extra length beyond a straight line
     // How much this edge counts as skiing: 0 when level or climbing, full at SKI_GRADE_FULL.
     const grade = e.lengthM > 0 ? -e.dropM / e.lengthM : 0;
-    const w = Math.min(1, Math.max(0, grade / SKI_GRADE_FULL));
+    const w =
+      allowPoling && isNamedRun(e) ? 1 : Math.min(1, Math.max(0, grade / SKI_GRADE_FULL));
     // Blends the two old branches: w=1 reproduces `straight + 0.25*wind`, w=0 the flat penalty.
     let s = w * (straight + 0.25 * wind) - (1 - w) * 0.75 * e.lengthM;
     s -= 8 * (uphillOf.get(e.id) ?? 0);
@@ -283,12 +316,57 @@ const MAX_ESCAPE_CLIMB_M = DEFAULT_GRAPH_CONSTANTS.maxTraverseClimb;
 /**
  * Usable continuations from one node: everything that does not climb, or — when that leaves
  * nothing at all — the shallow climbs that let the run escape a dead end.
+ *
+ * `poling` opens a third door, and it is the one that matters most in practice. A signposted run
+ * does not always fall away monotonically: it can roll over a rise and carry on down the far side,
+ * and a skier simply skates or poles across. The rule above refuses that whenever *any* descending
+ * option exists at the node, so the run stops at the rise and the terrain beyond is lost.
+ *
+ * Paradiski is the worked case. Villaroger crosses a 271 m rise of 8 m at Pré-Saint-Esprit with
+ * 2.2 km and 120 m of descent immediately beyond it; the node also offers a 97 m descent into the
+ * lift base, so the rise was never considered and the run ended there. That single refusal is the
+ * whole of the 18.7 km → 13.5 km difference. (It only looked like a fresh regression because a
+ * 34 m elevation error in the old data had made the rise read as a descent — see AGENTS.md.)
+ *
+ * Two conditions keep this from reopening the padding cheat the no-climb rule exists to stop.
+ * It must carry a `pisteName`: a named run rolling over a rise is real terrain a skier crosses,
+ * whereas an unnamed link that climbs is exactly the step-up onto a neighbouring piste that banks
+ * free length. And it must not be `synthetic`: app-invented plumbing never earns a climb. The
+ * ceiling stays `MAX_ESCAPE_CLIMB_M`, and the scorer still charges the ascent, so a rise that does
+ * not open real terrain beyond it cannot pay for itself.
+ *
+ * The dead-end escape is gated on `poling` too, and that is not cosmetic tidying. It was written
+ * long before the preference existed, so it had no gate and no name/synthetic test at all — which
+ * meant a skier who had explicitly unticked "allow a bit of poling" was still handed runs that
+ * climb. Madonna's 8.94 km top pick pushes 60 m up a +8 m **synthetic, unnamed** connector (`e978`,
+ * Pozza vecia → Skiweg Fortini); Ischgl's 10.60 km likewise. So the app refused the real signposted
+ * Villaroger rise while serving uphill plumbing it had invented itself. Gating it costs the
+ * unticked skier exactly the runs that require pushing (madonna 8.94 → 7.40, ischgl 10.60 → 8.64)
+ * and costs the default, ticked skier nothing — measured fleet-wide, the only movement with poling
+ * on is Sella Ronda *gaining* 0.02 km.
+ *
+ * The alternative — demanding named + non-synthetic here as well, without a poling gate — was also
+ * measured and is wrong: it deletes Madonna's 8.94 km run for *everyone*, ticked included, because
+ * the one link it turns on is synthetic. Connectivity out of a true dead end is worth more than
+ * provenance; consent is the thing that was actually missing.
  */
-function usableFrom(edges: GraphEdge[], keep: (e: GraphEdge) => boolean): GraphEdge[] {
+function usableFrom(
+  edges: GraphEdge[],
+  keep: (e: GraphEdge) => boolean,
+  poling = false,
+): GraphEdge[] {
   const allowed = edges.filter(keep);
   const level = allowed.filter((e) => e.dropM <= MAX_RUN_CLIMB_M);
-  if (level.length) return level;
-  return allowed.filter((e) => e.dropM <= MAX_ESCAPE_CLIMB_M);
+  if (!level.length) return poling ? allowed.filter((e) => e.dropM <= MAX_ESCAPE_CLIMB_M) : [];
+  if (!poling) return level;
+  const poled = allowed.filter(
+    (e) =>
+      e.dropM > MAX_RUN_CLIMB_M &&
+      e.dropM <= MAX_ESCAPE_CLIMB_M &&
+      !!e.pisteName &&
+      !e.synthetic,
+  );
+  return poled.length ? [...level, ...poled] : level;
 }
 
 /**
@@ -318,6 +396,7 @@ export function longestDownhillRuns(
   maxColorRank = Infinity,
   k = 3,
   allow: EdgeAllow = ALLOW_ALL,
+  allowPoling = false,
 ): GraphEdge[][] {
   const eleOf = new Map<string, number>();
   for (const [id, n] of index.nodes) eleOf.set(id, n.point.ele ?? 0);
@@ -335,11 +414,27 @@ export function longestDownhillRuns(
 
   // Candidate adjacency: every non-lift edge within the user's colour rank that does not climb
   // (plus a shallow climb where that is the only way on — see MAX_ESCAPE_CLIMB_M).
-  const adj = new Map<string, GraphEdge[]>();
-  for (const [from, edges] of index.out) {
-    const kept = usableFrom(edges, (e) => e.kind !== 'lift' && colorRank(e) <= maxColorRank && allow(e));
-    if (kept.length) adj.set(from, kept);
-  }
+  //
+  // Built TWICE when poling is allowed, and both are searched. Poling adds edges, and an added edge
+  // is not free: it changes what DFS meets first, so it re-orients flats elsewhere on the mountain
+  // and can lose a run that had nothing to do with poling (Verbier dropped 1.01 km when the poling
+  // adjacency simply replaced the plain one). Searching both and pooling the results makes the
+  // preference strictly additive — the plain pass reproduces the no-poling answer exactly, so no
+  // resort can come out shorter than it was.
+  const buildAdj = (poling: boolean) => {
+    const m = new Map<string, GraphEdge[]>();
+    for (const [from, edges] of index.out) {
+      const kept = usableFrom(
+        edges,
+        (e) => e.kind !== 'lift' && colorRank(e) <= maxColorRank && allow(e),
+        poling,
+      );
+      if (kept.length) m.set(from, kept);
+    }
+    return m;
+  };
+  const adj = buildAdj(false);
+  const adjacencies = allowPoling ? [adj, buildAdj(true)] : [adj];
 
   // Iterative DFS from `roots`. state: 0 unvisited, 1 on-stack (grey), 2 done (black).
   // Edges to grey nodes are back-edges (would form a cycle) and are dropped; all other
@@ -349,7 +444,37 @@ export function longestDownhillRuns(
   // bidirectional, so every flat mesh is a knot of 2-cycles. Which way DFS orients them depends
   // on where it entered, and a run can only ever cross a flat in the direction the DAG chose.
   // That makes the DAG start-dependent, which is why we rebuild it per candidate start below.
-  const buildDag = (roots: string[]) => {
+  //
+  // Deciding those flats by a physical rule instead of by arrival order looks obviously right and
+  // was measured twice fleet-wide; both variants lost. Orienting each two-way flat by skiing
+  // distance from the start (drop the direction that leads back toward it) cost Verbier 0.86 km and
+  // Mayrhofen 0.20 km, because a genuine descent does sometimes swing back toward a point it can
+  // reach more cheaply another way, and dropping that half cuts the run. The non-destructive
+  // version — keep every edge, only explore nearer nodes first so DFS meets a flat from its near
+  // end — cost Ischgl 0.83 km instead. Neither recovered the Paradiski line that prompted the work.
+  // Do not re-try either without a fleet longsum diff.
+  //
+  // Both failed for the same reason: they oriented a flat from evidence about the *whole mountain*
+  // (the cheapest way to reach it), when the only relevant evidence is the run being built. That is
+  // circular — the run needs the orientation and the orientation needs the run — so it is broken by
+  // refinement instead, below: solve, then re-orient the flats the answer actually used in the
+  // direction it used them, and solve again. `prefer` carries that hint. Because a node's chosen
+  // edge is explored FIRST, DFS walks the whole chain as tree edges before anything else can turn
+  // one of them into a back-edge, so every flat the chain used is guaranteed to survive.
+  const buildDag = (source: Map<string, GraphEdge[]>, roots: string[], prefer?: Map<string, string>) => {
+    // Re-order rather than filter: a hint must never remove terrain, only change what DFS meets
+    // first. That is what keeps refinement incapable of losing a run the unhinted pass could find.
+    const src = prefer
+      ? new Map<string, GraphEdge[]>(
+          [...source].map(([from, edges]): [string, GraphEdge[]] => {
+            const pid = prefer.get(from);
+            const i = pid ? edges.findIndex((e) => e.id === pid) : -1;
+            return i > 0
+              ? [from, [edges[i], ...edges.slice(0, i), ...edges.slice(i + 1)]]
+              : [from, edges];
+          }),
+        )
+      : source;
     const state = new Map<string, number>();
     const dagOut = new Map<string, GraphEdge[]>();
     const finished: string[] = [];
@@ -359,7 +484,7 @@ export function longestDownhillRuns(
       state.set(root, 1);
       while (stack.length) {
         const top = stack[stack.length - 1];
-        const edges = adj.get(top.id) ?? [];
+        const edges = src.get(top.id) ?? [];
         if (top.i < edges.length) {
           const e = edges[top.i++];
           const s = state.get(e.to) ?? 0;
@@ -391,7 +516,7 @@ export function longestDownhillRuns(
   // you arrived from and can charge makeTurnPenalty for a hairpin. A node-keyed DP structurally
   // cannot: it would compare continuations without knowing what they turn away from, and so
   // happily ski 1.5 km out and 0.8 km back because both legs descend.
-  const scoreOf = makeDescentScorer(index);
+  const scoreOf = makeDescentScorer(index, allowPoling);
   const localTurn = makeLocalBearings(index).turn;
   const turnPenalty = makeTurnPenalty(localTurn);
   // `penalties` shrinks the value of edges an earlier variant from the same start already used,
@@ -444,7 +569,7 @@ export function longestDownhillRuns(
   const globalRoots = [...index.nodes.keys()].sort(
     (a, b) => eleOf.get(b)! - eleOf.get(a)! || (a < b ? -1 : a > b ? 1 : 0),
   );
-  const global = runDp(buildDag(globalRoots));
+  const global = runDp(buildDag(adj, globalRoots));
 
   const posOf = (id: string) => index.node(id)?.point;
   const reverses = (prev: GraphEdge | undefined, e: GraphEdge): boolean =>
@@ -660,27 +785,74 @@ export function longestDownhillRuns(
   const MIN_OWN_BLOCK_FRACTION = 0.35;
 
   const candidates: { chain: GraphEdge[]; score: number }[] = [];
+  /**
+   * How many times a variant is re-solved with its own flats pinned. Each round is one extra DAG
+   * build plus DP, and the loop stops early the moment a round stops adding length.
+   * **1, measured.** Refining at all is worth a small, real gain on 9 of 18 resorts (Cervinia #3
+   * +0.30 km, Portes du Soleil #2 +0.28, Val Thorens #2 +0.06, and five smaller); a *second* round
+   * runs — the loop is live, it is reached wherever round 1 improved — and changes nothing anywhere
+   * fleet-wide while costing ~20% of total runtime (paired runs: 65.8 vs 52.2 s cold, 46.3 vs
+   * 39.2 s warm; wall-clock here is noisy, so only ever compare paired runs). Pinning an answer's
+   * own flats converges in one step. Raise it only against a fresh fleet `probe:longsum` diff.
+   */
+  const REFINE_ROUNDS = 1;
+  /** Pin each node's onward move to the one this chain made, so DFS cannot orient a flat against it. */
+  const preferFrom = (chain: GraphEdge[]) => {
+    const m = new Map<string, string>();
+    for (const e of chain) if (!m.has(e.from)) m.set(e.from, e.id);
+    return m;
+  };
+  const metresOf = (c: GraphEdge[]) => c.reduce((t, e) => t + e.lengthM, 0);
+  const seenChains = new Set<string>();
+  const offer = (chain: GraphEdge[]) => {
+    if (chain.length === 0) return false;
+    const key = chain.map((e) => e.id).join(',');
+    if (seenChains.has(key)) return false;
+    seenChains.add(key);
+    // Scored UNPENALISED: the penalty exists to steer the next search, and the quality gate
+    // below must judge the run itself, not how many variants preceded it.
+    candidates.push({ chain, score: chain.reduce((t, e) => t + scoreOf(e), 0) });
+    return true;
+  };
+
   for (const s of starts) {
-    // The DAG depends on the start (it orients the flats) but not on the penalties, so it is
-    // built once and re-solved.
-    const dag = buildDag([s]);
-    const penalties = new Map<string, number>();
-    const seen = new Set<string>();
-    for (let v = 0; v < VARIANTS_PER_START; v++) {
-      const walked = reconstruct(s, runDp(dag, penalties));
-      if (walked.length === 0) break;
-      const chain = trimToHighPoint(smoothFlats(walked));
-      const key = chain.map((e) => e.id).join(',');
-      if (chain.length > 0 && !seen.has(key)) {
-        seen.add(key);
-        // Scored UNPENALISED: the penalty exists to steer the next search, and the quality gate
-        // below must judge the run itself, not how many variants preceded it.
-        candidates.push({ chain, score: chain.reduce((t, e) => t + scoreOf(e), 0) });
+    // Which way DFS orients an ambiguous flat is arbitrary, and no physical rule for choosing has
+    // survived measurement (see buildDag). Searching both adjacencies gives two independent
+    // orientations of the same terrain as a side effect, and everything found is offered to the
+    // same pool, so this can only add answers.
+    for (const source of adjacencies) {
+      // The DAG depends on the start (it orients the flats) but not on the penalties, so it is
+      // built once and re-solved.
+      const dag = buildDag(source, [s]);
+      const penalties = new Map<string, number>();
+      for (let v = 0; v < VARIANTS_PER_START; v++) {
+        const walked = reconstruct(s, runDp(dag, penalties));
+        if (walked.length === 0) break;
+        let chain = trimToHighPoint(smoothFlats(walked));
+        offer(chain);
+
+        // Refinement (see buildDag): re-orient the flats this answer used in the direction it used
+        // them and solve again, so the run can continue through a flat that arrival order had
+        // pointed against it. Every round only ADDS a candidate — the pool below still ranks by
+        // length and gates on quality — so this cannot return a shorter answer than the unrefined
+        // search. Refining per variant rather than only on the winner matters: the variants sit in
+        // different parts of the mountain, and refining one explores a basin the winner never enters.
+        let seed = walked;
+        for (let r = 0; r < REFINE_ROUNDS; r++) {
+          const rewalked = reconstruct(s, runDp(buildDag(source, [s], preferFrom(seed)), penalties));
+          if (rewalked.length === 0) break;
+          const refined = trimToHighPoint(smoothFlats(rewalked));
+          offer(refined);
+          if (metresOf(refined) <= metresOf(chain) + 1) break; // stopped paying for itself
+          chain = refined;
+          seed = rewalked;
+        }
+
+        // Penalise what was walked, not the trimmed/smoothed result — the trunk it walked is what
+        // the next variant needs to diverge from. Partial (0.55), so a variant sharing a common top
+        // can still reuse it and split off lower down.
+        for (const e of walked) penalties.set(e.id, (penalties.get(e.id) ?? 1) * 0.55);
       }
-      // Penalise what was walked, not the trimmed/smoothed result — the trunk it walked is what
-      // the next variant needs to diverge from. Partial (0.55), so a variant sharing a common top
-      // can still reuse it and split off lower down.
-      for (const e of walked) penalties.set(e.id, (penalties.get(e.id) ?? 1) * 0.55);
     }
   }
   // Rank by distance — that is what the card promises and what the user reads. Score is used as a
@@ -759,8 +931,13 @@ export function longestDownhillRuns(
  *
  * Returns the ordered edge chain of the run (empty if none).
  */
-export function longestDownhillStreak(index: GraphIndex, maxColorRank = Infinity, allow: EdgeAllow = ALLOW_ALL): GraphEdge[] {
-  return longestDownhillRuns(index, maxColorRank, 1, allow)[0] ?? [];
+export function longestDownhillStreak(
+  index: GraphIndex,
+  maxColorRank = Infinity,
+  allow: EdgeAllow = ALLOW_ALL,
+  allowPoling = false,
+): GraphEdge[] {
+  return longestDownhillRuns(index, maxColorRank, 1, allow, allowPoling)[0] ?? [];
 }
 
 /**
@@ -783,12 +960,13 @@ export function longestDownhillPath(
   maxColorRank = Infinity,
   penalties?: Map<string, number>,
   allow: EdgeAllow = ALLOW_ALL,
+  allowPoling = false,
 ): GraphEdge[] {
   // Prefer a run that never climbs. Only if B is unreachable that way do we allow a rise, so a
   // legitimately awkward pairing still returns something rather than nothing.
-  const strict = descentPath(index, fromId, toId, maxColorRank, penalties, false, allow);
+  const strict = descentPath(index, fromId, toId, maxColorRank, penalties, false, allow, allowPoling);
   if (strict.length) return strict;
-  return descentPath(index, fromId, toId, maxColorRank, penalties, true, allow);
+  return descentPath(index, fromId, toId, maxColorRank, penalties, true, allow, allowPoling);
 }
 
 function descentPath(
@@ -799,6 +977,7 @@ function descentPath(
   penalties: Map<string, number> | undefined,
   allowClimb: boolean,
   allow: EdgeAllow = ALLOW_ALL,
+  allowPoling = false,
 ): GraphEdge[] {
   if (fromId === toId) return [];
 
@@ -818,7 +997,7 @@ function descentPath(
   const adj = new Map<string, GraphEdge[]>();
   for (const [from, edges] of index.out) {
     const keep = (e: GraphEdge) => e.kind !== 'lift' && colorRank(e) <= maxColorRank && allow(e);
-    const kept = allowClimb ? edges.filter(keep) : usableFrom(edges, keep);
+    const kept = allowClimb ? edges.filter(keep) : usableFrom(edges, keep, allowPoling);
     if (kept.length) adj.set(from, kept);
   }
 
@@ -852,7 +1031,7 @@ function descentPath(
   if (!state.has(toId)) return []; // B not reachable lift-free from A
 
   // Longest-descent DP toward B. Processing in `finished` order resolves successors first.
-  const scoreOf = makeDescentScorer(index);
+  const scoreOf = makeDescentScorer(index, allowPoling);
   const bestTo = new Map<string, number>([[toId, 0]]);
   const choice = new Map<string, GraphEdge>();
   for (const u of finished) {
@@ -913,11 +1092,17 @@ function descentPath(
  * plumbing keeps this to a couple of extra searches per run, and every edge descends, so a spliced
  * sub-path can never collide with the rest of the chain.
  */
-function smoothPlumbing(index: GraphIndex, chain: GraphEdge[], maxColorRank: number, allow: EdgeAllow = ALLOW_ALL): GraphEdge[] {
+function smoothPlumbing(
+  index: GraphIndex,
+  chain: GraphEdge[],
+  maxColorRank: number,
+  allow: EdgeAllow = ALLOW_ALL,
+  allowPoling = false,
+): GraphEdge[] {
   const isPlumbing = (e: GraphEdge) => !!(e.skeletonArm || e.spineDuplicate);
   if (!chain.some(isPlumbing)) return chain;
 
-  const scoreOf = makeDescentScorer(index);
+  const scoreOf = makeDescentScorer(index, allowPoling);
   const total = (es: GraphEdge[]) => es.reduce((s, e) => s + scoreOf(e), 0);
 
   const out = [...chain];
@@ -932,7 +1117,7 @@ function smoothPlumbing(index: GraphIndex, chain: GraphEdge[], maxColorRank: num
     while (start > 0 && isPlumbing(out[start - 1])) start--;
 
     const seg = out.slice(start, end);
-    const alt = descentPath(index, seg[0].from, seg[seg.length - 1].to, maxColorRank, undefined, false, allow);
+    const alt = descentPath(index, seg[0].from, seg[seg.length - 1].to, maxColorRank, undefined, false, allow, allowPoling);
     if (alt.length && total(alt) > total(seg) + 1e-6) out.splice(start, seg.length, ...alt);
 
     end = start;
@@ -954,18 +1139,19 @@ export function longestDownhillPaths(
   k = 3,
   maxOverlap = 0.7,
   allow: EdgeAllow = ALLOW_ALL,
+  allowPoling = false,
 ): GraphEdge[][] {
   const accepted: GraphEdge[][] = [];
   const penalties = new Map<string, number>();
   const maxAttempts = k * 4;
 
   for (let attempt = 0; attempt < maxAttempts && accepted.length < k; attempt++) {
-    const found = longestDownhillPath(index, fromId, toId, maxColorRank, penalties, allow);
+    const found = longestDownhillPath(index, fromId, toId, maxColorRank, penalties, allow, allowPoling);
     if (found.length === 0) break;
 
     // Keep the straightened run, but penalise what the search actually walked — penalties exist to
     // push the *next* search onto new terrain, and the dogleg is terrain it should not retry.
-    const chain = smoothPlumbing(index, found, maxColorRank, allow);
+    const chain = smoothPlumbing(index, found, maxColorRank, allow, allowPoling);
 
     const isDup = accepted.some(
       (r) => r.length === chain.length && r.every((e, i) => e.id === chain[i].id),

@@ -291,6 +291,17 @@ export interface Preferences {
    * Opting in is the skier's decision to make explicitly.
    */
   allowOffPiste: boolean;
+  /**
+   * When true, a named piste counts fully as skiing however shallow it runs — "allow a bit of
+   * poling".
+   *
+   * This is a matter of taste, not a fact about the mountain, which is why it is a preference and
+   * not a constant: some skiers will happily pole a flat stretch to link a much longer descent,
+   * others count only the pitch and would rather have a shorter, steeper run. See
+   * `makeDescentScorer` for why the opt-in is scoped to *named pistes* and never to connectors,
+   * synthetic bridges, polygon arms or spine duplicates.
+   */
+  allowPoling: boolean;
   /** When true, strongly prefer skiing over riding lifts (especially downhill lifts). */
   preferSkiing: boolean;
   /** Which "Find route" mode to use: balanced (one per objective) or a single objective ×3. */
