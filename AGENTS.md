@@ -771,32 +771,58 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   or they silently keep serving data fetched by the old query.
 - The OSM cache is keyed by **resort id, not bbox** — after changing a bbox you must
   `data:refresh` to actually re-fetch.
-- **Elevation comes from a MEDIAN of three DEMs, not from a priority chain.** EU-DEM 25 m was our
-  first-answer-wins primary and is badly wrong over the Plateau Rosa glacier — **14.3 m MAE** against
-  the user's contour readings, vs 2.6 m for srtm30m — which reversed pistes and manufactured false
-  bidirectional sections on Cervinia's runs 6 and 80. `pipeline/lib/elevation.ts` now samples
-  `CONSENSUS = [eudem25m, srtm30m, copernicus90]` and takes the median (3.0 m MAE on the same
-  points), with open-elevation kept as `FALLBACK` hole-filling only. Design constraints, each earned:
-  - The three must be **independent products** (fused / SRTM radar / TanDEM-X). **mapzen was rejected
-    as a vote** — it returned values identical to srtm30m at all 12 sampled points, so over the Alps
-    it is SRTM-derived and would just double one opinion.
-  - Copernicus is taken from **open-meteo**, a different host, so two of three votes don't share
-    opentopodata's 1000-call/day cap. open-meteo limits **per minute**, so its original sub-second
-    backoff merely burned retries and silently dropped its vote; it is now 5 attempts with a 20 s
-    backoff on 429.
-  - **A median of two is a mean**, which splits the difference with the bad DEM instead of outvoting
-    it. Hence the `degradedPoints` counter that warns when any point was resolved by fewer than 3
-    providers — the first Cervinia build had ~200 such points and was thrown away rather than measured.
+- **Elevation comes from TWO LOCAL RASTERS that must agree, with a rate-limited third only as
+  tiebreaker.** The earlier design took the median of three *API* DEMs (EU-DEM / SRTM / Copernicus).
+  It was more accurate than the old first-answer-wins chain, but it was **unshippable across the
+  fleet**: two of the three votes came from opentopodata's **1 000 calls/day** cap and Copernicus
+  from open-meteo, whose cap turned out to be **daily** too (one resort exhausted it in under two
+  hours). A full refresh penciled out at ~4 240 calls ≈ **5 days**, which meant resorts were being
+  rebuilt piecemeal on different provider states — the user's objection, and the right one: an
+  elevation model that cannot be applied to every resort at once guarantees inconsistency.
+  `pipeline/lib/elevation.ts` now reads two **raw rasters from AWS Open Data**, downloaded once and
+  sampled locally forever, and calls a capped third **only where they disagree**:
+  - **skadi SRTM 1-arcsec** (`pipeline/lib/skadi.ts`) and **Terrarium** (`pipeline/lib/terrarium.ts`,
+    already in the repo for `check:elevation`). Both uncapped, both offline after the first fetch.
+  - Within `AGREE_M` (8 m) the two are **averaged**; outside it the point goes to `TIEBREAK`
+    (aster30m). 8 m is chosen because a spread that small cannot flip a slope's direction, which is
+    the failure the consensus exists to prevent.
+  - **skadi is byte-for-byte opentopodata's `srtm30m` — but only under bilinear sampling.**
+    Nearest-post disagrees by up to 10 m on a slope, which reads as a dataset difference when it is
+    only a sampling one; bilinear reproduces opentopodata to **0.4 m** (their integer rounding). So
+    the SRTM half of this change is a *hosting* change, not a data change.
+  - **Terrarium is genuinely independent of SRTM — measured, not assumed.** It was twice asserted
+    here to be "largely SRTM-derived over the Alps" and that was wrong: only 7.9–10.5% of nodes agree
+    within 0.5 m, median difference 2.9–4.2 m, p99 ~20 m. Had it been a repackage, this design would
+    be a median of one.
+  - **The tiebreak must be batched across the whole pass, not per batch.** The first implementation
+    called it once per `BATCH`; at a ~20% disagreement rate essentially every batch qualifies, so
+    2 120 batches → 2 120 calls — the exact cap being escaped. Fix: `BATCH = 2000` (local raster
+    reads are free) and chunk the disagreeing subset into `TIEBREAK_BATCH = 100`.
+  - **The tiebreaker is ASTER, not EU-DEM.** Using our worst-measured DEM to decide precisely the
+    hard cases is backwards — at five Plateau Rosa points ASTER scored 4.6 m MAE vs EU-DEM's 14.3 m.
   - `ELEVATION_SOURCE` is a **cache namespace**: bump it on any provider change or the rebuild
     silently reuses the previous DEM's values.
-  **It is an improvement, not a cure, and the aggregate is not the evidence.** On Cervinia it fixed
-  2 of 3 diagnosed false bidirectionals with no override, freed a trapped node (`probe:trappeddiff`
-  10→9, no regressions) and made **6 of 14** `setNodeElevation` overrides redundant — but 5 remain
-  load-bearing, because the median can never be better than the *second-best* DEM (at `n563317811` it
-  reads 3440 m against a ~3451 m ground truth). The direction churn was near-symmetric (34 BI→ONEWAY
-  vs 30 ONEWAY→BI), which by our own rule is what noise looks like; only the **targeted** check on
-  the specific known-wrong sections is decisive. These edges sit near the 6% `flatGradeMax` line
-  where a metre tips them either way.
+  **Fleet result: all 18 resorts rebuilt in 17 minutes** (was ~5 days), tiebreak rate 0.4–24%,
+  ~450 capped calls total. 10 resorts unchanged; orphan nodes −11 net; badge invariant still 0
+  violations over 1 904 plans. **Every "regression" it produced was a correction**, and they were all
+  one mechanism: a near-flat traverse losing its uphill direction because the node moved and the
+  climb crossed `maxTraverseClimb`. Verified individually — Cervinia's was an invented rescue link to
+  a private hut off the piste; St. Anton's read as a **2 m** near-flat link before and **12 m** now,
+  with the independent DEM saying **19 m**. Paradiski's headline longest run went 18.70 km → 11.91 km
+  at the *same* 2 010 m vertical, because the old one padded the real Aiguille Rouge → Villaroger
+  descent (Les Arcs advertise **2 026 m**) with 6.8 km of looping through Arc 1950 twice.
+  **The remaining Plateau Rosa overrides are still load-bearing** (4 of 14, DEM still 9–25 m low over
+  the glacier); this is a distribution and cost fix, not a cure for the hardest terrain.
+
+- **A smoke test that starts from "the highest node" can report a false total failure.**
+  `npm run routetest` picks the top point and routes to every bottom. St. Anton's highest node is
+  **"Hochkar (top)"**, an island that reaches exactly **2 of 1087 nodes** — so the run reported
+  **0/301 routable** on a completely healthy graph. It is elevation-sensitive, which is how it
+  surfaced: the island sat at 2757 m against Valluga's 2759 m, and a DEM change moved it to 2790 m,
+  flipping which node was "highest" with nothing in the terrain having changed. `_routetest.ts` now
+  starts from the highest point **in the main body** (largest SCC, via the exported
+  `mainBodyNodeIds`), giving 264/301. Any future check that picks a single representative node needs
+  the same guard — a resort's extreme node is exactly the one most likely to be stranded.
 - **False-elevation reversals** (arrows/ski-direction wrong): a mis-sampled DEM elevation at a
   junction flips a piste segment. `npm run check:audit` flags them as "reversal candidates"
   (a piste starts at a node reachable only via an *uphill* flat); fix with `setNodeElevation`
@@ -1266,6 +1292,79 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 - **Longest** = max-km **lift-free** descent A→B, exact via a DAG longest-path (`longestStreak.ts`);
   only falls back to a lift if B is otherwise unreachable. The resort-wide "Longest runs" card is the
   only feature that ignores A and B.
+- **A named run may roll over a rise and keep descending, and refusing that cost Paradiski 5 km.**
+  `usableFrom` picks a node's onward edges: level/descending options win outright, and an "escape
+  climb" (≤ `maxTraverseClimb`, 8 m) is only considered when *nothing* is level. That is right for a
+  dead end and wrong for a run that crosses a saddle. Paradiski's **Villaroger** climbs **8 m over
+  271 m** at Pré-Saint-Esprit with **2242 m / 120 m of descent immediately beyond**; the node also
+  offers a 97 m drop into the lift base, so the level branch always fired and the run simply *ended
+  at the rise*. That one refusal **is** the whole 18.70 → 13.52 km fall. Three things to know before
+  touching it:
+  - **The old 18.70 km was partly an artifact.** The pre-Skadi graph had `n11595373789` at 1794.5 m;
+    the current pipeline and both DEMs put it at **1829 m** (DEM 1823). The old data turned an 8 m
+    climb into a 21 m descent. The number did not regress — the elevations got *right*, and the
+    honest way to recover the line is the user's explicit poling opt-in, not a looser rule.
+  - **Test `pisteName` + `!synthetic`, never `kind === 'piste'`.** The edge that carries the rise is
+    `e2314`, a `connector`/`flat_traverse` — because `buildGraph` assigns `connectorKind` by
+    direction alone — yet it carries `pisteName: 'Villaroger'`. Its reverse `e2313` is the piste
+    proper. A `kind` test misses exactly the edge that matters.
+  - **`dropM` is negative for descent in the graph and in code, but `probe:hood` prints it flipped.**
+    This has bitten repeatedly.
+- **Poling is not additive on its own, so the longest search runs BOTH adjacencies and pools them.**
+  Admitting escape climbs adds edges, which changes what DFS meets first and silently re-orients
+  two-way flats *elsewhere on the mountain* — measured, Verbier lost 1.01 km for reasons having
+  nothing to do with poling. `longestDownhillPaths` therefore builds `adj` twice (plain and poling)
+  and searches both, offering every result into one pool. The plain pass reproduces the no-poling
+  answer exactly, which is what makes the feature **provably non-regressive**: fleet-wide no resort
+  fell below baseline, six improved on options 2–3, and Paradiski went 13.52 → **18.48 km / 2023 m**
+  — more vertical than the old, wrong 18.70 km. Cost is one extra pass (~2 s/resort, browser-side).
+- **The longest-descent DAG orients two-way flats by DFS arrival order. It is arbitrary, but every
+  attempt to replace it lost distance** — and it was *not* the Paradiski cause (see above), which is
+  what these two experiments were chasing. Near-level traverses are passable both ways, so the lift-free sub-graph is a knot of
+  2-cycles and `buildDag` must drop one direction of each; today that direction is decided by
+  whichever end DFS reaches first. It is genuinely arbitrary, and it *is* why a given chain can stop
+  being expressible as a path after an elevation refresh reshuffles the roots. But replacing it costs
+  distance. Both principled replacements were built and measured fleet-wide: orienting each flat by
+  **skiing distance from the start** (drop the half leading back toward it) lost Verbier 0.86 km and
+  Mayrhofen 0.20 km — a real descent does sometimes swing back toward a point reachable more cheaply
+  another way, and cutting that half cuts the run; the **non-destructive** version, keeping every
+  edge and only exploring nearer nodes first so DFS meets a flat from its near end, lost Ischgl
+  0.83 km instead. Neither recovered the Paradiski line. Straight-line
+  distance is worse still — a run curls back toward the summit while genuinely descending
+  (Paradiski's Vallée de l'Arc swings north into Arc 1950), so an airline rule points exactly those
+  flats backwards. **Do not re-attempt without a fleet `probe:longsum` diff.** What *did* survive
+  from the work is `buildDag`'s optional `prefer` map (explore a chosen edge first, so a known
+  chain's flats become tree edges and cannot be dropped), used by a strictly-additive refinement
+  loop: solve, re-orient the flats the answer used in the direction it used them, re-solve, keep
+  the best. Measured worth: a small gain on **9 of 18** resorts (best +0.30 km), never a loss, and
+  it converges in **one** round — `REFINE_ROUNDS = 2` was live, reached, and changed nothing
+  fleet-wide while costing ~20% of runtime.
+- **"Allow a bit of poling" (`Preferences.allowPoling`, default on) is taste, not terrain.** Some
+  skiers happily push along a flat to earn a longer descent; others count only what they skied. It
+  does two things: waives the flat penalty in `makeDescentScorer` — full ski credit regardless of
+  grade — and admits the escape climbs above in `usableFrom`. Both are gated on the edge being a
+  **named run** (`isNamedRun`: has `pisteName`, not synthetic/arm/spine duplicate), which is what
+  keeps the junction-mesh padding cheat closed: an *unnamed* level line is exactly the scrap this
+  must never reward. **The two halves are not equally load-bearing, and the scorer half is not what
+  fixed Paradiski** — disabling it fleet-wide moves exactly one number (St. Anton #2, 6.23 → 6.18)
+  and leaves Paradiski at 18.48 km. It is kept for coherence, not for distance: with it off, a flat
+  the skier explicitly opted into poling across still scores as negative padding, so the search
+  would penalise the terrain the checkbox just allowed. The `usableFrom` half is worth the 5 km.
+- **"No poling" has to mean no climbing anywhere in the run, including out of dead ends.**
+  `usableFrom` has *two* climb doors, and only one was ever gated. The **dead-end escape** — no level
+  option at this node, so take anything up to `maxTraverseClimb` — predates the preference and had
+  no gate and no name/synthetic test, so an unticked skier was still served runs that climb, over
+  links the app invented itself. Madonna's 8.94 km top pick pushes **60 m up a +8 m synthetic,
+  unnamed connector** (`e978`, Pozza vecia → Skiweg Fortini) and Ischgl's 10.60 km does the same, so
+  the app was refusing the real signposted Villaroger rise while serving its own uphill plumbing.
+  The escape is now gated on `allowPoling` as well. Measured fleet-wide it costs the **ticked**
+  (default) skier nothing — the only movement is Sella Ronda *gaining* 0.02 km — and costs the
+  unticked skier exactly the runs that require pushing (madonna 8.94 → 7.40 with internal climb
+  8.1 m → **0.0 m**, ischgl 10.60 → 8.64). The alternative of demanding named + non-synthetic here
+  instead, with no poling gate, was measured and is wrong: it deletes Madonna's 8.94 km run for
+  *everyone*, because the single link it turns on is synthetic. Out of a genuine dead end,
+  connectivity outranks provenance — the thing that was missing was **consent**, not pedigree.
+  Note `usableFrom` is reached only by the longest-run family, never by the A→B planner.
 - **Speed/time model** lives in `src/config/speedModel.ts` — see **docs/SPEED_MODEL.md**. Key idea:
   routing uses **progress speed** (down the centerline), the UI shows **true move speed**
   (`progress × snakeFactor`), and measured GPS speeds are true speeds divided back to progress. Base
