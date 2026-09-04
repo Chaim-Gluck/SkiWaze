@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import type { ResortGraph, Route } from '../src/types/domain';
 import { DEFAULT_PREFERENCES } from '../src/config/defaults';
 import { planRoutes } from '../src/routing/plan';
+import { mainBodyNodeIds } from './lib/trappedBasins';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -61,10 +62,17 @@ function main(): void {
   }
 
   // Smoke test: highest meaningful point -> every bottom-type point.
+  //
+  // The start must come from the resort's MAIN BODY, not simply from the highest node. A resort's
+  // top node is sometimes an island (St. Anton's "Hochkar (top)" reaches 2 of 1087 nodes), and
+  // starting there reports 0/N routable — a false total failure that says nothing about the graph.
+  // It is elevation-sensitive too: a DEM change that lifts an island above the real summit flips
+  // this without anything in the terrain having changed.
+  const main = mainBodyNodeIds(graph);
   const withEle = graph.points
     .map((p) => ({ p, ele: graph.nodes.find((n) => n.id === p.nodeId)?.point.ele ?? 0 }))
     .sort((a, b) => b.ele - a.ele);
-  const top = withEle[0];
+  const top = withEle.find((c) => main.has(c.p.nodeId)) ?? withEle[0];
   const bottoms = graph.points.filter((p) => p.type === 'lift_bottom' || p.type === 'piste_bottom');
   if (!top || bottoms.length === 0) {
     console.log('Not enough meaningful points to smoke-test.');

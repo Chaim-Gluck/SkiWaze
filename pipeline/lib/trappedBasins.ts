@@ -265,6 +265,41 @@ export interface BasinReport {
   staleAccepted: AcceptedBasin[];
 }
 
+/**
+ * The ids of the resort's main body — the largest strongly-connected component, i.e. the part of
+ * the mountain you can roam freely. Exported because a caller that needs a *representative* node
+ * (a smoke test's start point, say) must not pick one off an island: St. Anton's highest node is
+ * "Hochkar (top)", which reaches exactly 2 of 1087 nodes, so starting there reports 0 routable
+ * bottoms and looks like a total failure of a perfectly healthy graph.
+ */
+export function mainBodyNodeIds(graph: ResortGraph): Set<string> {
+  const fwd = new Map<string, string[]>();
+  const rev = new Map<string, string[]>();
+  for (const n of graph.nodes) {
+    fwd.set(n.id, []);
+    rev.set(n.id, []);
+  }
+  for (const e of graph.edges) {
+    fwd.get(e.from)?.push(e.to);
+    rev.get(e.to)?.push(e.from);
+  }
+  const comp = stronglyConnected(
+    graph.nodes.map((n) => n.id),
+    fwd,
+    rev,
+  );
+  const members = new Map<number, string[]>();
+  for (const n of graph.nodes) {
+    const c = comp.get(n.id)!;
+    const list = members.get(c);
+    if (list) list.push(n.id);
+    else members.set(c, [n.id]);
+  }
+  let main: string[] = [];
+  for (const list of members.values()) if (list.length > main.length) main = list;
+  return new Set(main);
+}
+
 export function findTrappedBasins(
   graph: ResortGraph,
   resort: string,
