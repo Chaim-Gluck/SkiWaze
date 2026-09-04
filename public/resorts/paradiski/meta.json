@@ -25,20 +25,20 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.paradiski.com/"
   },
-  "generatedAt": "2026-08-31T04:48:38.484Z",
+  "generatedAt": "2026-09-03T12:43:18.211Z",
   "stats": {
     "resortId": "paradiski",
-    "nodeCount": 2946,
-    "edgeCount": 8891,
-    "pisteEdges": 3120,
+    "nodeCount": 2960,
+    "edgeCount": 8952,
+    "pisteEdges": 3033,
     "liftEdges": 220,
-    "connectorEdges": 5551,
-    "meaningfulPoints": 725,
-    "reachableFromLifts": 2944,
+    "connectorEdges": 5699,
+    "meaningfulPoints": 727,
+    "reachableFromLifts": 2958,
     "unreachableNodes": 2,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
-      "suspicious_merge": 15,
+      "suspicious_merge": 12,
       "missing_opening_hours": 183,
       "inferred_connector": 5,
       "unreachable_component": 1
@@ -47,21 +47,7 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 272 duplicate OSM node(s) at 248 spot(s) where ways meet but do not share a node."
-    },
-    {
-      "code": "suspicious_merge",
-      "message": "Node n25946536 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n25946536"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
-      "message": "Node n611037812 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n611037812"
-      ]
+      "message": "Unified 279 duplicate OSM node(s) at 255 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -72,7 +58,7 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n650881840 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n650881840 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n650881840"
       ]
@@ -86,16 +72,16 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n2095719977 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n2095708145 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n2095719977"
+        "n2095708145"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n2095708145 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n619485260 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n2095708145"
+        "n619485260"
       ]
     },
     {
@@ -107,30 +93,23 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n150549728 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n2752425838 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n150549728"
+        "n2752425838"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n2095715655 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n2475482422 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n2095715655"
+        "n2475482422"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n13393853408 merges points spanning 12.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n2095715590 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n13393853408"
-      ]
-    },
-    {
-      "code": "suspicious_merge",
-      "message": "Node n2535243621 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n2535243621"
+        "n2095715590"
       ]
     },
     {
@@ -142,14 +121,14 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n11386207316 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n259761664 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n11386207316"
+        "n259761664"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n12822714715 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n12822714715 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n12822714715"
       ]
@@ -888,23 +867,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 428 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 433 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 1375 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 1417 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 1142 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 1191 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 228 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 217 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 8 unreachable zone(s) to the nearest point a skier can already get to (3 onto a piste line)."
+      "message": "Linked 9 unreachable zone(s) to the nearest point a skier can already get to (3 onto a piste line)."
     },
     {
       "code": "unreachable_component",

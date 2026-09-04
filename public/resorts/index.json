@@ -1,12 +1,11 @@
 [
   {
-    "id": "cervinia-zermatt",
-    "name": "Zermatt – Cervinia (Matterhorn Ski Paradise)",
-    "shortName": "Zermatt – Cervinia",
-    "country": "Switzerland / Italy",
+    "id": "portes-du-soleil",
+    "name": "Portes du Soleil",
+    "country": "France / Switzerland",
     "center": {
-      "lon": 7.71,
-      "lat": 45.958
+      "lon": 6.76,
+      "lat": 46.2
     }
   },
   {
@@ -17,6 +16,16 @@
     "center": {
       "lon": 10.826,
       "lat": 46.23
+    }
+  },
+  {
+    "id": "cervinia-zermatt",
+    "name": "Zermatt – Cervinia (Matterhorn Ski Paradise)",
+    "shortName": "Zermatt – Cervinia",
+    "country": "Switzerland / Italy",
+    "center": {
+      "lon": 7.71,
+      "lat": 45.958
     }
   },
   {
@@ -154,15 +163,6 @@
     "center": {
       "lon": 7.28,
       "lat": 46.12
-    }
-  },
-  {
-    "id": "portes-du-soleil",
-    "name": "Portes du Soleil",
-    "country": "France / Switzerland",
-    "center": {
-      "lon": 6.76,
-      "lat": 46.2
     }
   }
 ]

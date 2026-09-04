@@ -17,21 +17,21 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.pontedilegnotonale.com/en/"
   },
-  "generatedAt": "2026-08-31T04:49:24.237Z",
+  "generatedAt": "2026-09-03T12:47:11.195Z",
   "stats": {
     "resortId": "passo-tonale",
-    "nodeCount": 204,
-    "edgeCount": 492,
-    "pisteEdges": 205,
+    "nodeCount": 205,
+    "edgeCount": 510,
+    "pisteEdges": 206,
     "liftEdges": 40,
-    "connectorEdges": 247,
-    "meaningfulPoints": 116,
-    "reachableFromLifts": 204,
+    "connectorEdges": 264,
+    "meaningfulPoints": 114,
+    "reachableFromLifts": 205,
     "unreachableNodes": 0,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "missing_opening_hours": 32,
-      "inferred_connector": 4
+      "inferred_connector": 5
     }
   },
   "warnings": [
@@ -169,19 +169,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 28 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 30 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 74 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 79 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 70 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 75 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 6 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 8 plateau traverse(s) linking hub nodes on the same level apron."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Rescued 2 trapped node(s) with a forced traverse to the nearest reachable point (0 onto a piste line)."
     }
   ]
 }

@@ -17,15 +17,15 @@
     "timezone": "Asia/Jerusalem",
     "infoUrl": "https://www.skihermon.co.il/"
   },
-  "generatedAt": "2026-08-31T04:48:56.380Z",
+  "generatedAt": "2026-09-03T12:44:33.473Z",
   "stats": {
     "resortId": "mount-hermon",
     "nodeCount": 64,
-    "edgeCount": 135,
-    "pisteEdges": 58,
+    "edgeCount": 137,
+    "pisteEdges": 62,
     "liftEdges": 9,
-    "connectorEdges": 68,
-    "meaningfulPoints": 40,
+    "connectorEdges": 66,
+    "meaningfulPoints": 41,
     "reachableFromLifts": 64,
     "unreachableNodes": 0,
     "warningsByCode": {
@@ -84,7 +84,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 14 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 17 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

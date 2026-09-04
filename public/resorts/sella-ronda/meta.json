@@ -31,17 +31,17 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-08-31T04:46:47.456Z",
+  "generatedAt": "2026-09-03T12:34:25.712Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1926,
-    "edgeCount": 5435,
-    "pisteEdges": 1740,
-    "liftEdges": 384,
-    "connectorEdges": 3311,
-    "meaningfulPoints": 822,
-    "reachableFromLifts": 1909,
-    "unreachableNodes": 17,
+    "nodeCount": 1936,
+    "edgeCount": 5545,
+    "pisteEdges": 1725,
+    "liftEdges": 383,
+    "connectorEdges": 3437,
+    "meaningfulPoints": 819,
+    "reachableFromLifts": 1923,
+    "unreachableNodes": 13,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 2,
@@ -57,16 +57,16 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n366190498 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n6472056070 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n366190498"
+        "n6472056070"
       ]
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n263479351 merges points spanning 11.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n330278398 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n263479351"
+        "n330278398"
       ]
     },
     {
@@ -1099,19 +1099,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 330 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 340 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 975 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 983 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 838 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 862 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 84 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 88 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -1119,25 +1119,21 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
+      "message": "Linked 2 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 12 unreachable zone(s) to the nearest point a skier can already get to (8 onto a piste line)."
+      "message": "Linked 12 unreachable zone(s) to the nearest point a skier can already get to (7 onto a piste line)."
     },
     {
       "code": "unreachable_component",
-      "message": "17 node(s) unreachable from the main lift network.",
+      "message": "13 node(s) unreachable from the main lift network.",
       "refs": [
-        "n2532518825",
         "n1149155677",
         "n2610898952",
-        "n338808035",
+        "n14067867609",
         "n278478692",
-        "n338808037",
         "n1149155667",
-        "n6511621009",
-        "n6511621012",
         "n5868831229",
         "n9691438681",
         "n9691438680",

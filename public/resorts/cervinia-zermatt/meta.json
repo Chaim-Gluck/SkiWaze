@@ -18,20 +18,20 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-09-03T08:28:45.616Z",
+  "generatedAt": "2026-09-03T12:28:24.009Z",
   "stats": {
     "resortId": "cervinia-zermatt",
-    "nodeCount": 859,
-    "edgeCount": 2322,
-    "pisteEdges": 861,
+    "nodeCount": 843,
+    "edgeCount": 2229,
+    "pisteEdges": 870,
     "liftEdges": 106,
-    "connectorEdges": 1355,
-    "meaningfulPoints": 337,
-    "reachableFromLifts": 851,
-    "unreachableNodes": 8,
+    "connectorEdges": 1253,
+    "meaningfulPoints": 339,
+    "reachableFromLifts": 836,
+    "unreachableNodes": 7,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
-      "suspicious_merge": 1,
+      "suspicious_merge": 2,
       "missing_opening_hours": 79,
       "inferred_connector": 6,
       "unreachable_component": 1
@@ -40,13 +40,20 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 54 duplicate OSM node(s) at 48 spot(s) where ways meet but do not share a node."
+      "message": "Unified 54 duplicate OSM node(s) at 47 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1109869943 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1109869943 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
         "n1109869943"
+      ]
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n1109895214 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n1109895214"
       ]
     },
     {
@@ -367,19 +374,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 143 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 118 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 388 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 355 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 323 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 280 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 37 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 41 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -391,7 +398,7 @@
     },
     {
       "code": "unreachable_component",
-      "message": "8 node(s) unreachable from the main lift network.",
+      "message": "7 node(s) unreachable from the main lift network.",
       "refs": [
         "n7847562228",
         "n342764945",
@@ -399,8 +406,7 @@
         "n7206042373",
         "n12944659729",
         "n3165652504",
-        "n7206060823",
-        "n1906820697"
+        "n7206060823"
       ]
     }
   ]

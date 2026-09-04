@@ -17,21 +17,21 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.visitmonterosa.com/en/"
   },
-  "generatedAt": "2026-08-31T04:49:23.113Z",
+  "generatedAt": "2026-09-03T12:47:02.222Z",
   "stats": {
     "resortId": "monterosa-ski",
     "nodeCount": 192,
-    "edgeCount": 475,
-    "pisteEdges": 188,
+    "edgeCount": 483,
+    "pisteEdges": 182,
     "liftEdges": 53,
-    "connectorEdges": 234,
+    "connectorEdges": 248,
     "meaningfulPoints": 113,
     "reachableFromLifts": 192,
     "unreachableNodes": 0,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "missing_opening_hours": 38,
-      "inferred_connector": 5
+      "inferred_connector": 4
     }
   },
   "warnings": [
@@ -193,23 +193,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 29 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 26 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 61 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 76 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 63 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 58 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 7 plateau traverse(s) linking hub nodes on the same level apron."
-    },
-    {
-      "code": "inferred_connector",
-      "message": "Rescued 1 trapped node(s) with a forced traverse to the nearest reachable point (0 onto a piste line)."
+      "message": "Added 8 plateau traverse(s) linking hub nodes on the same level apron."
     }
   ]
 }

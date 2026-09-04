@@ -17,16 +17,16 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.verbier4vallees.ch/en/"
   },
-  "generatedAt": "2026-08-31T04:49:25.053Z",
+  "generatedAt": "2026-09-03T12:47:46.076Z",
   "stats": {
     "resortId": "verbier-4vallees",
-    "nodeCount": 781,
-    "edgeCount": 1940,
-    "pisteEdges": 714,
+    "nodeCount": 779,
+    "edgeCount": 1916,
+    "pisteEdges": 725,
     "liftEdges": 130,
-    "connectorEdges": 1096,
-    "meaningfulPoints": 280,
-    "reachableFromLifts": 779,
+    "connectorEdges": 1061,
+    "meaningfulPoints": 276,
+    "reachableFromLifts": 777,
     "unreachableNodes": 2,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -446,19 +446,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 116 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 112 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 295 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 306 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 286 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 261 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 30 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 35 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

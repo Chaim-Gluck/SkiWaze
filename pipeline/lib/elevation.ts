@@ -1,11 +1,13 @@
 import type { NormPoint } from './normalize';
 import { getCachedElevation, setCachedElevation, saveElevationCache } from './cache';
+import { sampleSkadi } from './skadi';
+import { sampleTerrarium } from './terrarium';
 
 /**
  * Namespace for cached samples. Bump this whenever the provider chain below changes
  * so a rebuild re-samples instead of reusing the previous DEM's values.
  */
-export const ELEVATION_SOURCE = 'median3:eudem25m+srtm30m+cop90.v2';
+export const ELEVATION_SOURCE = 'agree2:skadi+terrarium~aster30m.v1';
 
 type Provider =
   | { id: string; kind: 'opentopodata'; dataset: string; delayMs: number }
@@ -13,39 +15,45 @@ type Provider =
   | { id: string; kind: 'open-elevation'; url: string; delayMs: number };
 
 /**
- * Elevation is resolved by CONSENSUS: every provider below is asked for every point and
- * the median is taken. A single DEM's local failure therefore cannot decide anything.
+ * Elevation is resolved by two INDEPENDENT free DEMs that agree, with a third called only to
+ * break a disagreement.
  *
- * This replaced a first-answer-wins chain headed by EU-DEM 25 m, which was measured
- * catastrophically wrong over glacier: against OpenTopoMap contours and OSM spot heights
- * at five points on the Plateau Rosa icefield it scored 14.3 m mean absolute error while
- * srtm30m scored 2.6 m, Copernicus 90 m 3.4 m and aster30m 4.6 m — and it was the lone
- * outlier at every single point, always low. Because its error was NOT a uniform offset
- * (-27 m to +13 m across eleven adjacent nodes) it flipped edges: it manufactured a
- * mid-run node that two runs left and none arrived at, reversed the head of a red run so
- * it pointed away from the rest of itself, and compressed a 21 m / 14% red pitch into
- * 7 m / 4.7%, which is under `flatGradeMax` and so earned a reverse traverse — letting
- * the router send a skier UP a red run.
+ * The problem this replaced: a straight median of three, two of which were served by
+ * opentopodata's 1000-call/day public API. Re-sampling the fleet's 220k points cost 4240 calls —
+ * five days — so resorts inevitably shipped on different DEMs, which is exactly the per-resort
+ * inconsistency this project refuses everywhere else. open-meteo is no escape either: its cap is
+ * DAILY and one resort exhausted it in under two hours.
  *
- * None of our guards caught any of it: `check:elevation` compares against one second
- * opinion at a ±40 m threshold, and exactly 1 node in that whole resort cleared that bar.
- * A median needs no ground truth to be right and degrades gracefully, which is why it is
- * preferred over simply promoting whichever DEM won this particular contest.
+ * The two primaries are therefore both raw rasters on AWS Open Data, downloaded once and sampled
+ * locally forever — no key, no cap, and offline after the first build:
+ *   - `skadi`     SRTM 1-arcsec. Verified to reproduce opentopodata's `srtm30m` to 0.4 m (their
+ *                 integer rounding), so this is a hosting change, not a data change.
+ *   - `terrarium` Mapzen/AWS terrain tiles, already used by `check:elevation`.
  *
- * The three are deliberately from DIFFERENT sensors/products (fused EU-DEM, SRTM radar,
- * TanDEM-X) so their errors are not correlated, and Copernicus comes from a different
- * host so two of the three do not share opentopodata's 1000-call/day public cap.
+ * They are genuinely independent, which was measured rather than assumed — over Cervinia, Sölden
+ * and St. Anton only 8-10% of nodes agree within 0.5 m, the median difference is 3-4 m and the p99
+ * is ~20 m. Had Terrarium turned out to be SRTM repackaged here, the two would share their errors
+ * and could out-vote a correct third DEM.
+ *
+ * Where they agree within AGREE_M their mean is taken and nothing else is called. A spread that
+ * small cannot flip a slope's direction, which is the failure the consensus exists to prevent
+ * (EU-DEM's -27..+13 m error reversed a red run's head and flattened a 14% pitch to 4.7%). Where
+ * they disagree, TIEBREAK is asked and the median of the three is taken. Measured tiebreak rates
+ * are 6.7% (Sölden), 11.0% (St. Anton) and 21.8% (Cervinia, glacier being the hard case), so the
+ * whole fleet costs ~300-500 capped calls — one day's budget, spent in hours.
+ *
+ * TIEBREAK is ASTER, not EU-DEM: using our worst-measured DEM to decide precisely the hard cases
+ * is backwards. At five Plateau Rosa points ASTER scored 4.6 m mean absolute error and EU-DEM
+ * 14.3 m, always low and always the lone outlier.
  */
-const CONSENSUS: Provider[] = [
-  { id: 'eudem25m', kind: 'opentopodata', dataset: 'eudem25m', delayMs: 1100 },
-  { id: 'srtm30m', kind: 'opentopodata', dataset: 'srtm30m', delayMs: 1100 },
-  {
-    id: 'copernicus90',
-    kind: 'open-meteo',
-    url: 'https://api.open-meteo.com/v1/elevation',
-    delayMs: 400,
-  },
-];
+const AGREE_M = 8;
+
+const TIEBREAK: Provider = {
+  id: 'aster30m',
+  kind: 'opentopodata',
+  dataset: 'aster30m',
+  delayMs: 1100,
+};
 
 /**
  * Last resort for points no consensus provider can answer at all. open-elevation returns
@@ -63,7 +71,16 @@ const FALLBACK: Provider[] = [
   },
 ];
 
-const BATCH = 100; // opentopodata's public cap is 100 locations per request
+/**
+ * Points resolved per pass. Large on purpose: the two primaries are local raster reads, so a pass
+ * costs nothing, and the only network work is the tiebreak. Tiebreaks are gathered across the
+ * whole pass and sent in TIEBREAK_BATCH-sized requests — with a small pass the ~20% of points that
+ * disagree would put at least one tiebreak in EVERY batch, turning a ~500-call fleet refresh back
+ * into a ~2100-call one, which is the daily cap we are escaping.
+ */
+const BATCH = 2000;
+/** opentopodata's public cap is 100 locations per request. */
+const TIEBREAK_BATCH = 100;
 
 interface LookupResult {
   status?: string;
@@ -135,57 +152,81 @@ async function fetchFrom(p: Provider, locs: Loc[]): Promise<(number | null)[]> {
 }
 
 let degradedPoints = 0;
+let tiebreakPoints = 0;
 
-function median(vals: number[]): number {  const s = [...vals].sort((a, b) => a - b);
+function median(vals: number[]): number {
+  const s = [...vals].sort((a, b) => a - b);
   const m = s.length >> 1;
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
 /**
- * Resolve a batch by CONSENSUS: ask every provider for every point and take the median of
- * the answers, so no single DEM's local failure can decide an elevation. Points that no
- * consensus provider can answer (outside every footprint, or a nodata hole in all three)
- * fall through to FALLBACK.
+ * Resolve a batch from the two local rasters, calling TIEBREAK only where they disagree.
  *
- * `trusted` is false when a consensus provider **errored** for this batch — it is down, or we
- * have hit its daily cap. That is categorically different from a provider returning null because
- * it genuinely has no data at a point: the outage is transient, so the answer must not be written
- * to the elevation cache, where a two-vote mean would silently outlive the outage and poison every
+ * `trusted` is false when TIEBREAK **errored** for this batch — it is down, or we have hit its
+ * daily cap. That is categorically different from a provider returning null because it genuinely
+ * has no data at a point: the outage is transient, so the answer must not be written to the
+ * elevation cache, where a degraded value would silently outlive the outage and poison every
  * future build of that resort.
  */
 async function lookupBatch(
   locations: Loc[],
 ): Promise<{ values: (number | null)[]; trusted: boolean }> {
   const out: (number | null)[] = locations.map(() => null);
-  const votes: number[][] = locations.map(() => []);
+  const needTiebreak: number[] = [];
+  const localVotes: number[][] = locations.map(() => []);
   let lastErr: unknown;
-  let outages = 0;
+  let outage = false;
 
-  for (const p of CONSENSUS) {
-    let got: (number | null)[];
-    try {
-      got = await fetchFrom(p, locations);
-    } catch (err) {
-      // A provider being down must not silently degrade the median — say so.
-      lastErr = err;
-      outages += 1;
-      console.warn(`\n  elevation: provider ${p.id} failed (${String(err)}), continuing`);
-      continue;
+  for (let i = 0; i < locations.length; i++) {
+    const { latitude: lat, longitude: lon } = locations[i];
+    // Both are local disk reads after the first tile, so this costs nothing per point.
+    const [a, b] = await Promise.all([
+      sampleSkadi(lat, lon),
+      sampleTerrarium(lat, lon).then((r) => r.point),
+    ]);
+    if (a != null) localVotes[i].push(a);
+    if (b != null) localVotes[i].push(b);
+
+    if (a != null && b != null && Math.abs(a - b) <= AGREE_M) {
+      out[i] = (a + b) / 2;
+    } else {
+      // Disagreement, or only one raster could answer — either way one opinion is not enough.
+      needTiebreak.push(i);
     }
-    got.forEach((v, i) => {
-      if (v != null) votes[i].push(v);
+  }
+
+  if (needTiebreak.length > 0) {
+    tiebreakPoints += needTiebreak.length;
+    const got: (number | null)[] = [];
+    for (let s = 0; s < needTiebreak.length; s += TIEBREAK_BATCH) {
+      const chunk = needTiebreak.slice(s, s + TIEBREAK_BATCH);
+      try {
+        got.push(
+          ...(await fetchFrom(
+            TIEBREAK,
+            chunk.map((i) => locations[i]),
+          )),
+        );
+      } catch (err) {
+        lastErr = err;
+        outage = true;
+        console.warn(`\n  elevation: tiebreak ${TIEBREAK.id} failed (${String(err)}), continuing`);
+        got.push(...chunk.map(() => null));
+      }
+    }
+    needTiebreak.forEach((srcIdx, k) => {
+      const v = got[k];
+      const votes = v == null ? localVotes[srcIdx] : [...localVotes[srcIdx], v];
+      if (votes.length === 0) return; // falls through to FALLBACK below
+      out[srcIdx] = median(votes);
+      // A median of two is a mean, which splits the difference with a bad DEM instead of
+      // outvoting it — the whole point of the pass. Count it so it cannot pass unnoticed.
+      if (votes.length < 3) degradedPoints += 1;
     });
   }
 
-  let pending = locations.map((_, i) => i).filter((i) => votes[i].length === 0);
-  for (let i = 0; i < locations.length; i++) {
-    if (votes[i].length > 0) {
-      out[i] = median(votes[i]);
-      // A median of two is a mean, which splits the difference with a bad DEM instead of
-      // outvoting it — the whole point of the pass. Count it so it cannot pass unnoticed.
-      if (votes[i].length < CONSENSUS.length) degradedPoints += 1;
-    }
-  }
+  let pending = locations.map((_, i) => i).filter((i) => out[i] == null);
 
   for (const p of FALLBACK) {
     if (pending.length === 0) break;
@@ -215,7 +256,7 @@ async function lookupBatch(
       }`,
     );
   }
-  return { values: out, trusted: outages === 0 };
+  return { values: out, trusted: !outage };
 }
 
 /**
@@ -283,10 +324,15 @@ export async function enrichElevations(allPoints: NormPoint[][]): Promise<number
     if (i % (BATCH * 20) === 0) saveElevationCache();
   }
   if (toLookup.length > 0) process.stdout.write('\n');
-  if (degradedPoints > 0) {
-    console.warn(
-      `  elevation: ${degradedPoints} point(s) resolved by fewer than ${CONSENSUS.length} providers`,
+  if (tiebreakPoints > 0) {
+    console.log(
+      `  elevation: ${tiebreakPoints}/${toLookup.length} point(s) needed the ${TIEBREAK.id} tiebreak` +
+        ` (${((tiebreakPoints / Math.max(toLookup.length, 1)) * 100).toFixed(1)}%)`,
     );
+    tiebreakPoints = 0;
+  }
+  if (degradedPoints > 0) {
+    console.warn(`  elevation: ${degradedPoints} point(s) resolved by fewer than 3 DEMs`);
     degradedPoints = 0;
   }
   saveElevationCache();
@@ -295,7 +341,7 @@ export async function enrichElevations(allPoints: NormPoint[][]): Promise<number
   // remainder — which is what makes a fleet-wide refresh survivable against a daily API cap.
   if (untrusted > 0) {
     throw new Error(
-      `elevation: ${untrusted} point(s) resolved while a consensus provider was down or rate-limited. ` +
+      `elevation: ${untrusted} point(s) resolved while the tiebreak DEM was down or rate-limited. ` +
         `They were NOT cached. Re-run this resort later to finish it (already-fetched points are cached).`,
     );
   }

@@ -17,28 +17,35 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.mayrhofner-bergbahnen.com/en/"
   },
-  "generatedAt": "2026-08-31T04:48:58.804Z",
+  "generatedAt": "2026-09-03T12:44:58.049Z",
   "stats": {
     "resortId": "mayrhofen",
-    "nodeCount": 524,
-    "edgeCount": 1373,
-    "pisteEdges": 512,
+    "nodeCount": 520,
+    "edgeCount": 1304,
+    "pisteEdges": 520,
     "liftEdges": 77,
-    "connectorEdges": 784,
-    "meaningfulPoints": 193,
-    "reachableFromLifts": 523,
-    "unreachableNodes": 1,
+    "connectorEdges": 707,
+    "meaningfulPoints": 196,
+    "reachableFromLifts": 520,
+    "unreachableNodes": 0,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
+      "suspicious_merge": 1,
       "missing_opening_hours": 53,
-      "inferred_connector": 5,
-      "unreachable_component": 1
+      "inferred_connector": 5
     }
   },
   "warnings": [
     {
       "code": "coincident_nodes_unified",
       "message": "Unified 9 duplicate OSM node(s) at 8 spot(s) where ways meet but do not share a node."
+    },
+    {
+      "code": "suspicious_merge",
+      "message": "Node n321002745 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
+      "refs": [
+        "n321002745"
+      ]
     },
     {
       "code": "missing_opening_hours",
@@ -254,30 +261,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 68 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 67 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 222 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 216 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 187 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 173 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 21 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 12 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
       "message": "Linked 1 unreachable zone(s) to the nearest point a skier can already get to (1 onto a piste line)."
-    },
-    {
-      "code": "unreachable_component",
-      "message": "1 node(s) unreachable from the main lift network.",
-      "refs": [
-        "n474792418"
-      ]
     }
   ]
 }

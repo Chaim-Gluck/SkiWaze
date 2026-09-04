@@ -17,20 +17,19 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.les2alpes.com/en/"
   },
-  "generatedAt": "2026-08-31T04:49:22.487Z",
+  "generatedAt": "2026-09-03T12:46:51.076Z",
   "stats": {
     "resortId": "les-deux-alpes",
-    "nodeCount": 501,
-    "edgeCount": 1335,
-    "pisteEdges": 524,
+    "nodeCount": 494,
+    "edgeCount": 1297,
+    "pisteEdges": 515,
     "liftEdges": 67,
-    "connectorEdges": 744,
-    "meaningfulPoints": 212,
-    "reachableFromLifts": 501,
+    "connectorEdges": 715,
+    "meaningfulPoints": 210,
+    "reachableFromLifts": 494,
     "unreachableNodes": 0,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
-      "suspicious_merge": 1,
       "missing_opening_hours": 52,
       "inferred_connector": 5
     }
@@ -39,13 +38,6 @@
     {
       "code": "coincident_nodes_unified",
       "message": "Unified 18 duplicate OSM node(s) at 18 spot(s) where ways meet but do not share a node."
-    },
-    {
-      "code": "suspicious_merge",
-      "message": "Node n11280322406 merges points spanning 9.0 m vertically (> Vmerge). Review in overrides.",
-      "refs": [
-        "n11280322406"
-      ]
     },
     {
       "code": "missing_opening_hours",
@@ -257,19 +249,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 73 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 65 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 183 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 181 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 183 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 174 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 23 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 24 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
