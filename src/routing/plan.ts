@@ -41,15 +41,28 @@ export function routeForEdges(graph: ResortGraph, prefs: Preferences, edges: Gra
 }
 
 /** Find up to `k` diverse longest lift-free runs across the resort, within the user's level. */
-export function findLongestRuns(graph: ResortGraph, prefs: Preferences, k = 3): LongestRun[] {
+export function findLongestRuns(
+  graph: ResortGraph,
+  prefs: Preferences,
+  k = 3,
+  closedKeys: readonly string[] = [],
+): LongestRun[] {
   const index = new GraphIndex(graph);
-  // Same gate as the A→B longest search: this walks the graph directly, so without it the card
-  // advertises unpatrolled freeride terrain to a skier who never opted into it.
+  // The same gate as the A→B longest search (`allowForLongest`): this walks the graph directly, so
+  // without it the card advertises unpatrolled freeride terrain to a skier who never opted into it.
+  //
+  // Closures have to be part of that gate and were missing. `buildEffectiveGraph` folds in the
+  // custom nodes/edges but NOT the closed set — closures are resolved per-plan from `closedKeys` —
+  // so this card was the one place in the app that would happily advertise, as the resort's longest
+  // run, a piste the user had just marked closed.
+  const closedEdgeIds = resolveClosedEdgeIds(graph, closedKeys);
   const chains = longestDownhillRuns(
     index,
     colorRank(prefs.maxDifficulty),
     k,
-    (e) => (prefs.allowOffPiste || !e.offPiste) && !(prefs.avoidSyntheticBridges && e.synthetic && !e.custom),
+    (e) => !closedEdgeIds.has(e.id)
+      && (prefs.allowOffPiste || !e.offPiste)
+      && !(prefs.avoidSyntheticBridges && e.synthetic && !e.custom),
     prefs.allowPoling,
   );
   return chains.map((chain) => {

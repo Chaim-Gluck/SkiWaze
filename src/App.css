@@ -121,6 +121,41 @@ body:lang(he) {
 .user-loc .ul-dot { width: 16px; height: 16px; border-radius: 50%; background: #1a73e8; border: 3px solid #fff; box-shadow: 0 0 4px rgba(0, 0, 0, 0.5); }
 .user-loc.has-heading .ul-dot { display: none; }
 
+/*
+ * Preview (simulated position) signalling.
+ *
+ * The frame is the primary signal because it is PERIPHERAL: a recoloured puck is small, often
+ * under the user's thumb and frequently off-screen, so it can be missed entirely. The frame cannot.
+ *
+ * Colour choice is constrained, not free: red already means off-route (the nav banner turns
+ * error.main), and the nav arrow is already orange (#ff6d00), so amber is the nearest unused
+ * warm hue. The puck is differentiated by SHAPE (a dashed ring) rather than hue, because shape
+ * survives colour-blindness and greyscale where a recolour does not.
+ *
+ * Tokenised and map-coupled, so it stays plain CSS rather than MUI (see docs/STYLE_GUIDE.md).
+ */
+:root { --sim: #ffb300; }
+
+.preview-frame {
+  position: absolute;
+  inset: 0;
+  border: 4px solid var(--sim);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.user-loc.simulated::after,
+.nav-arrow.simulated::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border: 2px dashed var(--sim);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.nav-arrow.simulated { position: relative; }
+
 /* Navigation (Phase 2) */
 .nav-arrow { filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)); }
 .pbadge { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 21px; padding: 0 5px; border-radius: 6px; color: #fff; font-weight: 800; font-size: 13px; border: 1.5px solid rgba(255, 255, 255, 0.85); vertical-align: middle; margin-inline-end: 5px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.25); }

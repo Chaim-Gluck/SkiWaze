@@ -64,8 +64,9 @@ import { loadCustomEdges, saveCustomEdges } from './state/customEdges';
 import { loadCustomNodes, saveCustomNodes, type CustomNode } from './state/customNodes';
 import { buildEffectiveGraph } from './routing/customGraph';
 import { loadClosures, saveClosures } from './state/closures';
-import { geometryForClosure } from './routing/closures';
+import { closedGeometries, geometryForClosure } from './routing/closures';
 import { nearestNode, nearestResort } from './utils/nearest';
+import { PreviewPrompt, type PreviewReason } from './components/PreviewPrompt';
 import { distance3dM, haversineM, projectOnPolyline } from './utils/geo';
 import { planRoutes, findLongestRuns, routeForEdges, type PlanResult, type LongestRun } from './routing/plan';
 import { buildRoutePath, snapToRoute, sliceAt, remainingStats, nextStep, type RoutePath } from './routing/navigation';
@@ -88,6 +89,7 @@ import { CustomLinkPanel, type LinkColor, type LinkDirection } from './component
 import { ClosedPanel } from './components/ClosedPanel';
 import { LongestRunPanel } from './components/LongestRunPanel';
 import { RoutePreview } from './components/RoutePreview';
+import { LongestPreview } from './components/LongestPreview';
 import { Logo } from './components/Logo';
 import { LanguagePicker } from './components/LanguagePicker';
 import { AppBarOverflow } from './components/AppBarOverflow';
@@ -212,6 +214,7 @@ export default function App() {
   const [toCustom, setToCustom] = useState<string | null>(null);
   const [pinMode, setPinMode] = useState<'from' | 'to' | null>(null);
   const [previewDismissed, setPreviewDismissed] = useState(false);
+  const [longestDismissed, setLongestDismissed] = useState(false);
   const isMobile = useMediaQuery('(max-width:820px)');
   // Narrower than the tablet breakpoint: this is the width at which the AppBar itself runs out of
   // room, which is a different question from whether the controls become a bottom sheet.
@@ -248,6 +251,15 @@ export default function App() {
   const live = useLiveLocation();
   const [simPos, setSimPos] = useState<LivePosition | null>(null);
   const userPos = simPos ?? live.position;
+  /**
+   * Preview mode: navigation played from a simulated position, offered only when the real thing
+   * cannot work (no fix, or a fix far from the resort). See `PreviewPrompt` for why it is a prompt
+   * rather than a setting, and `App.css` for why the signalling is a frame rather than a colour.
+   */
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewPrompt, setPreviewPrompt] = useState<PreviewReason | null>(null);
+  // One offer per navigation session — re-asking after a decline would be nagging.
+  const previewAsked = useRef(false);
   const [following, setFollowing] = useState(true);
   const [navRoute, setNavRoute] = useState<Route | null>(null);
   const [measured, setMeasured] = useState<MeasuredSpeeds>(() => loadMeasured());
@@ -512,14 +524,87 @@ export default function App() {
     };
   }, [navRoute, navPath, userPos]);
 
+  /**
+   * "Is this position at the resort?" measured against the nearest graph node, NOT the resort
+   * centre. A centre-distance test lies on sprawling multi-valley resorts — at Sella Ronda you can
+   * be on a piste and still be 10 km from the centroid — whereas the nearest node is by definition
+   * the closest bit of mapped terrain. Generous threshold on purpose: a false "far" merely offers
+   * Preview to someone who is really there (a shrug), while a false "near" would withhold it.
+   */
+  const PREVIEW_FAR_M = 10_000;
+  const isFarFromResort = useCallback(
+    (p: LivePosition | null): boolean => {
+      if (!p || !effectiveGraph) return false;
+      const n = nearestNode(effectiveGraph, p.lon, p.lat);
+      return !!n && haversineM({ lon: p.lon, lat: p.lat, ele: 0 }, n.point) > PREVIEW_FAR_M;
+    },
+    [effectiveGraph],
+  );
+
+  /**
+   * Is there a position the follow camera may legitimately fly to?
+   *
+   * The camera used to follow whatever `userPos` held, which is wrong the moment the real fix is
+   * nowhere near the mountain: leaving Preview clears `simPos` while `following` is still true, so
+   * the map eased straight from Madonna to the user's real position in another country. A
+   * simulated position is at the resort by construction; a real one has to earn it.
+   */
+  const posAtResort = !!simPos || (!!live.position && !isFarFromResort(live.position));
+
+  // Offer Preview when navigation cannot work for real. Three ways in: the location was refused or
+  // errored; a good fix arrived but it is nowhere near the mountain; or nothing arrived at all
+  // within a grace period (permission dialog left unanswered, indoors with no fix).
+  useEffect(() => {
+    if (!navRoute || previewMode || simPos || previewAsked.current) return;
+    if (live.error) {
+      previewAsked.current = true;
+      setPreviewPrompt('noFix');
+      return;
+    }
+    if (live.position && isFarFromResort(live.position)) {
+      previewAsked.current = true;
+      setPreviewPrompt('far');
+      return;
+    }
+    if (live.position) return;
+    const id = window.setTimeout(() => {
+      if (previewAsked.current) return;
+      previewAsked.current = true;
+      setPreviewPrompt('noFix');
+    }, 12_000);
+    return () => window.clearTimeout(id);
+  }, [navRoute, previewMode, simPos, live.error, live.position, isFarFromResort]);
+
+  // Self-cancelling: the instant a real fix places the user at the resort, Preview must stand down.
+  // A simulated position while someone is actually skiing is the one genuinely dangerous state.
+  useEffect(() => {
+    if (!previewMode || !live.position || isFarFromResort(live.position)) return;
+    setPreviewMode(false);
+    setSimPos(null);
+    notify(t('preview.endedRealFix'), 'info');
+  }, [previewMode, live.position, isFarFromResort, notify, t]);
+
   const onLocateToggle = () => {
+    // In Preview there is no real location to fall back to, so the FAB only
+    // toggles camera-follow. Clearing simPos here would drop the overlay back
+    // to "waiting for location" — the exact dead end Preview exists to escape.
+    if (previewMode) {
+      setFollowing((f) => !f);
+      notify(t(following ? 'app.notice.followingOff' : 'app.notice.followingOn'), 'info');
+      return;
+    }
     if (!live.tracking && !simPos) {
       live.start();
       setFollowing(true);
       notify(t('app.notice.followingOn'), 'info');
     } else if (!following) {
       setFollowing(true);
-      notify(t('app.notice.followingRecentered'), 'info');
+      // Be honest rather than appear broken: follow is on, but the camera will stay on the mountain
+      // until there is a fix here, so say so instead of leaving a lit FAB and a motionless map.
+      notify(
+        posAtResort ? t('app.notice.followingRecentered') : t('app.notice.followingFar'),
+        posAtResort ? 'info' : 'warning',
+      );
     } else {
       live.stop();
       setSimPos(null);
@@ -536,11 +621,20 @@ export default function App() {
     setNavRoute(selected);
     setFollowing(true);
     setPanelOpen(false);
+    previewAsked.current = false;
     if (!live.tracking && !simPos) live.start();
   };
   const exitNav = () => {
     setNavRoute(null);
     setSimPos(null);
+    setPreviewMode(false);
+    setPreviewPrompt(null);
+    // Once the simulation stops there may be nothing worth following: leaving follow mode on would
+    // light the locate FAB while the camera deliberately ignores a fix that isn't at the resort.
+    if (!live.position || isFarFromResort(live.position)) {
+      setFollowing(false);
+      live.stop();
+    }
     // Return to a clean map: drop the computed routes (options list, drawn line, preview card),
     // but keep the From/To selections so re-planning is one tap.
     setPlan(null);
@@ -569,7 +663,14 @@ export default function App() {
     setPreviewDismissed(false);
   };
   // On mobile the bottom sheet must never overlap the navigation overlay.
-  useEffect(() => { if (navRoute) setPanelOpen(false); }, [navRoute]);  const rerouteFromHere = () => {
+  useEffect(() => { if (navRoute) setPanelOpen(false); }, [navRoute]);
+  // Closing or reopening a run changes the question the Longest card answers, so a previously
+  // computed answer is stale — same reasoning as the "allow poling" checkbox, which clears it too.
+  useEffect(() => {
+    setLongestRuns(null);
+    setFocusGeometry(null);
+  }, [closedKeys]);
+  const rerouteFromHere = () => {
     if (!effectiveGraph || !userPos || !toNodeId) return;
     const near = nearestNode(effectiveGraph, userPos.lon, userPos.lat);
     if (!near) return;
@@ -1001,7 +1102,7 @@ export default function App() {
 
   const computeLongestRun = () => {
     if (!effectiveGraph) return;
-    const res = findLongestRuns(effectiveGraph, prefs, 3);
+    const res = findLongestRuns(effectiveGraph, prefs, 3, closedKeys);
     if (!res.length) {
       setLongestRuns(null);
       notify(t('app.notice.longestNone'), 'warning');
@@ -1020,7 +1121,10 @@ export default function App() {
     setPlan(null);
     setSelectedRange(null);
     setFocusGeometry(named[0].coords);
-    setPanelOpen(false);
+    // Deliberately does NOT close the mobile sheet. The user asked for the three longest runs, so
+    // dropping them straight onto the map hid the very list they came for; revealing the map is
+    // "Show on map"'s job (see onShowOnMap). These two behaviours used to be exactly inverted.
+    setLongestDismissed(false);
     setOpenSection('longest');
   };
 
@@ -1087,8 +1191,14 @@ export default function App() {
   const reopenClosure = (key: string) => applyClosures(closedRef.current.filter((k) => k !== key));
   const reopenAllClosures = () => applyClosures([]);
 
-  const locateClosure = (key: string) => {
-    if (!effectiveGraph) return;
+  // Every closed run/lift as geometry, so the map can draw what the router is refusing. One
+  // polyline per affected EDGE — a single closure key routinely covers several disconnected edges.
+  const closedGeometry = useMemo(
+    () => (effectiveGraph ? closedGeometries(effectiveGraph, closedKeys) : []),
+    [effectiveGraph, closedKeys],
+  );
+
+  const locateClosure = (key: string) => {    if (!effectiveGraph) return;
     const coords = geometryForClosure(effectiveGraph, key);
     if (coords.length >= 2) setFocusGeometry(coords);
     else notify(t('app.notice.closureLocateFailed'), 'warning');
@@ -1400,6 +1510,9 @@ export default function App() {
               setPlan(null);
               setSelectedRange(null);
               setFocusGeometry(currentLongest.coords);
+              setLongestDismissed(false);
+              // The button is named "Show on map", so on mobile it has to actually reveal the map.
+              if (isMobile) setPanelOpen(false);
             }}
             onNavigateStart={navigateToLongestStart}
             onNavigateEnd={navigateToLongestEnd}
@@ -1496,10 +1609,12 @@ export default function App() {
             linkFrom={linkEndPos(linkFrom)}
             linkTo={linkEndPos(linkTo)}
             focusGeometry={focusGeometry}
+            closedGeometry={closedGeometry}
             fitRequest={fitRequest}
             onMapClick={handleMapClick}
             userPosition={userPos}
-            following={following}
+            positionSimulated={previewMode && !!simPos}
+            following={following && posAtResort}
             nav={navData?.render ?? null}
             navHeadingUp
             resorts={index ?? []}
@@ -1510,6 +1625,8 @@ export default function App() {
             resortFrameSeq={resortFrameSeq}
             allowOffPiste={prefs.allowOffPiste}
           />
+          {/* Peripheral, unmissable marker that the position on screen is not real. */}
+          {previewMode && <div className="preview-frame" aria-hidden="true" />}
           {globalView && (
             <div className="pin-hint" dir={dir} data-testid="global-view-hint">
               {t('app.globalHint')}
@@ -1570,7 +1687,9 @@ export default function App() {
                 waiting={!userPos}
                 onExit={exitNav}
                 onReroute={rerouteFromHere}
-                sim={import.meta.env.DEV ? { path: navPath, onSim: setSimPos } : undefined}
+                sim={previewMode || import.meta.env.DEV
+                  ? { path: navPath, onSim: setSimPos, preview: previewMode }
+                  : undefined}
               />
             </div>
           )}
@@ -1583,6 +1702,30 @@ export default function App() {
                 onStart={startNav}
                 onDetails={() => { setOpenSection('routes'); setPanelOpen(true); }}
                 onDismiss={() => setPreviewDismissed(true)}
+                bottom={isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : 16}
+              />
+            </div>
+          )}
+          {longestRuns && longestRuns.length > 0 && currentLongest && focusGeometry && !navRoute && !plan
+            && !longestDismissed && (!isMobile || !panelOpen) && (
+            <div dir={dir}>
+              <LongestPreview
+                runs={longestRuns}
+                index={longestIdx}
+                onPrev={() => stepLongest(-1)}
+                onNext={() => stepLongest(1)}
+                onDetails={() => { setOpenSection('longest'); setPanelOpen(true); }}
+                onDismiss={() => setLongestDismissed(true)}
+                onNavigateStart={() => {
+                  navigateToLongestStart();
+                  // Unlike "To end", this only fills in the destination — it does not plan. From the
+                  // floating card the sheet is closed, so without this the user gets a toast and no
+                  // way to continue; hand them the planner with the destination already set.
+                  // (`mobileTab` is derived from `openSection`, so this selects the Plan tab too.)
+                  setOpenSection('plan');
+                  if (isMobile) setPanelOpen(true);
+                }}
+                onSki={navigateToLongestEnd}
                 bottom={isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : 16}
               />
             </div>
@@ -1703,6 +1846,12 @@ export default function App() {
           </Alert>
         </Snackbar>
       )}
+      <PreviewPrompt
+        reason={previewPrompt}
+        resortName={resortEntry?.shortName ?? resortEntry?.name ?? ''}
+        onAccept={() => { setPreviewPrompt(null); setPreviewMode(true); }}
+        onDecline={() => setPreviewPrompt(null)}
+      />
     </div>
   );
 }

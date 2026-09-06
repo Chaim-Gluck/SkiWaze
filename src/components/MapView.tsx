@@ -191,6 +191,41 @@ function arrowImage(double: boolean): ImageData {
   return ctx.getImageData(0, 0, S, S);
 }
 
+/**
+ * Red ⊘ badge marking a closed run or lift.
+ *
+ * Drawn as a white disc with a red ring and a red slash-cross so it reads over snow, forest and
+ * satellite alike — the arrow glyphs' dark-halo trick goes muddy in red. Repeated along the line
+ * rather than placed once: a single badge mid-run disappears the moment you zoom past it, which is
+ * the same defect that made `line-center` wrong for lift labels.
+ */
+function closedImage(): ImageData {
+  const S = 28;
+  const c = document.createElement('canvas');
+  c.width = S;
+  c.height = S;
+  const ctx = c.getContext('2d')!;
+  const cx = S / 2;
+  const r = S / 2 - 3;
+  ctx.beginPath();
+  ctx.arc(cx, cx, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#d32f2f';
+  ctx.stroke();
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 3;
+  const d = r * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(cx - d, cx - d);
+  ctx.lineTo(cx + d, cx + d);
+  ctx.moveTo(cx + d, cx - d);
+  ctx.lineTo(cx - d, cx + d);
+  ctx.stroke();
+  return ctx.getImageData(0, 0, S, S);
+}
+
 /** Lift types that realistically carry riders down as well as up (double-headed arrow). */
 const TWO_WAY_LIFTS = ['gondola', 'cable_car', 'funicular', 'mixed_lift'];
 
@@ -200,6 +235,20 @@ function lineFC(coords: [number, number][]): GeoFeatureCollection {
   return {
     type: 'FeatureCollection',
     features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } }],
+  } as unknown as GeoFeatureCollection;
+}
+
+/** Wrap several coordinate lists as a multi-feature LineString FeatureCollection. */
+function linesFC(lines: readonly [number, number][][] | undefined): GeoFeatureCollection {
+  const usable = (lines ?? []).filter((l) => l.length >= 2);
+  if (!usable.length) return EMPTY_FC;
+  return {
+    type: 'FeatureCollection',
+    features: usable.map((coords) => ({
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'LineString', coordinates: coords },
+    })),
   } as unknown as GeoFeatureCollection;
 }
 
@@ -284,6 +333,8 @@ const RESORT_DETAIL_LAYERS = [
   'pistes-line',
   'pistes-offpiste-line',
   'lifts-line',
+  'closed-line',
+  'closed-badges',
 ];
 
 /** Build the resort-marker GeoJSON; multi-country resorts are grouped by their first country. */
@@ -330,6 +381,18 @@ interface MapViewProps {
   linkTo: LonLat | null;
   focusGeometry: [number, number][] | null;
   /**
+   * Geometry of every currently-closed run/lift, one polyline each. Drawn as a red dashed overlay
+   * with repeating ⊘ badges so the map agrees with the closures the user has marked — without it,
+   * closing a run changed the routing silently and the map still showed it as skiable.
+   */
+  closedGeometry?: [number, number][][];
+  /**
+   * True while the shown position comes from Preview mode rather than the GPS. Marks both markers
+   * with a dashed ring — deliberately a SHAPE difference, not a recolour, so it survives greyscale
+   * and colour-blindness and cannot be confused with the orange nav arrow.
+   */
+  positionSimulated?: boolean;
+  /**
    * One-shot "frame this geometry" request. Unlike `focusGeometry` this only moves the camera —
    * it draws nothing and hides no markers — so a planned route can be framed while its own line
    * and the A/B pins stay as they are. `seq` makes each request distinct, so asking to frame the
@@ -359,8 +422,8 @@ interface MapViewProps {
 }
 
 export function MapView({
-  center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, fitRequest, onMapClick,
-  userPosition, following, nav, navHeadingUp, resorts, selectedResortId, onSelectResort,
+  center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, closedGeometry, fitRequest, onMapClick,
+  userPosition, following, nav, navHeadingUp, resorts, selectedResortId, onSelectResort, positionSimulated = false,
   globalView = false, onEnterGlobalView, resortFrameSeq = 0, allowOffPiste = false,
 }: MapViewProps) {
   const { t } = useTranslation();
@@ -402,6 +465,8 @@ export function MapView({
   // captures stale values (this is what previously left overlays blank on first load).
   const geoRef = useRef(geo);
   geoRef.current = geo;
+  const closedGeoRef = useRef(closedGeometry);
+  closedGeoRef.current = closedGeometry;
   const routeRef = useRef(routeFC);
   routeRef.current = routeFC;
   const stepRef = useRef(selectedRange);
@@ -683,7 +748,11 @@ export function MapView({
         minzoom: 12,
         layout: {
           'symbol-placement': 'line',
-          'symbol-spacing': 450,
+          // Zoom-scaled, not a flat 450: at 450 px a phone (~390 px wide) gets fewer than one label
+          // per screen width, so a run crossing the view often carried no name at all and the user
+          // had to zoom OUT to identify it — the opposite of what zooming in is for. Collision still
+          // culls the surplus, so a tighter spacing only buys more chances for one to survive.
+          'symbol-spacing': ['interpolate', ['linear'], ['zoom'], 12, 400, 14, 300, 17, 200],
           'text-field': ['coalesce', ['get', 'ref'], ['get', 'name'], ''],
           'text-font': ['Noto Sans Bold'],
           'text-size': ['interpolate', ['linear'], ['zoom'], 12, 11, 17, 13],
@@ -701,7 +770,11 @@ export function MapView({
         source: 'lifts',
         minzoom: 12,
         layout: {
-          'symbol-placement': 'line-center',
+          // NOT 'line-center'. That places exactly ONE label per lift, at its midpoint, so zooming
+          // in until the midpoint left the viewport made the lift's name vanish entirely — you had
+          // to zoom out to read it. Repeating along the line keeps a name on screen at any zoom.
+          'symbol-placement': 'line',
+          'symbol-spacing': ['interpolate', ['linear'], ['zoom'], 12, 400, 14, 300, 17, 200],
           'text-field': ['coalesce', ['get', 'name'], ''],
           'text-font': ['Noto Sans Bold'],
           'text-size': ['interpolate', ['linear'], ['zoom'], 12, 11, 17, 13],
@@ -711,6 +784,40 @@ export function MapView({
           'text-color': '#4a148c',
           'text-halo-color': '#ffffff',
           'text-halo-width': 1.8,
+        },
+      });
+
+      // --- Closed runs and lifts. Marking something closed changed routing but drew nothing, so
+      // the map contradicted the user's own input. Two layers: a red dashed overlay that shows the
+      // whole extent of what is shut, and repeating ⊘ badges that survive any zoom level. Added
+      // after the piste/lift layers so they sit on top of them, but before the route and navigation
+      // layers, which must stay the most prominent thing on the map.
+      if (!map.hasImage('closed-x')) map.addImage('closed-x', closedImage(), { pixelRatio: 2 });
+      map.addSource('closed', { type: 'geojson', data: EMPTY_FC });
+      map.addLayer({
+        id: 'closed-line',
+        type: 'line',
+        source: 'closed',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#d32f2f',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2.5, 17, 5],
+          'line-opacity': 0.9,
+          'line-dasharray': [1.5, 1.2],
+        },
+      });
+      map.addLayer({
+        id: 'closed-badges',
+        type: 'symbol',
+        source: 'closed',
+        layout: {
+          'symbol-placement': 'line',
+          'symbol-spacing': ['interpolate', ['linear'], ['zoom'], 12, 160, 17, 110],
+          'icon-image': 'closed-x',
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.55, 17, 0.9],
+          // A closure is a safety statement, so it must never be culled by label collision.
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
       });
 
@@ -778,6 +885,7 @@ export function MapView({
         resortsFC(resortsRef.current ?? [], selectedResortIdRef.current) as never,
       );
       (map.getSource('route') as maplibregl.GeoJSONSource).setData((routeRef.current ?? EMPTY_FC) as never);
+      (map.getSource('closed') as maplibregl.GeoJSONSource).setData(linesFC(closedGeoRef.current) as never);
       map.setFilter('route-step', rangeFilter(stepRef.current));
       setLoaded(true);
     });
@@ -840,6 +948,12 @@ export function MapView({
     (map.getSource('areas') as maplibregl.GeoJSONSource | undefined)?.setData(splitAreas(geo) as never);
     (map.getSource('lifts') as maplibregl.GeoJSONSource | undefined)?.setData(splitLifts(geo) as never);
   }, [geo, loaded]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded) return;
+    (map.getSource('closed') as maplibregl.GeoJSONSource | undefined)?.setData(linesFC(closedGeometry) as never);
+  }, [closedGeometry, loaded]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1035,6 +1149,7 @@ export function MapView({
     const el = userMarker.current.getElement();
     const hasHeading = userPosition.heading != null;
     el.classList.toggle('has-heading', hasHeading);
+    el.classList.toggle('simulated', positionSimulated);
     if (hasHeading) userMarker.current.setRotation(userPosition.heading as number);
     userMarker.current.setLngLat([userPosition.lon, userPosition.lat]).addTo(map);
     if (acc && userPosition.accuracy) {
@@ -1044,7 +1159,7 @@ export function MapView({
         geometry: { type: 'Polygon', coordinates: [circlePolygon(userPosition.lon, userPosition.lat, userPosition.accuracy)] },
       } as never);
     }
-  }, [userPosition, loaded]);
+  }, [userPosition, loaded, positionSimulated]);
 
   // Navigation render: travelled/remaining split + a nav arrow at the snapped point.
   useEffect(() => {
@@ -1066,9 +1181,10 @@ export function MapView({
     trav?.setData(lineFC(nav.traveled) as never);
     rem?.setData(lineFC(nav.remaining) as never);
     if (!navMarker.current) navMarker.current = new maplibregl.Marker({ element: navArrowEl(), rotationAlignment: 'map' });
+    navMarker.current.getElement().classList.toggle('simulated', positionSimulated);
     navMarker.current.setRotation(nav.bearing);
     navMarker.current.setLngLat([nav.lon, nav.lat]).addTo(map);
-  }, [nav, loaded, is3D]);
+  }, [nav, loaded, is3D, positionSimulated]);
 
   // Follow-me camera (heading-up + tilted while navigating).
   useEffect(() => {

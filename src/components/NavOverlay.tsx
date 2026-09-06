@@ -11,6 +11,9 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Slider from '@mui/material/Slider';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import ScienceIcon from '@mui/icons-material/Science';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -31,8 +34,12 @@ interface Props {
   waiting: boolean;
   onExit: () => void;
   onReroute: () => void;
-  /** Dev-only GPS simulator (plays a synthetic position along the active route). */
-  sim?: { path: RoutePath | null; onSim: (p: LivePosition | null) => void };
+  /**
+   * GPS simulator. Shown to end users only in Preview mode (`preview: true`), which App offers when
+   * navigation cannot work for real — no fix, or a fix far from the resort. In DEV it is always
+   * available with the raw scrub controls, because that is what it was built for.
+   */
+  sim?: { path: RoutePath | null; onSim: (p: LivePosition | null) => void; preview?: boolean };
 }
 
 function fmtDist(m: number, t: TFunction): string {
@@ -80,10 +87,20 @@ function StepBadge({ step, big }: { step?: DisplayStep; big?: boolean }) {
 
 export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExit, onReroute, sim }: Props) {
   const { t } = useTranslation();
-  // Dev simulator state
-  const [, setSimS] = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const preview = !!sim?.preview;
+  // Simulator state. `speed` is metres per second: end users pick it from three named presets,
+  // DEV gets the raw slider.
+  const [simS, setSimS] = useState(0);  const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(12); // m/s
+
+  // Seed a position at the route start the moment Preview opens. Without this the overlay would sit
+  // on "waiting for location" until the user pressed play — the very state Preview exists to escape.
+  useEffect(() => {
+    if (!preview || !sim?.path) return;
+    const p = posAtS(sim.path, 0);
+    if (p) sim.onSim({ lon: p.lon, lat: p.lat, accuracy: 5, heading: p.heading, speed: 0, ts: Date.now() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview, sim?.path]);
 
   useEffect(() => {
     if (!playing || !sim?.path) return;
@@ -109,6 +126,22 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           display: 'flex', justifyContent: 'center', pointerEvents: 'none',
         }}
       >
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.75, maxWidth: '92%' }}>
+        {/* Non-dismissable: a simulated position must never be mistakable for a real one. */}
+        {preview && (
+          <Paper
+            elevation={6}
+            sx={{
+              pointerEvents: 'none', px: 1.5, py: 0.4, borderRadius: 5,
+              bgcolor: 'var(--sim)', color: '#1a1200', display: 'flex', alignItems: 'center', gap: 0.75,
+            }}
+          >
+            <ScienceIcon fontSize="small" />
+            <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
+              {t('preview.banner')}
+            </Typography>
+          </Paper>
+        )}
         <Paper
           elevation={8}
           sx={{
@@ -137,6 +170,7 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
             </>
           )}
         </Paper>
+        </Box>
       </Box>
 
       {/* Bottom: ETA + speed + actions bar (plus the dev simulator strip above it). */}
@@ -148,20 +182,60 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
         }}
       >
         {sim && (
-          <Paper elevation={4} sx={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 2 }}>
-            <Typography variant="caption" sx={{ fontWeight: 700 }}>{t('nav.devSim')}</Typography>
+          <Paper
+            elevation={4}
+            sx={{
+              pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5,
+              borderRadius: 2,
+              ...(preview ? { border: '2px solid var(--sim)' } : null),
+            }}
+          >
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+              {preview ? t('preview.controls') : t('nav.devSim')}
+            </Typography>
             <IconButton size="small" onClick={() => setPlaying((p) => !p)} aria-label={playing ? t('nav.pause') : t('nav.play')}>
               {playing ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
             </IconButton>
             <IconButton
               size="small"
               aria-label={t('nav.resetSim')}
-              onClick={() => { setPlaying(false); setSimS(0); sim.onSim(null); }}
+              onClick={() => {
+                setPlaying(false);
+                setSimS(0);
+                // In Preview, resetting must re-seed at the route start rather than clear the
+                // position — clearing would drop the overlay back to "waiting for location", which
+                // is exactly the dead end Preview exists to avoid.
+                const p = preview && sim.path ? posAtS(sim.path, 0) : null;
+                sim.onSim(p ? { lon: p.lon, lat: p.lat, accuracy: 5, heading: p.heading, speed: 0, ts: Date.now() } : null);
+              }}
             >
               <ReplayIcon fontSize="small" />
             </IconButton>
-            <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>{t('units.mps', { value: speed })}</Typography>
-            <Slider size="small" min={3} max={25} value={speed} onChange={(_, v) => setSpeed(v as number)} sx={{ width: 110 }} />
+            {preview ? (
+              // Named presets rather than a metres-per-second slider: an end user is choosing a
+              // playback pace, not calibrating a skier's speed.
+              <ToggleButtonGroup
+                size="small"
+                exclusive
+                value={speed}
+                onChange={(_, v) => { if (v != null) setSpeed(v as number); }}
+                sx={{ '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 700, py: 0.1, px: 1 } }}
+              >
+                <ToggleButton value={6}>{t('preview.slow')}</ToggleButton>
+                <ToggleButton value={12}>{t('preview.normal')}</ToggleButton>
+                <ToggleButton value={22}>{t('preview.fast')}</ToggleButton>
+              </ToggleButtonGroup>
+            ) : (
+              <>
+                <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>{t('units.mps', { value: speed })}</Typography>
+                <Slider size="small" min={3} max={25} value={speed} onChange={(_, v) => setSpeed(v as number)} sx={{ width: 110 }} />
+              </>
+            )}
+            {preview && sim.path && sim.path.totalM > 0 && (
+              <Typography variant="caption" sx={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', minWidth: 34, textAlign: 'end' }}>
+                {Math.min(100, Math.round((simS / sim.path.totalM) * 100))}%
+              </Typography>
+            )}
           </Paper>
         )}
         <Paper

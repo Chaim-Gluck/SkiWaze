@@ -85,6 +85,18 @@ and apply identically to **every** resort — there is no per-resort graph code.
   the same way, never across differing `layer`/`bridge`/`tunnel` (`levelKey`), and ≤ 0.5 m.
 - **Slopes are one-way (descending only)**, except near-flat cat-tracks (gradient ≤ `flatGradeMax`)
   which also get a reverse traverse — but never a rise over `maxTraverseClimb`.
+- **An explicit `oneway=no` on a piste grants the reverse traverse, whatever the gradient.** The
+  `flatGradeMax` test is our *inference* about whether a skier can get back up; the tag is the
+  mapper answering directly, and we were reading `oneway` for **lifts only** and discarding it on
+  runs. Madonna's link from the Fortini gondola base to the Grostè carpet (`w1131930104`, novice,
+  `oneway=no`) drops 4 m over 66 m — a **6.06%** grade that misses the 6% cut-off by a hair — so it
+  shipped one-way against an explicit statement that it is not. Like the lift rule this is a
+  deliberate minority signal, not an editor default: **349 of 9986** downhill/connection ways carry
+  it against 1449 `oneway=yes`, and Alpe d'Huez settles what it means there — nine ways named
+  *"zone plate"* (flat zone) all carry it. Same two guards as the aerial-lift rule: **grant-only**
+  (`oneway=yes` is never honoured — on a piste it usually just restates the default, so believing
+  it would strand terrain on no evidence), and it waives only the *gradient* half, so
+  `maxTraverseClimb` still caps it and it can never turn a real descent into a free climb.
 - **Uphill is never inferred.** Skiable connectors are downhill-only or flat/bidirectional.
 - **A split may not invent an uphill piste.** A piste's direction comes from its two endpoint
   elevations, so a non-monotonic way (classically an `area=yes` ring arcing over a rim: down into
@@ -104,6 +116,69 @@ and apply identically to **every** resort — there is no per-resort graph code.
   direction, so believing it would strand terrain on ambiguous evidence; we only ever *add* a
   downhill direction. **(b)** gated on `AERIAL_LIFT_TYPES`, so a drag lift/platter can never become
   bidirectional however it is tagged.
+- **A near-flat lift is oriented by the OSM drawing, not by the DEM** (`liftFlatDirectionM`, 10 m).
+  Lifts are otherwise emitted bottom = lower station, which is right wherever the drop is real and
+  is decided by **pure noise** on flat ground — where it silently *inverts* a lift. Madonna's
+  "Tapis Roulant Grostè Express - Fortini" (`w107120077`) is a magic carpet over a road viaduct,
+  drawn east→west; its stations sample 1651 m and 1649 m, so **2 m over a 134 m bridge** flipped it
+  west→east and handed skiers a free crossing in the one direction that actually needs the carpet
+  (an A→B route across it reported "0 lifts"). The drawing is the better witness: measured
+  fleet-wide, our elevation-derived direction disagrees with the drawn one for **23.1% of lifts
+  under 2 m but only 0.8% over 20 m** (8 of 1026) — mappers draw a lift bottom→top ~99% of the
+  time, so a disagreement on a flat lift is far more likely to be our error than theirs. Above the
+  threshold elevation must keep winning, because those few big-drop disagreements are genuine
+  top-down drawings (Trockener Steg–Klein Matterhorn 844 m, Dixence–Lac des Dix 232 m). The rule
+  can only act where the two signals already disagree, so its blast radius is exactly the **13**
+  sub-10 m cases, all magic carpets, rope tows, people movers and short drags. Re-measure with
+  `files/liftdir.mts` — and note its trap: the Overpass cache is `{savedAt, data: RawWay[]}` whose
+  entries have **no `type` field**, so filtering on `type === 'way'` matches nothing and reports a
+  confident, wrong zero.
+- **A surface lift proves its own direction is not self-propelled.** Nobody builds a carpet, rope tow
+  or drag along a stretch a skier can glide, so a **flat traverse running a surface lift's uphill
+  line between that lift's own two stations** contradicts the lift and is dropped
+  (`surfaceLiftParallel.ts`, **47 edges** fleet-wide, most carrying the lift's own name — Grenouilles,
+  Replat, Dromonts, Baby Wold, Slow Vallon). Elevation cannot reach this conclusion: Madonna's "Tapis
+  Roulant Grostè Express - Fortini" crosses a road viaduct whose deck rises westward, but our field
+  *and* Terrarium read the two ends within 1 m of each other, because a short abrupt step over 135 m
+  is exactly what a 30 m DEM erases — so the parallel bridge footway (`w395885465`) earned a reverse
+  traverse at 1.5% and an A→B route across the bridge reported **"0 lifts"**. Guards: **flat
+  traverses only** (a `skiable_down` or `piste` edge along a lift's uphill line means one of the two
+  is *misoriented*, and deleting it would hide that — 3 such cases exist, e.g. St. Anton's
+  Furka-Steinmähder/Balmengratlift); **surface lifts only**, since an aerial lift overflies terrain
+  and proves nothing about the ground under it; and **never strand** — only the uphill direction is
+  removed, so the paired downhill traverse always survives.
+  **Do not widen this to a proximity or reachability test.** Three versions were tried and all failed
+  the same way — no knee, so no defensible threshold: "both ends within R of the two stations" gives
+  45/110/558 edges at R = 1/20/40 m, and "arrives at the top from anywhere that reaches the base
+  without a lift" gives 324/462/625 at a 100/200/400 m budget. Those are dominated by nursery slopes
+  where a skier genuinely *can* step around a 20 m carpet. When a free crossing survives this pass,
+  the cause is an elevation the DEM cannot see, not a rule that needs loosening.
+- **The app may not invent a way across a road.** Every synthetic edge — dead-end snap, rescue link,
+  lift-top ski-out, plateau bridge — claims "these two points are close, so a skier can get between
+  them", which is pure geometry and blind to what lies in between. Where a public road lies in
+  between the claim is false, and worse it is *plausible*: the link is short, near-flat, and lands
+  exactly where the router wants to go. Madonna's Grostè hub is the case: the resort built a carpet
+  and a footway on a **dedicated viaduct** (`w395885465`, `bridge=viaduct`) precisely because the
+  road cannot be crossed on skis, and we had nevertheless minted three links straight over the
+  carriageway, so east→west reported **"0 lifts"**. We could not see it because **roads were never
+  fetched at all**; they now arrive under their **own cache key** (`fetchResortRoads`) rather than via
+  `buildQuery`, so adding them does *not* invalidate the piste/lift cache. `roadCrossing.ts` drops
+  **568 edges fleet-wide** (madonna 4.8%, sella-ronda 6.5%, val-thorens 3.3%, ischgl 0.7% of synthetic
+  edges) and **keeps 45** that would strand terrain. Four guards, each a way it could delete real
+  terrain: **synthetic only** (a mapped way crossing a road is evidence — mappers draw that where a
+  bridge, underpass or crossing exists; user `custom` links are deliberate); **tunnels/covered roads
+  are not barriers**; **road bridges are not barriers either**, the reverse case, since terrain passes
+  underneath; and **service roads, tracks and paths are not roads** — resort access tracks and car-park
+  aisles are skied across all day. This **replaced** the `setNodeElevation` override written for the
+  same hub: with the rule in place the hand fix is provably redundant, and it was removed.
+- **"Never strand" has TWO directions, and guarding one is a silent bug.** Walking edges *backwards*
+  from the lift stations answers "can this node get back to a lift"; walking *forwards* answers "can a
+  skier ever get here", which is what the build's `unreachable=` figure reports. They are different
+  questions and a single link can be the only thing providing either. `roadCrossing.ts` first shipped
+  guarding backwards only and silently stranded **12 nodes** fleet-wide (sella-ronda 9) that could
+  still reach a lift but could no longer be reached from one — invisible in the trapped-basin count,
+  visible only in `unreachable=`. Guard both. `surfaceLiftParallel.ts` still guards backwards only; it
+  happens never to have tripped this, but the same latent gap is there.
 - **Rescue pass**: any node that can't reach a lift is linked to the nearest reachable node
   within `rescueRadius`; large drops become one-way so they can't be abused to climb.
 - **Lift-top ski-out pass** (`liftSkiOutRadius`): a lift top with no ski-out is projected onto
@@ -479,6 +554,22 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   The last fleet run was 17 pre-existing vs 3 genuinely broken; chasing all 20 would have been wasted
   work. For a lost id, find the nearest node in the new graph — if it is ~0 m away the entry just
   needs repointing (record the reason in a `_why`).
+- **"MISSING NODE — id gone" can be self-inflicted: an override that deletes its own target.**
+  `check:overrides` decides staleness by looking for the id in the **built** graph, i.e. *after*
+  `applyOverrides` has run — so an entry whose effect is to remove that very node reports as stale
+  while being fully load-bearing. `setNodeElevation` does exactly this: push a node far enough and
+  its adjacent `flat_traverse` clears `pisteFlatTolerance`, the uphill half is deleted (`overrides.ts`
+  271-283), the node can lose its last edge and get dropped. Les Deux Alpes `n813524822=3366` was
+  reported stale for exactly this reason and was suppressing a real 42 m blue piste. **Never
+  bulk-delete "stale" entries on the report alone** — snapshot the graphs, delete, rebuild, and diff
+  node sets: a target that *appears* after removal was never stale. Fleet-wide, 26 of 27 were
+  genuinely inert and 1 was this. (That one still stayed deleted: it was a 4 m nudge to precisely the
+  DEM value, i.e. inside noise, and `check:audit` is clean without it — but that was a *measured*
+  decision, not the report's.)
+- **A `check:overrides` "load-bearing" connector is a HOLD, not a to-do.** Four survive fleet-wide
+  (les-deux-alpes 410 m, monterosa 285 m, st-anton 317 m and 488 m); each strands 183-1068 nodes if
+  removed. Their ids resolve, so repointing is unnecessary and *re-pointing* one would move terrain
+  we never surveyed - a "never invent terrain" violation. Leave them.
 - **A parameter sweep that moves nothing is a bug signal, not a plateau.** Twice now, sweeping a
   constant produced byte-identical fleet numbers because the test it fed never actually fired: a
   structurally-dead `TAIL_CLEAR_RATIO`, and `STITCH_ROUTE_MAX_M` whose effect was invisible because
@@ -1289,6 +1380,23 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   375 m of black off-piste as a **0-minute** route. Both now take an `EdgeAllow` predicate, passed
   from `plan.ts`. Any future search that bypasses `edgeCost` needs the same treatment — and note
   the 0 s is the tell: a leg with distance and no duration means an edge the cost model refused.
+- **Two callers need that gate, and the resort-wide card is the one that gets forgotten.** `plan.ts`
+  builds `allowForLongest` for the A→B search, but `findLongestRuns` — the resort-wide "Longest
+  runs" card — builds its **own** predicate, and it silently omitted closures. `buildEffectiveGraph`
+  folds in custom nodes/edges but **not** the closed set (closures are resolved per-plan from
+  `closedKeys`), so the card was the single place in the app that would advertise, as the resort's
+  longest run, a piste the user had just marked closed. It now takes `closedKeys` and resolves them
+  the same way, and toggling a closure clears any computed runs — a stale answer to a changed
+  question, exactly as the "allow poling" checkbox already did.
+- **`allowPoling` is a *scoring* rule, not a *feasibility* rule — do not thread it into `edgeCost`.**
+  It decides whether a shallow named piste still **counts as skiing** when maximising a descent; it
+  never makes an edge usable that wasn't. Verified fleet-wide (`files/longestnav.mts`): replaying
+  every resort's #1 longest run through `routeForEdges`→`buildRoute` yields **no zero-cost legs**
+  under poling on *or* off, i.e. `edgeCost` already accepts every poling edge and simply charges
+  flat pace or `CLIMB_SECONDS_PER_M`. So the "Longest, then navigate it" consistency worry is
+  answered by **replaying the chain**, which `navigateToLongestEnd` does (`routeForEdges` over the
+  run's own edges), not by teaching the cost model a new preference. Poling changes the answer in
+  only 3 of 18 resorts: madonna 8.94↔7.40 km, paradiski 18.48↔13.52, ischgl 10.60↔8.64.
 - **Longest** = max-km **lift-free** descent A→B, exact via a DAG longest-path (`longestStreak.ts`);
   only falls back to a lift if B is otherwise unreachable. The resort-wide "Longest runs" card is the
   only feature that ignores A and B.
@@ -1450,6 +1558,16 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   On mobile the accordion header is dropped (`AccordionSection`'s `bare` prop): the tab you just
   tapped already names the section, so the header is a second copy of it above a chevron that
   expands something already expanded.
+- **On mobile, "compute" must not steal the sheet from the result it just computed.** The Longest
+  run flow had its two behaviours exactly **inverted**: `computeLongestRun` closed the sheet
+  unconditionally, so asking for the three longest runs threw the user onto the map *before* they
+  could compare them, while `onShowOnMap` — the button literally named "Show on map" — was the one
+  that never revealed the map. Finding now keeps the list up and only `onShowOnMap` closes the sheet
+  (mobile only; on desktop the panel is a sidebar and closing it is pure loss). Once the sheet is
+  gone the run is an anonymous highlight, so `LongestPreview` mirrors `RoutePreview`'s floating card
+  — prev/next, distance/descent, start→end, **Details** to reopen the sheet, dismiss, and a primary
+  action that skis *that* run. Reuse the existing preview pattern for any future "we hid the panel
+  to show you the map" case; the identity of what is highlighted has to survive the jump.
 - **i18next must be initialised WITH the stored language — a provider effect is too late.**
   `changeLanguage` is async, so initialising `lng:'en'` and letting `LanguageProvider` correct it
   leaves a window in which `t()` still answers in English. Anything resolving a string *eagerly*
@@ -1489,6 +1607,45 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   Pins get their **own, higher** threshold (`PIN_MINZOOM`): at the mode threshold a resort is
   already only ~30 px across. The route line is deliberately *not* gated — it stays readable when
   zoomed out, and hiding it could blank a long route that "fit to route" had just framed.
+- **`symbol-placement: 'line-center'` gives a feature exactly ONE label, at its midpoint.** That is
+  why lift names kept disappearing when the user zoomed in: past the midpoint the lift had no name
+  *anywhere* on screen, and only zooming back out brought it into view. Pistes had the same symptom
+  from a different cause — `'line'` placement is right, but a flat `symbol-spacing: 450` px is under
+  one label per phone-screen width, and `text-max-angle: 40` then rejects further placements on a
+  twisty run. Both layers now interpolate spacing by zoom (`12:400, 14:300, 17:200`); `symbol-spacing`
+  *is* zoom-interpolatable in MapLibre. Judge label density at a **phone** width, not a desktop one.
+- **`geometryForClosure` FLATTENS every matching edge into one coordinate array** — fine for its only
+  original caller (`locateClosure`, which just fits bounds) and silently wrong for anything drawn: as
+  a LineString it jumps in straight lines between disconnected segments. Measured on Madonna, 2 lift
+  closure keys are **4 edges**, so it would have drawn 2 zig-zags between lift bases and tops. Use
+  **`closedGeometries()`** (one polyline per edge) for any visual use. Closed terrain is now rendered
+  (red dashed + repeating ⊘ badges) — before this, closing a run changed routing *silently* while the
+  map still drew it as skiable.
+- **Preview mode is a trigger, not a preference, and is never offered to someone who can really be
+  followed.** Navigation used to enter and sit on `waiting for location` forever with no exit but
+  Exit, for anyone who denied location or was off the mountain. Preview replays the route from a
+  simulated position, offered **only** on a detected condition: geolocation error → `noFix`, a good
+  fix farther than `PREVIEW_FAR_M` (10 km) → `far`, nothing at all within 12 s → `noFix`. One offer
+  per nav session (`previewAsked`), and it **auto-exits** the moment a real fix arrives at the resort.
+  Being off-route is a **reroute, never a simulation**. Three implementation rules:
+  - **`isFarFromResort` measures to the nearest graph NODE, not the resort centre** — on a sprawling
+    multi-valley resort you can stand on a piste 10 km from the centroid. The threshold is
+    deliberately generous: a false "far" merely offers Preview to someone who is there (harmless),
+    a false "near" withholds the only escape from the dead end.
+  - **Preview must seed a position when it opens** (and re-seed on reset), or the overlay sits on the
+    very "waiting for location" state it exists to escape. For the same reason the locate FAB only
+    toggles camera-follow while in Preview — clearing `simPos` there re-creates the dead end.
+  - **The follow camera may only fly to a position that is AT the resort.** Exiting Preview clears
+    the simulated position while `following` is still true, so the camera handed itself back to the
+    user's real fix and eased the map from Madonna to **Amsterdam**. `posAtResort` gates what is
+    passed to `MapView`'s `following`, `exitNav` drops follow and stops the watch when no usable fix
+    exists, and tapping locate while away from the resort now *says so* rather than lighting the FAB
+    over a motionless map. A simulated position is at the resort by construction; a real one is not.
+  - **The signal is a frame, and the puck is differentiated by SHAPE.** A puck recolour is weak: it is
+    small, usually under the user's thumb, and often off-screen. The `--sim` amber `#ffb300` was
+    forced, not chosen — red already means off-route (`error.main` banner) and orange `#ff6d00` is
+    already the nav arrow. Simulated puck/arrow get a dashed ring, which survives colour-blindness
+    and greyscale.
 
 ## Internationalisation (English + Hebrew/RTL)
 - **Stack:** i18next + react-i18next. `src/i18n/config.ts` (catalogue registration, `LANGUAGES`,

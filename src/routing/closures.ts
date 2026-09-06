@@ -56,6 +56,24 @@ export function geometryForClosure(graph: ResortGraph, key: string): [number, nu
 }
 
 /**
+ * One polyline per affected edge, for every closure key. Deliberately NOT `geometryForClosure`:
+ * that flattens every matching edge into a single coordinate list, which is harmless for fitting a
+ * camera to bounds (its only caller) but would draw a straight jump between disconnected segments
+ * if handed to the map as a LineString. Drawing needs the edges kept apart.
+ */
+export function closedGeometries(graph: ResortGraph, closedKeys: Iterable<string>): [number, number][][] {
+  const closed = new Set(closedKeys);
+  if (closed.size === 0) return [];
+  const out: [number, number][][] = [];
+  for (const e of graph.edges) {
+    if (!edgeClosureKeys(e).some((k) => closed.has(k))) continue;
+    if (e.geometry.length < 2) continue;
+    out.push(e.geometry.map((p) => [p.lon, p.lat] as [number, number]));
+  }
+  return out;
+}
+
+/**
  * Human label for a closure key, as a catalogue key + params. The run/lift name inside it is
  * never translated; only the "Lift:" / "Run:" prefix is.
  */

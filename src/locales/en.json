@@ -152,7 +152,19 @@
     "details": "Details",
     "start": "Start",
     "eta": "ETA {{time}}",
-    "leave": "Leave {{time}}"
+    "leave": "Leave {{time}}",
+    "promptTitle": "Preview this route?",
+    "promptFar": "You're a long way from {{resort}}, so we can't follow you on the mountain right now.",
+    "promptNoFix": "We can't see your location, so we can't follow you on the mountain right now.",
+    "promptHint": "Preview plays the route back as if you were skiing it, so you can see every turn before you go.",
+    "promptAccept": "Preview route",
+    "promptDecline": "Not now",
+    "banner": "Preview - simulated position",
+    "controls": "Preview",
+    "slow": "Slow",
+    "normal": "Normal",
+    "fast": "Fast",
+    "endedRealFix": "Preview ended - you're at the resort, following your real location."
   },
   "picker": {
     "customLocation": "Custom location",
@@ -230,6 +242,7 @@
       "followingOn": "Showing your location - following you. Tap the button again to stop.",
       "followingRecentered": "Recentered - following you again. Tap the button again to stop.",
       "followingOff": "Stopped following your location.",
+      "followingFar": "You're not at this resort, so the map is staying on the mountain.",
       "navNoRoute": "Find and pick a route first, then start navigation.",
       "speedsNotEnough": "Not enough measured data yet - ski a bit on each colour while navigating.",
       "speedsOn": "Using your measured speeds. Turn off in preferences to go back to the model.",
