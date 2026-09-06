@@ -1646,6 +1646,58 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     forced, not chosen — red already means off-route (`error.main` banner) and orange `#ff6d00` is
     already the nav arrow. Simulated puck/arrow get a dashed ring, which survives colour-blindness
     and greyscale.
+  - **Never override `position` on a MapLibre marker element.** MapLibre positions markers with a
+    one-class `.maplibregl-marker { position: absolute }` rule, so a two-class selector like
+    `.nav-arrow.simulated { position: relative }` wins on specificity, the arrow stops being
+    absolutely positioned, and its `border-radius: 50%` ring stretches into a screen-wide flat
+    ellipse **while the arrow itself drifts off the real position**. Size the element instead
+    (`.nav-arrow` is an explicit 46x46 flex box).
+  - **One skier, one marker.** Navigation draws `.nav-arrow` at the position *snapped to the route*
+    while the raw `.user-loc` puck draws the *unsnapped* fix plus its accuracy halo, so both on
+    screen at once reads as two skiers a few metres apart. `MapView`'s puck effect bails on
+    `if (!userPosition || nav)`.
+  - **A simulated position must never be sampled into the measured-speed store.** `App` feeds
+    `userPos.speed` into `measuredSpeeds` on piste legs, and `userPos = simPos ?? live.position` —
+    so every Preview tick was writing the *playback dial* into the per-colour averages, and "use my
+    measured speeds" would then calibrate the router to a UI slider. Guarded with `if (simPos)
+    return;`, which deliberately covers the DEV simulator too.
+  - **Preview plays back at a MULTIPLE of the skier's own modelled pace, not an absolute m/s.** The
+    old fixed 12 m/s "Normal" preset showed **43 km/h** on a red run to a skier whose model says 33.
+    App derives `simPace` from the current leg: for a piste leg the display speed is
+    `estimatedByColor[color]` (already TRUE) and the advance rate is that divided by
+    `SNAKE_FACTOR[color]`, because the simulation moves along the **centreline** and using the true
+    speed there would run Preview's clock ~1.3x fast. Off a piste there is no colour to model, so
+    the route's own remaining pace (`rem.distM / rem.timeS`) is the fallback. **DEV keeps its raw
+    m/s slider** — that path is a tool, not a user-facing estimate.
+  - **"Off-route" is only a meaningful accusation against a fix that is on the mountain.** `offRoute`
+    is `snap.offM > max(30, accuracy+20)`, and a fix 1000 km away is trivially more than 30 m off the
+    line — so the same physical fact ("we cannot follow you") lit the Preview offer *and* a red
+    "ski back to the blue line" alarm at the same time, each contradicting the other. Off-route means
+    **you strayed**; being nowhere near the resort is a different condition with a different remedy.
+    Gated on `!isFarFromResort(userPos)`, which forced `PREVIEW_FAR_M`/`isFarFromResort` above
+    `navData` in `App.tsx`. Generalise it: before adding a warning, check whether an existing state
+    already implies it, or the user gets two answers to one question.
+  - **Bind a number to its unit in the CATALOGUE, not with `nowrap` on a span.** "1.8 km · 4 min
+    left" broke between "4" and "min". Fixing it per-component fixes one place and leaves every other
+    unit render to break later, so the NBSP (U+00A0) went into the `units.*` strings themselves
+    (`{{value}}\u00A0km`) in **both** locales, plus binding "left" to the time in `nav.remaining`.
+    Trap when verifying: `JSON.stringify` prints NBSP indistinguishably from a space — **dump
+    `charCodeAt`**, never trust the printed string.
+  - **The nav banner's hierarchy needs an arrow and a word, not just a bigger font.** The manoeuvre
+    block and the "Now" strip read as peers when the only difference was size. `turnAt()` in
+    `navigation.ts` supplies a Waze-style arrow, and an explicit "Next" caption sits above the run
+    name. Three things about it: the arrow has **exactly three states** and both turning glyphs are
+    the *slight* ones — a square 90° glyph reads as "turn at the junction", which is not what a
+    piste does (it bends, and the arrow only has to say which side), and grading the angle finer
+    just produces arrows that argue about the same bend; it measures the bearing change over a
+    **±25 m window**, not between adjacent vertices, because OSM geometry is dense enough that one
+    stray vertex at a junction would otherwise decide it; and it is computed at
+    `path.legEndS[current.toLeg]`, the boundary where the next step begins, not at the snapped
+    position.
+  - **Icon-only in a corner beats a labelled button in the middle of a status bar.** The ETA bar's
+    "✕ Exit" button was as wide as the text it sat beside and forced the remaining-distance line to
+    wrap. It is now an absolutely positioned `IconButton` at `top: 4, insetInlineEnd: 4` (logical
+    property, so RTL flips it) with the word surviving in the tooltip and `aria-label`.
 
 ## Internationalisation (English + Hebrew/RTL)
 - **Stack:** i18next + react-i18next. `src/i18n/config.ts` (catalogue registration, `LANGUAGES`,
@@ -1675,6 +1727,29 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   A fourth instance would look the same: state held as a finished English sentence. The
   loading/error banner was exactly that, and is now a `StatusState` discriminated union translated
   at render.
+- **Whatever a badge says, the sentence beside it must not repeat — and the de-duplicated label is
+  built in ROUTING, never by trimming the prose.** `labelShort` already existed because the colour
+  shows as a shield; the nav banner then printed the slope *number* twice as well ("89" in the
+  shield, "Ski 89 · Nambino" beside it). `DisplayStep.labelBadge` drops both, via `pisteLabelBadge`
+  in `buildRoute.ts`. A third badge-backed fact would need the same treatment - do not reach for a
+  regex over the label.
+- **The badge is placed by the CATALOGUE, not by cutting the sentence.** The shield reads best
+  inside the sentence ("Ski [89] Nambino"), but routing is pure and cannot emit a React node, and
+  the UI must not split a translated string at a fixed offset - Hebrew puts the name somewhere
+  else. So `pisteLabelBadge` interpolates `SHIELD_SLOT` (`src/utils/text.ts`, a private-use
+  codepoint that can never occur in an OSM name) as an ordinary param into `step.piste.badgeName` /
+  `badgeOnly`, and `NavOverlay.stepNodes` splits on it. The unquoted `{{name}}` is deliberate: the
+  shield already delimits the name, so `step.piste.name`'s quotes would be a second frame. A step
+  with **no** slot (a lift, a traverse) falls back to badge-then-text, which is right - inlining a
+  gondola glyph mid-sentence adds nothing. **Lifts get the same treatment** (`step.liftUpBadge`
+  etc.), and the badge form additionally drops the lift *type*: the glyph already says "lift", and
+  "Take "Tapis Roulant Grostè Express - Fortini" (gondola) up" is exactly what forced an ellipsis.
+  The type survives in the step list, where the detail belongs.
+- **A mapped name is data, so the nav cards shrink or wrap rather than ellipsing it.** The run or
+  lift name is the one fact those cards exist to carry, and "Tapis Rou..." fails at that job. The
+  banner sizes its type by label length (`bannerFont`, 20/17/15 px) with a 3-line clamp, and the
+  "Now" band wraps to two lines. Both keep the card a stable height, which is what the ellipsis was
+  really protecting - so protect it that way, not by cutting the name.
 - **The map is pinned `dir="ltr"`.** Geography does not mirror — north is up and west is left in
   every language — and `stylis-plugin-rtl` only rewrites *emotion* CSS, so our MUI overlays would
   flip while MapLibre's own controls (its stylesheet) would not, putting them on top of each other.

@@ -133,14 +133,64 @@ export function nextStep(
   route: Route,
   path: RoutePath,
   snap: Snap,
-): { current?: DisplayStep; next?: DisplayStep; distToNextM: number } {
+): { current?: DisplayStep; next?: DisplayStep; distToNextM: number; turn: TurnDir } {
   const steps = route.steps;
   let cs = steps.findIndex((st) => snap.leg >= st.fromLeg && snap.leg <= st.toLeg);
   if (cs < 0) cs = 0;
   const current = steps[cs];
   const next = steps[cs + 1];
   const distToNextM = current ? Math.max(0, path.legEndS[current.toLeg] - snap.s) : 0;
-  return { current, next, distToNextM };
+  const turn = current && next ? turnAt(path, path.legEndS[current.toLeg]) : 'straight';
+  return { current, next, distToNextM, turn };
+}
+
+export type TurnDir = 'left' | 'straight' | 'right';
+
+/** Bearing (deg, 0 = north) of the chord between two path points. */
+function chordBearing(a: { lon: number; lat: number }, b: { lon: number; lat: number }): number {
+  const latRef = (((a.lat + b.lat) / 2) * Math.PI) / 180;
+  const brg = (Math.atan2((b.lon - a.lon) * 111320 * Math.cos(latRef), (b.lat - a.lat) * 110540) * 180) / Math.PI;
+  return (brg + 360) % 360;
+}
+
+/**
+ * Which way the route swings at distance `s` along it.
+ *
+ * Deliberately only three answers. A skier does not execute a graded manoeuvre the way a driver
+ * does - there is no junction geometry to obey, just "the run bends this way" - so grading the
+ * angle finer would only produce arrows that argue with each other about the same bend.
+ *
+ * Measured over a window either side rather than between adjacent vertices: OSM geometry is dense
+ * and noisy, so a single stray vertex at the junction would decide the arrow. The window is also
+ * why this is honest at a lift station, where the "turn" is really the direction you set off in
+ * after getting off - averaging over 25 m gives the direction of travel, not of the last 2 m of
+ * cable.
+ */
+export function turnAt(path: RoutePath, s: number, winM = 25): TurnDir {
+  const a = posAtS(path, Math.max(0, s - winM));
+  const b = posAtS(path, s);
+  const c = posAtS(path, Math.min(path.totalM, s + winM));
+  if (!a || !b || !c) return 'straight';
+  let d = chordBearing(b, c) - chordBearing(a, b);
+  while (d > 180) d -= 360;
+  while (d < -180) d += 360;
+  if (d <= -25) return 'left';
+  if (d >= 25) return 'right';
+  return 'straight';
+}
+
+/**
+ * Distance along the route of every step boundary, with the length of the step that ends there.
+ *
+ * Only the simulator's "skip to next turn" uses this: it needs to land a fixed distance *before*
+ * a transition, and on a step shorter than that distance it must land at the step's own start
+ * instead of behind where it already is.
+ */
+export function stepTransitions(route: Route, path: RoutePath): { s: number; lenM: number }[] {
+  return route.steps.map((st) => ({
+    s: path.legEndS[st.toLeg],
+    lenM: Math.max(0, path.legEndS[st.toLeg] - path.legStartS[st.fromLeg]),
+  }));
 }
 
 /** Interpolated position + travel bearing at distance `s` along the route (for the dev simulator). */

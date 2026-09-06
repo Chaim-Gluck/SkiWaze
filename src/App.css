@@ -145,6 +145,14 @@ body:lang(he) {
   z-index: 7;
 }
 
+/*
+ * The dashed ring is drawn on a fixed-size box on purpose. `.nav-arrow` used to be a bare wrapper
+ * with no dimensions, and an earlier version forced `position: relative` on it to anchor the ring —
+ * which silently broke the marker: MapLibre positions markers with `.maplibregl-marker { position:
+ * absolute }`, a ONE-class rule, so a two-class override wins, the arrow became a full-width block,
+ * the 50% border-radius stretched into a screen-wide ellipse and the arrow drifted off position.
+ * Never override `position` on a marker element; size it instead.
+ */
 .user-loc.simulated::after,
 .nav-arrow.simulated::after {
   content: '';
@@ -154,13 +162,25 @@ body:lang(he) {
   border-radius: 50%;
   pointer-events: none;
 }
-.nav-arrow.simulated { position: relative; }
 
 /* Navigation (Phase 2) */
-.nav-arrow { filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)); }
+.nav-arrow {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+}
 .pbadge { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 21px; padding: 0 5px; border-radius: 6px; color: #fff; font-weight: 800; font-size: 13px; border: 1.5px solid rgba(255, 255, 255, 0.85); vertical-align: middle; margin-inline-end: 5px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.25); }
 .pbadge.big { min-width: 32px; height: 28px; font-size: 16px; border-radius: 7px; margin-inline-end: 7px; }
 .pbadge.lift { background: #37475a; border-color: rgba(255, 255, 255, 0.6); }
+/* Drawn INSIDE a sentence ("Ski [53] Pradalago"), so the gap must be equal on both sides - the
+   default end-only margin is for the badge-before-text layout and makes the shield hug the verb. */
+.pbadge.inline { margin-inline: 6px; }
+.pbadge.big.inline { margin-inline: 8px; }
+.pdot.inline { margin-inline: 6px; }
+.pdot.big.inline { margin-inline: 8px; }
 .pdot { display: inline-block; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.85); vertical-align: middle; margin-inline-end: 6px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.25); }
 .pdot.big { width: 22px; height: 22px; margin-inline-end: 7px; }
 .nav-speed-circle { width: 66px; height: 66px; border-radius: 50%; border: 2px solid #16a34a; background: rgba(22, 163, 74, 0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; color: var(--text); }

@@ -1,16 +1,17 @@
 {
   "common": {
     "showOnMap": "הצג על המפה",
-    "dismiss": "סגור"
+    "dismiss": "סגור",
+    "clear": "נקה"
   },
   "units": {
-    "kmh": "{{value}} קמ\"ש",
+    "kmh": "{{value}} קמ\"ש",
     "kmhShort": "קמ\"ש",
-    "mps": "{{value}} מ'/ש'",
-    "km": "{{value}} ק\"מ",
-    "m": "{{value}} מ'",
-    "min": "{{value}} דק'",
-    "hourMin": "{{hours}} ש' {{minutes}} דק'",
+    "mps": "{{value}} מ'/ש'",
+    "km": "{{value}} ק\"מ",
+    "m": "{{value}} מ'",
+    "min": "{{value}} דק'",
+    "hourMin": "{{hours}} ש' {{minutes}} דק'",
     "short": {
       "hour": "ש'",
       "minuteShort": "דק'",
@@ -23,8 +24,6 @@
     "waitingLocation": "ממתין לאיתור המיקום שלך…",
     "offRoute": "יצאת מהמסלול",
     "offRouteHint": "גלוש בחזרה אל הקו הכחול, או חשב מסלול מחדש.",
-    "inDistance": "בעוד {{distance}} ← ",
-    "then": "לאחר מכן ",
     "arriveAtDestination": "הגעה ליעד",
     "remaining": "נותרו {{distance}} · {{time}}",
     "acquiringGps": "מאתר GPS…",
@@ -36,7 +35,9 @@
     "pause": "השהה",
     "resetSim": "אפס סימולטור",
     "liftBadge": "רכבל",
-    "runBadge": "מדרון"
+    "runBadge": "מדרון",
+    "now": "כעת",
+    "next": "הבא"
   },
   "link": {
     "intro": "סמן חיבור שניתן לגלוש בו וחסר במפה. בחר את שני הקצוות מהרשימה, או נעץ אותם בכל מקום על המפה (גם באמצע המדרון) - נקודות שננעצו הופכות לצמתים מותאמים אישית.",
@@ -163,11 +164,11 @@
     "promptAccept": "הרץ הדמיה",
     "promptDecline": "לא עכשיו",
     "banner": "הדמיה - לא המיקום האמיתי שלכם",
-    "controls": "הדמיה",
     "slow": "איטי",
     "normal": "רגיל",
     "fast": "מהיר",
-    "endedRealFix": "ההדמיה הסתיימה - אתם באתר, עוקבים אחרי המיקום האמיתי."
+    "endedRealFix": "ההדמיה הסתיימה - אתם באתר, עוקבים אחרי המיקום האמיתי.",
+    "skipTurn": "דלג לפנייה הבאה"
   },
   "picker": {
     "customLocation": "מיקום מותאם אישית",
@@ -395,7 +396,9 @@
       "refName": "{{ref}} · {{name}}",
       "ref": "מדרון {{ref}}",
       "name": "\"{{name}}\"",
-      "any": "מדרון"
+      "any": "מדרון",
+      "badgeName": "{{badge}} {{name}}",
+      "badgeOnly": "{{badge}}"
     },
     "lift": {
       "name": "\"{{name}}\"",
@@ -405,7 +408,11 @@
     "skiShort": "גלוש ב{{piste}}",
     "liftUp": "עלה ב{{name}} ({{liftType}})",
     "liftDown": "רד ב{{name}} ({{liftType}})",
-    "traverse": "חצה"
+    "traverse": "חצה",
+    "liftUpBadge": "עלה ב{{badge}} {{name}}",
+    "liftDownBadge": "רד ב{{badge}} {{name}}",
+    "liftUpBadgeOnly": "עלה ב{{badge}}",
+    "liftDownBadgeOnly": "רד ב{{badge}}"
   },
   "leg": {
     "ski": "גלוש ב{{piste}} ({{color}}) - {{dist}} מ'",

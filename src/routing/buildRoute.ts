@@ -13,6 +13,7 @@ import type { GraphIndex } from './graphIndex';
 import { edgeCost } from './cost';
 import { liftClosureKey, pisteClosureKey } from './closures';
 import { bidiName } from '../utils/format';
+import { SHIELD_SLOT } from '../utils/text';
 
 /**
  * How a run is named in prose: "12 · Ruggenhof", "piste 12", "\"Ruggenhof\"", or just "run".
@@ -28,6 +29,20 @@ function pisteLabel(edge: GraphEdge): TextRef {
   if (ref) return { key: 'step.piste.ref', params: { ref } };
   if (name) return { key: 'step.piste.name', params: { name } };
   return { key: 'step.piste.any' };
+}
+
+/**
+ * The same run, named for a surface that draws the slope shield inline.
+ *
+ * `SHIELD_SLOT` goes in as an ordinary interpolation param, so the *catalogue* decides where the
+ * shield sits in the sentence — "Ski [89] Nambino" in English, and wherever Hebrew wants it. The
+ * bare (unquoted) name is deliberate: the shield already delimits it, so `step.piste.name`'s
+ * quotes would be a second frame around the same thing.
+ */
+function pisteLabelBadge(edge: GraphEdge): TextRef {
+  const name = bidiName(edge.pisteName);
+  if (name) return { key: 'step.piste.badgeName', params: { badge: SHIELD_SLOT, name } };
+  return { key: 'step.piste.badgeOnly', params: { badge: SHIELD_SLOT } };
 }
 
 function liftLabel(edge: GraphEdge): TextRef {
@@ -192,20 +207,28 @@ function stepKeyForEdge(e: GraphEdge): string {
   return 'conn';
 }
 
-function stepLabelForEdge(e: GraphEdge): { label: TextRef; short: TextRef } {
+function stepLabelForEdge(e: GraphEdge): { label: TextRef; short: TextRef; badge: TextRef } {
   if (e.kind === 'piste') {
     const piste = pisteLabel(e);
     return {
       label: { key: 'step.ski', params: { piste, color: { key: `color.${e.color ?? 'unknown'}` } } },
       short: { key: 'step.skiShort', params: { piste } },
+      badge: { key: 'step.skiShort', params: { piste: pisteLabelBadge(e) } },
     };
   }
   if (e.kind === 'lift') {
     const params = { name: liftLabel(e), liftType: liftTypeLabel(e) };
     const key = e.isDownload ? 'step.liftDown' : 'step.liftUp';
-    return { label: { key, params }, short: { key, params } };
+    // The badge form drops the lift TYPE as well as the quotes: the glyph already says "lift", and
+    // the banner is one line where a gondola's full name plus "(gondola)" is what forced an
+    // ellipsis. The type survives in the step list, which is where the detail belongs.
+    const name = bidiName(e.liftName);
+    const badge: TextRef = name
+      ? { key: e.isDownload ? 'step.liftDownBadge' : 'step.liftUpBadge', params: { badge: SHIELD_SLOT, name } }
+      : { key: e.isDownload ? 'step.liftDownBadgeOnly' : 'step.liftUpBadgeOnly', params: { badge: SHIELD_SLOT } };
+    return { label: { key, params }, short: { key, params }, badge };
   }
-  return { label: { key: 'step.traverse' }, short: { key: 'step.traverse' } };
+  return { label: { key: 'step.traverse' }, short: { key: 'step.traverse' }, badge: { key: 'step.traverse' } };
 }
 
 function closureForEdge(e: GraphEdge): { key: string | null; label: TextRef | null } {
@@ -285,6 +308,7 @@ function groupSteps(edges: GraphEdge[], legs: RouteLeg[]): DisplayStep[] {
         const cl = closureForEdge(e);
         cur.label = lab.label;
         cur.labelShort = lab.short;
+        cur.labelBadge = lab.badge;
         cur.name = bidiName(e.pisteName);
         cur.ref = bidiName(e.pisteRef);
         cur.closureKey = cl.key;
@@ -298,6 +322,7 @@ function groupSteps(edges: GraphEdge[], legs: RouteLeg[]): DisplayStep[] {
         kind: e.kind,
         label: lab.label,
         labelShort: lab.short,
+        labelBadge: lab.badge,
         name: bidiName(e.kind === 'lift' ? e.liftName : e.pisteName),
         distanceM: legs[i].distanceM,
         durationS: legs[i].durationS,

@@ -1,16 +1,17 @@
 {
   "common": {
     "showOnMap": "Show on map",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "clear": "Clear"
   },
   "units": {
-    "kmh": "{{value}} km/h",
+    "kmh": "{{value}} km/h",
     "kmhShort": "km/h",
-    "mps": "{{value}} m/s",
-    "km": "{{value}} km",
-    "m": "{{value}} m",
-    "min": "{{value}} min",
-    "hourMin": "{{hours}} h {{minutes}} min",
+    "mps": "{{value}} m/s",
+    "km": "{{value}} km",
+    "m": "{{value}} m",
+    "min": "{{value}} min",
+    "hourMin": "{{hours}} h {{minutes}} min",
     "short": {
       "hour": "h",
       "minuteShort": "m",
@@ -23,10 +24,8 @@
     "waitingLocation": "Waiting for your location…",
     "offRoute": "You're off the route",
     "offRouteHint": "Ski back to the blue line, or re-route.",
-    "inDistance": "in {{distance}} → ",
-    "then": "Then ",
     "arriveAtDestination": "arrive at destination",
-    "remaining": "{{distance}} · {{time}} left",
+    "remaining": "{{distance}} · {{time}} left",
     "acquiringGps": "Acquiring GPS…",
     "enRoute": "On your way",
     "reroute": "Re-route",
@@ -36,7 +35,9 @@
     "pause": "Pause",
     "resetSim": "Reset simulator",
     "liftBadge": "lift",
-    "runBadge": "run"
+    "runBadge": "run",
+    "now": "Now",
+    "next": "Next"
   },
   "link": {
     "intro": "Draw a skiable link the map is missing. Pick both ends from the list, or pin them anywhere on the map (even mid-slope) - pinned points become custom junctions.",
@@ -160,11 +161,11 @@
     "promptAccept": "Preview route",
     "promptDecline": "Not now",
     "banner": "Preview - simulated position",
-    "controls": "Preview",
     "slow": "Slow",
     "normal": "Normal",
     "fast": "Fast",
-    "endedRealFix": "Preview ended - you're at the resort, following your real location."
+    "endedRealFix": "Preview ended - you're at the resort, following your real location.",
+    "skipTurn": "Skip to next turn"
   },
   "picker": {
     "customLocation": "Custom location",
@@ -388,7 +389,9 @@
       "refName": "{{ref}} · {{name}}",
       "ref": "piste {{ref}}",
       "name": "\"{{name}}\"",
-      "any": "run"
+      "any": "run",
+      "badgeName": "{{badge}} {{name}}",
+      "badgeOnly": "{{badge}}"
     },
     "lift": {
       "name": "\"{{name}}\"",
@@ -398,7 +401,11 @@
     "skiShort": "Ski {{piste}}",
     "liftUp": "Take {{name}} ({{liftType}}) up",
     "liftDown": "Take {{name}} ({{liftType}}) down",
-    "traverse": "Traverse"
+    "traverse": "Traverse",
+    "liftUpBadge": "Take {{badge}} {{name}} up",
+    "liftDownBadge": "Take {{badge}} {{name}} down",
+    "liftUpBadgeOnly": "Take {{badge}} up",
+    "liftDownBadgeOnly": "Take {{badge}} down"
   },
   "leg": {
     "ski": "Ski {{piste}} ({{color}}) - {{dist}} m",

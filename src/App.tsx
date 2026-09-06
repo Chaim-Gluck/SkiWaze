@@ -69,7 +69,7 @@ import { nearestNode, nearestResort } from './utils/nearest';
 import { PreviewPrompt, type PreviewReason } from './components/PreviewPrompt';
 import { distance3dM, haversineM, projectOnPolyline } from './utils/geo';
 import { planRoutes, findLongestRuns, routeForEdges, type PlanResult, type LongestRun } from './routing/plan';
-import { buildRoutePath, snapToRoute, sliceAt, remainingStats, nextStep, type RoutePath } from './routing/navigation';
+import { buildRoutePath, snapToRoute, sliceAt, remainingStats, nextStep, stepTransitions, type RoutePath } from './routing/navigation';
 import { useLiveLocation, type LivePosition } from './hooks/useLiveLocation';
 import { NavOverlay } from './components/NavOverlay';
 import type { NavRender } from './components/MapView';
@@ -507,22 +507,11 @@ export default function App() {
     [navRoute, geomOf],
   );
 
-  const navData = useMemo(() => {
-    if (!navRoute || !navPath || !userPos) return null;
-    const snap = snapToRoute(navPath, userPos.lon, userPos.lat);
-    if (!snap) return null;
-    const { traveled, remaining } = sliceAt(navPath, snap.s);
-    const render: NavRender = { lon: snap.lon, lat: snap.lat, bearing: snap.bearing, traveled, remaining };
-    const curLeg = navRoute.legs[snap.leg];
-    return {
-      render,
-      rem: remainingStats(navRoute, navPath, snap),
-      step: nextStep(navRoute, navPath, snap),
-      offRoute: snap.offM > Math.max(30, (userPos.accuracy || 0) + 20),
-      legKind: curLeg?.kind,
-      legColor: curLeg?.color,
-    };
-  }, [navRoute, navPath, userPos]);
+  /** Step boundaries along the route; only the Preview simulator's "skip to next turn" reads them. */
+  const navTransitions = useMemo(
+    () => (navRoute && navPath ? stepTransitions(navRoute, navPath) : undefined),
+    [navRoute, navPath],
+  );
 
   /**
    * "Is this position at the resort?" measured against the nearest graph node, NOT the resort
@@ -540,6 +529,28 @@ export default function App() {
     },
     [effectiveGraph],
   );
+
+  const navData = useMemo(() => {
+    if (!navRoute || !navPath || !userPos) return null;
+    const snap = snapToRoute(navPath, userPos.lon, userPos.lat);
+    if (!snap) return null;
+    const { traveled, remaining } = sliceAt(navPath, snap.s);
+    const render: NavRender = { lon: snap.lon, lat: snap.lat, bearing: snap.bearing, traveled, remaining };
+    const curLeg = navRoute.legs[snap.leg];
+    return {
+      render,
+      rem: remainingStats(navRoute, navPath, snap),
+      step: nextStep(navRoute, navPath, snap),
+      // "Off route" means *you* strayed, and it is only ever a true statement about a fix that is
+      // actually on the mountain. A fix in another country is off the route by thousands of
+      // kilometres, but the honest diagnosis of that is "we can't follow you" (which is exactly
+      // what the Preview prompt says) - shouting a red off-route alarm underneath it names the
+      // same fact twice and tells the user to ski back to a line they are nowhere near.
+      offRoute: !isFarFromResort(userPos) && snap.offM > Math.max(30, (userPos.accuracy || 0) + 20),
+      legKind: curLeg?.kind,
+      legColor: curLeg?.color,
+    };
+  }, [navRoute, navPath, userPos, isFarFromResort]);
 
   /**
    * Is there a position the follow camera may legitimately fly to?
@@ -716,10 +727,17 @@ export default function App() {
   }, [navRoute]);
 
   // Record real skiing speed per piste colour while navigating (feeds "my measured speeds").
+  //
+  // A SIMULATED position must never be sampled. `userPos` is `simPos ?? live.position`, so without
+  // this guard every Preview playback tick wrote the playback preset (a UI dial, e.g. 12 m/s =
+  // 43 km/h) into the user's per-colour averages — and "use my measured speeds" would then
+  // calibrate the router to a slider instead of to a skier. The DEV simulator is excluded for the
+  // same reason: it feeds the identical stream.
   const navDataRef = useRef(navData);
   navDataRef.current = navData;
   useEffect(() => {
     if (!navRoute || !userPos || userPos.speed == null) return;
+    if (simPos) return;
     const sp = userPos.speed;
     if (sp < 0.8 || sp > 35) return; // filter GPS noise / stationary
     const nd = navDataRef.current;
@@ -1247,6 +1265,28 @@ export default function App() {
 
   // The sheet's open/close, backdrop and swipe-to-dismiss now belong to PanelShell's MUI drawer.
 
+  /**
+   * Playback pace for Preview, derived from the skier's own model rather than from a fixed dial.
+   *
+   * Two different speeds, and conflating them is what made a red run read 43 km/h: `advanceMps` is
+   * the PROGRESS speed the simulation moves along the centreline at (so Preview takes about as long
+   * as the planner said the route would), while `displayMps` is the TRUE move speed shown in the
+   * speed circle (progress x the colour's snake factor) - the number a skier would see on a watch.
+   * Off a piste there is no colour to model, so the route's own remaining pace is the honest
+   * fallback.
+   */
+  const simPace = useMemo(() => {
+    const color = navData?.legKind === 'piste' && isSpeedColor(navData.legColor) ? navData.legColor : null;
+    if (color) {
+      const trueMps = estimatedByColor[color];
+      return { advanceMps: trueMps / SNAKE_FACTOR[color], displayMps: trueMps };
+    }
+    const rem = navData?.rem;
+    const pace = rem && rem.timeS > 0 ? rem.distM / rem.timeS : 8;
+    return { advanceMps: pace, displayMps: pace };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navData?.legKind, navData?.legColor, navData?.rem, prefs.speeds.skiSpeedByColor, prefs.skillLevel]);
+
   return (
     <div className="app">
       <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
@@ -1516,6 +1556,11 @@ export default function App() {
             }}
             onNavigateStart={navigateToLongestStart}
             onNavigateEnd={navigateToLongestEnd}
+            onClear={() => {
+              setLongestRuns(null);
+              setLongestIdx(0);
+              setFocusGeometry(null);
+            }}
           />
           </AccordionSection>
           )}
@@ -1688,7 +1733,7 @@ export default function App() {
                 onExit={exitNav}
                 onReroute={rerouteFromHere}
                 sim={previewMode || import.meta.env.DEV
-                  ? { path: navPath, onSim: setSimPos, preview: previewMode }
+                  ? { path: navPath, onSim: setSimPos, preview: previewMode, pace: simPace, transitions: navTransitions }
                   : undefined}
               />
             </div>
@@ -1715,7 +1760,13 @@ export default function App() {
                 onPrev={() => stepLongest(-1)}
                 onNext={() => stepLongest(1)}
                 onDetails={() => { setOpenSection('longest'); setPanelOpen(true); }}
-                onDismiss={() => setLongestDismissed(true)}
+                onDismiss={() => {
+                  // Closing the card must also take the highlight off the map: a painted run with
+                  // no card is an anonymous line the user has no way to identify or remove. The
+                  // results stay in the panel, so "Show on map" puts it straight back.
+                  setLongestDismissed(true);
+                  setFocusGeometry(null);
+                }}
                 onNavigateStart={() => {
                   navigateToLongestStart();
                   // Unlike "To end", this only fills in the destination — it does not plan. From the

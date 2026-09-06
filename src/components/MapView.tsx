@@ -1133,11 +1133,15 @@ export function MapView({
   }, [showPistes, showLifts, showAreas, showLabels, showOffPiste, globalView, loaded]);
 
   // Live-location puck from the shared position stream.
+  //
+  // Suppressed while navigating: the nav arrow already represents the user, snapped to the route,
+  // so drawing the raw puck too gives two arrows a few metres apart (and two accuracy halos) for
+  // one skier. Every turn-by-turn app shows exactly one.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded) return;
     const acc = map.getSource('user-accuracy') as maplibregl.GeoJSONSource | undefined;
-    if (!userPosition) {
+    if (!userPosition || nav) {
       userMarker.current?.remove();
       userMarker.current = null;
       acc?.setData(EMPTY_FC as never);
@@ -1159,7 +1163,7 @@ export function MapView({
         geometry: { type: 'Polygon', coordinates: [circlePolygon(userPosition.lon, userPosition.lat, userPosition.accuracy)] },
       } as never);
     }
-  }, [userPosition, loaded, positionSimulated]);
+  }, [userPosition, loaded, positionSimulated, nav]);
 
   // Navigation render: travelled/remaining split + a nav arrow at the snapped point.
   useEffect(() => {

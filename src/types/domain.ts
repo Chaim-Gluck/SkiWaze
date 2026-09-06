@@ -437,6 +437,13 @@ export interface DisplayStep {
    * "(blue)" off `label` with an English-only regex.
    */
   labelShort: TextRef;
+  /**
+   * The label with the slope NUMBER dropped as well, for surfaces that render the piste shield
+   * beside it. Without this the nav banner printed the number twice - once in the shield and again
+   * inside "Ski 89 · Nambino". Same reasoning as `labelShort`: whatever a badge already says, the
+   * sentence must not repeat.
+   */
+  labelBadge: TextRef;
   /** Raw run/lift name as mapped (never translated) — the badge reads its slope number from it. */
   name?: string;
   distanceM: number;

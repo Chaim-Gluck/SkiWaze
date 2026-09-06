@@ -13,6 +13,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MapIcon from '@mui/icons-material/Map';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import DownhillSkiingIcon from '@mui/icons-material/DownhillSkiing';
+import ClearIcon from '@mui/icons-material/Clear';
 
 export interface LongestRunView {
   distanceM: number;
@@ -33,6 +34,8 @@ interface Props {
   onPrev: () => void;
   onNext: () => void;
   onShowOnMap: () => void;
+  /** Drops both the results and the map highlight - see App's `clearLongest`. */
+  onClear: () => void;
   onNavigateStart: () => void;
   onNavigateEnd: () => void;
 }
@@ -46,6 +49,7 @@ export function LongestRunPanel({
   onPrev,
   onNext,
   onShowOnMap,
+  onClear,
   onNavigateStart,
   onNavigateEnd,
 }: Props) {
@@ -106,6 +110,9 @@ export function LongestRunPanel({
             <Button size="small" variant="outlined" startIcon={<MapIcon />} onClick={onShowOnMap}>{t('common.showOnMap')}</Button>
             <Button size="small" variant="outlined" startIcon={<MyLocationIcon />} onClick={onNavigateStart}>{t('longest.toStart')}</Button>
             <Button size="small" variant="outlined" startIcon={<DownhillSkiingIcon />} onClick={onNavigateEnd}>{t('longest.toEnd')}</Button>
+            {/* Finding the longest runs paints them on the map, so there has to be a way to take
+                them off again - otherwise the highlight outlives the question that produced it. */}
+            <Button size="small" color="inherit" startIcon={<ClearIcon />} onClick={onClear} sx={{ color: 'text.secondary' }}>{t('common.clear')}</Button>
           </Box>
         </Box>
       )}

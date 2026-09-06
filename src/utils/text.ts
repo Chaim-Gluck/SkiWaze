@@ -17,3 +17,13 @@ export function tr(t: TFunction, ref: TextRef): string {
   }
   return t(ref.key, params);
 }
+
+/**
+ * Marker for "the piste shield goes here" inside a resolved label.
+ *
+ * Routing is pure and cannot emit a React node, and the UI must not cut a translated sentence at a
+ * fixed offset — Hebrew puts the run's name in a different place from English. So routing
+ * interpolates this character as an ordinary param and the **catalogue** decides where it lands;
+ * the UI just splits on it. A private-use codepoint, so it can never collide with an OSM name.
+ */
+export const SHIELD_SLOT = '\uE000';
