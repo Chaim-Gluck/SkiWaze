@@ -1173,11 +1173,15 @@ export default function App() {
     setPlan(null);
     setSelectedRange(null);
     setFocusGeometry(named[0].coords);
-    // Deliberately does NOT close the mobile sheet. The user asked for the three longest runs, so
-    // dropping them straight onto the map hid the very list they came for; revealing the map is
-    // "Show on map"'s job (see onShowOnMap). These two behaviours used to be exactly inverted.
     setLongestDismissed(false);
     setOpenSection('longest');
+    // On mobile, reveal the map. The three runs are a HIGHLIGHT, and a highlight the sheet is
+    // covering is not an answer. This was deliberately the other way round until the floating
+    // LongestPreview card existed: closing the sheet then left an anonymous glowing line with no
+    // way back to the list. The card carries the identity (rank, distance, descent, start -> end),
+    // prev/next, and a Details button that reopens this section, so the list is one tap away and
+    // the map is free. Desktop keeps the panel: there it is a sidebar, so closing it is pure loss.
+    if (isMobile) setPanelOpen(false);
   };
 
   const stepLongest = (delta: number) => {
