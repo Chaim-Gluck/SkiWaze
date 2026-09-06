@@ -532,6 +532,12 @@ export default function App() {
 
   const navData = useMemo(() => {
     if (!navRoute || !navPath || !userPos) return null;
+    // A fix that is nowhere near the mountain cannot produce guidance, only the appearance of it:
+    // snapping it onto the route yields a nearest point and from there a distance-to-turn and an
+    // ETA that are pure fiction. Refusing here leaves the overlay in its honest "waiting" state
+    // while the Preview offer decides what happens next. A simulated position is at the resort by
+    // construction, so Preview is unaffected.
+    if (!simPos && isFarFromResort(userPos)) return null;
     const snap = snapToRoute(navPath, userPos.lon, userPos.lat);
     if (!snap) return null;
     const { traveled, remaining } = sliceAt(navPath, snap.s);
@@ -542,15 +548,14 @@ export default function App() {
       rem: remainingStats(navRoute, navPath, snap),
       step: nextStep(navRoute, navPath, snap),
       // "Off route" means *you* strayed, and it is only ever a true statement about a fix that is
-      // actually on the mountain. A fix in another country is off the route by thousands of
-      // kilometres, but the honest diagnosis of that is "we can't follow you" (which is exactly
-      // what the Preview prompt says) - shouting a red off-route alarm underneath it names the
-      // same fact twice and tells the user to ski back to a line they are nowhere near.
-      offRoute: !isFarFromResort(userPos) && snap.offM > Math.max(30, (userPos.accuracy || 0) + 20),
+      // actually on the mountain - the far case never reaches here (it returns null above), which
+      // is what stops a red off-route alarm from naming the same fact twice and telling the user to
+      // ski back to a line they are nowhere near.
+      offRoute: snap.offM > Math.max(30, (userPos.accuracy || 0) + 20),
       legKind: curLeg?.kind,
       legColor: curLeg?.color,
     };
-  }, [navRoute, navPath, userPos, isFarFromResort]);
+  }, [navRoute, navPath, userPos, simPos, isFarFromResort]);
 
   /**
    * Is there a position the follow camera may legitimately fly to?
@@ -634,6 +639,31 @@ export default function App() {
     setPanelOpen(false);
     previewAsked.current = false;
     if (!live.tracking && !simPos) live.start();
+  };
+  /**
+   * "Not now" on the Preview offer.
+   *
+   * Declining has to LEAVE navigation, not sit in it. The offer only ever appears when we cannot
+   * see the skier on the mountain, and a nav overlay in that state is not merely useless - it
+   * snaps a fix from another country onto the route and prints a distance-to-turn and an ETA off
+   * it, which are fabricated numbers wearing the costume of live guidance.
+   *
+   * Unlike `exitNav` this keeps the computed plan: the route, its options and its step list are
+   * exactly what is still worth reading without a position, so the panel is opened on them.
+   */
+  const declinePreview = () => {
+    setPreviewPrompt(null);
+    setNavRoute(null);
+    setSimPos(null);
+    setPreviewMode(false);
+    if (!live.position || isFarFromResort(live.position)) {
+      setFollowing(false);
+      live.stop();
+    }
+    setPreviewDismissed(false);
+    setOpenSection('routes');
+    setPanelOpen(true);
+    notify(t('preview.declined'), 'info');
   };
   const exitNav = () => {
     setNavRoute(null);
@@ -1729,7 +1759,7 @@ export default function App() {
                 remaining={navData?.rem}
                 speedMps={userPos?.speed ?? null}
                 offRoute={navData?.offRoute ?? false}
-                waiting={!userPos}
+                waiting={!navData}
                 onExit={exitNav}
                 onReroute={rerouteFromHere}
                 sim={previewMode || import.meta.env.DEV
@@ -1901,7 +1931,7 @@ export default function App() {
         reason={previewPrompt}
         resortName={resortEntry?.shortName ?? resortEntry?.name ?? ''}
         onAccept={() => { setPreviewPrompt(null); setPreviewMode(true); }}
-        onDecline={() => setPreviewPrompt(null)}
+        onDecline={declinePreview}
       />
     </div>
   );

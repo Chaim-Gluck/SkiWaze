@@ -165,7 +165,8 @@
     "normal": "Normal",
     "fast": "Fast",
     "endedRealFix": "Preview ended - you're at the resort, following your real location.",
-    "skipTurn": "Skip to next turn"
+    "skipTurn": "Skip to next turn",
+    "declined": "Navigation needs your location, so we stopped it. The route and its steps are still here."
   },
   "picker": {
     "customLocation": "Custom location",

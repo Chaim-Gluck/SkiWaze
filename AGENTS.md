@@ -1624,10 +1624,23 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 - **Preview mode is a trigger, not a preference, and is never offered to someone who can really be
   followed.** Navigation used to enter and sit on `waiting for location` forever with no exit but
   Exit, for anyone who denied location or was off the mountain. Preview replays the route from a
-  simulated position, offered **only** on a detected condition: geolocation error → `noFix`, a good
-  fix farther than `PREVIEW_FAR_M` (10 km) → `far`, nothing at all within 12 s → `noFix`. One offer
+  simulated position, offered **only** on a detected condition: geolocation error -> `noFix`, a good
+  fix farther than `PREVIEW_FAR_M` (10 km) -> `far`, nothing at all within 12 s -> `noFix`. One offer
   per nav session (`previewAsked`), and it **auto-exits** the moment a real fix arrives at the resort.
   Being off-route is a **reroute, never a simulation**. Three implementation rules:
+- **Declining Preview must LEAVE navigation, and a far fix must never reach the guidance code.**
+  These are the same bug seen twice. "Not now" originally only closed the dialog, so navigation kept
+  running off a fix we had just told the user was a thousand kilometres away: `snapToRoute` happily
+  returns a nearest point on the route from anywhere on Earth, and the banner then printed a
+  distance-to-turn and an ETA computed from it - fabricated numbers wearing the costume of live
+  guidance, with nothing on screen admitting it (the off-route alarm is deliberately suppressed for
+  a far fix, so that safety valve was closed too). Two fixes, and both are needed: `navData` returns
+  **null** when `isFarFromResort(userPos)` and there is no `simPos`, so the overlay falls back to its
+  honest waiting state (hence `waiting={!navData}`, not `!userPos`); and `declinePreview` exits
+  navigation. It deliberately does **not** call `exitNav` - the computed plan, its options and its
+  step list are exactly what is still worth reading without a position, so it keeps them and opens
+  the panel on them. Generalise it: any surface that consumes a position owes a check that the
+  position is somewhere the answer can be true. Three implementation rules:
   - **`isFarFromResort` measures to the nearest graph NODE, not the resort centre** — on a sprawling
     multi-valley resort you can stand on a piste 10 km from the centroid. The threshold is
     deliberately generous: a false "far" merely offers Preview to someone who is there (harmless),
@@ -1768,6 +1781,19 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 - **Guarding it:** `npm run probe:badges all` must stay **0 violations / 1834 plans** after anything
   touching labels or ranking. There is no automated catalogue check yet — the useful ad-hoc one
   compares flattened `en.json` vs `he.json` for missing keys, extra keys and `{{param}}` drift.
+- **Hebrew is capped at weight 600, and the cap belongs in the CATALOGUE of MUI classes, not on the
+  element.** Hebrew has no case, so it carries none of the visual variety that lets a Latin heading
+  absorb 700-800 without shouting, and `system-ui` resolves to Segoe UI on Windows whose Hebrew is
+  markedly heavier and blockier than its Latin at the same weight. Two mechanisms: `theme.tsx` swaps
+  the whole stack to `HEBREW_FONTS` (Arial first - the most neutral face that ships everywhere, so
+  no webfont download), and `App.css` caps weight under `:lang(he)`. The cap must list the MUI
+  typography classes **including `body1`/`body2`**: it was originally headings-and-captions only, so
+  any element setting `fontWeight: 800` through `sx` on a plain Typography slipped straight through
+  it, which is how the nav banner's instruction and the remaining-distance line shipped shouting in
+  Hebrew. Keyed on `:lang`, not `[dir]`, and `!important` because `sx` is emotion and outranks a
+  stylesheet rule. One documented exception, `.num-hero`: an element holding **digits only** carries
+  no Hebrew glyphs, so the cap's reason does not apply while the cap would visibly weaken the
+  reading the user is navigating by. Use it only where the text can never contain a word.
 - **Known gap:** the named-point labels in `graph.points` (`"Grostè (top) · 2496 m"`) are composed
   **by the pipeline** in English, so they stay English in Hebrew. Fixing it means emitting the parts
   structurally (`name` + `side` + `ele`) and composing them in the UI, plus a data rebuild.

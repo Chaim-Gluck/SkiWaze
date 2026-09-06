@@ -53,8 +53,18 @@ body:lang(he) {
 :lang(he) .MuiChip-label,
 :lang(he) .MuiTypography-caption,
 :lang(he) .MuiTypography-subtitle1,
-:lang(he) .MuiTypography-subtitle2 {
+:lang(he) .MuiTypography-subtitle2,
+:lang(he) .MuiTypography-body1,
+:lang(he) .MuiTypography-body2 {
   font-weight: 600 !important;
+}
+
+/* The one exception, and it is about content rather than styling: an element holding DIGITS ONLY
+   carries no Hebrew glyphs, so the reason for the cap (Hebrew has no case, so it shouts at 700+)
+   does not apply to it, while the cap would visibly weaken the reading the user is navigating by.
+   Use it only where the text can never contain a word - the unit label sits in its own element. */
+:lang(he) .num-hero {
+  font-weight: 900 !important;
 }
 
 .app {
@@ -183,9 +193,12 @@ body:lang(he) {
 .pdot.big.inline { margin-inline: 8px; }
 .pdot { display: inline-block; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.85); vertical-align: middle; margin-inline-end: 6px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.25); }
 .pdot.big { width: 22px; height: 22px; margin-inline-end: 7px; }
-.nav-speed-circle { width: 66px; height: 66px; border-radius: 50%; border: 2px solid #16a34a; background: rgba(22, 163, 74, 0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; color: var(--text); }
-.ns-num { font-size: 25px; font-weight: 800; }
-.ns-unit { font-size: 10px; font-weight: 700; color: #16a34a; margin-top: 2px; }
+/* The speed dial sets the height of the status card's lower half, so it is sized to the text beside
+   it (a 17px line plus a caption) rather than being the biggest thing there: the reading a moving
+   skier navigates by is the manoeuvre card at the top, and every pixel here is map. */
+.nav-speed-circle { width: 54px; height: 54px; border-radius: 50%; border: 2px solid #16a34a; background: rgba(22, 163, 74, 0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; color: var(--text); }
+.ns-num { font-size: 21px; font-weight: 800; }
+.ns-unit { font-size: 9px; font-weight: 700; color: #16a34a; margin-top: 1px; }
 
 
 /* Tablet / phone: full-screen map with the controls in a bottom sheet (see PanelShell). */

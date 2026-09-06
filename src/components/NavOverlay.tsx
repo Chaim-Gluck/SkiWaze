@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { DisplayStep } from '../types/domain';
@@ -109,9 +109,9 @@ function stepNodes(t: TFunction, st: DisplayStep | undefined, big?: boolean): Re
  * carry, so the type shrinks instead - the instruction stays whole and the card stays one height.
  */
 function bannerFont(len: number): number {
-  if (len > 46) return 15;
-  if (len > 32) return 17;
-  return 20;
+  if (len > 46) return 14;
+  if (len > 32) return 16;
+  return 18;
 }
 
 const COLOR_HEX: Record<string, string> = {
@@ -138,7 +138,7 @@ const SKIP_LEAD_M = 50;
  * a piste does; the run simply bends, and the arrow only has to say which side.
  */
 function TurnArrow({ turn }: { turn?: TurnDir }) {
-  const sx = { fontSize: 34 } as const;
+  const sx = { fontSize: 28 } as const;
   if (turn === 'left') return <TurnSlightLeftIcon sx={sx} />;
   if (turn === 'right') return <TurnSlightRightIcon sx={sx} />;
   return <StraightIcon sx={sx} />;
@@ -188,7 +188,38 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
     return null;
   }, [sim?.transitions, simS]);
 
-  // Seed a position at the route start the moment Preview opens. Without this the overlay would sit
+  // Publish where the manoeuvre card ENDS, so the map's own controls (Layers, Legend) can sit level
+  // with the simulation chip beside it rather than below the whole overlay.
+  //
+  // Two things are deliberate. It is measured, not assumed: the card is one to three lines depending
+  // on how long the run's name is, so a constant would be wrong most of the time. And it publishes
+  // the card's BOTTOM EDGE relative to its offset parent, not its height - reconstructing the edge
+  // from a height means adding back the overlay's own top inset, which is an assumption about a
+  // layout constant living in another component, and it is silently wrong the moment either side is
+  // repadded. `.map-shell` and `.map-wrap` are both `position: relative` and coincide, so the
+  // resulting y is in the same frame the map's controls are positioned in.
+  const bannerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = bannerRef.current;
+    const root = document.documentElement;
+    if (!el) return;
+    const publish = () => {
+      const parent = el.offsetParent as HTMLElement | null;
+      const top = parent ? parent.getBoundingClientRect().top : 0;
+      root.style.setProperty('--nav-banner-h', `${Math.round(el.getBoundingClientRect().bottom - top)}px`);
+    };
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    window.addEventListener('resize', publish);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', publish);
+      root.style.removeProperty('--nav-banner-h');
+    };
+  }, []);
+
+
   // on "waiting for location" until the user pressed play — the very state Preview exists to escape.
   useEffect(() => {
     if (!preview || !sim?.path) return;
@@ -225,18 +256,24 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
         sx={{
           position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5,
           display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none',
+          px: 1, pt: 1,
         }}
       >
+        {/* A floating card, inset on all four sides rather than flush to the top edge. Full-bleed
+            read as chrome and sat on top of the map's own controls; an inset card lets a sliver of
+            map show past every corner, which is what tells the eye it is an overlay and leaves the
+            controls beside it reachable. */}
         <Paper
+          ref={bannerRef}
           elevation={8}
           sx={{
-            pointerEvents: 'auto', width: '100%', maxWidth: 640,
-            borderRadius: '0 0 18px 18px', overflow: 'hidden',
+            pointerEvents: 'auto', width: '100%', maxWidth: 620,
+            borderRadius: 3, overflow: 'hidden',
             bgcolor: offRoute ? 'error.main' : NAV_BAR_BG,
             color: '#fff',
           }}
         >
-          <Box sx={{ px: 2, py: 1.25 }}>
+          <Box sx={{ px: 1.75, py: 0.6 }}>
           {waiting ? (
             <Typography sx={{ fontWeight: 800, fontSize: 18 }}>{t('nav.waitingLocation')}</Typography>
           ) : offRoute ? (
@@ -261,25 +298,29 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 62, flexShrink: 0 }}>
                 <Typography
                   variant="caption"
-                  sx={{ fontWeight: 800, opacity: 0.5, letterSpacing: 1, textTransform: 'uppercase', lineHeight: 1.2 }}
+                  sx={{ fontWeight: 800, fontSize: 10, opacity: 0.5, letterSpacing: 1, textTransform: 'uppercase', lineHeight: 1.2 }}
                 >
                   {t('nav.next')}
                 </Typography>
                 <TurnArrow turn={step?.turn} />
                 {step && step.distToNextM > 5 && (
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.4 }}>
-                    <Typography sx={{ fontWeight: 900, fontSize: 26, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
+                    <Typography className="num-hero" sx={{ fontWeight: 900, fontSize: 22, lineHeight: 1.05, fontVariantNumeric: 'tabular-nums' }}>
                       {splitDist(step.distToNextM, t).value}
                     </Typography>
-                    <Typography sx={{ fontSize: 13, fontWeight: 700, opacity: 0.75 }}>
+                    <Typography sx={{ fontSize: 11, fontWeight: 700, opacity: 0.75 }}>
                       {splitDist(step.distToNextM, t).unit}
                     </Typography>
                   </Box>
                 )}
               </Box>
+              {/* Half-height hairline, not a full-height Divider: it separates the manoeuvre column
+                  from the instruction without drawing a box around either. Logical-flow only - the
+                  row reverses under RTL and the rule travels with it. */}
+              <Box sx={{ alignSelf: 'center', width: '1px', height: 32, bgcolor: 'rgba(255,255,255,0.18)', flexShrink: 0 }} />
               <Typography
                 sx={{
-                  flex: 1, minWidth: 0, fontWeight: 800,
+                  flex: 1, minWidth: 0, fontWeight: 800, textAlign: 'center',
                   fontSize: bannerFont(step?.next ? tr(t, step.next.labelBadge).length : 0),
                   lineHeight: 1.3,
                   display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
@@ -297,12 +338,12 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           <Paper
             elevation={6}
             sx={{
-              pointerEvents: 'none', mt: 1, px: 1.5, py: 0.4, borderRadius: 5,
-              bgcolor: 'var(--sim)', color: '#1a1200', display: 'flex', alignItems: 'center', gap: 0.75,
+              pointerEvents: 'none', mt: 0.75, px: 0.9, py: 0.15, borderRadius: 5,
+              bgcolor: 'var(--sim)', color: '#1a1200', display: 'flex', alignItems: 'center', gap: 0.4,
             }}
           >
-            <ScienceIcon fontSize="small" />
-            <Typography variant="caption" sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
+            <ScienceIcon sx={{ fontSize: 13 }} />
+            <Typography sx={{ fontWeight: 700, fontSize: 10.5, letterSpacing: 0.1, lineHeight: 1.4 }}>
               {t('preview.banner')}
             </Typography>
           </Paper>
@@ -415,31 +456,54 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
             color: offRoute ? 'error.contrastText' : 'text.primary',
           }}
         >
-          {!waiting && !offRoute && step?.current && (
-            <Box
-              sx={{
-                px: 1.75, py: 0.5, bgcolor: 'action.hover',
-                display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0,
-              }}
-            >
-              <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.7, flexShrink: 0 }}>
-                {t('nav.now')}
-              </Typography>
-              {/* Wrap to two lines rather than ellipsing. A lift's mapped name is routinely long
-                  ("Tapis Roulant Grostè Express - Fortini") and it is the one fact this band
-                  exists to carry, so cutting it to "Tapis Rou..." fails at its only job. */}
-              <Typography
-                variant="body2"
+          {/* Top strip: the run you are on, and the way out. It always renders even when there is
+              nothing to say, because it owns the exit button - a card whose dismiss control comes
+              and goes with the content is a card whose dismiss control moves. Trailing end of the
+              quiet strip, not a corner of the busy row: at the bottom it sat under the ETA and
+              looked like part of it. */}
+          <Box
+            sx={{
+              px: 1.75, py: 0.25, minWidth: 0,
+              bgcolor: offRoute ? 'rgba(255,255,255,0.12)' : 'action.hover',
+              display: 'flex', alignItems: 'center', gap: 0.75,
+            }}
+          >
+            {!waiting && !offRoute && step?.current && (
+              <>
+                <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.7, flexShrink: 0 }}>
+                  {t('nav.now')}
+                </Typography>
+                {/* Wrap to two lines rather than ellipsing. A lift's mapped name is routinely long
+                    ("Tapis Roulant Grostè Express - Fortini") and it is the one fact this band
+                    exists to carry, so cutting it to "Tapis Rou..." fails at its only job. */}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600, minWidth: 0, overflow: 'hidden',
+                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                  }}
+                >
+                  {stepNodes(t, step.current)}
+                </Typography>
+              </>
+            )}
+            {/* Icon only: a labelled button the width of "Exit" squeezed the remaining-distance
+                line into a wrap. The word survives in the tooltip and the aria-label. */}
+            <Tooltip title={t('nav.exit')}>
+              <IconButton
+                size="small"
+                aria-label={t('nav.exit')}
+                onClick={onExit}
                 sx={{
-                  fontWeight: 600, minWidth: 0, overflow: 'hidden',
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                  ml: 'auto', flexShrink: 0, p: 0.5,
+                  color: offRoute ? 'error.contrastText' : 'text.secondary',
                 }}
               >
-                {stepNodes(t, step.current)}
-              </Typography>
-            </Box>
-          )}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 1.75, py: 1, pr: 4.5 }}>
+                <CloseIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1.75, py: 0.6 }}>
           {!waiting && speedMps != null && speedMps >= 0 && (
             <div className="nav-speed-circle">
               <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
@@ -454,12 +518,12 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
                     different question: "22 min left" is a duration, "14:05" is something you
                     compare against a lift closing time or a lunch booking. */}
                 <Typography
-                  sx={{ fontWeight: 800, fontSize: 17, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                  sx={{ fontWeight: 800, fontSize: 16, lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                   color={offRoute ? 'inherit' : 'primary.main'}
                 >
                   {t('nav.remaining', { distance: fmtDist(remaining.distM, t), time: fmtTime(remaining.timeS, t) })}
                 </Typography>
-                <Typography variant="caption" color={offRoute ? 'inherit' : 'text.secondary'} sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                <Typography variant="caption" color={offRoute ? 'inherit' : 'text.secondary'} sx={{ display: 'block', lineHeight: 1.3, fontVariantNumeric: 'tabular-nums' }}>
                   {t('preview.eta', { time: fmtClock(new Date(Date.now() + remaining.timeS * 1000).toISOString()) })}
                 </Typography>
               </>
@@ -479,23 +543,6 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               {t('nav.reroute')}
             </Button>
           )}
-          {/* Icon only, in the corner: a labelled button the width of "Exit" sat in the middle of
-              the bar and squeezed the remaining-distance line into a wrap. The word survives in the
-              tooltip and the aria-label, so nothing is lost to a screen reader. Bottom corner, not
-              top, because the "Now" band owns the top edge. */}
-          <Tooltip title={t('nav.exit')}>
-            <IconButton
-              size="small"
-              aria-label={t('nav.exit')}
-              onClick={onExit}
-              sx={{
-                position: 'absolute', bottom: 4, insetInlineEnd: 4,
-                color: offRoute ? 'error.contrastText' : 'text.secondary',
-              }}
-            >
-              <CloseIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
           </Box>
         </Paper>
       </Box>
