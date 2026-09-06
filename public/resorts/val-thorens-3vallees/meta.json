@@ -18,16 +18,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.valthorens.com/en/"
   },
-  "generatedAt": "2026-09-03T12:37:48.184Z",
+  "generatedAt": "2026-09-06T04:45:36.041Z",
   "stats": {
     "resortId": "val-thorens-3vallees",
-    "nodeCount": 4835,
-    "edgeCount": 15160,
-    "pisteEdges": 5021,
+    "nodeCount": 4830,
+    "edgeCount": 15012,
+    "pisteEdges": 5017,
     "liftEdges": 246,
-    "connectorEdges": 9893,
+    "connectorEdges": 9749,
     "meaningfulPoints": 919,
-    "reachableFromLifts": 4829,
+    "reachableFromLifts": 4824,
     "unreachableNodes": 6,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -1222,15 +1222,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 2486 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 2487 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 1973 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 1974 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 384 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 380 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

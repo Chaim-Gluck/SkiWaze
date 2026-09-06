@@ -18,16 +18,16 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.campigliodolomiti.it/en/"
   },
-  "generatedAt": "2026-09-03T12:33:00.449Z",
+  "generatedAt": "2026-09-06T04:44:22.359Z",
   "stats": {
     "resortId": "madonna-di-campiglio",
-    "nodeCount": 393,
-    "edgeCount": 982,
-    "pisteEdges": 404,
+    "nodeCount": 392,
+    "edgeCount": 969,
+    "pisteEdges": 403,
     "liftEdges": 81,
-    "connectorEdges": 497,
+    "connectorEdges": 485,
     "meaningfulPoints": 233,
-    "reachableFromLifts": 393,
+    "reachableFromLifts": 392,
     "unreachableNodes": 0,
     "warningsByCode": {
       "missing_opening_hours": 61,
@@ -281,7 +281,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 59 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 60 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
@@ -289,7 +289,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 112 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 111 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

@@ -2,9 +2,14 @@
   "_comment": "Portes du Soleil. Audit sign-offs, plus one hand-elevation patch at Avoriaz. See src/config/resorts.ts for the Roc d'Enfer exclusion box.",
   "_comment_setNodeElevation": "AVORIAZ VILLAGE PATCH â€” the case where BOTH sources are wrong, which is exactly what setNodeElevation is for. Our elevation provider reads this shelf 5-76 m TOO LOW, and the second DEM (Terrarium) reads it 3-7 m TOO HIGH, almost certainly sampling the tops of Avoriaz's tall timber-clad apartment blocks rather than the snow. Because neither source is competent here, the elevation-consensus pass DECLINES the whole 22-node patch (that is the atomic-patch guard working as designed â€” half a repair drops a step into the middle of the fault) and it can only be resolved by hand. Every value below was read off the contours on the debug map by the user, not derived. The load-bearing facts: the three lift bottoms Stade / Lac-Intrets / Tour are LEVEL with each other at ~1737 m (our data spread them over 17 m and put Tour 11 m too HIGH, which is why the links between them came out one-way instead of bidirectional), and Surf sits ~8 m above them at ~1745 m. DO NOT replace these with a DEM sample on the next refresh, and do not widen any tolerance to make the automatic pass accept this patch â€” it is right to refuse it.",
   "setNodeElevation": [
-    { "node": "n362907957", "ele": 1761 },
-    { "node": "sn362907957", "ele": 1761 },
-    { "node": "n1326714381", "ele": 1737 },
+    {
+      "node": "n362907957",
+      "ele": 1761
+    },
+    {
+      "node": "n1326714381",
+      "ele": 1737
+    },
     {
       "_why": "Stade Tete au Boeuf (bottom) â€” the node the FIRST pass of this patch missed, and the proof that a half-patched fault is worse than an unpatched one: pinning the four lift bases around it left this one 17-25 m below them, every run bottomed out here, and it became a 22-node trapped basin that did not exist before. Read off the contours by the user like the rest.",
       "node": "n7012682590",
@@ -15,14 +20,15 @@
       "node": "sn7012682590",
       "ele": 1739
     },
-    { "node": "sn1326714381", "ele": 1737 },
     {
       "_why": "The same sunken shelf continues a few metres east — Retour Chavanette's bottom and the node beside Stade. Read off the contours by the user at ~1737-1738 m, i.e. level with the lift bases 27 m away, not 9-17 m below them.",
       "node": "n7858239736",
       "ele": 1737
     },
-    { "node": "sn7858239736", "ele": 1737 },
-    { "node": "n1626744832", "ele": 1737 },
+    {
+      "node": "n1626744832",
+      "ele": 1737
+    },
     {
       "_why": "Lift top station. The OSM point sits at ~1750 m where the cable enters the building; the skier exit is at ~1760 m, which is the elevation that matters for routing (this is the station the runs must leave FROM).",
       "node": "n4578135789",
@@ -48,24 +54,53 @@
       "node": "n1650096130",
       "ele": 2211
     },
-    { "_why": "Stade â€” bottom station, level with Lac-Intrets and Tour.", "node": "n1626744833", "ele": 1737 },
-    { "_why": "Lac-Intrets â€” bottom station, level with Stade and Tour.", "node": "n10989833535", "ele": 1737 },
+    {
+      "_why": "Stade â€” bottom station, level with Lac-Intrets and Tour.",
+      "node": "n1626744833",
+      "ele": 1737
+    },
+    {
+      "_why": "Lac-Intrets â€” bottom station, level with Stade and Tour.",
+      "node": "n10989833535",
+      "ele": 1737
+    },
     {
       "_why": "Tour â€” bottom station. The only node in the patch our data placed too HIGH (1748 vs ~1737), which is why it never looked like part of the same sunken fault.",
       "node": "n1627574944",
       "ele": 1737
     },
-    { "_why": "Surf â€” bottom station, ~8 m ABOVE the other three, not level with them.", "node": "n7021400778", "ele": 1745 },
-    { "node": "n7021400781", "ele": 1742 },
-    { "node": "sn7021400781", "ele": 1742 },
-
-    { "node": "n4205782804", "ele": 1718 },
-    { "node": "n7705862461", "ele": 1772 },
-    { "node": "n3294190215", "ele": 1765 }
+    {
+      "_why": "Surf â€” bottom station, ~8 m ABOVE the other three, not level with them.",
+      "node": "n7021400778",
+      "ele": 1745
+    },
+    {
+      "node": "n7021400781",
+      "ele": 1742
+    },
+    {
+      "node": "sn7021400781",
+      "ele": 1742
+    },
+    {
+      "node": "n4205782804",
+      "ele": 1718
+    },
+    {
+      "node": "n7705862461",
+      "ele": 1772
+    },
+    {
+      "node": "n3294190215",
+      "ele": 1765
+    }
   ],
   "acceptedDeadEnds": [
     {
-      "nodes": ["n13289373141", "n13289373143"],
+      "nodes": [
+        "n13289373141",
+        "n13289373143"
+      ],
       "why": "Top of runs '54' (blue) and '56' (red), Braitaz sector â€” OPEN OSM GAP, signed off pending an upstream fix, NOT a defect on our side. n13289373141 @1626 m has no in-edges at all; n13289373143 @1609 m is flagged only because its sole feed is that orphan. Below them everything drains normally (54 -> n281370219 @1570, 56 -> n7366125507 @1509). Verified: OSM w1448462122 ('54', easy) starts EXACTLY at n13289373141 (vertex 0, 0 m), so we imported it complete; elevations are sound (second DEM agrees within 1-5 m: 1626/1609/1570); there is NO abandoned:/disused: lift anywhere in the box, so unlike Torgon nothing was dismantled; and there is no other piste within 600 m of the top, nor any node higher than 1626 m within 988 m. The nearest lift, the Panthiaz gondola, tops out 348 m away and 139 m BELOW. The piste map has 54 served by TÃ©lÃ©siÃ¨ge de Braitaz, whose top station (1799 m) in OSM only feeds the red 'Blanchot', landing 988 m away. CONCLUSION: OSM is missing the run â€” most likely a blue â€” that brings you from the Braitaz/Blanchot side across to the top of 54. Reviewed on the map by the user, who reached the same conclusion: real terrain, real missing feed, but we do not have the information to draw it. REJECTED ALTERNATIVES: (a) reversing the arrows so you enter 54 from the green below and climb to the top of 56 â€” that is 39 m of ascent over 425 m with the final pitches at 8% and 15%, far beyond maxTraverseClimb (8 m) and flatGradeMax (6%), and not a momentum traverse; (b) deleting the 145 m stub above the junction â€” it is part of OSM way 54 itself, so removing it just moves the orphan down to n13289373143. DO NOT invent a connector here. RE-CHECK ON REFRESH: if OSM gains the missing run these nodes stop being trapped and check:trapped will report this entry as stale â€” that WARN is the signal to come back and delete this sign-off."
     },
     {
@@ -81,11 +116,15 @@
       "why": "Torgon / La Jorette (Swiss side) â€” the 2.1 km blue chain descending from 1621 m through 1503 / 1341 / 1329 / 1181 m to the two dead ends at 1142 and 1143 m in the Vionnaz valley. Reported as 5 trapped + 3 orphan nodes, but it is ONE connected descent, not eight defects. THE LIFTS THAT SERVED IT HAVE BEEN DISMANTLED, and OSM says so explicitly: w44538226 'TÃ©lÃ©siÃ¨ge Jorette' is abandoned:aerialway=chair_lift, w45666705 'TÃ©lÃ©siÃ¨ge Grands Places' is abandoned:aerialway=chair_lift, and w44538224 'Fignards' is disused:aerialway=drag_lift. Their positions land on the stranded chain itself â€” Jorette's centre (46.30924,6.86262) sits on n565736424 @1341 / n14050186237 @1329, and Fignards' centre (46.31198,6.86650) sits on n14050186233 @1181, the node feeding both bottom dead ends. Corroborated off-map: the chairlifts linking Torgon La Jorette to the main Plan-de-Croix area were decommissioned and the link is now shuttle bus only; just beginner lifts remain at La Jorette. So the pipeline is behaving correctly on every count â€” it imports the pistes (they are still drawn, and still skiable downhill) and refuses the abandoned/disused lifts. NEVER bridge this: any connector added here would fabricate a lift that no longer exists in the real world. Signed off by the user after review."
     },
     {
-      "nodes": ["n14050214809"],
+      "nodes": [
+        "n14050214809"
+      ],
       "why": "Morzine, foot of the 'CrÃ´t' blue (1164 m). Reviewed on the map by the user: this is a run that legitimately ends AT THE HOUSES it serves â€” you ski in to your door and walk from there. Traced back, it is a continuous 1.2 km descent (Crozats black -> CrÃ´t blue) off the Morzine side, and it stops 277 m from the nearest lift station and 10 m BELOW it, i.e. on the valley floor in the village, not short of a lift it ought to reach. Nothing for the pipeline to connect: there is no snow onward. Counted as 'trapped' only because a skier cannot ride back up from the doorstep, which is true and correct."
     },
     {
-      "nodes": ["n632790668"],
+      "nodes": [
+        "n632790668"
+      ],
       "why": "ChÃ¢tel side, foot of an unnamed blue at 1327 m. Same call as the Morzine CrÃ´t dead end above and reviewed the same way by the user: a genuine ski-in-to-the-houses run-out. It is the bottom of a continuous 2.4 km blue descent from 1840 m, ending 257 m from the nearest lift station and 15 m below it. Real terrain that really does end there, so it stays in the graph and routes normally; it is only removed from the audit's trapped count."
     }
   ],

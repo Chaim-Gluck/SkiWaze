@@ -26,16 +26,16 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.stantonamarlberg.com/en/"
   },
-  "generatedAt": "2026-09-03T12:44:26.943Z",
+  "generatedAt": "2026-09-06T04:40:55.554Z",
   "stats": {
     "resortId": "st-anton-arlberg",
-    "nodeCount": 1087,
-    "edgeCount": 2826,
-    "pisteEdges": 1196,
+    "nodeCount": 1088,
+    "edgeCount": 2801,
+    "pisteEdges": 1197,
     "liftEdges": 140,
-    "connectorEdges": 1490,
+    "connectorEdges": 1464,
     "meaningfulPoints": 576,
-    "reachableFromLifts": 1083,
+    "reachableFromLifts": 1084,
     "unreachableNodes": 4,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -531,19 +531,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 144 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 145 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 374 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 377 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 343 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 351 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 45 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 44 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

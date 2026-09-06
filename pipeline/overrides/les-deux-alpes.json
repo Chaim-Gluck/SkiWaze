@@ -1,18 +1,30 @@
 {
   "_comment": "Les 2 Alpes corrections. (1) OSM tags a disused run 'ancienne piste intermédiaire \"Bons\"' (ancienne = former) NW near Mont-de-Lans; it is not an operational piste and imports as a disconnected island, so remove it. (2) The Venosc village gondola ('Venosc', 991 m -> 1632 m) tops out ~410 m from the resort base with no piste/path tagged from its top station, leaving it a 2-node island. Add a pedestrian-transfer connector from its top (n2296628004) to the Super Venosc gondola base (n13991766869, 1692 m)   so skiers arriving from Venosc can continue up. (3) Mont-de-Lans glacier plateau: open-elevation quantises this area into flat 3379/3275/3268 blobs, which invented a false basin. Cross-checking every plateau node against two independent DEMs (opentopodata eudem25m + srtm30m, which agree with each other to within 4-7 m here) shows n336366315 and n615079377 are ~30 m too HIGH and the NW cluster around Puy Salie 1 is ~14-17 m too high. That reversed two arrows: the plateau really falls to the WEST, but the bad heights made 'Puy Salie 1' point back east/NE and forced routes through a fake ~20 m uphill jog. Correct them to the DEM consensus. The four NW-cluster nodes are snapped to one shared value (3366, the mean of their 3362-3371 DEM readings) because they sit 15-36 m apart on a genuinely flat shelf - giving each its own noisy value would fabricate 14-17% micro-pitches out of DEM noise. Nodes whose two DEMs disagree by more than ~8 m (the 3414 summit blob) are deliberately left alone.",
-    "setNodeElevation": [
-      { "node": "n336366315", "ele": 3246 },
-      { "node": "n615079377", "ele": 3237 },
-      { "node": "n9649479129", "ele": 3227 },
-      { "node": "n9649479140", "ele": 3366 },
-      { "node": "n813525347", "ele": 3366 },
-      { "node": "n813524822", "ele": 3366 },
-      { "node": "sn813524822", "ele": 3366 }
-    ],
-    "removePistes": [
-    { "name": "ancienne piste intermédiare \"Bons\"" }
+  "setNodeElevation": [
+    {
+      "node": "n336366315",
+      "ele": 3246
+    },
+    {
+      "node": "n9649479129",
+      "ele": 3227
+    },
+    {
+      "node": "n9649479140",
+      "ele": 3366
+    }
+  ],
+  "removePistes": [
+    {
+      "name": "ancienne piste intermédiare \"Bons\""
+    }
   ],
   "addConnectors": [
-    { "from": "n2296628004", "to": "n13991766869", "kind": "flat_traverse", "bidirectional": true }
+    {
+      "from": "n2296628004",
+      "to": "n13991766869",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    }
   ]
 }

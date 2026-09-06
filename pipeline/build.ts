@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { RESORTS } from '../src/config/resorts';
 import { DEFAULT_GRAPH_CONSTANTS } from '../src/config/graphConstants';
 import type { Resort } from '../src/types/domain';
-import { fetchResortOsm } from './lib/overpass';
+import { fetchResortOsm, fetchResortRoads } from './lib/overpass';
 import { normalizeLift, normalizePiste } from './lib/normalize';
 import { dropExcludedFeatures } from './lib/excludeArea';
 import { enrichElevations } from './lib/elevation';
@@ -21,6 +21,8 @@ import { dropInertFragments } from './lib/inertFragments';
 import { linkLiftBaseSkiIns } from './lib/liftSkiIn';
 import { weldCoincidentNodes } from './lib/weldCoincident';
 import { markSpineDuplicates } from './lib/spineDuplicates';
+import { dropTraversesAlongSurfaceLifts } from './lib/surfaceLiftParallel';
+import { dropSyntheticRoadCrossings } from './lib/roadCrossing';
 import { printReport, reachableFromLiftStations, validateGraph } from './lib/validate';
 import { emitResort } from './lib/emit';
 import { auditGraph, auditSummary, acceptedDeadEndNodes } from './_phantoms';
@@ -197,6 +199,37 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
       `  spine duplicates: ${dup.edges} edge(s) / ${(dup.lengthM / 1000).toFixed(1)} km ` +
         `retracing an adopted spine across ${dup.polygons} polygon(s)`,
     );
+  }
+
+  // A surface lift proves its own direction is not self-propelled, so a flat traverse running the
+  // lift's uphill line between its own two stations contradicts it. Before pruning, because this
+  // removes edges and pruning's redundancy proof must be the last thing that moves. See
+  // surfaceLiftParallel.ts.
+  const par = dropTraversesAlongSurfaceLifts(graph);
+  graph = par.graph;
+  if (par.dropped.length > 0) {
+    console.log(
+      `  dropped ${par.dropped.length} flat traverse(s) running along a surface lift` +
+        (par.keptStranding > 0 ? ` (kept ${par.keptStranding} that would strand terrain)` : ''),
+    );
+  }
+
+  // Every synthetic edge claims "a skier can get between these two points" on geometry alone, which
+  // is blind to what lies in between. Where a public road does, the claim is false. Roads arrive
+  // under their own cache key, so this is skipped (loudly) when Overpass is unreachable rather than
+  // emitting a graph that was never checked. See roadCrossing.ts.
+  const roads = await fetchResortRoads(resort, { refresh: opts.refresh, ttlDays: opts.ttlDays });
+  if (roads === null) {
+    console.warn('  WARNING: roads unavailable — synthetic road-crossing check SKIPPED');
+  } else {
+    const rc = dropSyntheticRoadCrossings(graph, roads);
+    graph = rc.graph;
+    if (rc.dropped.length > 0) {
+      console.log(
+        `  dropped ${rc.dropped.length} app-inferred link(s) crossing a road` +
+          (rc.keptStranding > 0 ? ` (kept ${rc.keptStranding} that would strand terrain)` : ''),
+      );
+    }
   }
 
   // Last of all, and deliberately so: pruning proves an arm redundant against the graph around it,

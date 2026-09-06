@@ -25,16 +25,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.paradiski.com/"
   },
-  "generatedAt": "2026-09-03T12:43:18.211Z",
+  "generatedAt": "2026-09-06T04:46:50.018Z",
   "stats": {
     "resortId": "paradiski",
-    "nodeCount": 2960,
-    "edgeCount": 8952,
-    "pisteEdges": 3033,
+    "nodeCount": 2961,
+    "edgeCount": 8895,
+    "pisteEdges": 3029,
     "liftEdges": 220,
-    "connectorEdges": 5699,
+    "connectorEdges": 5646,
     "meaningfulPoints": 727,
-    "reachableFromLifts": 2958,
+    "reachableFromLifts": 2959,
     "unreachableNodes": 2,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -875,11 +875,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 1191 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 1193 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 217 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 214 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

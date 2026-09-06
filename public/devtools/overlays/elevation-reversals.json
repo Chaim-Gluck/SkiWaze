@@ -1,14 +1,14 @@
 {
-  "ischgl-samnaun": {
+  "val-thorens-3vallees": {
     "focus": {
       "bounds": [
         [
-          10.32143,
-          46.9707145665148
+          6.5574298,
+          45.3109409
         ],
         [
-          10.321946372603938,
-          46.9710566
+          6.558074,
+          45.3118736
         ]
       ]
     },
@@ -16,39 +16,205 @@
       {
         "coords": [
           [
-            10.32143,
-            46.9710566
+            6.558074,
+            45.3109409
           ],
           [
-            10.321946372603938,
-            46.9707145665148
+            6.557897,
+            45.3109838
+          ],
+          [
+            6.5577092,
+            45.31102
+          ],
+          [
+            6.5576608,
+            45.3110328
+          ],
+          [
+            6.5576083,
+            45.3110494
+          ],
+          [
+            6.5575642,
+            45.311073
+          ],
+          [
+            6.5575227,
+            45.3110995
+          ],
+          [
+            6.5574974,
+            45.3111249
+          ],
+          [
+            6.5574801,
+            45.3111504
+          ],
+          [
+            6.5574503,
+            45.3112079
+          ],
+          [
+            6.5574378,
+            45.3112457
+          ],
+          [
+            6.557432,
+            45.3112779
+          ],
+          [
+            6.5574298,
+            45.3113233
+          ],
+          [
+            6.5574336,
+            45.3113555
+          ],
+          [
+            6.5574414,
+            45.3113821
+          ],
+          [
+            6.5574674,
+            45.3114394
+          ],
+          [
+            6.557512,
+            45.3114911
+          ],
+          [
+            6.5575798,
+            45.3115333
+          ],
+          [
+            6.5577022,
+            45.3115887
+          ],
+          [
+            6.5577997,
+            45.311627
+          ],
+          [
+            6.5578184,
+            45.3116354
+          ],
+          [
+            6.5578974,
+            45.3116708
+          ],
+          [
+            6.5579323,
+            45.3116966
+          ],
+          [
+            6.557978,
+            45.3117357
+          ],
+          [
+            6.5580227,
+            45.3117739
+          ],
+          [
+            6.5579964,
+            45.3118736
           ]
         ],
         "color": "#f59e0b",
         "width": 4,
-        "label": "n364108865->sn1000000000089 reverses (margin 12 m; fix n364108865 our2464~terr2442  sn1000000000089 our2455~terr2454)"
+        "label": "n678966602->n6882724007 reverses (margin 10 m; fix n678966602 our2220~terr2203  n6882724007 our2214~terr2213)"
       }
     ],
     "points": [
       {
         "at": [
-          10.321946372603938,
-          46.9707145665148
+          6.5579964,
+          45.3118736
         ],
         "color": "#22a06b",
         "r": 16,
-        "tag": "sn1000000000089",
-        "label": "SUGGESTED TOP (descend from here) Â· sn1000000000089 Â· corrected 2454 m"
+        "tag": "n6882724007",
+        "label": "SUGGESTED TOP (descend from here) Â· n6882724007 Â· corrected 2213 m"
       },
       {
         "at": [
-          10.32143,
-          46.9710566
+          6.558074,
+          45.3109409
         ],
         "color": "#f59e0b",
         "r": 14,
-        "tag": "n364108865",
-        "label": "current top (looks too high) Â· n364108865 Â· our 2464->2442 m"
+        "tag": "n678966602",
+        "label": "current top (looks too high) Â· n678966602 Â· our 2220->2203 m"
+      }
+    ],
+    "notes": "<b>1 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"
+  },
+  "cervinia-zermatt": {
+    "focus": {
+      "bounds": [
+        [
+          7.7079574,
+          45.9343805
+        ],
+        [
+          7.7088497,
+          45.9358812
+        ]
+      ]
+    },
+    "lines": [
+      {
+        "coords": [
+          [
+            7.7079574,
+            45.9343805
+          ],
+          [
+            7.7082718,
+            45.9344319
+          ],
+          [
+            7.708514,
+            45.9345243
+          ],
+          [
+            7.7086035,
+            45.9347312
+          ],
+          [
+            7.7087356,
+            45.9352073
+          ],
+          [
+            7.7088497,
+            45.9358812
+          ]
+        ],
+        "color": "#e11d1d",
+        "width": 4,
+        "label": "n563317811->n1175674844 reverses (margin 15 m; fix n563317811 our3457~terr3424  n1175674844 our3426~terr3439)"
+      }
+    ],
+    "points": [
+      {
+        "at": [
+          7.7088497,
+          45.9358812
+        ],
+        "color": "#22a06b",
+        "r": 16,
+        "tag": "n1175674844",
+        "label": "SUGGESTED TOP (descend from here) Â· n1175674844 Â· corrected 3439 m"
+      },
+      {
+        "at": [
+          7.7079574,
+          45.9343805
+        ],
+        "color": "#f59e0b",
+        "r": 14,
+        "tag": "n563317811",
+        "label": "current top (looks too high) Â· n563317811 Â· our 3457->3424 m"
       }
     ],
     "notes": "<b>1 elevation-reversal candidate(s).</b> Each line is a piste that would flip direction once mis-sampled elevations are corrected. <span style=\"color:#22a06b\">Green</span> = where the run SHOULD start (top per corrected DEM); it currently starts at the <span style=\"color:#f59e0b\">orange</span> end. Red line = strong (an independent point DEM agrees), orange line = marginal (verify carefully). Check the topo layer: does the slope actually fall away from the green dot?"

@@ -31,14 +31,14 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-09-03T12:34:25.712Z",
+  "generatedAt": "2026-09-06T04:44:59.213Z",
   "stats": {
     "resortId": "sella-ronda",
     "nodeCount": 1936,
-    "edgeCount": 5545,
+    "edgeCount": 5449,
     "pisteEdges": 1725,
     "liftEdges": 383,
-    "connectorEdges": 3437,
+    "connectorEdges": 3341,
     "meaningfulPoints": 819,
     "reachableFromLifts": 1923,
     "unreachableNodes": 13,
@@ -1103,7 +1103,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 983 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 985 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
@@ -1111,7 +1111,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 88 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 87 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

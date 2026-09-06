@@ -17,14 +17,14 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.visitmonterosa.com/en/"
   },
-  "generatedAt": "2026-09-03T12:47:02.222Z",
+  "generatedAt": "2026-09-06T04:47:38.107Z",
   "stats": {
     "resortId": "monterosa-ski",
     "nodeCount": 192,
-    "edgeCount": 483,
+    "edgeCount": 482,
     "pisteEdges": 182,
     "liftEdges": 53,
-    "connectorEdges": 248,
+    "connectorEdges": 247,
     "meaningfulPoints": 113,
     "reachableFromLifts": 192,
     "unreachableNodes": 0,

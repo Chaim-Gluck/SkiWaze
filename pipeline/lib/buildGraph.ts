@@ -610,8 +610,15 @@ export function buildResortGraph(
         // lateral transfers across gateways. Synthetic endpoint-snap connectors below already use
         // this "climb cap only" rule. The cap is what keeps it safe: it is the reason this cannot
         // turn a long steep run into a free lift.
+        //
+        // An explicit OSM `oneway=no` waives the same half for the same reason, but on far better
+        // evidence: the gradient test is our inference about whether a skier can get back up, and
+        // the tag is the mapper answering that question directly. See `pisteBidirectionalFor`.
         const grade = Math.abs(drop) / lengthM;
-        const gradeOk = grade <= c.flatGradeMax || (piste.skeletonArm === true && !process.env.SKEL_NOARMGRADE);
+        const gradeOk =
+          grade <= c.flatGradeMax ||
+          piste.bidirectional === true ||
+          (piste.skeletonArm === true && !process.env.SKEL_NOARMGRADE);
         if (gradeOk && Math.abs(drop) <= c.maxTraverseClimb) {
           const reverse = [...geometry].reverse();
           edges.push({
@@ -699,9 +706,13 @@ export function buildResortGraph(
       if (lengthM < 1) continue;
       const aEle = a.ele ?? 0;
       const bEle = b.ele ?? 0;
-      // Bottom = lower station.
-      const bottomId = aEle <= bEle ? seg.from : seg.to;
-      const topId = aEle <= bEle ? seg.to : seg.from;
+      // Bottom = lower station — except when the two stations are so close in height that the
+      // difference is DEM noise rather than a slope, in which case the way's drawn direction is
+      // the better witness. `segmentWay` preserves OSM order, so `seg.from` is the drawn-first
+      // end. See `liftFlatDirectionM` for the fleet measurement behind this.
+      const flatLift = Math.abs(aEle - bEle) < c.liftFlatDirectionM;
+      const bottomId = flatLift ? seg.from : aEle <= bEle ? seg.from : seg.to;
+      const topId = flatLift ? seg.to : aEle <= bEle ? seg.to : seg.from;
       const upGeom = bottomId === seg.from ? seg.geometry : [...seg.geometry].reverse();
       const ride = osmRideSeconds(lift.durationSec);
       const drop = Math.abs((b.ele ?? 0) - (a.ele ?? 0));

@@ -39,6 +39,28 @@ export interface GraphConstants {
   /** Max absolute rise (m) allowed on any flat traverse (reverse cat-track / rescue) — you can skate a small rise, not climb. */
   maxTraverseClimb: number;
   /**
+   * Below this station-to-station height difference (m), a lift's direction is taken from the way
+   * as OSM drew it instead of from its endpoint elevations.
+   *
+   * Lifts are otherwise oriented bottom = lower station, which is right wherever the drop is real
+   * but is decided by pure DEM noise on flat ground — and it silently *inverts* a lift. Madonna's
+   * "Tapis Roulant Grostè Express - Fortini" (w107120077) is a magic carpet over a road viaduct,
+   * drawn east -> west; its two stations sample 1651 m and 1649 m, so 2 m over a 134 m bridge
+   * flipped it west -> east and handed skiers a free crossing in the one direction that needs the
+   * carpet.
+   *
+   * The drawing is the better witness here: measured fleet-wide, our elevation-derived direction
+   * disagrees with the drawn one for 23.1% of lifts under 2 m but only 0.8% of lifts over 20 m
+   * (8 of 1026) — i.e. mappers draw a lift bottom -> top ~99% of the time, so a disagreement on a
+   * flat lift is far more likely to be our error than theirs. Above the threshold elevation must
+   * keep winning, because those few big-drop disagreements are genuine top-down drawings
+   * (Trockener Steg - Klein Matterhorn at 844 m, Dixence - Lac des Dix at 232 m).
+   *
+   * This can only change a lift whose two signals already disagree, so the blast radius is exactly
+   * the 13 sub-10 m disagreements — all magic carpets, rope tows, people movers and short drags.
+   */
+  liftFlatDirectionM: number;
+  /**
    * Max rise (m) of a run's *opening* climb away from a lift station that we still model as an
    * access push rather than a mis-drawn way. Piste segments are oriented high -> low from their
    * endpoint elevations, which is right almost everywhere and wrong for a run that leaves its lift
@@ -94,6 +116,7 @@ export const DEFAULT_GRAPH_CONSTANTS: GraphConstants = {
   rescueLineRadius: 130,
   flatGradeMax: 0.06,
   maxTraverseClimb: 8,
+  liftFlatDirectionM: 10,
   liftAccessClimbMax: 40,
   flatJunctionRadius: 120,
   flatJunctionDV: 8,

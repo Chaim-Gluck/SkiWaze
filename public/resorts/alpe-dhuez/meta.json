@@ -17,16 +17,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.alpedhuez.com/en/"
   },
-  "generatedAt": "2026-09-03T12:46:28.051Z",
+  "generatedAt": "2026-09-06T04:47:34.350Z",
   "stats": {
     "resortId": "alpe-dhuez",
-    "nodeCount": 800,
-    "edgeCount": 2396,
+    "nodeCount": 799,
+    "edgeCount": 2330,
     "pisteEdges": 735,
     "liftEdges": 126,
-    "connectorEdges": 1535,
+    "connectorEdges": 1469,
     "meaningfulPoints": 335,
-    "reachableFromLifts": 800,
+    "reachableFromLifts": 799,
     "unreachableNodes": 0,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -458,15 +458,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 139 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 138 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 463 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 461 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 321 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 322 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

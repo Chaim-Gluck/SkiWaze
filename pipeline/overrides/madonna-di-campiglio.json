@@ -1,18 +1,40 @@
 {
   "setNodeElevation": [
-    { "node": "n298987361", "ele": 1952 },
-    { "node": "n5420317398", "ele": 1635 },
-    { "node": "sn1798688844", "ele": 1956 },
-    { "node": "n4575135898", "ele": 1903 },
-    { "node": "n603385508", "ele": 2097 },
-    { "node": "sn297449294", "ele": 2097 },
-    { "node": "n3986850382", "ele": 2079 },
-    { "node": "n4575900382", "ele": 1735 },
-    { "node": "n4090685615", "ele": 1719 }
+    {
+      "node": "n298987361",
+      "ele": 1952
+    },
+    {
+      "node": "n5420317398",
+      "ele": 1635
+    },
+    {
+      "node": "n4575135898",
+      "ele": 1903
+    },
+    {
+      "node": "n603385508",
+      "ele": 2097
+    },
+    {
+      "node": "n3986850382",
+      "ele": 2079
+    },
+    {
+      "node": "n4575900382",
+      "ele": 1735
+    },
+    {
+      "node": "n4090685615",
+      "ele": 1719
+    }
   ],
   "splitPisteAt": [
     {
-      "at": [10.79796, 46.17281],
+      "at": [
+        10.79796,
+        46.17281
+      ],
       "pisteRef": "109",
       "node": "x109apex",
       "radius": 20
@@ -26,12 +48,6 @@
       "bidirectional": true
     },
     {
-      "from": "n603385508",
-      "to": "sn297449294",
-      "kind": "flat_traverse",
-      "bidirectional": true
-    },
-    {
       "from": "n6200882916",
       "to": "n2499552133",
       "kind": "flat_traverse",
@@ -40,18 +56,6 @@
     {
       "from": "n2499552133",
       "to": "n2499552153",
-      "kind": "flat_traverse",
-      "bidirectional": true
-    },
-    {
-      "from": "n1798688856",
-      "to": "sn1798688844",
-      "kind": "flat_traverse",
-      "bidirectional": true
-    },
-    {
-      "from": "n1798688844",
-      "to": "sn1798688844",
       "kind": "flat_traverse",
       "bidirectional": true
     },

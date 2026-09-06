@@ -28,6 +28,12 @@ export interface NormPiste {
   /** See `levelKeyFor`. */
   levelKey?: string;
   /**
+   * OSM explicitly says this run is two-way (`oneway=no`), so it may be traversed back up even
+   * where its gradient exceeds `flatGradeMax`. Only ever *grants* a reverse direction — see
+   * `pisteBidirectionalFor`.
+   */
+  bidirectional?: boolean;
+  /**
    * True when OSM says this is not a piste at all but off-piste/freeride terrain.
    *
    * We used to map `piste:difficulty=freeride|extreme` straight to black and route on it like any
@@ -167,6 +173,30 @@ function isExpertBackcountry(tags: Record<string, string>): boolean {
   return tags['piste:difficulty'] === 'expert' && tags['piste:grooming'] === 'backcountry';
 }
 
+/**
+ * A run OSM explicitly marks two-way (`oneway=no`).
+ *
+ * A piste is one-way downhill by default, and it also earns a reverse traverse when it is gentle
+ * enough (`flatGradeMax`). That gradient test is our inference; `oneway=no` is the mapper telling
+ * us directly, and it was being thrown away — `oneway` was read for lifts only. Madonna's link
+ * from the Fortini gondola base to the Grostè carpet (w1131930104, novice, `oneway=no`) drops 4 m
+ * over 66 m, a 6.06% grade that misses the 6% cut-off by a hair, so it shipped one-way against an
+ * explicit statement that it is not.
+ *
+ * Like the lift rule, this is a deliberate minority signal rather than an editor default: 349 of
+ * 9986 downhill/connection ways carry it, against 1449 tagged `oneway=yes`. Alpe d'Huez settles
+ * what it means there — nine ways named "zone plate" (flat zone) all carry it.
+ *
+ * Deliberately one-directional, exactly as `bidirectionalFor` is for lifts: this only ever *grants*
+ * the reverse traverse, and only by waiving the *gradient* half of the test. The absolute
+ * `maxTraverseClimb` cap still applies, so it can never turn a real descent into a free climb, and
+ * `oneway=yes` is never honoured in the other direction — on a piste it usually just restates the
+ * default, so believing it would strand terrain on no evidence.
+ */
+function pisteBidirectionalFor(tags: Record<string, string>): boolean | undefined {
+  return tags['oneway'] === 'no' ? true : undefined;
+}
+
 export function normalizePiste(w: RawWay): NormPiste {
   const difficulty = w.tags['piste:difficulty'];
   const offPiste =
@@ -188,6 +218,7 @@ export function normalizePiste(w: RawWay): NormPiste {
     area: isPisteArea(w),
     levelKey: levelKeyFor(w.tags),
     offPiste,
+    bidirectional: pisteBidirectionalFor(w.tags),
     points: toPoints(w),
   };
 }

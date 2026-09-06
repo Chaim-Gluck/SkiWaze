@@ -2,7 +2,15 @@
   "_comment": "St. Anton am Arlberg (Ski Arlberg) corrections. Main fix: reconnect the Zurs->Lech Madloch descent (OSM gap) so the Flexenbahn interconnection routes end-to-end; plus a few stray-endpoint snaps.",
   "_comment_stuben": "Stuben am Arlberg. The whole Albona Nord black run plus the two village drags (Walchlift, Angerlift) formed one 13-node trapped basin, and the two halves were only joined by a 178 m connector our rescue pass invented across the Arlbergstrasse / Alfenz, which made the nursery area look reachable. Two separate corrections: (a) the real way off Albona Nord is a level traverse partway down the run over to the Rauztobel (102) run-out, which flows straight into the Albonabahn I base - OSM has no node there, so splitPisteAt mints one at the branch point; (b) the invented bridge to the drags is removed, leaving them as the genuinely separate basin they are (signed off below).",
   "splitPisteAt": [
-    { "at": [10.15614, 47.1362], "pisteName": "Albona Nord", "radius": 25, "node": "xStubenTraverse" }
+    {
+      "at": [
+        10.15614,
+        47.1362
+      ],
+      "pisteName": "Albona Nord",
+      "radius": 25,
+      "node": "xStubenTraverse"
+    }
   ],
   "removeConnectors": [
     {
@@ -13,41 +21,112 @@
   ],
   "acceptedBasins": [
     {
-      "nodes": ["n3457700195", "n5465166615", "n3457700194", "n12812475759"],
+      "nodes": [
+        "n3457700195",
+        "n5465166615",
+        "n3457700194",
+        "n12812475759"
+      ],
       "why": "Fluehenlift plus its run 218 Fluehen, on the Rufikopf side of Lech village. This is a ski-school / practice slope, not part of the through-network: you can ski down it but nothing links its bottom (1442 m) back into the circuit. The nearest node outside is the Bergbahn Lech - Oberlech base, 172 m away and 4 m higher - a village walk across the Lechtalstrasse, not a ski link. Reviewed on the map: signed off rather than bridged. If Lech ever grooms a real connector here, drop this entry and add an addConnectors instead."
     },
     {
-      "nodes": ["n3339664233", "n1516352681", "n1516352760", "n1653460881"],
+      "nodes": [
+        "n3339664233",
+        "n1516352681",
+        "n1516352760",
+        "n1653460881"
+      ],
       "why": "Vorderes / Hinteres Maroital, the St. Anton ski routes that drop off Milchboeden east into the Rosanna valley. They bottom out at 1497 m with no node of any kind within 450 m and the cheapest escape climbing 246 m: a classic one-way valley descent that ends at the road, where you take the train or bus back. Nothing to add and nothing to remove, so it is signed off rather than fixed."
     },
     {
-      "nodes": ["n1259978729", "n1165759951", "n1259978687", "n1259978714", "n1165759824"],
+      "nodes": [
+        "n1259978729",
+        "n1165759951",
+        "n1259978687",
+        "n1259978714",
+        "n1165759824"
+      ],
       "why": "Walchlift and Angerlift, the two village nursery drags on the north side of Stuben, with their own short pistes. They sit across the main Arlbergstrasse and the Alfenz from the ski area proper, and no run or lift links them to it - you walk. Reviewed on the map: correctly disconnected, so this is signed off rather than bridged."
     },
     {
-      "nodes": ["n6208824734", "n5125495652", "n1875105036", "n6208824730", "n1795360560"],
+      "nodes": [
+        "n6208824734",
+        "n5125495652",
+        "n1875105036",
+        "n6208824730",
+        "n1795360560"
+      ],
       "why": "Schroecken village (1258-1512 m). Runs 310 Skiroute - Nesslegg - Schroecken, 309 Skiroute - Aelpele (Dorfabfahrt Schroecken) and Klemm all bottom out in the village and nothing carries a skier back up: the cheapest escape climbs 243 m over 623 m. That is correct, because the lift that would close it IS NOT BUILT - the village gondola is OSM w660999299 aerialway=proposed, note 'in Planung'. Today you ride the ski bus. Signed off rather than bridged; when the gondola opens, drop this entry and rebuild rather than adding a connector."
     }
   ],
   "addConnectors": [
-    { "from": "xStubenTraverse", "to": "sn249417956", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n1623687503", "to": "n279736879", "kind": "skiable_down" },
-    { "_why": "Lech village floor -> Hinterwieslift bottom. Repointed from n1436596085: that id belonged to an aerialway=station building polygon, which the non-passenger-lift filter now drops, so the merge cluster lost its id-holder. n3457627022 is the same spot, 6 m away.",
-      "from": "n1437496212", "to": "n3457627022", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n12798747121", "to": "n487179638", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n612548368", "to": "n6682123969", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n327300760", "to": "n328068749", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n327358947", "to": "n6711103844", "kind": "flat_traverse", "bidirectional": true },
-    { "from": "n327317441", "to": "n279609294", "kind": "flat_traverse", "bidirectional": true }
+    {
+      "from": "xStubenTraverse",
+      "to": "sn249417956",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "_why": "Lech village floor -> Hinterwieslift bottom. Repointed from n1436596085: that id belonged to an aerialway=station building polygon, which the non-passenger-lift filter now drops, so the merge cluster lost its id-holder. n3457627022 is the same spot, 6 m away.",
+      "from": "n1437496212",
+      "to": "n3457627022",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "from": "n12798747121",
+      "to": "n487179638",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "from": "n612548368",
+      "to": "n6682123969",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "from": "n327300760",
+      "to": "n328068749",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "from": "n327358947",
+      "to": "n6711103844",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    },
+    {
+      "from": "n327317441",
+      "to": "n279609294",
+      "kind": "flat_traverse",
+      "bidirectional": true
+    }
   ],
   "_comment2": "False-elevation cluster at the Muggengrat junction (~47.164, 10.135). A DEM spike put n325116111 (144 Muggengrat - Taeli top) 62 m too high while the surrounding knoll sampled ~25-30 m too low, so every piste there drained INTO n325116082 instead of out of it, orphaning the two Muggengrat tops. Values are the corrected terrain samples from npm run check:elevation st-anton-arlberg; n325116019 (lift station on the same knoll) was 29 m low but under the 40 m audit threshold.",
   "_comment3": "n327317441<->n279609294 (~47.152, 10.222) is a flat saddle where skiers off either neighbouring lift top choose to descend east or west. The whole basin samples ~30 m low on the reference DEM, so the audit flagged the 61 m link as a reversal; the real answer is that it is two-way, not backwards. A bidirectional flat_traverse expresses that (setNodeElevation can only demote a flat traverse to a one-way piste, never promote one).",
   "setNodeElevation": [
-    { "node": "n325116111", "ele": 2384 },
-    { "node": "n325116101", "ele": 2415 },
-    { "node": "n325116082", "ele": 2429 },
-    { "node": "n705524894", "ele": 2416 },
-    { "node": "n325116019", "ele": 2436 }
+    {
+      "node": "n325116111",
+      "ele": 2384
+    },
+    {
+      "node": "n325116101",
+      "ele": 2415
+    },
+    {
+      "node": "n325116082",
+      "ele": 2429
+    },
+    {
+      "node": "n705524894",
+      "ele": 2416
+    },
+    {
+      "node": "n325116019",
+      "ele": 2436
+    }
   ],
   "ignoreReversals": [
     {

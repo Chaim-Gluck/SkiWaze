@@ -127,6 +127,51 @@ export async function fetchResortOsm(
 }
 
 /**
+ * Public roads carrying motor traffic. Deliberately excludes `service`, `track` and `path`: a
+ * resort access track or car-park aisle is routinely skied straight across, and treating one as a
+ * barrier would delete real links.
+ */
+const ROAD_HIGHWAYS = 'motorway|trunk|primary|secondary|tertiary|unclassified|residential';
+
+/**
+ * Roads are fetched and cached UNDER THEIR OWN KEY, not folded into `buildQuery`. The piste/lift
+ * cache is keyed by resort id and TTL only, so extending that query would silently serve stale data
+ * until every resort was force-refreshed (see the cache gotcha in AGENTS.md). A separate key lets
+ * roads arrive for an already-built resort without re-fetching its terrain.
+ *
+ * Returns `null` — not `[]` — when Overpass cannot be reached, so the caller can skip the pass with
+ * a warning instead of quietly emitting a graph that was never checked against roads.
+ */
+export async function fetchResortRoads(
+  r: Resort,
+  opts: { refresh?: boolean; ttlDays?: number } = {},
+): Promise<RawWay[] | null> {
+  const ttlDays = opts.ttlDays ?? DEFAULT_TTL_DAYS;
+  const cacheKey = `roads-${r.id}`;
+
+  if (!opts.refresh) {
+    const cached = readCache<RawWay[]>(cacheKey, ttlDays);
+    if (cached) return cached;
+  }
+
+  const { minLat, minLon, maxLat, maxLon } = r.bbox;
+  const query = `[out:json][timeout:180];way["highway"~"^(${ROAD_HIGHWAYS})$"](${minLat},${minLon},${maxLat},${maxLon});out geom;`;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const endpoint = OVERPASS_ENDPOINTS[attempt % OVERPASS_ENDPOINTS.length];
+    try {
+      const ways = await postOverpass(endpoint, query);
+      writeCache(cacheKey, ways);
+      return ways;
+    } catch (err) {
+      const backoff = Math.min(30000, 3000 * 2 ** Math.floor(attempt / OVERPASS_ENDPOINTS.length));
+      console.warn(`  road fetch failed (${endpoint}); retrying in ${backoff / 1000}s: ${String(err)}`);
+      await sleep(backoff);
+    }
+  }
+  return null;
+}
+
+/**
  * Lifts that run on the ground rather than on a cable, which OSM tags under `railway` — so a query
  * for `aerialway` alone silently misses them. They are ordinary ski lifts to a skier and several are
  * a sector's ONLY way back up: without them Les Arcs' valley return, Tignes' Funival to the Grande

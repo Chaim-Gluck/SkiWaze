@@ -18,16 +18,16 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-09-03T12:28:24.009Z",
+  "generatedAt": "2026-09-06T04:44:45.846Z",
   "stats": {
     "resortId": "cervinia-zermatt",
-    "nodeCount": 843,
-    "edgeCount": 2229,
-    "pisteEdges": 870,
+    "nodeCount": 842,
+    "edgeCount": 2217,
+    "pisteEdges": 869,
     "liftEdges": 106,
-    "connectorEdges": 1253,
+    "connectorEdges": 1242,
     "meaningfulPoints": 339,
-    "reachableFromLifts": 836,
+    "reachableFromLifts": 835,
     "unreachableNodes": 7,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -374,7 +374,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 118 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 117 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
@@ -382,11 +382,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 280 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 282 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 41 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 40 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

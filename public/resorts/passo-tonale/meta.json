@@ -17,14 +17,14 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.pontedilegnotonale.com/en/"
   },
-  "generatedAt": "2026-09-03T12:47:11.195Z",
+  "generatedAt": "2026-09-06T04:47:39.872Z",
   "stats": {
     "resortId": "passo-tonale",
     "nodeCount": 205,
-    "edgeCount": 510,
+    "edgeCount": 509,
     "pisteEdges": 206,
     "liftEdges": 40,
-    "connectorEdges": 264,
+    "connectorEdges": 263,
     "meaningfulPoints": 114,
     "reachableFromLifts": 205,
     "unreachableNodes": 0,
@@ -181,7 +181,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 8 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 7 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
