@@ -85,7 +85,9 @@ body:lang(he) {
 .logo-pin { height: 56px; width: auto; display: block; }
 .logo-words { display: flex; flex-direction: column; line-height: 1; }
 .logo-name { font-weight: 800; font-size: 34px; letter-spacing: 0.5px; color: var(--text); }
-.logo-waze {
+/* The gradient half of the wordmark. Class name is generic on purpose: the visible name has changed
+   once already, and a class named after the letters it happens to hold goes stale with it. */
+.logo-accent {
   background: linear-gradient(90deg, #2196f3, #00c853);
   -webkit-background-clip: text;
   background-clip: text;

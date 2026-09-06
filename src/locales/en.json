@@ -368,8 +368,8 @@
       "toDest": "Share the “To” destination",
       "toDestNamed": "Share the “To” destination: {{name}}",
       "thisSpot": "this spot",
-      "msgHere": "📍 Meet me at {{place}} - open this SkiWaze link to navigate there:",
-      "msgMe": "📍 Come meet me on the slopes! Open this SkiWaze link and it'll route you to my location:"
+      "msgHere": "📍 Meet me at {{place}} - open this SkiNav link to navigate there:",
+      "msgMe": "📍 Come meet me on the slopes! Open this SkiNav link and it'll route you to my location:"
     },
     "sharePrompt": {
       "text": "A location was shared with you - set as your destination. Navigate there?",
