@@ -17,16 +17,16 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.ischgl.com/en/"
   },
-  "generatedAt": "2026-09-06T04:47:26.049Z",
+  "generatedAt": "2026-09-06T19:50:45.458Z",
   "stats": {
     "resortId": "ischgl-samnaun",
-    "nodeCount": 1703,
-    "edgeCount": 5348,
-    "pisteEdges": 1750,
-    "liftEdges": 71,
-    "connectorEdges": 3527,
-    "meaningfulPoints": 268,
-    "reachableFromLifts": 1702,
+    "nodeCount": 1705,
+    "edgeCount": 5344,
+    "pisteEdges": 1752,
+    "liftEdges": 72,
+    "connectorEdges": 3520,
+    "meaningfulPoints": 270,
+    "reachableFromLifts": 1704,
     "unreachableNodes": 1,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -540,7 +540,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 253 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 251 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
@@ -548,11 +548,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 708 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 705 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 110 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 111 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

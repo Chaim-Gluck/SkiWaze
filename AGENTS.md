@@ -127,12 +127,43 @@ and apply identically to **every** resort — there is no per-resort graph code.
   under 2 m but only 0.8% over 20 m** (8 of 1026) — mappers draw a lift bottom→top ~99% of the
   time, so a disagreement on a flat lift is far more likely to be our error than theirs. Above the
   threshold elevation must keep winning, because those few big-drop disagreements are genuine
-  top-down drawings (Trockener Steg–Klein Matterhorn 844 m, Dixence–Lac des Dix 232 m). The rule
-  can only act where the two signals already disagree, so its blast radius is exactly the **13**
-  sub-10 m cases, all magic carpets, rope tows, people movers and short drags. Re-measure with
-  `files/liftdir.mts` — and note its trap: the Overpass cache is `{savedAt, data: RawWay[]}` whose
-  entries have **no `type` field**, so filtering on `type === 'way'` matches nothing and reports a
-  confident, wrong zero.
+  top-down drawings (Trockener Steg–Klein Matterhorn 844 m, Dixence–Lac des Dix 232 m). Re-measure
+  with `files/liftdir.mts` — and note its trap: the Overpass cache is `{savedAt, data: RawWay[]}`
+  whose entries have **no `type` field**, so filtering on `type === 'way'` matches nothing and
+  reports a confident, wrong zero.
+  Two corrections the rule needed, each found by censusing what it actually flips
+  (`files/liftflipcensus.mts`, which reads the shipped graphs and asks Terrarium about every flip):
+  - **The near-flat test is decided ONCE PER LIFT, never per segment.** `segmentWay` splits a lift
+    at every junction it shares a node with, so a long line arrives as short pieces that are each
+    individually "near-flat" while the line as a whole climbs properly. Judged per segment, Sella
+    Ronda's **Gardena Ronda Express funicular** — ~45 m of rise cut into ten pieces of 2-7 m — had
+    every piece exempted and the whole funicular ran **downhill**. The premise ("this drop is DEM
+    noise, not a slope") is a statement about the *lift's own rise*, so it must be measured over
+    the lift's own length. Generalise it: **any threshold that describes a whole feature must be
+    evaluated on the whole feature, not on the fragments a splitter produced.** Fix alone: fleet
+    flips 57 → 39, of which corroborated 28 → 17.
+  - **A corroboration gate vetoes the exemption where the drop is real** (`liftDirection.ts`, run
+    from `build.ts` before the graph build and fed in as `rejectDrawnLiftDirection`). The exemption
+    is a bet that our elevation is wrong; where a second raster agrees the drawn-first end is the
+    higher one by >`CORROB_MARGIN_M` (2 m) on **both** its point and smoothed readings, that bet is
+    against the evidence and we were emitting a magic carpet, rope tow or people mover **downhill**
+    — handing out a free descent and removing the uphill service the lift exists to provide. It is
+    a **veto, not a vote**: it can only ever *withhold* the exemption, never grant one, and never
+    touches a lift over the flat threshold. Where the second raster disagrees or the margin is
+    inside noise the drawing still wins, which is the case the rule was written for (Madonna's
+    Tapis Roulant reads +1.3 m in our field, −0.5 m in Terrarium). Blast radius **18 lifts across
+    9 resorts**; after it, fleet flips 39 → 23 with **0 corroborated**, `probe:trappeddiff` zero
+    REGRESSED. Caveat to state whenever quoting it: Terrarium is **not fully independent** — our
+    field averages skadi and Terrarium wherever they agree within 8 m — so it separates these cases
+    cleanly but is not a second opinion in the strict sense. Published resort information about
+    which way a carpet runs beats both rasters and belongs in an override.
+  - **A descending lift edge is NOT on its own evidence of a flip.** A cable is straight while the
+    DEM under it wiggles, so an interior segment of a perfectly contiguous ascending tow can dip:
+    Paradiski's **Replat** runs 2288 → 2290 → 2295 → **2297 → 2293**, one unbroken rope tow whose
+    last piece descends 4 m over a bump near the top station. Per edge that reads as a corroborated
+    defect; per lift it is the flat rule doing its job, keeping the tow in one piece instead of
+    severing it. The census therefore takes its verdict on the whole **chain's** net rise — which
+    is also the second reason the exemption earns its keep, beyond the noise argument.
 - **A surface lift proves its own direction is not self-propelled.** Nobody builds a carpet, rope tow
   or drag along a stretch a skier can glide, so a **flat traverse running a surface lift's uphill
   line between that lift's own two stations** contradicts the lift and is dropped
@@ -320,9 +351,12 @@ npm run check:trapped <id>   # nodes that can't reach a lift / are isolated / tr
 npm run check:basins         # fleet-wide trapped basins (ski in, no way back to the main body);
                              #   writes the trapped-basins overlay + the mapdebug review list
 npm run check:audit <id>     # false-elevation reversals + non-skiable long connections
-npm run check:graphdiff <id|all>  # structural diff of the built graph vs the committed one:
-                             #   matches nodes by position and compares edges as a multiset, so a
-                             #   pure id change reports "IDENTICAL (relabelled only)"
+npm run check:graphdiff <id|all>  # structural diff of the WORKING-TREE graph.json vs a git ref
+                             #   (default HEAD). It does NOT build - to see a pipeline code change
+                             #   you must run `npm run data <id>` first, or it reports a confident
+                             #   "IDENTICAL" about the old data. Matches nodes by position and
+                             #   compares edges as a multiset, so a pure id change reports
+                             #   "IDENTICAL (relabelled only)"
 npm run check:elevation <id|all> [thresh]  # cross-check node elevations vs Terrarium DEM; lists
                              #   piste "reversal candidates" + clusters; writes a map-debug overlay
                              #   (verified-good spots are silenced via `ignoreReversals` in the override)
@@ -414,6 +448,26 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 > server). Resort + investigation-overlay dropdowns, OpenTopoMap/OSM/satellite base, area fills,
 > flow-direction arrows (double-headed ⟺ = bidirectional), piste-name labels, and a node finder —
 > the main way to eyeball routing/elevation questions.
+>
+> **Arrows cover LIFTS too (magenta `#b5179e`), and that arrowhead is our whole claim about which
+> way a lift carries skiers.** It is the only view that can show the near-flat lift-direction rule
+> being right or wrong, and it did not exist until a user asked for it — the review recipes written
+> before that asserted a feature that was not there. Two things it must get right, both found the
+> hard way within minutes of shipping it:
+> - **"Bidirectional" is judged WITHIN A CLASS.** A surface lift routinely has a *connector* running
+>   back down its own line — that is `surfaceLiftParallel` working as designed, since it deletes only
+>   the uphill traverse and keeps the downhill one (11–26 such lifts per resort). Judged across all
+>   kinds, that pair collapses into one double-headed arrow and a one-way carpet is drawn as two-way
+>   on someone else's evidence: 3 of the first 5 lifts a user reviewed were mislabelled this way. A
+>   lift is two-way only when another **lift** edge runs the reverse (the `isDownload` twin). The
+>   dedupe key is by class for the mirror reason: a two-way piste is emitted as a **piste + connector
+>   pair**, so keying it per `kind` draws two overlapping double heads.
+> - **The collapsed pair must draw the UPHILL geometry.** A download edge is the reverse polyline of
+>   its twin, so using it renders a gondola's arrow backwards on a line that looks one-way.
+>   `files/flowcheck2.mts` mirrors `buildFlow` and asserts every double-headed lift is a real
+>   download pair — run it after touching the arrow code, and note it is what caught the one genuine
+>   defect in the population (st-anton `e1865`/`e1906`, two magic carpets on the same node pair
+>   pointing opposite ways, neither flagged download).
 >
 > **Never send the user to this map without a complete recipe.** A bare "go look at X" makes them ask
 > which controls to touch, every single time. State all four, always, even when the answer is "leave
@@ -696,6 +750,23 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   so gating it would silently re-strand the sector (the same class of bug as the `speeds` map).
   **Changing `buildQuery` does not invalidate the cache** (keyed by resort id + TTL), so this needs a
   full `data:refresh` before it does anything.
+  **A people mover is the ONE surface lift that can run both ways, and OSM says so in its own
+  vocabulary — `conveying=both`, not `oneway=no`.** A village escalator or a moving walkway in a
+  pedestrian tunnel is a *pair* of belts, so modelling it up-only removes half the service it exists
+  to provide, and the `oneway` family we already honour for aerial lifts never fires here because a
+  mapper tagging a footway reaches for `conveying`. `bidirectionalFor` in `normalize.ts` therefore
+  answers on `conveying` first, before the `DOWNLOADABLE_LIFT_TYPES`/`AERIAL_LIFT_TYPES` gate that
+  a `people_mover` otherwise falls straight out of. Found by a user looking at the new lift arrows on
+  `mapdebug` and saying of Ischgl's **Dorftunnel** (`w137094192`, 199 m under the village, no slope
+  anywhere near it) "it goes both ways" — it is tagged exactly that. Three guards, each a way this
+  could go wrong: **`both` only** — `yes|forward|backward` all state a *single* direction, and
+  `reversible` (Mayrhofen `w320793573`) means one direction *at a time*, the opposite of both at
+  once; **`people_mover` only** — a magic carpet is one belt and physically cannot reverse, so
+  `conveying=both` on an `aerialway=magic_carpet` is contradictory tagging we decline to believe;
+  and **grant-only**, like every other minority-signal rule here, so no value of `conveying` ever
+  *removes* a direction. Fleet population is the whole of **3 ways** (Dorftunnel + both halves of
+  La Curta), it needs only `npm run data <id>` (the tag is already in the cache), and it changes no
+  connectivity at all — trapped/orphan flat at ischgl 12/1 and sella-ronda 30/13, zero REGRESSED.
   **Do not expect the import to have freed Alpe di Siusi — it did not, and it cannot.** The escalator
   welds correctly (base → escalator → 18 m connector → escalator → the Ortisei–Furnes gondola base),
   but the trapped sector's ski-out ends **259 m away across Ortisei's pedestrianised main street**,

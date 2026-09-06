@@ -449,11 +449,21 @@ function applyElevationFixes(ways: { points: NormPoint[] }[], fixed: Map<number,
  * Build the full resort graph: piste edges (descending), flat traverses (bidirectional),
  * lift edges (up, plus down for downloadable types), and inferred skiable connectors.
  */
+export interface BuildGraphOptions {
+  /**
+   * Lift way ids whose drawn direction must not override the elevation-derived orientation, even
+   * though the lift is near-flat. Produced by `liftDirection.ts`, which asks a second raster
+   * whether the small drop we were about to dismiss as noise is in fact real.
+   */
+  rejectDrawnLiftDirection?: Set<number>;
+}
+
 export function buildResortGraph(
   resortId: string,
   pistes: NormPiste[],
   lifts: NormLift[],
   c: GraphConstants,
+  opts?: BuildGraphOptions,
 ): ResortGraph {
   const warnings: DataWarning[] = [];
   // Must run before canonical nodes: junctions are found by counting ways per OSM node id, so
@@ -699,6 +709,23 @@ export function buildResortGraph(
   for (const lift of lifts) {
     const segs = segmentWay(lift.points, canonicalOf);
     // Treat the whole lift as bottom-station to top-station using its overall endpoints.
+    //
+    // The near-flat exemption below is decided ONCE, for the whole lift, and that is the point of
+    // it. A lift is split into a segment at every junction it shares a node with, so a long line
+    // arrives here as a handful of short pieces that are each individually "near-flat" while the
+    // line as a whole climbs properly. Judged per segment, Sella Ronda's Gardena Ronda Express
+    // funicular - ~45 m of rise cut into ten pieces of 2-7 m - had every single piece exempted and
+    // the entire funicular ran downhill. The premise ("this drop is DEM noise, not a slope") is a
+    // statement about the lift's own rise, so it has to be measured over the lift's own length.
+    const first = segs.length ? node(segs[0].from) : undefined;
+    const last = segs.length ? node(segs[segs.length - 1].to) : undefined;
+    const flatLift =
+      first !== undefined && last !== undefined &&
+      Math.abs((first.ele ?? 0) - (last.ele ?? 0)) < c.liftFlatDirectionM &&
+      // ...unless a second raster says the drop we were about to dismiss as noise is real. The
+      // exemption is a bet that our elevation is wrong; corroboration is the evidence that it is
+      // not. See liftDirection.ts - this can only ever withhold the exemption, never grant one.
+      !opts?.rejectDrawnLiftDirection?.has(lift.wayId);
     for (const seg of segs) {
       const a = node(seg.from);
       const b = node(seg.to);
@@ -710,7 +737,6 @@ export function buildResortGraph(
       // difference is DEM noise rather than a slope, in which case the way's drawn direction is
       // the better witness. `segmentWay` preserves OSM order, so `seg.from` is the drawn-first
       // end. See `liftFlatDirectionM` for the fleet measurement behind this.
-      const flatLift = Math.abs(aEle - bEle) < c.liftFlatDirectionM;
       const bottomId = flatLift ? seg.from : aEle <= bEle ? seg.from : seg.to;
       const topId = flatLift ? seg.to : aEle <= bEle ? seg.to : seg.from;
       const upGeom = bottomId === seg.from ? seg.geometry : [...seg.geometry].reverse();

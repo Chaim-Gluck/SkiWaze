@@ -89,6 +89,7 @@
     <div class="lg"><span class="sw"></span> overlay line</div>
     <div class="lg"><span class="dot" style="background:#1560ff"></span> overlay point</div>
     <div class="lg">➤ one-way flow · ⟺ bidirectional (double-headed, green)</div>
+    <div class="lg"><span style="color:#b5179e;font-weight:700">➤</span> lift flow (magenta) — points the way the lift carries skiers <b>up</b>; ⟺ means it also carries them down (gondola / cable car / funicular)</div>
   </details>
   <div class="notes" id="notes"></div>
   </div>
@@ -173,16 +174,35 @@ function addSpineLayers(sp){
 }
 // Flow arrows are drawn from graph.json (true per-edge directions) so bidirectional links show a
 // double-headed arrow; geo.json can't express this because it dedupes bidirectional connectors.
+//
+// LIFTS get arrows too, and they are the one case where the arrow is the whole point: a lift is
+// emitted bottom -> top, so the arrowhead IS our claim about which way the lift carries skiers.
+// Getting that wrong hands out a free descent and removes the uphill service (see the near-flat
+// lift-direction rule in AGENTS.md), and until now the map could not show it at all.
+//
+// "Bidirectional" must be judged WITHIN A CLASS, or a lift is drawn two-way on someone else's
+// evidence. A surface lift routinely has a connector running back down its own line - that is
+// `surfaceLiftParallel` working as designed, since it deletes only the UPHILL traverse and keeps
+// the downhill one (11-26 such lifts per resort). Ride up, ski down beside it: two one-way arrows,
+// not one double head. So a lift is two-way only when another LIFT edge runs the reverse (the
+// `isDownload` twin of a gondola/cable car/funicular), and a ground edge only when another ground
+// edge does. The dedupe key is by CLASS for the same reason: a two-way piste is emitted as a
+// piste + connector pair, so keying it per `kind` would draw two overlapping double heads.
 function buildFlow(graph){
-  const has=new Set();
-  for(const e of graph.edges||[]) if(e.kind==='piste'||e.kind==='connector') has.add(e.from+'>'+e.to);
+  const cls=e=>e.kind==='lift'?'lift':(e.kind==='piste'||e.kind==='connector')?'ground':null;
+  const has={lift:new Set(),ground:new Set()};
+  for(const e of graph.edges||[]){ const c=cls(e); if(c) has[c].add(e.from+'>'+e.to); }
   const feats=[], drawn=new Set();
   for(const e of graph.edges||[]){
-    if(e.kind!=='piste'&&e.kind!=='connector') continue;
-    const bidir=has.has(e.to+'>'+e.from);
-    if(bidir){ const k=[e.from,e.to].sort().join('|'); if(drawn.has(k)) continue; drawn.add(k); }
+    const c=cls(e); if(!c) continue;
+    const bidir=has[c].has(e.to+'>'+e.from);
+    if(bidir){ const k=c+'|'+[e.from,e.to].sort().join('|'); if(drawn.has(k)) continue; drawn.add(k); }
     const coords=(e.geometry&&e.geometry.length>1)?e.geometry.map(p=>[p.lon,p.lat]):null;
     if(!coords) continue;
+    // A download edge is the reverse of its uphill twin, so when the pair collapses to one
+    // double-headed arrow the geometry must be the UPHILL one or the arrow is drawn backwards on
+    // a one-way-looking line. Skipping a download edge whose twin exists keeps that guaranteed.
+    if(e.kind==='lift'&&e.isDownload&&bidir) continue;
     feats.push({type:'Feature',properties:{kind:e.kind,bidir},geometry:{type:'LineString',coordinates:coords}});
   }
   return {type:'FeatureCollection',features:feats};
@@ -192,14 +212,24 @@ function addFlowArrows(graph){
   const flow=buildFlow(graph);
   if(map.getSource('flow')) map.getSource('flow').setData(flow); else map.addSource('flow',{type:'geojson',data:flow});
   const icon=['case',['get','bidir'],'flow-arrow2','flow-arrow'];
+  const liftIcon=['case',['get','bidir'],'lift-arrow2','lift-arrow'];
   if(!map.getLayer('flow-arrows-p')) map.addLayer({id:'flow-arrows-p',type:'symbol',source:'flow',filter:['==',['get','kind'],'piste'],layout:{'symbol-placement':'line','icon-image':icon,'icon-size':0.85,'symbol-spacing':85,'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':'none'}});
   if(!map.getLayer('flow-arrows-c')) map.addLayer({id:'flow-arrows-c',type:'symbol',source:'flow',filter:['==',['get','kind'],'connector'],layout:{'symbol-placement':'line','icon-image':icon,'icon-size':0.72,'symbol-spacing':85,'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':'none'}});
+  // Tighter spacing than a piste: most of the lifts worth checking this way are 20-90 m carpets and
+  // people movers, which at 85 px get one arrow or none at all.
+  if(!map.getLayer('flow-arrows-l')) map.addLayer({id:'flow-arrows-l',type:'symbol',source:'flow',filter:['==',['get','kind'],'lift'],layout:{'symbol-placement':'line','icon-image':liftIcon,'icon-size':0.9,'symbol-spacing':60,'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':'none'}});
 }
 function ensureArrowImage(){
-  if(map.hasImage && map.hasImage('flow-arrow') && map.hasImage('flow-arrow2')) return;
+  if(map.hasImage && map.hasImage('flow-arrow') && map.hasImage('flow-arrow2') && map.hasImage('lift-arrow')) return;
   const mk=(draw)=>{ const s=24,c=document.createElement('canvas'); c.width=s;c.height=s; const x=c.getContext('2d'); x.lineCap='round'; x.lineJoin='round'; draw(x); return x.getImageData(0,0,s,s); };
-  if(!map.hasImage('flow-arrow')) map.addImage('flow-arrow', mk((x)=>{ for(const [col,w] of [['#ffffff',5],['#0b3d91',2.8]]){ x.strokeStyle=col;x.lineWidth=w; x.beginPath(); x.moveTo(8,5); x.lineTo(17,12); x.lineTo(8,19); x.stroke(); } }));
-  if(!map.hasImage('flow-arrow2')) map.addImage('flow-arrow2', mk((x)=>{ for(const [col,w] of [['#ffffff',5],['#0a7d43',2.8]]){ x.strokeStyle=col;x.lineWidth=w; x.beginPath(); x.moveTo(14,5); x.lineTo(21,12); x.lineTo(14,19); x.stroke(); x.beginPath(); x.moveTo(10,5); x.lineTo(3,12); x.lineTo(10,19); x.stroke(); } }));
+  const one=(col)=>mk((x)=>{ for(const [c,w] of [['#ffffff',5],[col,2.8]]){ x.strokeStyle=c;x.lineWidth=w; x.beginPath(); x.moveTo(8,5); x.lineTo(17,12); x.lineTo(8,19); x.stroke(); } });
+  const two=(col)=>mk((x)=>{ for(const [c,w] of [['#ffffff',5],[col,2.8]]){ x.strokeStyle=c;x.lineWidth=w; x.beginPath(); x.moveTo(14,5); x.lineTo(21,12); x.lineTo(14,19); x.stroke(); x.beginPath(); x.moveTo(10,5); x.lineTo(3,12); x.lineTo(10,19); x.stroke(); } });
+  if(!map.hasImage('flow-arrow')) map.addImage('flow-arrow', one('#0b3d91'));
+  if(!map.hasImage('flow-arrow2')) map.addImage('flow-arrow2', two('#0a7d43'));
+  // Magenta: far enough from piste navy/green, from lift-line black and from every slope colour
+  // (green/blue/red/black/orange) that the arrow's family is unambiguous at a glance.
+  if(!map.hasImage('lift-arrow')) map.addImage('lift-arrow', one('#b5179e'));
+  if(!map.hasImage('lift-arrow2')) map.addImage('lift-arrow2', two('#b5179e'));
 }
 function applyToggles(){
   const vis=(id,on)=>{ if(map.getLayer(id)) map.setLayoutProperty(id,'visibility',on?'visible':'none'); };
@@ -209,6 +239,9 @@ function applyToggles(){
   vis('r-spines-case',el('t-spines').checked); vis('r-spines',el('t-spines').checked); vis('r-spine-pts',el('t-spines').checked);
   vis('r-arms',el('t-arms').checked);
   vis('flow-arrows-p',el('t-arrows').checked); vis('flow-arrows-c',el('t-arrows').checked && el('t-connectors').checked);
+  // A lift arrow with no lift line under it is an unattributable floating glyph, so it follows the
+  // `lifts` toggle as well - same pairing as connectors above.
+  vis('flow-arrows-l',el('t-arrows').checked && el('t-lifts').checked);
   vis('r-pistes-labels',el('t-names').checked);
   vis('r-areas-labels',el('t-names').checked && el('t-areas').checked);
   vis('r-lifts-labels',el('t-names').checked && el('t-lifts').checked);

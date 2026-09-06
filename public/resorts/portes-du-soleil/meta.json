@@ -25,16 +25,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.portesdusoleil.com/en/"
   },
-  "generatedAt": "2026-09-06T04:48:03.250Z",
+  "generatedAt": "2026-09-06T18:53:48.717Z",
   "stats": {
     "resortId": "portes-du-soleil",
-    "nodeCount": 1934,
-    "edgeCount": 5367,
-    "pisteEdges": 1978,
+    "nodeCount": 1933,
+    "edgeCount": 5363,
+    "pisteEdges": 1976,
     "liftEdges": 211,
-    "connectorEdges": 3178,
+    "connectorEdges": 3176,
     "meaningfulPoints": 664,
-    "reachableFromLifts": 1930,
+    "reachableFromLifts": 1929,
     "unreachableNodes": 4,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -870,11 +870,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 265 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 264 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 801 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 799 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",

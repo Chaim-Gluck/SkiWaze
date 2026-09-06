@@ -11,6 +11,7 @@ import { normalizeLift, normalizePiste } from './lib/normalize';
 import { dropExcludedFeatures } from './lib/excludeArea';
 import { enrichElevations } from './lib/elevation';
 import { buildResortGraph } from './lib/buildGraph';
+import { corroborateLiftDirections } from './lib/liftDirection';
 import { buildSkeletons } from './lib/areaSkeleton';
 import { skeletonPistes } from './lib/areaSkeletonPistes';
 import { applyOverrides, loadOverrides } from './lib/overrides';
@@ -63,7 +64,24 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
   if (missing > 0) console.warn(`  ${missing} node(s) still missing elevation.`);
 
   console.log('  building graph...');
-  let graph = buildResortGraph(resort.id, pistes, lifts, DEFAULT_GRAPH_CONSTANTS);
+  // Ask the second raster about every lift the near-flat rule is about to orient by its drawing.
+  // Runs here because it needs elevations on the lift points and must feed BOTH graph builds.
+  const liftDir = await corroborateLiftDirections(lifts, DEFAULT_GRAPH_CONSTANTS);
+  const rejected = liftDir.checks.filter((k) => k.rejected);
+  if (rejected.length)
+    console.log(
+      `  lift direction: ${rejected.length}/${liftDir.checks.length} near-flat lift(s) keep their ` +
+        `elevation-derived direction (a second raster corroborates the drop) - ` +
+        rejected
+          .slice(0, 8)
+          .map(
+            (k) =>
+              `w${k.wayId} ${k.name ?? '<unnamed>'} ours=${k.oursM.toFixed(1)} terr=${k.terrM?.toFixed(1)}`,
+          )
+          .join('; '),
+    );
+  const buildOpts = { rejectDrawnLiftDirection: liftDir.reject };
+  let graph = buildResortGraph(resort.id, pistes, lifts, DEFAULT_GRAPH_CONSTANTS, buildOpts);
 
   // Replace `area=yes` polygons with an interior skeleton (plan Â§3). The polygon's *perimeter* is
   // what the router can follow today, so crossing a bowl means skiing around its rim. Two passes
@@ -106,7 +124,7 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
     const skMissing = await enrichElevations([sk.newPoints]);
     if (skMissing > 0) console.warn(`  ${skMissing} skeleton vertex/vertices still missing elevation.`);
     const kept = pistes.filter((p) => !sk.replaced.has(p.wayId));
-    graph = buildResortGraph(resort.id, [...kept, ...sk.pistes], lifts, DEFAULT_GRAPH_CONSTANTS);
+    graph = buildResortGraph(resort.id, [...kept, ...sk.pistes], lifts, DEFAULT_GRAPH_CONSTANTS, buildOpts);
   }
 
   const ov = loadOverrides(resort.id, OVERRIDES_DIR);

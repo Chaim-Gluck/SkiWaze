@@ -17,14 +17,14 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.verbier4vallees.ch/en/"
   },
-  "generatedAt": "2026-09-05T21:58:42.907Z",
+  "generatedAt": "2026-09-06T18:55:32.167Z",
   "stats": {
     "resortId": "verbier-4vallees",
     "nodeCount": 778,
-    "edgeCount": 1911,
+    "edgeCount": 1895,
     "pisteEdges": 724,
     "liftEdges": 130,
-    "connectorEdges": 1057,
+    "connectorEdges": 1041,
     "meaningfulPoints": 276,
     "reachableFromLifts": 776,
     "unreachableNodes": 2,
@@ -450,7 +450,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 303 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 304 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",

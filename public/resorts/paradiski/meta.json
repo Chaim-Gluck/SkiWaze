@@ -25,14 +25,14 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.paradiski.com/"
   },
-  "generatedAt": "2026-09-06T04:46:50.018Z",
+  "generatedAt": "2026-09-06T18:52:09.236Z",
   "stats": {
     "resortId": "paradiski",
     "nodeCount": 2961,
     "edgeCount": 8895,
-    "pisteEdges": 3029,
+    "pisteEdges": 3030,
     "liftEdges": 220,
-    "connectorEdges": 5646,
+    "connectorEdges": 5645,
     "meaningfulPoints": 727,
     "reachableFromLifts": 2959,
     "unreachableNodes": 2,
@@ -867,15 +867,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 433 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 432 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 1417 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 1418 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 1193 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 1189 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

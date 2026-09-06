@@ -31,16 +31,16 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-09-06T04:44:59.213Z",
+  "generatedAt": "2026-09-06T19:51:12.614Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1936,
+    "nodeCount": 1935,
     "edgeCount": 5449,
-    "pisteEdges": 1725,
-    "liftEdges": 383,
-    "connectorEdges": 3341,
+    "pisteEdges": 1724,
+    "liftEdges": 385,
+    "connectorEdges": 3340,
     "meaningfulPoints": 819,
-    "reachableFromLifts": 1923,
+    "reachableFromLifts": 1922,
     "unreachableNodes": 13,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -1099,15 +1099,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 340 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 339 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 985 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 982 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 862 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 864 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

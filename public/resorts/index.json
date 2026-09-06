@@ -1,5 +1,14 @@
 [
   {
+    "id": "sella-ronda",
+    "name": "Sella Ronda (Dolomites)",
+    "country": "Italy",
+    "center": {
+      "lon": 11.808,
+      "lat": 46.518
+    }
+  },
+  {
     "id": "madonna-di-campiglio",
     "name": "Madonna di Campiglio · Pinzolo · Folgarida-Marilleva",
     "shortName": "Madonna di Campiglio",
@@ -20,15 +29,6 @@
     }
   },
   {
-    "id": "sella-ronda",
-    "name": "Sella Ronda (Dolomites)",
-    "country": "Italy",
-    "center": {
-      "lon": 11.808,
-      "lat": 46.518
-    }
-  },
-  {
     "id": "val-thorens-3vallees",
     "name": "Les 3 Vallées (Val Thorens · Méribel · Courchevel)",
     "shortName": "Les 3 Vallées",
@@ -39,12 +39,31 @@
     }
   },
   {
+    "id": "tignes-val-disere",
+    "name": "Tignes – Val d'Isère (Espace Killy)",
+    "country": "France",
+    "center": {
+      "lon": 6.93,
+      "lat": 45.46
+    }
+  },
+  {
     "id": "paradiski",
     "name": "Paradiski (Les Arcs – La Plagne)",
     "country": "France",
     "center": {
       "lon": 6.72,
       "lat": 45.55
+    }
+  },
+  {
+    "id": "st-anton-arlberg",
+    "name": "Ski Arlberg (St. Anton · Lech · Zürs · Warth)",
+    "shortName": "Ski Arlberg",
+    "country": "Austria",
+    "center": {
+      "lon": 10.2,
+      "lat": 47.16
     }
   },
   {
@@ -63,6 +82,15 @@
     "center": {
       "lon": 44.49,
       "lat": 42.485
+    }
+  },
+  {
+    "id": "mayrhofen",
+    "name": "Mayrhofen",
+    "country": "Austria",
+    "center": {
+      "lon": 11.81,
+      "lat": 47.16
     }
   },
   {
@@ -120,49 +148,21 @@
     }
   },
   {
-    "id": "portes-du-soleil",
-    "name": "Portes du Soleil",
-    "country": "France / Switzerland",
-    "center": {
-      "lon": 6.76,
-      "lat": 46.2
-    }
-  },
-  {
-    "id": "tignes-val-disere",
-    "name": "Tignes – Val d'Isère (Espace Killy)",
-    "country": "France",
-    "center": {
-      "lon": 6.93,
-      "lat": 45.46
-    }
-  },
-  {
-    "id": "st-anton-arlberg",
-    "name": "Ski Arlberg (St. Anton · Lech · Zürs · Warth)",
-    "shortName": "Ski Arlberg",
-    "country": "Austria",
-    "center": {
-      "lon": 10.2,
-      "lat": 47.16
-    }
-  },
-  {
-    "id": "mayrhofen",
-    "name": "Mayrhofen",
-    "country": "Austria",
-    "center": {
-      "lon": 11.81,
-      "lat": 47.16
-    }
-  },
-  {
     "id": "verbier-4vallees",
     "name": "Verbier – 4 Vallées",
     "country": "Switzerland",
     "center": {
       "lon": 7.28,
       "lat": 46.12
+    }
+  },
+  {
+    "id": "portes-du-soleil",
+    "name": "Portes du Soleil",
+    "country": "France / Switzerland",
+    "center": {
+      "lon": 6.76,
+      "lat": 46.2
     }
   }
 ]

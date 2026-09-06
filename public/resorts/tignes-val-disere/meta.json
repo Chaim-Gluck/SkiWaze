@@ -17,14 +17,14 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.tignes.net/en/"
   },
-  "generatedAt": "2026-09-05T22:50:04.333Z",
+  "generatedAt": "2026-09-06T18:51:40.101Z",
   "stats": {
     "resortId": "tignes-val-disere",
     "nodeCount": 1074,
-    "edgeCount": 3177,
+    "edgeCount": 3157,
     "pisteEdges": 1051,
     "liftEdges": 123,
-    "connectorEdges": 2003,
+    "connectorEdges": 1983,
     "meaningfulPoints": 428,
     "reachableFromLifts": 1068,
     "unreachableNodes": 6,

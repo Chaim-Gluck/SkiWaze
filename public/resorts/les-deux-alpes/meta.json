@@ -17,14 +17,14 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.les2alpes.com/en/"
   },
-  "generatedAt": "2026-09-06T04:47:37.287Z",
+  "generatedAt": "2026-09-06T18:52:52.703Z",
   "stats": {
     "resortId": "les-deux-alpes",
     "nodeCount": 495,
-    "edgeCount": 1297,
+    "edgeCount": 1300,
     "pisteEdges": 516,
     "liftEdges": 67,
-    "connectorEdges": 714,
+    "connectorEdges": 717,
     "meaningfulPoints": 210,
     "reachableFromLifts": 495,
     "unreachableNodes": 0,
@@ -257,7 +257,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 172 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 174 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

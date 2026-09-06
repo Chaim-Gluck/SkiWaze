@@ -17,7 +17,7 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.alpedhuez.com/en/"
   },
-  "generatedAt": "2026-09-06T04:47:34.350Z",
+  "generatedAt": "2026-09-06T18:52:50.038Z",
   "stats": {
     "resortId": "alpe-dhuez",
     "nodeCount": 799,
@@ -466,7 +466,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 322 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 321 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

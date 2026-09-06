@@ -238,8 +238,23 @@ export function normalizePiste(w: RawWay): NormPiste {
  * Deliberately one-directional: this only ever *grants* a downhill direction, never removes one.
  * `oneway=yes` on a gondola usually just records the way's drawn direction rather than a ban on
  * downloading, so believing it would strand terrain on the strength of an ambiguous tag.
+ *
+ * A **people mover is the one surface lift that can run both ways**, and OSM says so in its own
+ * vocabulary rather than in `oneway`: `conveying=both`. A village escalator or moving walkway in a
+ * pedestrian tunnel is a pair of belts, not a single uphill belt, and modelling it up-only removes
+ * half the service it exists to provide - Ischgl's **Dorftunnel** (`w137094192`, 199 m under the
+ * village, no slope anywhere near it) and both halves of Ortisei's **La Curta** (`w29910707`,
+ * `w29912017`) are the fleet's entire population of the tag, 3 ways in total.
+ *
+ * Three guards, each the reason this cannot be widened:
+ * - **`both` only.** `conveying=yes|forward|backward` state a single direction, and `reversible`
+ *   (Mayrhofen `w320793573`) means one direction *at a time* - the opposite of both at once.
+ * - **`people_mover` only.** A magic carpet is one belt and physically cannot reverse, so a
+ *   `conveying=both` on an `aerialway=magic_carpet` is contradictory tagging we decline to believe.
+ * - **Grant-only**, exactly as above: no value of `conveying` ever removes a direction.
  */
 function bidirectionalFor(tags: Record<string, string>, liftType: LiftType): boolean | undefined {
+  if (liftType === 'people_mover') return tags['conveying'] === 'both' ? true : undefined;
   // You cannot ride a surface lift downhill however it is tagged.
   if (!DOWNLOADABLE_LIFT_TYPES.has(liftType) && !AERIAL_LIFT_TYPES.has(liftType)) return undefined;
   if (tags['aerialway:oneway'] === 'no' || tags['oneway'] === 'no') return true;

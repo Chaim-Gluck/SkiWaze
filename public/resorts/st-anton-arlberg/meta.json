@@ -26,14 +26,14 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.stantonamarlberg.com/en/"
   },
-  "generatedAt": "2026-09-06T04:40:55.554Z",
+  "generatedAt": "2026-09-06T18:52:28.188Z",
   "stats": {
     "resortId": "st-anton-arlberg",
     "nodeCount": 1088,
-    "edgeCount": 2801,
+    "edgeCount": 2796,
     "pisteEdges": 1197,
     "liftEdges": 140,
-    "connectorEdges": 1464,
+    "connectorEdges": 1459,
     "meaningfulPoints": 576,
     "reachableFromLifts": 1084,
     "unreachableNodes": 4,
@@ -531,15 +531,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 145 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 144 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 377 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 375 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 351 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 349 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
