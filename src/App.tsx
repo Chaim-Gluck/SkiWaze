@@ -641,6 +641,25 @@ export default function App() {
     if (!live.tracking && !simPos) live.start();
   };
   /**
+   * Tear down navigation itself - the route being followed, the simulation, and the follow camera -
+   * without touching what was computed. Shared by `exitNav` (which additionally drops the plan) and
+   * by any action that starts showing something else on the map: navigation is a full-screen mode,
+   * so leaving it running underneath a different answer gives the user two of them at once.
+   */
+  const stopNavigation = () => {
+    setNavRoute(null);
+    setSimPos(null);
+    setPreviewMode(false);
+    setPreviewPrompt(null);
+    // Once the simulation stops there may be nothing worth following: leaving follow mode on would
+    // light the locate FAB while the camera deliberately ignores a fix that isn't at the resort.
+    if (!live.position || isFarFromResort(live.position)) {
+      setFollowing(false);
+      live.stop();
+    }
+    setPreviewDismissed(false);
+  };
+  /**
    * "Not now" on the Preview offer.
    *
    * Declining has to LEAVE navigation, not sit in it. The offer only ever appears when we cannot
@@ -652,37 +671,19 @@ export default function App() {
    * exactly what is still worth reading without a position, so the panel is opened on them.
    */
   const declinePreview = () => {
-    setPreviewPrompt(null);
-    setNavRoute(null);
-    setSimPos(null);
-    setPreviewMode(false);
-    if (!live.position || isFarFromResort(live.position)) {
-      setFollowing(false);
-      live.stop();
-    }
-    setPreviewDismissed(false);
+    stopNavigation();
     setOpenSection('routes');
     setPanelOpen(true);
     notify(t('preview.declined'), 'info');
   };
   const exitNav = () => {
-    setNavRoute(null);
-    setSimPos(null);
-    setPreviewMode(false);
-    setPreviewPrompt(null);
-    // Once the simulation stops there may be nothing worth following: leaving follow mode on would
-    // light the locate FAB while the camera deliberately ignores a fix that isn't at the resort.
-    if (!live.position || isFarFromResort(live.position)) {
-      setFollowing(false);
-      live.stop();
-    }
+    stopNavigation();
     // Return to a clean map: drop the computed routes (options list, drawn line, preview card),
     // but keep the From/To selections so re-planning is one tap.
     setPlan(null);
     setSelectedRoute(0);
     setSelectedRange(null);
     setFocusGeometry(null);
-    setPreviewDismissed(false);
   };
   /**
    * Start over: drop both the inputs and everything computed from them in one action.
@@ -1165,7 +1166,10 @@ export default function App() {
     setLongestRuns(named);
     setLongestIdx(0);
     // Showing the longest run is a highlight, not a route — clear any route options so only
-    // one thing glows on the map at a time.
+    // one thing glows on the map at a time. Navigation goes with them: it is a full-screen mode
+    // that owns the whole map, so leaving it running under the longest-run highlight showed two
+    // answers at once (the manoeuvre card and the Preview strip on top of the run just asked for).
+    stopNavigation();
     setPlan(null);
     setSelectedRange(null);
     setFocusGeometry(named[0].coords);

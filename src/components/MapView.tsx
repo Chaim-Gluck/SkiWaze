@@ -1229,16 +1229,22 @@ export function MapView({
           generated CSS whatever the container's dir is, and these controls must stay put in Hebrew
           — MapLibre's own controls (its stylesheet, which the plugin never sees) do.
 
-          While navigating they move clear of the manoeuvre card, which is centred and full width and
-          would otherwise sit on top of them. The offset comes from `--nav-banner-h`, published by
-          NavOverlay from a ResizeObserver rather than guessed: the card is one to three lines
-          depending on how long the run's name is, so any fixed number is wrong two-thirds of the
-          time. The variable is the card's BOTTOM EDGE in this same coordinate frame, so the 6px is
-          only the gap - matching the simulation chip's own top margin puts these level with it
-          rather than below the whole overlay. */}
+          While navigating on a PHONE they drop below the manoeuvre card, which is centred and nearly
+          full width there and would otherwise sit on top of them. The offset comes from
+          `--nav-banner-h`, published by NavOverlay from a ResizeObserver rather than guessed: the
+          card is one to three lines depending on how long the run's name is, so any fixed number is
+          wrong two-thirds of the time. The variable is the card's BOTTOM EDGE in this same
+          coordinate frame, so the 6px is only the gap - matching the simulation chip's own top
+          margin puts these level with it rather than below the whole overlay. On desktop they do not
+          move at all: there the card is capped narrower and inset past this column, so it never
+          reaches them and displacing them would be pure loss.
+
+          `top` is safe in `sx` (the RTL plugin rewrites the inline axis only); `left` is not. */}
       <Box
-        style={{ position: 'absolute', top: nav ? 'calc(var(--nav-banner-h, 0px) + 6px)' : 10, left: 10 }}
+        style={{ position: 'absolute', left: 10 }}
         sx={{
+        top: nav ? 'calc(var(--nav-banner-h, 0px) + 6px)' : '10px',
+        '@media (min-width: 821px)': { top: '10px' },
         zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start',
         // Stop short of the map's right-hand Fab column instead of running under it. The locate Fab
         // is size="small" (40px) at right:12, so it owns the last 52px; 10px left inset + 10px gap

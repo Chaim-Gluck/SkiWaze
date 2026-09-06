@@ -257,6 +257,13 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5,
           display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none',
           px: 1, pt: 1,
+          // On desktop there is width to spare, so the card gives it back to the map's own controls
+          // rather than displacing them: it is capped narrower and the gutters are SYMMETRIC, both
+          // sized to clear the wider of the two columns (Layers/Legend at left, the Fab column at
+          // right). Reserving only what each side actually needs would centre the card in the free
+          // space rather than on the map, and it read as visibly off-centre. Phones have no such
+          // room, which is why the controls drop below the card there instead (see MapView).
+          '@media (min-width: 821px)': { px: '260px' },
         }}
       >
         {/* A floating card, inset on all four sides rather than flush to the top edge. Full-bleed
@@ -268,6 +275,7 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           elevation={8}
           sx={{
             pointerEvents: 'auto', width: '100%', maxWidth: 620,
+            '@media (min-width: 821px)': { maxWidth: 460 },
             borderRadius: 3, overflow: 'hidden',
             bgcolor: offRoute ? 'error.main' : NAV_BAR_BG,
             color: '#fff',
@@ -450,6 +458,7 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           elevation={8}
           sx={{
             pointerEvents: 'auto', width: 'min(560px, 94%)', borderRadius: 3,
+            '@media (min-width: 821px)': { width: 'min(460px, 94%)' },
             position: 'relative', overflow: 'hidden',
             display: 'flex', flexDirection: 'column',
             bgcolor: offRoute ? 'error.main' : 'background.paper',
@@ -463,16 +472,23 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               looked like part of it. */}
           <Box
             sx={{
-              px: 1.75, py: 0.25, minWidth: 0,
+              px: 1.75, py: 0.6, minWidth: 0,
               bgcolor: offRoute ? 'rgba(255,255,255,0.12)' : 'action.hover',
-              display: 'flex', alignItems: 'center', gap: 0.75,
+              display: 'flex', alignItems: 'center', gap: 1.25,
             }}
           >
             {!waiting && !offRoute && step?.current && (
               <>
-                <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.7, flexShrink: 0 }}>
+                {/* The caption is boxed to the speed dial's width, and the gap matches the row
+                    below, so this strip's hairline lands directly above that row's - the two
+                    columns read as one, rather than as two rules at unrelated offsets. */}
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 700, opacity: 0.7, flexShrink: 0, width: 54, textAlign: 'center' }}
+                >
                   {t('nav.now')}
                 </Typography>
+                <Box sx={{ alignSelf: 'stretch', width: '1px', bgcolor: 'divider', flexShrink: 0 }} />
                 {/* Wrap to two lines rather than ellipsing. A lift's mapped name is routinely long
                     ("Tapis Roulant Grostè Express - Fortini") and it is the one fact this band
                     exists to carry, so cutting it to "Tapis Rou..." fails at its only job. */}
@@ -505,10 +521,16 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1.75, py: 0.6 }}>
           {!waiting && speedMps != null && speedMps >= 0 && (
-            <div className="nav-speed-circle">
-              <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
-              <span className="ns-unit">{t('units.kmhShort')}</span>
-            </div>
+            <>
+              <div className="nav-speed-circle">
+                <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
+                <span className="ns-unit">{t('units.kmhShort')}</span>
+              </div>
+              {/* Same half-height hairline as the manoeuvre card: it separates the dial from the
+                  remaining/ETA readings without drawing a box around either, and it travels with
+                  the row under RTL because it is placed in logical flow. */}
+              <Box sx={{ alignSelf: 'center', width: '1px', height: 32, bgcolor: 'divider', flexShrink: 0 }} />
+            </>
           )}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {remaining ? (
