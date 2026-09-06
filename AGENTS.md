@@ -1782,6 +1782,43 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     "✕ Exit" button was as wide as the text it sat beside and forced the remaining-distance line to
     wrap. It is now an absolutely positioned `IconButton` at `top: 4, insetInlineEnd: 4` (logical
     property, so RTL flips it) with the word surviving in the tooltip and `aria-label`.
+- **A portalled overlay centres on the VIEWPORT, and on desktop the map is not the viewport.** A MUI
+  `Dialog` or `Snackbar` renders into `<body>`, so "centred" means centred on the window - but the
+  desktop layout puts a 400 px sidebar beside the map, leaving anything centred over the map 200 px
+  out. Both offenders were overlays that appear *before* the user has touched anything (the
+  assumed-open status notice on loading a resort, and the Preview offer), which is exactly when a
+  misplaced element reads as a layout bug rather than as a choice. `mapCenteredSx`
+  (`src/utils/mapCentered.ts`) is the one rule; three things about it are deliberate:
+  - **The shift is `padding-inline-start`, never `left` or `transform`.** It *composes* with MUI's
+    own positioning instead of overriding it, so it cannot break when MUI changes how it centres a
+    Dialog container. One mechanism covers both shapes: a flex centring container
+    (`.MuiDialog-container`) shrinks its content box by the padding, and a `left:50%;
+    translateX(-50%)` root (the Snackbar) grows by it - both move the content by **half**, which is
+    exactly the half-sidebar wanted.
+  - **It is a logical property, so it flips itself.** The sidebar is the flex row's first child, so
+    in Hebrew it renders on the *right* and the map centre moves the other way; a physical
+    `paddingLeft` would push RTL the wrong way. (The RTL plugin also rewrites MUI's own `left:50%`
+    to `right:50%`, and the arithmetic works out the same in both directions - check both.)
+  - **The width is `--sidebar-w`, a `:root` variable `.sidebar` itself uses**, so the offset can
+    never drift from the layout it is compensating for. Returns `{}` on mobile, where the panel is
+    a bottom sheet and the map spans the full width.
+  Menus are exempt - they anchor to their trigger, not to the window.
+- **A destructive-ish state the user already knows about must be reachable without first performing
+  an unrelated task.** "Closed today" could only be populated by planning a route *over* the thing
+  and clicking ⊘ on the step, so a skier who arrived knowing a lift was shut had to first ask for a
+  route across it, and a run no route happened to use could not be closed at all. `closableItems()`
+  (`src/routing/closures.ts`) feeds two searchable pickers in the card. Two rules it must keep:
+  it emits the **name-based** keys (`lift:<name>`, `piste:<ref>~<name>`), never `edge:<id>`, which is
+  order-dependent and orphans on a rebuild; and it excludes **synthetic/custom** edges as a *source*
+  of names, so the app's own invented plumbing is never offered as if it were signposted terrain (a
+  name that also exists on a real edge still appears, and closing it still closes the synthetic
+  copies, because `resolveClosedEdgeIds` matches the key rather than this list). Measured over all
+  18 resorts: 9-181 lifts and 16-393 runs each, with **zero duplicate labels**, so the picker never
+  shows two identical rows.
+- **When a feature adds a second way to do something, every place that teaches the first one is
+  stale.** Adding the pickers left `app.statusNotice.tip` still saying only "⊘ on a route step" -
+  and that notice fires on *landing*, before any route exists, so it was advice the user could not
+  act on yet. Grep the catalogue for prose describing the old path, not just the component.
 
 ## Internationalisation (English + Hebrew/RTL)
 - **Stack:** i18next + react-i18next. `src/i18n/config.ts` (catalogue registration, `LANGUAGES`,

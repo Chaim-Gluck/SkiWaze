@@ -189,12 +189,16 @@
     "toEnd": "To end"
   },
   "closed": {
-    "intro": "Statuses are assumed open. Mark a run or lift closed (⊘ on a route step) and routes will avoid it.",
+    "intro": "Statuses are assumed open. Pick a lift or run below, or use ⊘ on a route step, and routes will avoid it.",
     "empty": "Nothing marked closed.",
     "count_one": "{{count}} closed",
     "count_other": "{{count}} closed",
     "reopenAll": "Reopen all",
-    "reopen": "Reopen (remove closure)"
+    "reopen": "Reopen (remove closure)",
+    "addLift": "Close a lift",
+    "addRun": "Close a run",
+    "search": "Type to search",
+    "noneLeft": "No match"
   },
   "layers": {
     "title": "Layers",
@@ -292,7 +296,7 @@
       "title": "Lift & slope status",
       "text": "Shown as OPEN by default - in early or late season some lifts and runs may actually be closed.",
       "hrefLabel": "Check the resort’s live status ↗",
-      "tip": "Tip: mark a closed lift or run (⊘ on a route step) and Find Route will avoid it."
+      "tip": "Tip: close a lift or run - pick it in the Closed today panel, or use ⊘ on a route step - and Find Route will avoid it."
     },
     "plan": {
       "title": "Plan a route",

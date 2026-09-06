@@ -6,6 +6,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleFilled';
+import { mapCenteredSx } from '../utils/mapCentered';
 
 /** Why we are offering Preview — the two situations read very differently to the user. */
 export type PreviewReason = 'noFix' | 'far';
@@ -14,6 +15,8 @@ interface Props {
   reason: PreviewReason | null;
   /** Resort name, used to make the "you are far away" wording concrete. */
   resortName: string;
+  /** Desktop centres the dialog over the map, not the viewport - see `mapCenteredSx`. */
+  isMobile: boolean;
   onAccept: () => void;
   onDecline: () => void;
 }
@@ -27,10 +30,10 @@ interface Props {
  * the user has a real fix inside the resort: a simulated position while someone is actually skiing
  * is a safety hazard, and being off-route is a reroute, never a simulation.
  */
-export function PreviewPrompt({ reason, resortName, onAccept, onDecline }: Props) {
+export function PreviewPrompt({ reason, resortName, isMobile, onAccept, onDecline }: Props) {
   const { t } = useTranslation();
   return (
-    <Dialog open={!!reason} onClose={onDecline} maxWidth="xs">
+    <Dialog open={!!reason} onClose={onDecline} maxWidth="xs" sx={mapCenteredSx(isMobile, '& .MuiDialog-container')}>
       <DialogTitle sx={{ fontWeight: 800 }}>{t('preview.promptTitle')}</DialogTitle>
       <DialogContent>
         <DialogContentText>

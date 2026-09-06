@@ -82,3 +82,48 @@ export function closureLabel(key: string): TextRef {
   if (key.startsWith('piste:')) return { key: 'closure.run', params: { piste: key.slice(6).replace('~', ' \u00b7 ') } };
   return { key: 'closure.segment' };
 }
+
+/** One closable named lift or run, for the Closed panel's pickers. */
+export interface ClosableItem {
+  key: string;
+  kind: 'lift' | 'piste';
+  /** Display text: the OSM name, prefixed by the run's ref where it has one. Never translated. */
+  label: string;
+  color?: GraphEdge['color'];
+  liftType?: GraphEdge['liftType'];
+}
+
+/**
+ * Every named lift and run in the graph, as closure keys the user can pick directly.
+ *
+ * Before this, the only way to close something was to route through it and click the sign on the
+ * step - so a skier who already knew a lift was shut had to first plan a route over it, and a run
+ * that no route happened to use could not be closed at all.
+ *
+ * Deliberately excludes **synthetic** edges as a *source* of names: those are links the app
+ * invented (snap, rescue, ski-out, skeleton arms), not terrain anyone signposted, and offering them
+ * as closable would present the app's own plumbing as if it were a run. A name that also exists on
+ * a real edge still appears, and closing it still closes the synthetic copies, because
+ * `resolveClosedEdgeIds` matches on the key rather than on this list.
+ */
+export function closableItems(graph: ResortGraph): ClosableItem[] {
+  const byKey = new Map<string, ClosableItem>();
+  for (const e of graph.edges) {
+    if (e.synthetic || e.custom) continue;
+    if (e.kind === 'lift') {
+      const key = liftClosureKey(e);
+      if (key && !byKey.has(key)) byKey.set(key, { key, kind: 'lift', label: e.liftName!, liftType: e.liftType });
+    } else if (e.kind === 'piste') {
+      const key = pisteClosureKey(e);
+      if (!key) continue;
+      // A run split across ways can carry the colour on one piece and not another, so fill in a
+      // colour we learn later rather than trusting whichever edge we met first.
+      const seen = byKey.get(key);
+      if (seen) { if (!seen.color && e.color) seen.color = e.color; continue; }
+      const label = e.pisteRef && e.pisteName ? `${e.pisteRef} \u00b7 ${e.pisteName}` : (e.pisteName ?? e.pisteRef!);
+      byKey.set(key, { key, kind: 'piste', label, color: e.color });
+    }
+  }
+  const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+  return [...byKey.values()].sort((a, b) => collator.compare(a.label, b.label));
+}

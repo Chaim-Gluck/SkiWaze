@@ -64,7 +64,8 @@ import { loadCustomEdges, saveCustomEdges } from './state/customEdges';
 import { loadCustomNodes, saveCustomNodes, type CustomNode } from './state/customNodes';
 import { buildEffectiveGraph } from './routing/customGraph';
 import { loadClosures, saveClosures } from './state/closures';
-import { closedGeometries, geometryForClosure } from './routing/closures';
+import { closableItems, closedGeometries, geometryForClosure, type ClosableItem } from './routing/closures';
+import { mapCenteredSx } from './utils/mapCentered';
 import { nearestNode, nearestResort } from './utils/nearest';
 import { PreviewPrompt, type PreviewReason } from './components/PreviewPrompt';
 import { distance3dM, haversineM, projectOnPolyline } from './utils/geo';
@@ -1247,6 +1248,12 @@ export default function App() {
   const reopenClosure = (key: string) => applyClosures(closedRef.current.filter((k) => k !== key));
   const reopenAllClosures = () => applyClosures([]);
 
+  // Everything the user could close, whether or not a route has ever used it. Built from the
+  // EFFECTIVE graph so a custom link's terrain is covered too.
+  const closable = useMemo(() => (effectiveGraph ? closableItems(effectiveGraph) : []), [effectiveGraph]);
+
+  const closeFromPicker = (item: ClosableItem) => markClosed(item.key, item.label);
+
   // Every closed run/lift as geometry, so the map can draw what the router is refusing. One
   // polyline per affected EDGE — a single closure key routinely covers several disconnected edges.
   const closedGeometry = useMemo(
@@ -1645,6 +1652,8 @@ export default function App() {
           >
           <ClosedPanel
             closedKeys={closedKeys}
+            closable={closable}
+            onClose={closeFromPicker}
             onReopen={reopenClosure}
             onReopenAll={reopenAllClosures}
             onLocate={locateClosure}
@@ -1865,6 +1874,7 @@ export default function App() {
           autoHideDuration={structured ? 15000 : noticeHref ? 13000 : 7000}
           onClose={(_, reason) => { if (reason !== 'clickaway') setPopup(null); }}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={mapCenteredSx(isMobile)}
         >
           <Alert
             onClose={() => setPopup(null)}
@@ -1938,6 +1948,7 @@ export default function App() {
       <PreviewPrompt
         reason={previewPrompt}
         resortName={resortEntry?.shortName ?? resortEntry?.name ?? ''}
+        isMobile={isMobile}
         onAccept={() => { setPreviewPrompt(null); setPreviewMode(true); }}
         onDecline={declinePreview}
       />

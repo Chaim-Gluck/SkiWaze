@@ -6,6 +6,13 @@
   --muted: #9fb0c0;
   --accent: #ff9800;
   --line: #2c3d4d;
+  /*
+   * The desktop sidebar's width. A variable rather than a literal because anything the app centres
+   * over the MAP has to subtract it: a Dialog or Snackbar is portalled to <body>, so it centres on
+   * the viewport, and with a 400px column beside the map that lands it visibly off-centre of the
+   * thing it is talking about. `mapCenteredSx` in `src/utils/mapCentered.ts` is the only consumer.
+   */
+  --sidebar-w: 400px;
 }
 
 * { box-sizing: border-box; }
@@ -114,7 +121,7 @@ body:lang(he) {
 }
 
 .sidebar {
-  width: 400px;
+  width: var(--sidebar-w);
   padding: 12px;
   overflow-y: auto;
   background: var(--bg);
