@@ -97,7 +97,59 @@ and apply identically to **every** resort — there is no per-resort graph code.
   (`oneway=yes` is never honoured — on a piste it usually just restates the default, so believing
   it would strand terrain on no evidence), and it waives only the *gradient* half, so
   `maxTraverseClimb` still caps it and it can never turn a real descent into a free climb.
+- **A pass that re-derives another pass's decision must use that pass's own constant.** The
+  `oneway=no` grant above is decided in `buildGraph` under `maxTraverseClimb` (8 m), because the tag
+  waives only the *gradient* half of the test. `applyOverrides` then re-derives direction after every
+  elevation correction - and its flat->slope demotion branch re-asked the same question under
+  `pisteFlatTolerance` (**3 m**), knowing nothing about the grant. So a tagged two-way run with a
+  4-8 m rise lost its uphill half the instant anything corrected a neighbouring node's height,
+  **including corrections that left the rise completely unchanged**: Madonna's `w395878130` sat at
+  6 m before and after a 4-node hand pin and was deleted anyway. Both hand overrides and the
+  **elevation-consensus** pass funnel through this branch (`build.ts` calls
+  `applyOverrides(g, { setNodeElevation: c })`), so the damage was fleet-wide. `GraphEdge.taggedTwoWay`
+  carries the grant onto both halves at build time and the branch now honours it, still capped by
+  `maxTraverseClimb`. Three things worth knowing:
+  - **`overrides.ts` already contained the correct mirror and still had the bug.** Its `addFlatReverse`
+    helper - written for the Avoriaz case - uses `flatGradeMax` + `maxTraverseClimb` and its comment
+    says outright *"same constants as buildGraph deliberately - this is that rule, not a second one"*.
+    The demotion branch beside it was the older half that never got the same treatment. A file being
+    *aware* of the discipline is not evidence that every branch in it follows the discipline.
+  - **Grant-only, like every other minority-signal rule here.** It can only *keep* an edge buildGraph
+    already emitted, never create one, so it cannot invent a climb.
+  - **The census that measured it also explains its own residue, and that is the point.** 31 runs
+    across 10 resorts looked one-way against an explicit `oneway=no`; the fix recovered **3**, and the
+    other 28 turned out to be two non-defects: **16** are `area=yes` polygons, which reach the graph
+    through the skeleton path and were never granted a reverse in the first place, and **12** are ways
+    whose rise *over the whole way* exceeds `maxTraverseClimb` and only fall under it because a later
+    split cut them in half - retro-granting those would violate the whole-feature rule stated in the
+    lift-direction bullet above. A census is only finished when every survivor has a name.
 - **Uphill is never inferred.** Skiable connectors are downhill-only or flat/bidirectional.
+- **An unrated piste inherits the EASIEST colour that feeds INTO it** (`pipeline/lib/inferColors.ts`,
+  called from `buildGraph`). OSM routinely tags a real run or link `piste:type=downhill|connection`
+  with no `piste:difficulty`, so it imports as `unknown` - which `cost.ts` treats as *harder than
+  black* and filters out for every skier, taking whole sectors with it when the unrated segment is a
+  lift top's only ski-out. The domain rationale is the user's and is the part that cannot be
+  re-derived: **an easy run cannot turn difficult mid-way with no way out**, so whoever is standing
+  on this segment arrived on one of its feeders, and the *easiest* arrival defines who must be able
+  to keep going. Three passes, and the ordering is the safety argument:
+  1. **Feeder rule** - easiest rated run feeding in, to a fixpoint.
+  2. **Guarded downstream fallback** - if only a lift or connector feeds it, inherit the run it feeds
+     *into*, but **only when it is that run's sole skiable feeder**. A run that is independently
+     reachable must not gain a second, harder access painted easy.
+  3. **Ambiguous leftovers take the HARDEST neighbour**, so experts can still use them and easy
+     skiers are never misrouted onto them. The asymmetry between 1 and 3 is deliberate: rule 1 is
+     reasoning about who *is already there*, rule 3 is a guess, and a guess must fail safe.
+  Rated runs are never changed, and freeride/backcountry already carries `piste:difficulty=freeride`,
+  so the pass can never downgrade dangerous terrain. Fleet residue: **29 of 20 751 piste edges**
+  still `unknown` (0.14%), spread over 10 resorts - i.e. nothing rated touches them at all.
+- **A hut or restaurant apron is graded flat, so links there are two-way even where the terrain
+  slopes.** Resorts bulldoze the ground around a mountain restaurant precisely so people can
+  traverse in and out, so a node that reads a few metres higher than its neighbours at a hut
+  entrance is **not** evidence that the link is one-way. This is a domain fact the DEM cannot
+  supply, and it is the standing explanation for a class of "both arrows look right but the node is
+  higher" cases that the elevation passes will otherwise keep re-flagging. Related but distinct
+  from the merge rule above, which is about huts *close horizontally at different heights staying
+  separate nodes*.
 - **A split may not invent an uphill piste.** A piste's direction comes from its two endpoint
   elevations, so a non-monotonic way (classically an `area=yes` ring arcing over a rim: down into
   the bowl, back out, ending near its start height) passes as "descending". Splitting it at an
@@ -214,6 +266,43 @@ and apply identically to **every** resort — there is no per-resort graph code.
   within `rescueRadius`; large drops become one-way so they can't be abused to climb.
 - **Lift-top ski-out pass** (`liftSkiOutRadius`): a lift top with no ski-out is projected onto
   the nearest downhill piste point, splitting it and adding a synthetic skiable_down connector.
+- **A snap may not duplicate an edge OSM already drew, and the base of an ascending lift is not a
+  dead end.** Two guards on the dead-end snap, both found at Mayrhofen's 6er Ebenwald base. The snap
+  asks "can a skier ski onward from here", which a **lift bottom fails by definition** — the way out
+  is the cable — so it was inventing a link back *up* the hill (13 m over 27 m) purely so the station
+  would have an exit. Gated on the lift **gaining height**, not merely on a lift departing: a
+  downloadable gondola also has a lift edge leaving its top, and a gondola top genuinely does need a
+  ski-out. Nothing is lost inbound either, because `liftSkiIn.ts` is the pass that guarantees a base
+  can be skied *to*. The second guard is the reuse branch: where the projection lands within `Hmerge`
+  of an endpoint we adopt that node, and if a **real (non-synthetic) edge already joins the two**,
+  the link is pure duplication — worse than useless, since the pair is emitted two-way and so also
+  asserts a reverse traversal the mapped way denies (piste `w475122536` already ran 38 m down into
+  that same station). Only the reuse branch can hit this; a fresh `s…` split node cannot already be
+  joined to anything.
+- **A station link that CLIMBS is redundant once the station can be skied away from, and a link
+  arriving at the top of an up-only lift is unusable** (`stationAccess.ts`, run from `build.ts`). The
+  dead-end snap marks the links it draws out of a lift station `stationAccess`, and it runs **before**
+  the lift-top ski-out pass — so at snap time a lift top with no ski-out still looks stranded, the
+  snap invents a ramp, the ski-out pass then adds the correct descending exit, and nothing removes the
+  first answer. St. Anton's Kindlisfeldlift top is the case a user found by eye: two one-way descents
+  onto the runs below (`e2364`/`e2365`) *and* beside them a two-way ramp climbing 9.6 m over 15 m
+  (**64%**) to reach terrain you can already ski down onto. Their question is the rule — *if there is
+  one that goes down, why do we also need the one that goes up?* Only the **climbing half** is
+  dropped: its twin descends *into* the station, which is the ski-in `liftSkiIn.ts` exists to
+  guarantee. Most `stationAccess` links are near-level (fleet median 0.0 m) and those are a station's
+  ordinary attachment to the snow, so the rule must never touch them. The threshold is
+  `maxTraverseClimb`, **not a swept number** — the sweep has no knee (0.5 m → 311, 2 m → 164,
+  4 m → 62, 8 m → 13), so the honest choice is the constant the *builder* already uses for "can a
+  skier get back up this", same discipline as `POTHOLE_CLIMB_TOL`. The sibling rule is directional:
+  at the **top of an up-only lift the station is a source** — you cannot board there — so a
+  `stationAccess` link *arriving* at it can never be used to reach the lift and only offers a dead
+  end (Verbier's "en projet" chair top, `e1365` out / `e1366` back in). Guarded on the node being the
+  `to` of an **ascending** lift and the `from` of **no** lift, so a downloadable gondola top and a
+  node that doubles as another lift's base are both exempt. Fleet effect: **7 climbing links and ~280
+  inbound links** dropped, `probe:trappeddiff` **0 REGRESSED on all 18**, and the `probe:stationclimb`
+  review population fell **5 → 1**. Both rules live in `build.ts`, not `buildResortGraph`, for the
+  same reason as `liftSkiIn.ts`: they ask about edge **direction**, which the overrides and the
+  elevation consensus both re-derive afterwards. Both use the two-directional never-strand guard.
 - **Areas** (OSM `area=yes` pistes): **kept in the routing graph** (open bowls need them for
   connectivity) but **excluded from the render lines** and emitted separately as polygon fills.
   Never drop areas from the graph — it disconnects bowls.
@@ -407,6 +496,12 @@ npm run probe:badges <id|all> [pairs]  # asserts a badge never contradicts the n
                              #   badged "Longest" shows fewer ski km. Compares at DISPLAY resolution
                              #   (whole minutes, 0.1 km) — a margin the user cannot see is not a lie.
                              #   Exit code 1 on any violation, so it works as a gate.
+npm run probe:stationclimb   # every app-invented link that climbs > maxTraverseClimb out of a lift
+                             #   station, with the second DEM's reading at each one. Writes the
+                             #   station-climb overlay + a review round. NOTE the framing this probe
+                             #   originally shipped with — "probable mis-seated station" — was
+                             #   DISPROVED by its own Terrarium column (every survivor agrees within
+                             #   1.6 m). Elevation is not the explanation; provenance is.
 npm run probe:wiggle <id>    # how often option 1 detours off a spine onto a parallel duplicate, and
                              #   by how far. Report the RATE, MEAN and WORST together — a pass that
                              #   turns one 1246 m detour into several 50 m ones raises the rate while
@@ -426,6 +521,12 @@ npm run probe:elevoverrides [--details]  # are our setNodeElevation overrides st
                              #   Compares each entry against what the CURRENT provider chain samples
                              #   at that node. Most were written against an older DEM: at last run,
                              #   43/117 were redundant and 36 pointed at nodes that no longer exist.
+                             #   IT COMPARES VALUES, NOT EFFECTS, so "redundant" is a hint and never a
+                             #   verdict: a 1 m pin sitting on a threshold changes the graph. Madonna's
+                             #   n603385508 reads redundant (live DEM 2098 vs pin 2097) yet removing it
+                             #   carried the 49 m run w562245685 from -4.0 m to exactly -3.0 m - onto
+                             #   `pisteFlatTolerance` - flipping a one-way piste into a two-way flat
+                             #   traverse. Always snapshot, remove, rebuild and diff the edge set.
 npm run probe:plumb <id>     # how much app-invented plumbing ends up inside longest-descent options.
 npm run probe:armsweep <id>  # sweeps ARM_PENALTY, reporting plumbing share AND detour rate together
                              #   (a penalty that cuts plumbing but sends routes the long way is a
@@ -468,6 +569,14 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 >   download pair — run it after touching the arrow code, and note it is what caught the one genuine
 >   defect in the population (st-anton `e1865`/`e1906`, two magic carpets on the same node pair
 >   pointing opposite ways, neither flagged download).
+> - **Two distinct lifts can share both end nodes, so the dedupe key needs the lift NAME.** Paradiski
+>   runs Vanoise Express 1 and 2 as separate cable cars between one pair of stations (and Funiculaire
+>   1/2 likewise); keyed on class + node pair, the first claimed the key and the second was drawn with
+>   **no arrow at all**. Fleet-wide that hid exactly those 2 lifts. The name still collapses the case
+>   the dedupe exists for, since a download twin carries its own lift's name. **Do not extend the
+>   discriminator to ground edges** - a two-way ground link's two halves do not reliably share a
+>   `srcWayId`, and keying on it splits ~3000 double heads fleet-wide into pairs of overlapping
+>   single arrows (measured: 37590 -> 40658).
 >
 > **Never send the user to this map without a complete recipe.** A bare "go look at X" makes them ask
 > which controls to touch, every single time. State all four, always, even when the answer is "leave
@@ -518,6 +627,20 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 > before it was deleted, and the reason that deletion was safe only once the spine layer replaced
 > it. Keep both files committed, and keep one entry as a schema example.
 >
+> **A review round must name its own overlay, or two of your five reviews are worthless.** The review
+> list and the investigation-overlay dropdown are **independent** controls, so stepping the list never
+> switched the overlay and a reviewer judges each case against whatever was left selected. This cost a
+> real round: a user reviewed two station-climb cases with "Over-rim critical arcs" loaded and the
+> panel literally saying *"(no overlay data for verbier-4vallees)"*, and reported — correctly — that
+> they had no idea what they were looking at. Every review-list entry therefore carries an
+> **`overlay`** field which `gotoReview()` applies before framing. Any writer of a review round owes
+> it. The same round taught the presentation half: an overlay must make **provenance** legible or the
+> reviewer cannot answer the question. `mapdebug` draws app-invented links **dashed** and real OSM
+> ways **solid**, and every overlay line is clickable for its edge id, direction, length, climb and
+> either `w<id>` or "APP-ADDED - no OSM way behind it". Note `line-dasharray` is **not** data-driven
+> in MapLibre, so the dashed subset needs its **own layer** with a filter on both — and that new layer
+> must be added to `applyToggles()`, or unticking `overlay` leaves half the drawing on screen.
+>
 > **`check:areaskel` and `check:areaclass` are deleted.** Both re-derived polygons straight
 > from OSM via `buildResortGraph` and so never saw `build.ts`'s synthesis passes — they classified
 > every polygon class `D` and produced nothing. `check:spines` is the live gate, and the **`spines`
@@ -560,14 +683,31 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   105 m gap and hid a 0 m touch; (c) two ways that each put an explicit vertex at the same spot is a
   mapper marking a junction, not a coincidence. Fixed generically — see `coincidentNodes.ts` above.
   Census at the time: 18 dropped junctions across 8 of 15 resorts.
+- **Before bridging or deleting a suspicious OSM way, ask whether it CONNECTS AT BOTH ENDS.** The
+  user's own triage rule, from comparing two cases side by side: at Val Thorens the odd-looking runs
+  *"all start at the same point or close to other slopes and also connect again at the bottom with
+  others, and you can continue skiing until a lift"* - real terrain. At St. Anton the equivalent way
+  *"was going to nowhere"* - a bad import. A run that begins near other runs and rejoins something
+  from which you can ski to a lift is terrain whatever else looks wrong about it; a run that starts
+  or ends in isolation is the import tell. This is the human check that belongs *before* the
+  mechanical ones, because every automated test we have measures connectivity **after** assuming the
+  way is real.
+- **Sella Ronda: Arabba Fly was the LAST forced gap on the loop - stop hunting for more.** Skier
+  ground truth, so it settles a question no probe can. Four named features come up repeatedly and
+  **none of them is a missing edge**: the Selva/Wolkenstein overpass, the Plan de Gralba "Città dei
+  Sassi" flats, the Lupo Bianco / Pian Frataces choke, and the Corvara/Colfosco gondola bridge
+  (Borest lift, already in production and already bidirectional). All four are **momentum and
+  flat-ground quirks** a skier notices on the snow, not gaps in the graph. Treat a report about any
+  of them as a routing-cost or spine question, never as a connector to invent.
 - **A basin "obviously" needing a lift may just have an unbuilt one.** Schröcken's village gondola is
   `w660999299 aerialway=proposed`, note "in Planung". Grep OSM for `proposed`/`construction` before
   assuming a data bug.
 - **…and a basin obviously needing a lift may have had one that was torn down.** The mirror image of
   the case above, and the more common one. A **lifecycle-prefixed** OSM tag — `abandoned:aerialway=*`,
   `disused:aerialway=*`, `razed:`, `demolished:` — is the signature of a dismantled lift. Our Overpass
-  query matches **bare `aerialway`** only, so dead lifts are already excluded **fleet-wide and
-  automatically**; no pipeline change is ever needed for this, and the stranded terrain below is
+  query matches **bare `aerialway`** only, so a **prefixed** dead lift is excluded automatically (but
+  see the next bullet - the prefix is only one of three shapes, and the other two needed real code).
+  The stranded terrain below such a lift is
   **correct output, not a bug**. Portes du Soleil's Torgon sector read as 7 stranded nodes above the
   village until OSM itself supplied the proof: `w44538226` *Télésiège Jorette* and `w45666705`
   *Télésiège Grands Places* are both `abandoned:aerialway=chair_lift`, `w44538224` *Fignards* is
@@ -575,6 +715,29 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   externally by the resort now running a shuttle bus to that side. **Query the lifecycle prefixes
   before assuming a data bug, and sign the result off (`acceptedDeadEnds`) rather than bridging it** —
   a synthetic link there would route skiers to a lift that no longer physically exists.
+- **A dead lift is written THREE ways in OSM, and we only handled two of them.** The lifecycle idea
+  appears as (1) a **prefixed key**, `abandoned:aerialway=chair_lift` - never fetched, so free;
+  (2) a lifecycle **value**, `aerialway=proposed` - caught by `NON_PASSENGER_AERIALWAYS`; and (3) a
+  **top-level lifecycle key beside a live type**, `aerialway=t-bar` + `abandoned=yes`. Shape 3 was the
+  gap: those ways carry a perfectly ordinary lift type, so every existing filter waved them through
+  and we shipped **12 rideable lifts that do not exist**, including two Passo Tonale gondolas named
+  *"Progetto Cabinovia"* and a Verbier chair *"(en projet)"* - i.e. we were routing skiers onto lifts
+  that had been torn down or never built. `LIFECYCLE_TAGS` in `overpass.ts` rejects a way carrying any
+  of `planned|proposed|construction|disused|abandoned|razed|demolished` as a top-level key. Three
+  things about it: `v !== 'no'` is required, since `disused=no` is a mapper stating the opposite; the
+  **tag is the trigger and the name never is** (every one of the 16 hits happens to be corroborated by
+  its name - *stillgelegt*, *Progetto*, *en projet* - but names are multilingual and a resort may call
+  a live lift anything); and it runs on the **cached** raw ways, so a plain `npm run data <id>`
+  applies it. Blast radius: 16 ways fleet-wide, 12 of them previously shipping, across 5 resorts.
+  Stranding was almost nil because the dead lifts largely served terrain live lifts also reach -
+  exactly **2** nodes fleet-wide lost their last way in (Sella Ronda's Sass del Mul top), and those
+  are signed off in `acceptedDeadEnds` rather than bridged.
+- **`probe:trappeddiff` is blind in one of its two directions.** `_trappeddiff.ts` computes both the
+  trapped and the orphan sets but only ever prints a REGRESSED section for **trapped** - so "0
+  REGRESSED" says nothing about whether a change made terrain **unreachable**, which is the half the
+  `roadCrossing.ts` lesson above exists to warn about. The lifecycle filter's only real effect showed
+  up purely as `orphan 13 -> 15` at sella-ronda, with the probe reporting a clean bill of health.
+  Until it is fixed, diff the orphan sets by hand before believing a connectivity result.
 - **Trapped/orphan is a DIRECTED property — never walk the component undirected.** A first pass at
   Torgon flood-filled ignoring edge direction and returned **the whole 1233-node resort**, i.e. "no
   problem here", which is the wrong question answered confidently. One-way pistes mean a sector can be
@@ -620,6 +783,13 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   genuinely inert and 1 was this. (That one still stayed deleted: it was a 4 m nudge to precisely the
   DEM value, i.e. inside noise, and `check:audit` is clean without it — but that was a *measured*
   decision, not the report's.)
+- **Never anchor an override to a synthetic node — it is the app's own guess, and a rule change can
+  delete it.** An `addConnectors` entry pointing at an `s…`/`k…`/`sn…` id is anchored to a link a
+  pass invented, so the moment that pass stops firing (or fires differently) the override goes stale
+  and its terrain drops out. St. Anton's `sn249417956` was exactly this and was repointed to the real
+  `n249417956`, which is the node the entry always meant. **Point overrides at OSM-derived ids**
+  (`n<osm>`), and if only a synthetic id is available, that is a sign the graph rule is the thing that
+  needs fixing.
 - **A `check:overrides` "load-bearing" connector is a HOLD, not a to-do.** Four survive fleet-wide
   (les-deux-alpes 410 m, monterosa 285 m, st-anton 317 m and 488 m); each strands 183-1068 nodes if
   removed. Their ids resolve, so repointing is unnecessary and *re-pointing* one would move terrain
@@ -919,6 +1089,46 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   alternatives you rejected**, because the next person will otherwise re-litigate it. Useful property:
   `_trapped.ts` **warns when a signed-off node stops being trapped**, so a sign-off doubles as a
   tripwire — write one whenever the real fix is upstream in OSM and you want to be told when it lands.
+- **A sign-off's node list must be PRUNED when the tripwire fires, or the tripwire stops working.**
+  The WARN is per node, so a group sign-off covering a chain keeps warning about the one node that got
+  better while the other six are still correct — and a warning that fires on every run trains the
+  reviewer to skip the whole gate, which is exactly the failure the `check:audit`/`acceptedDeadEnds`
+  bullet elsewhere exists to prevent. Torgon's two-raster elevation rollout freed
+  `n14050186237`/`n565736424` out of a 7-node group; both were removed from `nodes` and **named in the
+  `why`**, so the record survives and a future re-stranding lands back under the same verdict. Prune
+  the ids, never the reasoning.
+- **An unsourced OSM way beside sourced siblings is weak evidence, and weak evidence loses both ways.**
+  Portes du Soleil's red "Pauvre Conche" (`w30751810`) dead-ends mid-face and carries **three tags and
+  no `source`**, while the black `w8215594` (`source=GPS`, `piste:grooming=classic`) and the blue
+  `w274898287/8` (`source=Bing 2014`) fork from the *same* top node `n340096712` @1904 and both reach
+  `n616880` @1693. The user checked satellite imagery and the published piste maps: no snow in the gap,
+  and **no resort publishes a red here at all**. So it is probably an OSM sketch — and that changes
+  nothing about what we do. We do **not bridge** it (137 m of invented terrain on no evidence) and we
+  do **not delete** it (a real OSM way is evidence; deleting on suspicion is the mirror of inventing on
+  suspicion). It gets an `acceptedDeadEnds` sign-off, which is the only move that is honest in both
+  directions. Provenance asymmetry between sibling ways is a good *tie-breaker* when you already have
+  a decision to make; it is never on its own grounds to act.
+- **`rescueLineRadius` stays at 130 m — re-measured 2026-09-07, do not re-litigate.** The sweep
+  (`files/rescuesweep2.mts`) projects every trapped node onto the nearest reachable piste line under
+  the pass's own rules, minus two filters the 2026-08-29 run lacked: nodes already in
+  `acceptedDeadEnds`/`acceptedBasins` (a rescue there contradicts a reviewed decision) and nodes whose
+  only real terrain is `offPiste` (not stranded piste since the off-piste work). Fleet-wide that is
+  **139 trapped, of which 36 signed off and 48 off-piste-only**, leaving 21 with a legal projection
+  within 400 m. Cumulative new rescues by radius: **140 → 1, 150 → 1, 175 → 1, 200 → 3, 250 → 10,
+  400 → 20.** So 130 → 140 buys exactly **one** case (Pauvre Conche) with a **44 m dead zone** behind
+  it, and the user rejected it on the merits — there is no snow in that gap. Note the histogram moved a
+  lot since August (the second near-boundary case, cervinia `n2525940038`, drifted 138 m → **221 m**
+  under the two-raster elevation rollout), so **re-measure before quoting these numbers**; and note the
+  sweep is a *static* approximation, since the real pass is iterative and each rescue changes what is
+  reachable.
+- **Override JSON has been mojibaked before — check before you read a `why` as authoritative.**
+  `portes-du-soleil.json` had been through a cp1252 round-trip, so every accent and dash was stored as
+  the UTF-8 bytes of its own mojibake (`Châtel` → `ChÃ¢tel`, ` - ` → `â€”`) and `check:trapped` printed
+  the sign-offs garbled. Two traps in repairing it: a whole-file re-decode is **lossy**, because the
+  damage is not uniform (one genuine em dash had survived), so replace the *exact* sequences present
+  and assert nothing unexpected is left; and the round-trip is **cp1252, not latin1** — the mojibake
+  leans on 0x80-0x9F, which latin1 leaves as control codes. Cause was `Set-Content`; the standing rule
+  (use the edit tool or `[IO.File]::WriteAllText`) is what prevents a repeat.
 - **Not every lift is an `aerialway`.** Funiculars and cogwheel railways are tagged `railway=funicular`
   / `railway=rack`, so a query for `aerialway` alone silently misses them — for years we fetched
   **zero** of the 22 that exist across the fleet. They are ordinary ski lifts to a skier and several
@@ -1132,6 +1342,37 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   that edits a field another pass derived a decision from owes that decision a re-derivation, and the
   cheapest way to find the gap is to dump one neighbourhood and ask *why* of each one-way edge —
   `files/whyoneway.ts` prints exactly that, with the failing rule named.
+- **A big lift station is a BUILDING, so the vertical between it and the piste beside it is stairs,
+  not snow.** The DEM samples the ground at the station's footprint - often the boarding level, or
+  the road outside - while skiers leave from the top floor. Paradiski's Vanoise Express base reads
+  **1541 m** against **1550-1552 m** for the two runs that touch it, and *both* rasters agree, so
+  this is not a bad datum to be overridden with `setNodeElevation`; it is the building, and pinning
+  a guessed exit height would silently change the cable car's own drop as well. Charged as terrain
+  it cost **10.9 m x 12 s/m = 131 s** of imaginary poling just to walk out of a major inter-sector
+  cable car - easily enough to push routes off it. `GraphEdge.stationAccess` (set by the dead-end
+  snap in `buildGraph.ts`) therefore tells `cost.ts` not to charge `CLIMB_SECONDS_PER_M`; the
+  horizontal term still applies, pricing the walk through the terminal at flat-traverse pace.
+  Three things keep it narrow, and the middle one is the whole rule:
+  - **Gated on `DOWNLOADABLE_LIFT_TYPES`** - gondola, cable car, funicular - because that set is
+    *exactly* the types that have a terminal building. A chairlift base or a drag top is an open-air
+    ramp, so an apparent climb into one is evidence of a **mis-seated station** and must stay
+    visible. Fleet-wide 13 station snaps exceed `maxTraverseClimb`; only **4** are downloadable
+    (paradiski Vanoise Express 10.9 m, cervinia Gant-Hohtälli 11.0 m, cervinia Leisee-Shuttle
+    13.0 m, val-thorens Pointe de la Masse 9.4 m). Of the other 9, **two are platter *tops***
+    (st-anton Kindlisfeldlift 9.6 m over 15 m = 63%, Angerlift 8.3 m) - and our own lift-type rule
+    says a drag top is a *source*, so a link climbing INTO one is a probable elevation fault.
+    Exempting them would have hidden it.
+  - **No new length constant is needed.** The whole 399-strong station-snap population maxes at
+    **45 m** because `snapToLineRadius` is 45, so the station-footprint bound is already enforced by
+    the snap radius. Measured: len p50 21 / p90 38 / max 45; climb p50 **0.0** / p90 4.5 / max 13.0.
+  - **Grant-only, and topology is untouched.** It removes a penalty, never adds a direction. All 13
+    over-climb links were *already* two-way, so there was never a gate to relax - the live defect
+    was purely the cost. Fleet effect: **592 flagged edges, 264 of them climbing, 9 446 s** of
+    imaginary poling removed, `probe:badges all` still **0 violations / 1904 plans**, and every
+    resort's node/edge counts unchanged.
+  Do **not** "fix" this class by capping the snap at `maxTraverseClimb`: that was the obvious move
+  and it is backwards, deleting the four links that are physically real while leaving the nine that
+  are suspect.
 - **A lift base you can ski away from but never ski *to* is invisible to every existing guard.**
   `buildGraph` has a lift-**top** ski-out pass; there was no mirror for the base. Nothing else finds
   it: the rescue pass fixes nodes that cannot leave, the orphan pass fixes components with no
@@ -1237,6 +1478,37 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   road rather than a run. Fleet-wide **143 of the 256** downhill ways carrying both tags disagree
   (Zermatt "Moosstrasse" vs "Moos", "Riedweg" vs "Ried"; Alpe d'Huez "Lac Blanc" vs "Retour 1800").
   Takes effect only after `npm run data:refresh`.
+- **A `piste:name` that merely repeats `piste:ref` is not harmless noise - it SPLITS the run's
+  closure key.** The key is `piste:<ref>~<name>` when both tags exist and `piste:<ref>` when only
+  the ref does, so a run whose ways are inconsistently tagged becomes **two** keys and closing one
+  leaves the other half open. Ischgl and Sölden put `piste:ref=2` *and* `piste:name=2` on most of
+  their runs - **1423 edges fleet-wide** - which is how a user reading the Closed picker found "2"
+  and "2 · 2" listed as separate runs. `dropSelfRefName` in `normalize.ts` clears the name when it
+  equals the ref (trimmed, case-insensitive). Three things about it:
+  - **It needs no ambiguity guard, and its stronger sibling does.** Dropping a self-repeating name
+    can only ever merge a key with the bare-ref key denoting *the same number*. Adopting a
+    **different** sibling's name cannot claim that - see the Rule B caveat below.
+  - **Verified as label-only**: rebuilding both resorts left the node id set and the whole edge
+    signature (`from>to|kind|length`) **byte-identical**, with **zero** names dropped that were not
+    a repeat of the ref. Keys fell 108 → 87 at Ischgl and 78 → 61 at Sölden.
+  - **The tag is already cached**, so `npm run data <id>` applies it; no `--refresh` needed.
+- **A piste ref does NOT identify a run - 115 of 852 refs name several.** The tempting fix for the
+  split above is to key on the ref alone, since the number on the signpost looks like the run's
+  identity. Measured, it is not: Sella Ronda's ref **6** covers **eight** unrelated runs (Pian
+  Frataces, Ciampinoi 6, Ornella, Canazei, Ciampac, Cigolade, …) in different valleys, and Cervinia
+  has 31 such refs. Keying on the ref would let one click close eight runs on other mountains.
+  The safe residue is a **per-resort** rule (*"Rule B"*, not implemented): where a ref carries
+  exactly **one** distinct real name, its bare-ref ways may adopt that name. Worth only 14 more keys
+  (Mayrhofen 7, Sella Ronda 5, Monterosa 1, Val Thorens 1) and it has a genuine failure mode - a
+  resort reusing a ref for a second run that is *entirely* unnamed would be silently labelled as the
+  first - so it needs a **connectivity guard** (adopt only onto ways connected to the named part),
+  which is the same "repair the whole feature or none of it" discipline as the elevation patches.
+  Note the resorts worst hit by the split (Ischgl, Sölden) have **zero** ambiguous refs, so Rule A
+  carries almost all the value.
+- **Lift names that differ by a trailing number are usually NOT duplicates.** A crude prefix/suffix
+  test reports 79 pairs fleet-wide and essentially all are real: `Poutran 1`/`Poutran 2` and
+  `Pic Blanc 1/2/3` are separate stages of one gondola, and `Rif Nel 1`/`Tapis Rif Nel 1` is a
+  carpet beside the chair it serves. Do not "de-duplicate" lift names.
 - **A road can be a real piste, and OSM says so explicitly.** Before treating a run that follows a
   road as an import artefact, read its tags: the Route des Lindarets ways carry `piste:type=downhill`
   + `piste:difficulty=easy` + a `piste:name`, and `w327863773` adds
@@ -1598,6 +1870,20 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   nav banner, legend + layer selector, Snackbar/Dialog). **MapLibre visuals stay tokenized CSS**
   (location puck, on-map arrows, route lines, piste badges, pin hints) — they must read over the
   unchanging map tiles in both themes, so don't tie them to the light panel colour.
+- **Preferred colours are a CONTIGUOUS band, and raising max ability drops what is above it.** Two
+  UI invariants in `PreferencesPanel.tsx`, both from the user and both easy to "helpfully" undo:
+  preferring green **and** black while skipping blue and red is not a coherent taste, it is a
+  mis-click - a skier who likes greens and blacks likes everything between - so the selection is
+  forced to a run with no gaps; and setting max difficulty to red must **auto-drop black** from
+  preferred, because a preference for terrain the same panel has just declared off-limits is a
+  contradiction the router then has to resolve silently. Max ability is the **ceiling** and preferred
+  colours are a taste *within* it, never beside it.
+- **The resort picker has no search box, on purpose.** It was removed at the user's request: on a
+  phone, focusing a search field throws up the keyboard and covers the very list you are choosing
+  from, and grouping by country is already enough to find 18 resorts. Do not add it back as an
+  ergonomics "improvement" - it is one, on a desktop, for a list this short it is a net loss on the
+  device the app is actually used on. Revisit only if the fleet grows past what a grouped list can
+  carry.
 - **The panel's two primary sections are pinned open; only the secondary four collapse.** The route
   form and its results are the panel's whole job, so they are `pinned` (header, no chevron, never
   collapses) and Longest runs / Custom links / Closed today / Preferences stay a normal exclusive
@@ -1606,9 +1892,151 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   in itself, it was exclusivity applied to two things that must be visible together. Note the
   secondary four keep their collapsed one-line summaries ("All open", "None yet"): those carry
   state, so replacing that strip with bare icons would cost information to save ~150 px.
+- **A card with too much in it gets TABS, and the tab value must be state that already exists.**
+  Two cards outgrew a single scroll. Preferences became **Me / Route / Lifts**, and the Plan card
+  became **Plan / Options** — the latter *replacing* the separate pinned "Route options" section
+  above, so the two are now one card. Five rules came out of doing it:
+  - **Reuse the existing selector; never add a parallel one.** The Plan strip's value **is**
+    `openSection`, clamped to `plan|routes`. All seven `setOpenSection('routes')` call sites (after
+    a search, after picking an option, reroute, the preview's Details, the options FAB) already
+    meant "show me the results", so the strip inherited every one of them and cannot drift out of
+    step. A second `useState` would have had to be threaded to all seven by hand. `mobileTab` still
+    folds `routes` into `plan`, so the bottom nav is untouched.
+  - **Clamp when the second tab cannot exist.** Options only render when
+    `plan && (noLiftFreeRoute || routes.length)`. Without the clamp, clearing a route or changing
+    resort while `openSection === 'routes'` leaves a blank card. The **strip stays put** and the
+    empty tab is `disabled`, not hidden: a strip that appears when results arrive shoves the card
+    down 40 px at exactly the moment the user is reading it, which is the same "nothing may jump"
+    rule that gives the mobile sheet a single fixed height, and a greyed tab tells the user where
+    the results are going to land. (Hiding a *lone* tab would still be right — this card always has
+    two.)
+  - **A tab strip owns the card's iconography, so the header gives its icon up.** Each tab carries
+    the glyph of the mobile FAB that opens it — `SearchIcon` for Plan, `AltRouteIcon` for Options —
+    so the button you tapped and the tab it lands on are visibly the same thing. That puts
+    `SearchIcon` ~40 px below the header's copy of it, which reads as a mistake, so the Plan card's
+    `AccordionSection` takes no `icon`. It is the only card with tabs, hence the only header that is
+    a title over a labelled strip; the mobile sheet's title bar still shows the icon via
+    `sectionHeader`, far from the strip. Use `iconPosition="start"` — `"top"` doubles the strip's
+    height for no gain.
+  - **A tab label carries its own state**, same convention as the collapsed accordion summaries:
+    "Options (3)" shows the count, and each Preferences tab shows a dot when it holds a non-default
+    value (`isTouched`). A dot, not a count — those settings are
+    heterogeneous and have no natural number. Tabs hide state; the strip has to give it back.
+  - **If a tab is hard to name, the GROUPING is wrong — do not go looking for a better word.**
+    The third Preferences tab was "Terrain" and held the lift-type grid plus two strays, `allow
+    off-piste` and `avoid app-added bridges`. No name worked, because two of its three settings are
+    not terrain. Both strays are constraints on which **edges the router may use**, exactly like
+    `prefer skiing`, so they moved to **Route** and the tab became simply **Lifts** — the most
+    findable word on the card ("can I turn off drag lifts?"), and now literally true. `isTouched`
+    moved with them. Two follow-ons: the lift grid's disclosure was deleted, since the chips *are*
+    the tab and a collapse would leave it empty but for a count; and the Hebrew is **רכבלים**, the
+    term already used fleet-wide for ski lifts — **מעליות** is elevators in a building, which is
+    what a dictionary lookup hands you.
+  - **Nothing may live outside a tab panel.** `MeasuredSpeedsPanel` was rendered by `App.tsx` as a
+    *sibling* of `PreferencesPanel`, so after tabbing it sat below the strip and appeared under all
+    three tabs. It is now passed in as `speedsSlot` and rendered inside **Me**, beside the skiing
+    speed it calibrates — App still owns the sample store, the panel only decides placement.
+  This does knowingly soften the bullet above: on desktop the form and its results were previously
+  both visible at once. The old defect was **exclusivity across six peers** — a route search made
+  the form vanish into an accordion set with no hint where it went. A two-tab strip is a different
+  thing: the form is one labelled, permanently visible click away.
+- **A disclosure toggle is not a link, and `underline="hover"` on one gets stuck.** Preferences'
+  `Collapse` triggers were `Link component="button" underline="hover"`. Measured in
+  the live page rather than guessed: the class list is identical before and after a click, there is
+  no `focusVisible` class, and computed `text-decoration-line` is `none` — so MUI holds no state and
+  the only rule that underlines is `:hover`. On desktop that means the cursor parked on the control
+  after clicking; on touch it is **sticky `:hover`**, which persists until you tap elsewhere and
+  reads as "this is a visited link". Affordance on a disclosure belongs in a chevron, which cannot
+  get stuck, not in a decoration that depends on pointer state.
+- **A setting whose default is nearly always right is collapsed, and its SUMMARY carries the state.**
+  The Plan form's "When" was a label line plus a two-button toggle row - three lines of vertical
+  budget for a control that reads "Now" on virtually every plan, sitting between From/To and the
+  Find button that the user actually came for. It is now the same `Button` + chevron disclosure used
+  in Preferences, labelled `"When: now"` / `"When: arrive by 09:15"`. Two rules: the label is a
+  **single catalogue string with a param** (`app.plan.whenArriveBy`), never a concatenation, because
+  Hebrew puts the time somewhere else in the sentence; and the time goes through `fmtClock`, whose
+  bidi isolate stops `09:15` reordering against the surrounding Hebrew. `arrive_by` deliberately does
+  **not** force it open - the summary already states the chosen time, and force-expanding would make
+  the control uncollapsible in exactly the state where it is longest.
+- **"Share my location" is a map FAB, not a form field.** It sat as a full-width outlined button at
+  the foot of the Plan form, which made it read as a third action of that form (beside Find and
+  Clear) when it has nothing to do with planning: it is a safety utility you reach for when you are
+  *not* filling the form in, typically because someone is lost. It is now a `Fab size="small"`
+  directly under Locate in the map stack - the two answer the same question ("where am I") - and,
+  critically, that stack is the one place a **mobile** user can reach without opening a card, since
+  the Plan and Options FABs are `!isMobile`. Its `Menu` moved with it and anchors bottom-right of
+  the FAB. The stack's `position/top/right` stay an **inline style**, not `sx`, so the RTL emotion
+  plugin cannot flip it away from the map's edge.
+- **A card can be a HOME for a topic rather than one feature, and the coming-soon tab is what makes
+  that honest.** "Longest runs" was a card for a single button. It is now **This resort**, with
+  **Longest / Iconic routes / Stats** - the same tab mechanism as above, but the tab value is local
+  `useState`, *not* `openSection`, because unlike the Plan strip nothing in the app navigates to a
+  specific one of these. Three things came out of it:
+  - **A tab may ship empty if the empty state is a promise.** Iconic routes renders a coming-soon
+    note. That is not filler: it tells the user the resort's signposted circuits are a planned
+    feature and stops the question being asked, and it reserves the slot so adding the feature is
+    not another card. Do this only where the feature is genuinely designed (see the backlog section).
+  - **Debug-ish numbers belong in a tab, not loose under the panel.** The node/edge counts were a
+    desktop-only line under all the cards, invisible on mobile. They are now the **Stats** tab, which
+    also made them reachable on a phone for the first time. `src/utils/resortStats.ts` derives them
+    from the loaded graph, and it counts **lifts, not lift edges** - a lift is split at every shared
+    node, so an edge count reports a number several times the one on the resort's own website.
+  - **Stats are derived, so they say where they came from.** The tab carries a caption naming
+    OpenStreetMap and the compile date, because a raw "212 runs" invites comparison with a published
+    figure that counts differently.
+  - **A vertical drop is a SKIING statistic, so it is measured over skiable ground - not over every
+    node.** Scanning all nodes lets a valley station you can neither ski to nor ski from set the low
+    point, and the offenders are exactly the lifts that are not ski lifts: Madonna read **790 m** at
+    the Pinzolo gondola base and Verbier **483 m** at Riddes-Iserables, which AGENTS already records
+    as public transport. `resortStats` therefore ranges over nodes touching a real mapped run -
+    off-piste **counts** (terrain a skier descends, just unpatrolled), areas and the app's own
+    synthetic plumbing do not. Fleet effect on the low end: verbier 483 -> 844, val-thorens
+    626 -> 1117, alpe-dhuez 724 -> 1132, paradiski 808 -> 1198, les-deux-alpes 964 -> 1286,
+    sella-ronda 1015 -> 1218, madonna 790 -> 851; **every top unchanged**. Note off-piste is
+    load-bearing at the top end too - dropping it would cost st-anton 2790 -> 2635 and monterosa
+    3250 -> 3022, where the highest lift serves freeride terrain only.
+  It is deliberately called **Iconic routes**, not "Iconic circuits": a circuit (Sella Ronda) is one
+  shape of the thing, and most resorts' iconic line is a point-to-point descent. Model it as
+  `waypoints[] + loop: boolean`.
+- **A duplicate JSON key silently deletes the earlier block, and nothing anywhere warns.** Adding a
+  `"status"` object to a locale file that already had one produced **valid JSON**; `JSON.parse` keeps
+  the *last* occurrence, so `app.status.loadingResorts` / `errorResort` and friends vanished and the
+  AppBar's loading and error banners would have rendered raw keys. Build, lint and i18next were all
+  green throughout. **Grep the catalogue for a block's name before adding it**, and treat a suddenly
+  missing string as a duplicate-key symptom rather than a typo.
+- **Occasional + spatial + list-shaped belongs in the AppBar overflow, not in a card.** "Custom
+  links" held a whole panel card and, on mobile, one of five bottom-nav slots, for something a user
+  touches perhaps once a season - while the card body is a list plus a form, i.e. exactly what a
+  dialog does better than a 400 px sidebar. It moved to a `Dialog` behind the ⋮ menu, alongside a new
+  **About**. Four things this needed:
+  - **The ⋮ had to become permanent.** `AppBarOverflow` rendered only when `isNarrow` (it existed to
+    fold the language picker and theme toggle away on a ~360 px screen), so on desktop there was no
+    overflow to hang anything on. It now renders at every width, with the language/theme block still
+    behind `compact`. The **resort picker stays out of it**: it is how you change mountain, so it
+    must remain one tap. Inside the menu **every row is one line with one icon** - the language list
+    was a subheader plus two permanent rows, three lines carrying no glyph, so it became a
+    `LanguageIcon` row with a chevron and a `Collapse`. It re-collapses on close, and the label stays
+    bilingual (`Language / שפה`) for the same reason the desktop control is a globe: someone who
+    cannot read the current language still has to find their way out of it.
+  - **`keepMounted` is mandatory, because pin mode closes the dialog.** Picking a point "anywhere on
+    the map" closes the dialog and the map click reopens it - the same close/reopen contract
+    `enterLinkPinMode` already had for the mobile sheet, now applied at all widths. Without
+    `keepMounted` MUI unmounts `DialogContent`, `CustomLinkPanel` loses the local `adding` state, and
+    the user comes back to a collapsed card with their half-filled form gone. The pinned point itself
+    survives (it lives in `App`); the form around it does not.
+  - **The menu item carries the count the card's summary used to.** A card gives state away for free
+    in its collapsed one-liner ("2 links"); a menu item behind an icon gives nothing, so the item
+    shows a `Chip` when `linkCount > 0`. Anything moved out of a card owes this.
+  - **The About dialog links the GitHub PROFILE, not the repo.** `Chaim-Gluck/SkiWaze` is private, so
+    a repo link 404s for every visitor and reads as a broken app rather than as closed source. One
+    string in `AboutDialog.tsx` if that ever changes. Name and year are pinned `dir="ltr"`.
+  `openSection` is plain `useState`, never persisted, which is what made deleting the `'links'` value
+  safe - no returning user can hold a stale value and land on a blank sheet. Check that before
+  removing any section id.
 - Mobile (≤820px) = **bottom nav bar + bottom sheet**, and the two are not alternatives: the nav
-  bar is the *only* navigator (5 fixed tabs; re-tapping the active tab closes the sheet) and the
-  sheet is only a *container* for whichever section it selected. Both are MUI —
+  bar is the *only* navigator (4 fixed tabs - Plan / Resort / Closed / Filters; re-tapping the
+  active tab closes the sheet) and the sheet is only a *container* for whichever section it
+  selected. Both are MUI —
   `BottomNavigation` plus `PanelShell` (`SwipeableDrawer`). Three things there are load-bearing:
   - **The sheet has a fixed height, not `max-height`.** Content-driven height meant the panel
     jumped 458 px between tabs and the map behind it went 95 px → 537 px. There is exactly **one**
@@ -1780,8 +2208,34 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     position.
   - **Icon-only in a corner beats a labelled button in the middle of a status bar.** The ETA bar's
     "✕ Exit" button was as wide as the text it sat beside and forced the remaining-distance line to
-    wrap. It is now an absolutely positioned `IconButton` at `top: 4, insetInlineEnd: 4` (logical
-    property, so RTL flips it) with the word surviving in the tooltip and `aria-label`.
+    wrap. It is now an absolutely positioned `IconButton` with the word surviving in the tooltip and
+    `aria-label`, `insetInlineEnd` (logical property, so RTL flips it) and **vertically centred**
+    (`top: 50%` + `translateY(-50%)`) rather than pinned to the corner - once the "Now" strip moved
+    off this card it became a single row, and a top-corner X on a one-row card reads as jammed into
+    the edge instead of as part of the row. Its inline-end inset is mirrored as padding on the ETA
+    row, so a long remaining/ETA line can never run under it.
+  - **The run you are ON belongs under the run you are heading FOR, on the same card.** The two are
+    the same kind of fact and were separated by the whole map - manoeuvre banner at the top, "Now"
+    strip on the ETA card at the bottom. The strip now closes the top `Paper`. Three things it
+    needs, and the first two are the ones that showed up as visible defects within minutes:
+    - **Its `gap` must equal the manoeuvre row's** (`1.5`, not the `1.25` used elsewhere in the
+      file). The "NEXT" column and the "NOW" caption are both 62 wide from the same padding origin,
+      so the gap alone decides where each hairline lands; a 0.25 difference put the two rules 2 px
+      apart, which reads as a mistake. Exact alignment beyond that is not achievable - the
+      manoeuvre column is `minWidth: 62` and grows with the distance string.
+    - **The text is `flex: 1, textAlign: 'center'`, matching the instruction above it.** Left-aligned
+      it read as a detached band rather than as the foot of the same column.
+    - **Height is RESERVED (`minHeight: 32`) even when there is nothing to say** - waiting,
+      off-route, arriving. `--nav-banner-h` drives where MapView's controls sit, so a strip that
+      appears and disappears would make them jump mid-run.
+    Net effect: top card ~74 -> 106 px, ETA card ~110 -> 64 px, so the pair got shorter overall and
+    the bottom card gives back 46 px of map.
+  - **Keep the "NOW" caption; do not swap it for a progressive tense.** "Skiing 89 Nambino" is
+    self-labelling in English and is what Waze does, but **Hebrew has no genderless present
+    participle** (`גולש`/`גולשת`, `רוכב`/`רוכבת`) and we have no user gender, so the caption is what
+    keeps the string genderless. It would also fork the catalogue - `step.piste.badgeName`,
+    `step.liftUpBadge` and friends are shared with the step list, where the imperative is correct -
+    and `NEXT`/`NOW` are the paired labels that make the two-column geometry work at all.
 - **A portalled overlay centres on the VIEWPORT, and on desktop the map is not the viewport.** A MUI
   `Dialog` or `Snackbar` renders into `<body>`, so "centred" means centred on the window - but the
   desktop layout puts a 400 px sidebar beside the map, leaving anything centred over the map 200 px
@@ -1908,9 +2362,11 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 
 ## Outstanding follow-ups (not in v1)
 
-### Iconic circuits (Sella Ronda clockwise/anti-clockwise, and friends)
-A third routing mode beside "A → B" and "longest run": follow a resort's **signposted circuit**.
-Designed, not built. The design decisions that matter:
+### Iconic routes (Sella Ronda clockwise/anti-clockwise, and friends)
+A third routing mode beside "A → B" and "longest run": follow a resort's **signposted iconic line**.
+Designed, not built. Model it as `waypoints[] + loop: boolean` - a circuit (Sella Ronda) is the
+`loop: true` case, and most resorts' iconic line is a point-to-point descent, which is why the
+feature is **not** named "circuits". The design decisions that matter:
 - **A circuit is DATA, not routing code** — which is what keeps it inside the "never add per-resort
   routing code" rule. Model it as a small ordered **ring of waypoints** (Sella Ronda is literally the
   four passes: Pordoi, Sella, Gardena, Campolongo) and plan each consecutive pair with the **existing**

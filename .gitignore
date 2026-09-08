@@ -18,6 +18,9 @@ dist-ssr
 # Local-only handoff/ops notes (secrets, resource names, live URL)
 NOTES.local.md
 
+# Local-only session handoff (regenerated as work lands; not for other users)
+HANDOFF.local.md
+
 # Secrets / environment files
 .env
 .env.*
