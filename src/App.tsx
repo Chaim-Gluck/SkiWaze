@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from './i18n/language-context';
 import { tr } from './utils/text';
-import { bidiName } from './utils/format';
+import { bidiName, fmtClock } from './utils/format';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -10,7 +10,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import AltRouteIcon from '@mui/icons-material/AltRoute';
 import SearchIcon from '@mui/icons-material/Search';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import FilterHdrIcon from '@mui/icons-material/FilterHdr';
 import LinkIcon from '@mui/icons-material/Link';
 import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -25,6 +25,8 @@ import Menu from '@mui/material/Menu';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import Tooltip from '@mui/material/Tooltip';
 import Alert from '@mui/material/Alert';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import Snackbar from '@mui/material/Snackbar';
 import Link from '@mui/material/Link';
 import AlertTitle from '@mui/material/AlertTitle';
@@ -36,12 +38,22 @@ import Badge from '@mui/material/Badge';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
 import { PanelShell } from './components/PanelShell';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Fab from '@mui/material/Fab';
+import Chip from '@mui/material/Chip';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import StarIcon from '@mui/icons-material/Star';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import Collapse from '@mui/material/Collapse';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import { useThemeMode } from './theme-context';
@@ -89,11 +101,15 @@ import { RouteOptions } from './components/RouteOptions';
 import { CustomLinkPanel, type LinkColor, type LinkDirection } from './components/CustomLinkPanel';
 import { ClosedPanel } from './components/ClosedPanel';
 import { LongestRunPanel } from './components/LongestRunPanel';
+import { ResortStatsPanel } from './components/ResortStatsPanel';
+
+type ResortTab = 'longest' | 'iconic' | 'stats';
 import { RoutePreview } from './components/RoutePreview';
 import { LongestPreview } from './components/LongestPreview';
 import { Logo } from './components/Logo';
 import { LanguagePicker } from './components/LanguagePicker';
 import { AppBarOverflow } from './components/AppBarOverflow';
+import { AboutDialog } from './components/AboutDialog';
 import './App.css';
 
 const DEFAULT_RESORT_ID = 'madonna-di-campiglio';
@@ -225,6 +241,12 @@ export default function App() {
 
   const [timingMode, setTimingMode] = useState<'now' | 'arrive_by'>('now');
   const [arriveTime, setArriveTime] = useState<string>(() => nowLocalDatetime());
+  const [showWhen, setShowWhen] = useState(false);
+  const [resortTab, setResortTab] = useState<ResortTab>('longest');
+  // Custom links and About are once-a-session actions, so they live in the AppBar overflow menu as
+  // dialogs rather than each claiming a panel card and a bottom-nav slot.
+  const [linksOpen, setLinksOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const [plan, setPlan] = useState<PlanResult | null>(null);
   const [selectedRoute, setSelectedRoute] = useState(0);
@@ -821,7 +843,8 @@ export default function App() {
         if (linkPinMode === 'from') setLinkFrom({ kind: 'point', lon: p.lon, lat: p.lat, label });
         else setLinkTo({ kind: 'point', lon: p.lon, lat: p.lat, label });
         setLinkPinMode(null);
-        if (isMobile) setPanelOpen(true); // restore the sheet we minimised to reveal the map
+        setLinksOpen(true); // restore the dialog we closed to reveal the map
+        if (isMobile) setPanelOpen(true); // restore the sheet we minimised for the same reason
         return;
       }
       if (!pinMode || !effectiveGraph) return;
@@ -851,7 +874,10 @@ export default function App() {
   const enterLinkPinMode = (which: 'from' | 'to') => {
     setLinkPinMode((cur) => {
       const next = cur === which ? null : which;
-      if (next && isMobile) setPanelOpen(false);
+      // Picking an endpoint means clicking the map, which nothing covering the map can allow. The
+      // sheet already yielded on mobile; the links dialog now yields at every width, and both are
+      // restored below the moment the point lands.
+      if (next) { setLinksOpen(false); if (isMobile) setPanelOpen(false); }
       return next;
     });
   };
@@ -1176,6 +1202,9 @@ export default function App() {
     setFocusGeometry(named[0].coords);
     setLongestDismissed(false);
     setOpenSection('longest');
+    // The card's tab is local state, so it could still be on Iconic or Stats from an earlier
+    // visit. Computing runs is a request to see them.
+    setResortTab('longest');
     // On mobile, reveal the map. The three runs are a HIGHLIGHT, and a highlight the sheet is
     // covering is not an answer. This was deliberately the other way round until the floating
     // LongestPreview card existed: closing the sheet then left an anonymous glowing line with no
@@ -1282,7 +1311,6 @@ export default function App() {
     () => new Set(customEdges.map((e) => e.id.split('-').slice(0, 2).join('-'))).size,
     [customEdges],
   );
-  const linksSummary = linkGroupCount ? t('app.summary.links', { count: linkGroupCount }) : t('app.summary.noneYet');
   const closedSummary = closedKeys.length ? t('app.summary.closed', { count: closedKeys.length }) : t('app.summary.allOpen');
   const { mode, toggle: toggleTheme } = useThemeMode();
   const locateActive = live.tracking || !!simPos;
@@ -1290,6 +1318,12 @@ export default function App() {
 
   // Mobile bottom navigation. "Route options" is folded into the Plan tab, giving 5 fixed tabs.
   const mobileTab = openSection === 'routes' ? 'plan' : openSection;
+  // The Plan card carries its own two-tab strip (form / results). Its value IS `openSection`, not a
+  // second piece of state: every existing `setOpenSection('routes')` call site already means "show
+  // me the options", so the strip inherits them all and cannot drift. Clamped to 'plan' whenever
+  // there is nothing to show, otherwise clearing a route (or changing resort) leaves a blank card.
+  const hasOptions = !!plan && (plan.noLiftFreeRoute || plan.routes.length > 0);
+  const planTab: 'plan' | 'routes' = openSection === 'routes' && hasOptions ? 'routes' : 'plan';
   const showSec = (key: string) =>
     !isMobile || (key === 'routes' ? mobileTab === 'plan' : mobileTab === key);
   const selectMobileTab = (v: string) => {
@@ -1301,8 +1335,7 @@ export default function App() {
   // column uses. Falls back to Plan so the header is never blank mid-transition.
   const sectionHeader = ({
     plan: { title: t('app.plan.title'), icon: <SearchIcon fontSize="small" /> },
-    longest: { title: t('app.longest.title'), icon: <EmojiEventsIcon fontSize="small" /> },
-    links: { title: t('app.links.title'), icon: <LinkIcon fontSize="small" /> },
+    longest: { title: t('app.resort.title'), icon: <FilterHdrIcon fontSize="small" /> },
     closed: { title: t('app.closed.title'), icon: <DoNotDisturbOnIcon fontSize="small" /> },
     prefs: { title: t('app.prefs.title'), icon: <TuneIcon fontSize="small" /> },
   } as Record<string, { title: string; icon: ReactNode }>)[mobileTab]
@@ -1366,10 +1399,10 @@ export default function App() {
             // spacer absorbs the rest.
             sx={{ flex: '1 1 auto', minWidth: { xs: 88, sm: 170 }, maxWidth: 280 }}
           >
-            <InputLabel id="resort-picker-label">{t('app.resort')}</InputLabel>
+            <InputLabel id="resort-picker-label">{t('app.resort.picker')}</InputLabel>
             <Select
               labelId="resort-picker-label"
-              label={t('app.resort')}
+              label={t('app.resort.picker')}
               value={index ? resortId : ''}
               // Resort and country names are never translated, so the menu stays left-aligned even
               // in Hebrew — a column of Latin names ragged-right is harder to scan than ragged-left.
@@ -1383,10 +1416,8 @@ export default function App() {
             </Select>
           </FormControl>
           {/* Below sm the bar cannot hold both icon buttons beside the brand and the resort
-              picker, so they collapse into one overflow menu. See AppBarOverflow. */}
-          {isNarrow ? (
-            <AppBarOverflow />
-          ) : (
+              picker, so they collapse into the overflow menu too. See AppBarOverflow. */}
+          {!isNarrow && (
             <>
               <LanguagePicker />
               <Tooltip title={mode === 'dark' ? t('app.themeLight') : t('app.themeDark')}>
@@ -1396,6 +1427,12 @@ export default function App() {
               </Tooltip>
             </>
           )}
+          <AppBarOverflow
+            compact={isNarrow}
+            linkCount={linkGroupCount}
+            onCustomLinks={() => setLinksOpen(true)}
+            onAbout={() => setAboutOpen(true)}
+          />
         </Toolbar>
       </AppBar>
 
@@ -1411,15 +1448,49 @@ export default function App() {
           {showSec('plan') && (
           <AccordionSection
             title={t('app.plan.title')}
-            icon={<SearchIcon fontSize="small" />}
+            // No header icon on this card: the tab strip below carries the same SearchIcon on its
+            // Plan tab ~40 px lower, and two identical glyphs in one card read as a mistake. This
+            // is the only card with tabs, so it is the only header that is a title over a labelled
+            // strip. (Mobile is `bare` - no header at all, the sheet title bar carries the icon.)
             summary={planSummary}
             bare={isMobile}
             pinned
             open={openSection === 'plan'}
             onToggle={() => toggleSection('plan')}
           >
+            {/* The strip is always present, and Options is disabled rather than hidden until a
+                search produces something. A strip that appears on results would shove the whole
+                card down 40 px at exactly the moment the user is reading it - the same "nothing
+                may jump" rule that gives the mobile sheet a single fixed height - and a greyed tab
+                says where the results are going to land. */}
+            <Tabs
+              value={planTab}
+              onChange={(_, v: 'plan' | 'routes') => setOpenSection(v)}
+              variant="fullWidth"
+              sx={{ minHeight: 40, mb: 1.5, borderBottom: 1, borderColor: 'divider',
+                    '& .MuiTab-root': { minHeight: 40, py: 0.5, textTransform: 'none', fontWeight: 600 },
+                    '& .MuiTab-icon': { mb: 0 } }}
+            >
+              {/* Same two glyphs as the mobile Plan / Route-options FABs, so the button you tapped
+                  and the tab it lands on are visibly the same thing. */}
+              <Tab
+                value="plan" id="plan-tab-plan" aria-controls="plan-panel-plan"
+                icon={<SearchIcon fontSize="small" />} iconPosition="start"
+                label={t('app.plan.tabPlan')}
+              />
+              <Tab
+                value="routes" id="plan-tab-routes" aria-controls="plan-panel-routes"
+                disabled={!hasOptions}
+                icon={<AltRouteIcon fontSize="small" />} iconPosition="start"
+                label={plan && plan.routes.length
+                  ? t('app.plan.tabOptionsN', { n: plan.routes.length })
+                  : t('app.plan.tabOptions')}
+              />
+            </Tabs>
+
+          <Box role="tabpanel" id="plan-panel-plan" aria-labelledby="plan-tab-plan" hidden={planTab !== 'plan'}>
+          {planTab === 'plan' && (
           <div className="panel">
-            <h3>{t('app.plan.title')}</h3>
             <PointPicker
               label={t('app.plan.from')}
               accent="#2e7d32"
@@ -1444,21 +1515,36 @@ export default function App() {
             />
 
             <Box sx={{ mb: 1.5 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                {t('app.plan.when')}
-              </Typography>
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                value={timingMode}
-                onChange={(_, v) => v && setTimingMode(v)}
+              {/* Collapsed by default, because "now" is the answer almost every time and the
+                  expanded control is a label line plus a toggle row for a setting nobody touched.
+                  The summary carries the state (same convention as the tab labels and the collapsed
+                  accordion summaries), so folding it away never hides what was chosen. */}
+              <Button
+                size="small" variant="text" color="inherit" onClick={() => setShowWhen((v) => !v)}
+                endIcon={showWhen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                sx={{ textTransform: 'none', fontWeight: 400, px: 0.5, ml: -0.5,
+                      typography: 'body2', color: 'text.secondary' }}
               >
-                <ToggleButton value="now">{t('app.plan.now')}</ToggleButton>
-                <ToggleButton value="arrive_by">{t('app.plan.arriveBy')}</ToggleButton>
-              </ToggleButtonGroup>
-              {timingMode === 'arrive_by' && (
-                <ArriveTimePicker value={arriveTime} onChange={setArriveTime} />
-              )}
+                {timingMode === 'now'
+                  ? t('app.plan.whenNow')
+                  : t('app.plan.whenArriveBy', { time: fmtClock(arriveTime) })}
+              </Button>
+              <Collapse in={showWhen}>
+                <Box sx={{ mt: 0.5 }}>
+                  <ToggleButtonGroup
+                    exclusive
+                    size="small"
+                    value={timingMode}
+                    onChange={(_, v) => v && setTimingMode(v)}
+                  >
+                    <ToggleButton value="now">{t('app.plan.now')}</ToggleButton>
+                    <ToggleButton value="arrive_by">{t('app.plan.arriveBy')}</ToggleButton>
+                  </ToggleButtonGroup>
+                  {timingMode === 'arrive_by' && (
+                    <ArriveTimePicker value={arriveTime} onChange={setArriveTime} />
+                  )}
+                </Box>
+              </Collapse>
             </Box>
 
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -1486,45 +1572,15 @@ export default function App() {
                 </Button>
               )}
             </Box>
-            <Button
-              variant="outlined"
-              size="large"
-              fullWidth
-              startIcon={<IosShareIcon />}
-              onClick={(e) => setShareAnchor(e.currentTarget)}
-              sx={{ mt: 1 }}
-            >
-              {t('app.share.button')}
-            </Button>
-            <Menu anchorEl={shareAnchor} open={!!shareAnchor} onClose={() => setShareAnchor(null)}>
-              <MenuItem onClick={shareMyLocation}>{t('app.share.myLocationItem')}</MenuItem>
-              <MenuItem
-                disabled={!toNodeId}
-                onClick={() => {
-                  setShareAnchor(null);
-                  const coord = pointFor(toNodeId);
-                  if (!coord) { notify(t('app.notice.shareNoDest'), 'warning'); return; }
-                  const place = toLabel ?? t('app.share.thisSpot');
-                  void shareCoord(coord, place, t('app.share.msgHere', { place }));
-                }}
-              >
-                {toLabel ? t('app.share.toDestNamed', { name: toLabel }) : t('app.share.toDest')}
-              </MenuItem>
-            </Menu>
+            {/* "Share my location" is not part of planning - it is a safety utility you want most
+                when you are NOT filling this form - so it lives on the map FAB stack instead. */}
           </div>
-          </AccordionSection>
           )}
+          </Box>
 
-          {showSec('routes') && plan && (plan.noLiftFreeRoute || plan.routes.length > 0) && (
-            <AccordionSection
-              title={t('app.routes.title')}
-              icon={<AltRouteIcon fontSize="small" />}
-              summary={plan.routes.length ? t('app.summary.options', { count: plan.routes.length }) : t('app.summary.noRoute')}
-              bare={isMobile}
-              pinned
-              open={openSection === 'routes'}
-              onToggle={() => toggleSection('routes')}
-            >
+          <Box role="tabpanel" id="plan-panel-routes" aria-labelledby="plan-tab-routes" hidden={planTab !== 'routes'}>
+          {planTab === 'routes' && plan && (
+            <>
               {plan.noLiftFreeRoute && (
                 <Alert severity="warning" sx={{ mb: 1 }}>
                   <strong>{t('app.routes.noLiftFree')}</strong>
@@ -1565,18 +1621,46 @@ export default function App() {
                   {t('app.routes.startNav')}
                 </Button>
               )}
-            </AccordionSection>
+            </>
+          )}
+          </Box>
+          </AccordionSection>
           )}
 
           {showSec('longest') && (
           <AccordionSection
-            title={t('app.longest.title')}
-            icon={<EmojiEventsIcon fontSize="small" />}
+            title={t('app.resort.title')}
+            icon={<FilterHdrIcon fontSize="small" />}
             summary={longestSummary}
             bare={isMobile}
             open={openSection === 'longest'}
             onToggle={() => toggleSection('longest')}
           >
+            {/* Unlike the Plan card the tab value is NOT `openSection`: nothing outside this card
+                navigates to Iconic or Stats, so the tab is local state. The tabs stay text-only and
+                the header keeps its icon - the Plan card gives its icon up only because its tabs
+                carry the mobile FABs' glyphs, which these have no counterpart for. */}
+            <Tabs
+              value={resortTab}
+              onChange={(_, v: ResortTab) => setResortTab(v)}
+              variant="fullWidth"
+              sx={{ minHeight: 40, mb: 1.5, borderBottom: 1, borderColor: 'divider',
+                    '& .MuiTab-root': { minHeight: 40, py: 0.5, textTransform: 'none', fontWeight: 600,
+                                        gap: 0.5, '& .MuiSvgIcon-root': { fontSize: 18 } } }}
+            >
+              <Tab value="longest" id="resort-tab-longest" aria-controls="resort-panel-longest"
+                   icon={<EmojiEventsIcon />} iconPosition="start"
+                   label={t('app.resort.tabLongest')} />
+              <Tab value="iconic" id="resort-tab-iconic" aria-controls="resort-panel-iconic"
+                   icon={<StarIcon />} iconPosition="start"
+                   label={t('app.resort.tabIconic')} />
+              <Tab value="stats" id="resort-tab-stats" aria-controls="resort-panel-stats"
+                   icon={<BarChartIcon />} iconPosition="start"
+                   label={t('app.resort.tabStats')} />
+            </Tabs>
+
+          <Box role="tabpanel" id="resort-panel-longest" aria-labelledby="resort-tab-longest" hidden={resortTab !== 'longest'}>
+          {resortTab === 'longest' && (
           <LongestRunPanel
             runs={longestRuns}
             index={longestIdx}
@@ -1607,37 +1691,25 @@ export default function App() {
               setFocusGeometry(null);
             }}
           />
-          </AccordionSection>
           )}
+          </Box>
 
-          {showSec('links') && (
-          <AccordionSection
-            title={t('app.links.title')}
-            icon={<LinkIcon fontSize="small" />}
-            summary={linksSummary}
-            bare={isMobile}
-            open={openSection === 'links'}
-            onToggle={() => toggleSection('links')}
-          >
-          <CustomLinkPanel
-            points={points}
-            fromLabel={linkFrom?.label ?? null}
-            toLabel={linkTo?.label ?? null}
-            onPickFrom={(nodeId) => setLinkFrom({ kind: 'node', nodeId, label: nodeLabelFor(nodeId) })}
-            onPickTo={(nodeId) => setLinkTo({ kind: 'node', nodeId, label: nodeLabelFor(nodeId) })}
-            onPinFrom={() => enterLinkPinMode('from')}
-            onPinTo={() => enterLinkPinMode('to')}
-            pinFromActive={linkPinMode === 'from'}
-            pinToActive={linkPinMode === 'to'}
-            onClearFrom={() => setLinkFrom(null)}
-            onClearTo={() => setLinkTo(null)}
-            links={customEdges}
-            nodeLabel={nodeLabelFor}
-            onAdd={addCustomLink}
-            onDelete={deleteCustomLinks}
-            onLocate={setFocusGeometry}
-            onClear={clearCustomLinks}
-          />
+          <Box role="tabpanel" id="resort-panel-iconic" aria-labelledby="resort-tab-iconic" hidden={resortTab !== 'iconic'}>
+          {resortTab === 'iconic' && (
+            <Box className="panel">
+              <Typography variant="subtitle2">{t('app.resort.iconicHeading')}</Typography>
+              <Chip label={t('app.resort.iconicSoon')} size="small" color="primary" variant="outlined" sx={{ my: 1 }} />
+              {/* Enabled rather than a disabled tab: a disabled tab cannot say why it is empty. */}
+              <Typography variant="body2" color="text.secondary">{t('app.resort.iconicBlurb')}</Typography>
+            </Box>
+          )}
+          </Box>
+
+          <Box role="tabpanel" id="resort-panel-stats" aria-labelledby="resort-tab-stats" hidden={resortTab !== 'stats'}>
+          {resortTab === 'stats' && effectiveGraph && (
+            <ResortStatsPanel graph={effectiveGraph} pointCount={points.length} />
+          )}
+          </Box>
           </AccordionSection>
           )}
 
@@ -1670,20 +1742,17 @@ export default function App() {
             open={openSection === 'prefs'}
             onToggle={() => toggleSection('prefs')}
           >
-          <PreferencesPanel prefs={prefs} onChange={setPrefs} />
-          <MeasuredSpeedsPanel measured={measured ?? emptyMeasured()} estimatedByColor={estimatedByColor} minSamples={MIN_SAMPLES} onApply={applyMeasured} onReset={resetMeasured} />
+          <PreferencesPanel
+            prefs={prefs}
+            onChange={setPrefs}
+            speedsSlot={<MeasuredSpeedsPanel measured={measured ?? emptyMeasured()} estimatedByColor={estimatedByColor} minSamples={MIN_SAMPLES} onApply={applyMeasured} onReset={resetMeasured} />}
+          />
           </AccordionSection>
           )}
 
-          {!isMobile && graph && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', py: 1 }}>
-              {t('app.graphStats', {
-                nodes: effectiveGraph?.nodes.length ?? 0,
-                edges: effectiveGraph?.edges.length ?? 0,
-                points: points.length,
-              })}
-            </Typography>
-          )}
+          {/* The graph counts used to live here as a desktop-only footer under every card. They are
+              a fact about this resort, so they moved into the Stats tab - which also gives them to
+              mobile for the first time. */}
         </PanelShell>
 
         {/* The map is geography, not prose: north is up and west is left in every language. Pinning
@@ -1744,6 +1813,39 @@ export default function App() {
                 {locateActive && !following ? <LocationSearchingIcon /> : <MyLocationIcon />}
               </Fab>
             </Tooltip>
+            {/* Share sits directly under Locate: both answer "where am I", and this is the one that
+                has to be reachable on mobile, where the two panel FABs below do not render. It was
+                previously a full-width button at the foot of the Plan form, which read as a third
+                action of a form it has nothing to do with. */}
+            <Tooltip title={t('app.share.button')} placement="left">
+              <Fab
+                size="small"
+                aria-label={t('app.share.button')}
+                onClick={(e) => setShareAnchor(e.currentTarget)}
+                sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
+              >
+                <IosShareIcon />
+              </Fab>
+            </Tooltip>
+            <Menu
+              anchorEl={shareAnchor} open={!!shareAnchor} onClose={() => setShareAnchor(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <MenuItem onClick={shareMyLocation}>{t('app.share.myLocationItem')}</MenuItem>
+              <MenuItem
+                disabled={!toNodeId}
+                onClick={() => {
+                  setShareAnchor(null);
+                  const coord = pointFor(toNodeId);
+                  if (!coord) { notify(t('app.notice.shareNoDest'), 'warning'); return; }
+                  const place = toLabel ?? t('app.share.thisSpot');
+                  void shareCoord(coord, place, t('app.share.msgHere', { place }));
+                }}
+              >
+                {toLabel ? t('app.share.toDestNamed', { name: toLabel }) : t('app.share.toDest')}
+              </MenuItem>
+            </Menu>
             {!isMobile && (
               <Tooltip title={t('app.plan.title')} placement="left">
                 <Fab
@@ -1806,7 +1908,7 @@ export default function App() {
                 index={longestIdx}
                 onPrev={() => stepLongest(-1)}
                 onNext={() => stepLongest(1)}
-                onDetails={() => { setOpenSection('longest'); setPanelOpen(true); }}
+                onDetails={() => { setResortTab('longest'); setOpenSection('longest'); setPanelOpen(true); }}
                 onDismiss={() => {
                   // Closing the card must also take the highlight off the map: a painted run with
                   // no card is an anonymous line the user has no way to identify or remove. The
@@ -1852,8 +1954,7 @@ export default function App() {
                 </Badge>
               }
             />
-            <BottomNavigationAction value="longest" label={t('app.tabs.longest')} icon={<EmojiEventsIcon />} />
-            <BottomNavigationAction value="links" label={t('app.tabs.links')} icon={<LinkIcon />} />
+            <BottomNavigationAction value="longest" label={t('app.tabs.longest')} icon={<FilterHdrIcon />} />
             <BottomNavigationAction value="closed" label={t('app.tabs.closed')} icon={<DoNotDisturbOnIcon />} />
             <BottomNavigationAction value="prefs" label={t('app.tabs.prefs')} icon={<TuneIcon />} />
           </BottomNavigation>
@@ -1952,6 +2053,54 @@ export default function App() {
         onAccept={() => { setPreviewPrompt(null); setPreviewMode(true); }}
         onDecline={declinePreview}
       />
+
+      {/* Custom links: a dialog rather than a panel card. The feature is spatial and occasional -
+          you draw on the map, then occasionally prune the list - so it earns more room when it is
+          open and none at all when it is not. Full screen on mobile, where the 68vh sheet was the
+          tightest container in the app. */}
+      <Dialog
+        open={linksOpen}
+        onClose={() => setLinksOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        fullScreen={isMobile}
+        // Pin mode closes this dialog and reopens it when the point lands, so the panel must not
+        // be unmounted in between - it holds the half-filled form the pin belongs to.
+        keepMounted
+        slotProps={{ paper: { dir } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LinkIcon fontSize="small" />
+          {t('app.links.title')}
+          <Box sx={{ flex: 1 }} />
+          <IconButton onClick={() => setLinksOpen(false)} aria-label={t('common.close')} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <CustomLinkPanel
+            points={points}
+            fromLabel={linkFrom?.label ?? null}
+            toLabel={linkTo?.label ?? null}
+            onPickFrom={(nodeId) => setLinkFrom({ kind: 'node', nodeId, label: nodeLabelFor(nodeId) })}
+            onPickTo={(nodeId) => setLinkTo({ kind: 'node', nodeId, label: nodeLabelFor(nodeId) })}
+            onPinFrom={() => enterLinkPinMode('from')}
+            onPinTo={() => enterLinkPinMode('to')}
+            pinFromActive={linkPinMode === 'from'}
+            pinToActive={linkPinMode === 'to'}
+            onClearFrom={() => setLinkFrom(null)}
+            onClearTo={() => setLinkTo(null)}
+            links={customEdges}
+            nodeLabel={nodeLabelFor}
+            onAdd={addCustomLink}
+            onDelete={deleteCustomLinks}
+            onLocate={(g) => { setFocusGeometry(g); setLinksOpen(false); }}
+            onClear={clearCustomLinks}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} dir={dir} />
     </div>
   );
 }

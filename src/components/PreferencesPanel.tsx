@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LiftType, PisteColor, Preferences, SkillLevel, RouteType } from '../types/domain';
-import { ALL_LIFT_TYPES } from '../config/defaults';
+import { ALL_LIFT_TYPES, DEFAULT_PREFERENCES } from '../config/defaults';
 import { trueSpeedMps, type SpeedColor } from '../config/speedModel';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -9,9 +9,13 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
-import Link from '@mui/material/Link';
+import Button from '@mui/material/Button';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 
 const ROUTE_TYPES: RouteType[] = ['balanced', 'fastest', 'fewest_lifts', 'preferred', 'longest'];
 
@@ -21,15 +25,51 @@ const SLOPE_HEX: Record<PisteColor, string> = {
   green: '#2e7d32', blue: '#1565c0', red: '#d32f2f', black: '#222', unknown: '#ff9800',
 };
 
+const TABS = ['skier', 'route', 'lifts'] as const;
+type PrefTab = (typeof TABS)[number];
+
+/**
+ * Does this tab hold anything the user changed?
+ *
+ * Tabs hide state, and this panel's whole job is to show the skier what they asked for - behind a
+ * tab, "off-piste is on" becomes invisible. The panel's own collapsed accordion summary and the
+ * "Lift types (6/8)" link already solve this the same way, by carrying state in the label, so the
+ * tab strip does too rather than inventing a second convention. A dot, not a count: these are
+ * heterogeneous settings with no natural number, and the question the label has to answer is only
+ * "is there something in here I set".
+ */
+function isTouched(tab: PrefTab, p: Preferences): boolean {
+  switch (tab) {
+    case 'skier':
+      return p.maxDifficulty !== DEFAULT_PREFERENCES.maxDifficulty
+        || p.skillLevel !== DEFAULT_PREFERENCES.skillLevel;
+    case 'route':
+      return (p.routeType ?? 'balanced') !== DEFAULT_PREFERENCES.routeType
+        || p.preferredColors.length !== DEFAULT_PREFERENCES.preferredColors.length
+        || p.preferSkiing !== DEFAULT_PREFERENCES.preferSkiing
+        || p.allowOffPiste !== DEFAULT_PREFERENCES.allowOffPiste
+        || p.avoidSyntheticBridges !== DEFAULT_PREFERENCES.avoidSyntheticBridges;
+    case 'lifts':
+      return p.allowedLiftTypes.length !== ALL_LIFT_TYPES.length;
+  }
+}
+
 interface Props {
   prefs: Preferences;
   onChange: (p: Preferences) => void;
+  /**
+   * Measured-speeds block, rendered inside the "Me" tab. It is passed in rather than imported
+   * because App owns the sample store and the apply/reset actions; this panel only decides *where*
+   * it belongs, which is beside the skiing-speed control it calibrates. Rendered as a sibling it
+   * sat below the tab strip and so appeared under all three tabs.
+   */
+  speedsSlot?: ReactNode;
 }
 
-export function PreferencesPanel({ prefs, onChange }: Props) {
+export function PreferencesPanel({ prefs, onChange, speedsSlot }: Props) {
   const { t } = useTranslation();
   const [showSpeedHelp, setShowSpeedHelp] = useState(false);
-  const [showLiftTypes, setShowLiftTypes] = useState(false);
+  const [tab, setTab] = useState<PrefTab>('skier');
   const SPEED_COLORS: SpeedColor[] = ['green', 'blue', 'red', 'black'];
   // Preferred colors are a CONTIGUOUS difficulty band (green<blue<red<black) — no gaps. Clicking
   // a color outside the band extends it (filling any gap); clicking one inside shrinks the band
@@ -77,15 +117,34 @@ export function PreferencesPanel({ prefs, onChange }: Props) {
 
   return (
     <Box>
-      <TextField
-        select size="small" fullWidth label={t('prefs.routeType')} sx={{ mb: 1.5 }}
-        value={prefs.routeType ?? 'balanced'}
-        onChange={(e) => onChange({ ...prefs, routeType: e.target.value as RouteType })}
-        helperText={t(`prefs.routeTypeHelp.${prefs.routeType ?? 'balanced'}`)}
+      <Tabs
+        value={tab}
+        onChange={(_, v: PrefTab) => setTab(v)}
+        variant="fullWidth"
+        sx={{ minHeight: 36, mb: 1.5, borderBottom: 1, borderColor: 'divider',
+              '& .MuiTab-root': { minHeight: 36, py: 0.5, textTransform: 'none', fontWeight: 600 } }}
       >
-        {ROUTE_TYPES.map((rt) => <MenuItem key={rt} value={rt}>{t(`prefs.routeTypeLabel.${rt}`)}</MenuItem>)}
-      </TextField>
+        {TABS.map((id) => (
+          <Tab
+            key={id}
+            value={id}
+            id={`prefs-tab-${id}`}
+            aria-controls={`prefs-panel-${id}`}
+            label={
+              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                {t(`prefs.tab.${id}`)}
+                {isTouched(id, prefs) && (
+                  <Box component="span" aria-hidden
+                    sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'primary.main', flexShrink: 0 }} />
+                )}
+              </Box>
+            }
+          />
+        ))}
+      </Tabs>
 
+      <Box role="tabpanel" id="prefs-panel-skier" aria-labelledby="prefs-tab-skier" hidden={tab !== 'skier'}>
+      {tab === 'skier' && <>
       <TextField
         select size="small" fullWidth label={t('prefs.maxDifficulty')} sx={{ mb: 1.5 }}
         value={prefs.maxDifficulty}
@@ -103,9 +162,17 @@ export function PreferencesPanel({ prefs, onChange }: Props) {
       </TextField>
 
       <Box sx={{ mb: 2, mt: -0.5 }}>
-        <Link component="button" type="button" variant="caption" underline="hover" onClick={() => setShowSpeedHelp((v) => !v)}>
+        {/* A Button, not a Link: a disclosure is not navigation, and MUI's `underline="hover"`
+            leaves the underline stuck on after a tap on touch (sticky :hover), which reads as a
+            visited link. The chevron carries the affordance and cannot get stuck. */}
+        <Button
+          size="small" variant="text" color="inherit" onClick={() => setShowSpeedHelp((v) => !v)}
+          endIcon={showSpeedHelp ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          sx={{ textTransform: 'none', fontWeight: 400, px: 0.5, ml: -0.5,
+                typography: 'caption', color: 'text.secondary' }}
+        >
           {showSpeedHelp ? t('prefs.hide') : t('prefs.speedHelpLink')}
-        </Link>
+        </Button>
         <Collapse in={showSpeedHelp}>
           <Box sx={{ mt: 0.75, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
@@ -125,6 +192,21 @@ export function PreferencesPanel({ prefs, onChange }: Props) {
           </Box>
         </Collapse>
       </Box>
+
+      {speedsSlot}
+      </>}
+      </Box>
+
+      <Box role="tabpanel" id="prefs-panel-route" aria-labelledby="prefs-tab-route" hidden={tab !== 'route'}>
+      {tab === 'route' && <>
+      <TextField
+        select size="small" fullWidth label={t('prefs.routeType')} sx={{ mb: 1.5 }}
+        value={prefs.routeType ?? 'balanced'}
+        onChange={(e) => onChange({ ...prefs, routeType: e.target.value as RouteType })}
+        helperText={t(`prefs.routeTypeHelp.${prefs.routeType ?? 'balanced'}`)}
+      >
+        {ROUTE_TYPES.map((rt) => <MenuItem key={rt} value={rt}>{t(`prefs.routeTypeLabel.${rt}`)}</MenuItem>)}
+      </TextField>
 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>{t('prefs.preferredColors')}</Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 2 }}>
@@ -158,42 +240,49 @@ export function PreferencesPanel({ prefs, onChange }: Props) {
         })}
       </Box>
 
-      <Box sx={{ mb: 1 }}>
-        <Link component="button" type="button" variant="body2" underline="hover" color="text.secondary"
-          onClick={() => setShowLiftTypes((v) => !v)}
-          sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {t('prefs.liftTypes', { used: prefs.allowedLiftTypes.length, total: ALL_LIFT_TYPES.length })} {showLiftTypes ? '▲' : '▼'}
-        </Link>
-        <Collapse in={showLiftTypes}>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 0.75 }}>
-            {ALL_LIFT_TYPES.map((lt) => {
-              const on = prefs.allowedLiftTypes.includes(lt);
-              return (
-                <Chip
-                  key={lt} label={t(`liftType.${lt}`)} onClick={() => toggleLift(lt)} size="small"
-                  color={on ? 'primary' : 'default'} variant={on ? 'filled' : 'outlined'}
-                />
-              );
-            })}
-          </Box>
-        </Collapse>
-      </Box>
-
       <FormControlLabel
-        control={<Checkbox size="small" checked={prefs.avoidSyntheticBridges}
-          onChange={(e) => onChange({ ...prefs, avoidSyntheticBridges: e.target.checked })} />}
-        label={<Typography variant="body2">{t('prefs.avoidBridges')}</Typography>}
+        control={<Checkbox size="small" checked={prefs.preferSkiing}
+          onChange={(e) => onChange({ ...prefs, preferSkiing: e.target.checked })} />}
+        label={<Typography variant="body2">{t('prefs.preferSkiing')}</Typography>}
       />
+      {/* Off-piste and app-added bridges live here, not with the lift types: both are constraints
+          on which EDGES the router may use, exactly like "prefer skiing" above them. Grouped with
+          the lifts they forced that tab into a name ("Terrain") that two of its three settings
+          contradicted. */}
       <FormControlLabel
         control={<Checkbox size="small" checked={prefs.allowOffPiste}
           onChange={(e) => onChange({ ...prefs, allowOffPiste: e.target.checked })} />}
         label={<Typography variant="body2">{t('prefs.allowOffPiste')}</Typography>}
       />
       <FormControlLabel
-        control={<Checkbox size="small" checked={prefs.preferSkiing}
-          onChange={(e) => onChange({ ...prefs, preferSkiing: e.target.checked })} />}
-        label={<Typography variant="body2">{t('prefs.preferSkiing')}</Typography>}
+        control={<Checkbox size="small" checked={prefs.avoidSyntheticBridges}
+          onChange={(e) => onChange({ ...prefs, avoidSyntheticBridges: e.target.checked })} />}
+        label={<Typography variant="body2">{t('prefs.avoidBridges')}</Typography>}
       />
+      </>}
+      </Box>
+
+      <Box role="tabpanel" id="prefs-panel-lifts" aria-labelledby="prefs-tab-lifts" hidden={tab !== 'lifts'}>
+      {tab === 'lifts' && <>
+      {/* No disclosure here: the eight chips ARE this tab, so a collapse would leave it empty but
+          for a count. (It also drops one of the two `Link component="button"` toggles whose
+          `underline="hover"` sticks on touch.) */}
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
+        {t('prefs.liftTypes', { used: prefs.allowedLiftTypes.length, total: ALL_LIFT_TYPES.length })}
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+        {ALL_LIFT_TYPES.map((lt) => {
+          const on = prefs.allowedLiftTypes.includes(lt);
+          return (
+            <Chip
+              key={lt} label={t(`liftType.${lt}`)} onClick={() => toggleLift(lt)} size="small"
+              color={on ? 'primary' : 'default'} variant={on ? 'filled' : 'outlined'}
+            />
+          );
+        })}
+      </Box>
+      </>}
+      </Box>
     </Box>
   );
 }

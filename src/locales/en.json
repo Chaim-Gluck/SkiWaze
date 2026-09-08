@@ -1,6 +1,7 @@
 {
   "common": {
     "showOnMap": "Show on map",
+    "close": "Close",
     "dismiss": "Dismiss",
     "clear": "Clear"
   },
@@ -121,7 +122,12 @@
     "liftTypes": "Lift types I'll use ({{used}}/{{total}})",
     "avoidBridges": "Avoid app-added bridges (dotted magenta gap-fills)",
     "allowOffPiste": "Include off-piste / freeride terrain (unmarked, unpatrolled)",
-    "preferSkiing": "Prefer skiing (avoid riding lifts downhill)"
+    "preferSkiing": "Prefer skiing (avoid riding lifts downhill)",
+    "tab": {
+      "skier": "Me",
+      "route": "Route",
+      "lifts": "Lifts"
+    }
   },
   "route": {
     "badge": {
@@ -198,7 +204,10 @@
     "addLift": "Close a lift",
     "addRun": "Close a run",
     "search": "Type to search",
-    "noneLeft": "No match"
+    "noneLeft": "No match",
+    "groupLifts": "Lifts",
+    "groupRuns": "Runs",
+    "groupOther": "Other"
   },
   "layers": {
     "title": "Layers",
@@ -305,6 +314,8 @@
       "when": "When",
       "now": "Now",
       "arriveBy": "Arrive by",
+      "whenNow": "When: now",
+      "whenArriveBy": "When: arrive by {{time}}",
       "find": "Find routes",
       "hour": "Hour",
       "minute": "Min",
@@ -312,7 +323,10 @@
       "plus1h": "+1 hr",
       "plus2h": "+2 hr",
       "tomorrow": "Tomorrow",
-      "clear": "Clear"
+      "clear": "Clear",
+      "tabPlan": "Plan",
+      "tabOptions": "Options",
+      "tabOptionsN": "Options ({{n}})"
     },
     "routes": {
       "title": "Route options",
@@ -325,8 +339,31 @@
     "longest": {
       "title": "Longest runs"
     },
+    "resort": {
+      "title": "The resort",
+      "picker": "Resort",
+      "tabLongest": "Longest",
+      "tabIconic": "Iconic",
+      "tabStats": "Stats",
+      "iconicHeading": "Iconic routes",
+      "iconicSoon": "Coming soon",
+      "iconicBlurb": "Ski a resort's own signposted routes - for example the Sella Ronda both ways, a valley traverse or a famous descent - planned leg by leg under your own preferences, and told the latest you can set off and still finish before the lifts stop.",
+      "liftsHeading": "Lifts ({{n}})",
+      "elevationHeading": "Elevation",
+      "pistesHeading": "Pistes ({{value}})",
+      "offPiste": "Off-piste",
+      "vertical": "Vertical",
+      "verticalDrop": "Total drop",
+      "statsSource": "Counted from OpenStreetMap data as this app uses it, so these will not match the resort's published figures."
+    },
     "links": {
       "title": "Custom links"
+    },
+    "about": {
+      "title": "About",
+      "what": "SkiNav plans a route from A to B across a ski resort, combining pistes and lifts and respecting your level, your slope preferences and lift opening hours. It also finds the longest lift-free descent on the mountain.",
+      "data": "Terrain data comes from OpenStreetMap and is compiled offline, so routing runs entirely in your browser. Times and distances are estimates: always follow the signs on the mountain.",
+      "credit": "Built by {{name}}, 2026"
     },
     "closed": {
       "title": "Closed today"
@@ -337,8 +374,7 @@
     },
     "tabs": {
       "plan": "Plan",
-      "longest": "Longest",
-      "links": "Links",
+      "longest": "Resort",
       "closed": "Closed",
       "prefs": "Filters"
     },
@@ -357,9 +393,6 @@
     "summary": {
       "pickStartEnd": "Pick start & end",
       "findLongest": "Find longest descents",
-      "links_one": "{{count}} link",
-      "links_other": "{{count}} links",
-      "noneYet": "None yet",
       "closed": "{{count}} closed",
       "allOpen": "All open",
       "options_one": "{{count}} option",

@@ -7,7 +7,8 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
-import Link from '@mui/material/Link';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import Table from '@mui/material/Table';
 import TableHead from '@mui/material/TableHead';
 import TableBody from '@mui/material/TableBody';
@@ -42,13 +43,15 @@ export function MeasuredSpeedsPanel({ measured, estimatedByColor, minSamples, on
   return (
     <Box sx={{ mt: 2 }}>
       <Divider sx={{ mb: 1 }} />
-      <Link
-        component="button" type="button" underline="hover" color="inherit"
-        onClick={() => setOpen((v) => !v)}
-        sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 700 }}
+      {/* Same disclosure as the speed-help toggle above it: a Button with a chevron, never a Link.
+          `underline="hover"` sticks on after a tap on touch, and a text arrow is not an affordance. */}
+      <Button
+        size="small" variant="text" color="inherit" onClick={() => setOpen((v) => !v)}
+        endIcon={open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        sx={{ textTransform: 'none', fontWeight: 700, px: 0.5, ml: -0.5 }}
       >
-        {t('speeds.title')} {open ? '▲' : '▼'}
-      </Link>
+        {t('speeds.title')}
+      </Button>
       <Collapse in={open}>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1, mt: 0.5 }}>
         {t('speeds.intro')}

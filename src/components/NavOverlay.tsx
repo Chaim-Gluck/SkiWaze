@@ -339,6 +339,54 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
             </Box>
           )}
           </Box>
+          {/* The run you are ON, directly under the run you are heading FOR - the two names are the
+              same kind of fact and belong side by side, where they used to be separated by the whole
+              map. It sits BELOW the manoeuvre, never above: the arrow and distance are the
+              instruction and this is reference, so loud-then-quiet is the reading order.
+
+              Height is RESERVED even when there is nothing to say (waiting, off-route, arriving).
+              `--nav-banner-h` drives where the map's own controls sit, so a strip that appears and
+              disappears would make them jump mid-run. */}
+          <Box
+            sx={{
+              px: 1.75, py: 0.6, minHeight: 32, minWidth: 0, boxSizing: 'border-box',
+              bgcolor: offRoute ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.10)',
+              // `gap` MUST match the manoeuvre row above (1.5, not the 1.25 used elsewhere in this
+              // file): both columns are 62 wide from the same padding origin, so the gap alone
+              // decides where each hairline lands, and a 0.25 difference put them 2px apart.
+              display: 'flex', alignItems: 'center', gap: 1.5,
+            }}
+          >
+            {!waiting && !offRoute && step?.current && (
+              <>
+                {/* Boxed to the same width as the "NEXT" caption above it, so the two captions and
+                    the two hairlines line up as one column rather than at unrelated offsets. */}
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 700, opacity: 0.6, flexShrink: 0, width: 62, textAlign: 'center' }}
+                >
+                  {t('nav.now')}
+                </Typography>
+                <Box sx={{ alignSelf: 'stretch', width: '1px', bgcolor: 'rgba(255,255,255,0.18)', flexShrink: 0 }} />
+                {/* Wrap to two lines rather than ellipsing. A lift's mapped name is routinely long
+                    ("Tapis Roulant Grostè Express - Fortini") and it is the one fact this band
+                    exists to carry, so cutting it to "Tapis Rou..." fails at its only job. */}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600, minWidth: 0, overflow: 'hidden', opacity: 0.9,
+                    // Centred in the remaining space, exactly like the instruction above it: the two
+                    // share a column, so left-aligning this one made the strip read as detached
+                    // from the row it sits under.
+                    flex: 1, textAlign: 'center',
+                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                  }}
+                >
+                  {stepNodes(t, step.current)}
+                </Typography>
+              </>
+            )}
+          </Box>
         </Paper>
 
         {/* Non-dismissable: a simulated position must never be mistakable for a real one. */}
@@ -465,61 +513,33 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
             color: offRoute ? 'error.contrastText' : 'text.primary',
           }}
         >
-          {/* Top strip: the run you are on, and the way out. It always renders even when there is
-              nothing to say, because it owns the exit button - a card whose dismiss control comes
-              and goes with the content is a card whose dismiss control moves. Trailing end of the
-              quiet strip, not a corner of the busy row: at the bottom it sat under the ETA and
-              looked like part of it. */}
-          <Box
-            sx={{
-              px: 1.75, py: 0.6, minWidth: 0,
-              bgcolor: offRoute ? 'rgba(255,255,255,0.12)' : 'action.hover',
-              display: 'flex', alignItems: 'center', gap: 1.25,
-            }}
-          >
-            {!waiting && !offRoute && step?.current && (
-              <>
-                {/* The caption is boxed to the speed dial's width, and the gap matches the row
-                    below, so this strip's hairline lands directly above that row's - the two
-                    columns read as one, rather than as two rules at unrelated offsets. */}
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: 700, opacity: 0.7, flexShrink: 0, width: 54, textAlign: 'center' }}
-                >
-                  {t('nav.now')}
-                </Typography>
-                <Box sx={{ alignSelf: 'stretch', width: '1px', bgcolor: 'divider', flexShrink: 0 }} />
-                {/* Wrap to two lines rather than ellipsing. A lift's mapped name is routinely long
-                    ("Tapis Roulant Grostè Express - Fortini") and it is the one fact this band
-                    exists to carry, so cutting it to "Tapis Rou..." fails at its only job. */}
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: 600, minWidth: 0, overflow: 'hidden',
-                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                  }}
-                >
-                  {stepNodes(t, step.current)}
-                </Typography>
-              </>
-            )}
-            {/* Icon only: a labelled button the width of "Exit" squeezed the remaining-distance
-                line into a wrap. The word survives in the tooltip and the aria-label. */}
-            <Tooltip title={t('nav.exit')}>
-              <IconButton
-                size="small"
-                aria-label={t('nav.exit')}
-                onClick={onExit}
-                sx={{
-                  ml: 'auto', flexShrink: 0, p: 0.5,
-                  color: offRoute ? 'error.contrastText' : 'text.secondary',
-                }}
-              >
-                <CloseIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-            </Tooltip>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1.75, py: 0.6 }}>
+          {/* Exit is an absolutely positioned corner icon, not a row of its own: a dedicated band
+              for one control costs the card as much height as the reading it exists to show. Icon
+              only - a labelled button the width of "Exit" squeezed the remaining-distance line into
+              a wrap. The word survives in the tooltip and the aria-label. `insetInlineEnd` so it
+              follows the document direction under RTL. */}
+          <Tooltip title={t('nav.exit')}>
+            <IconButton
+              size="small"
+              aria-label={t('nav.exit')}
+              onClick={onExit}
+              sx={{
+                // Vertically CENTRED, not pinned to the corner: since the "Now" strip moved up to
+                // the manoeuvre card this Paper is a single row, and a top-corner X on a one-row
+                // card reads as jammed into the edge rather than as belonging to the row. It stays
+                // at the inline end so it is still out of the reading path, and `insetInlineEnd`
+                // keeps it following the document direction under RTL.
+                position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+                insetInlineEnd: 6, zIndex: 1, p: 0.5,
+                color: offRoute ? 'error.contrastText' : 'text.secondary',
+              }}
+            >
+              <CloseIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          {/* The inline-end padding clears the corner button so a long remaining/ETA line cannot
+              run under it. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1.75, py: 0.6, paddingInlineEnd: 4 }}>
           {!waiting && speedMps != null && speedMps >= 0 && (
             <>
               <div className="nav-speed-circle">
