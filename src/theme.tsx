@@ -70,6 +70,9 @@ function applyCssVars(mode: ThemeMode): void {
   const root = document.documentElement;
   for (const [k, v] of Object.entries(TOKENS[mode])) root.style.setProperty(`--${k}`, v);
   root.style.colorScheme = mode;
+  // The status bar is tinted from this, and the app's mode is app-owned rather than the OS's, so
+  // the static meta in index.html is only the pre-mount value and has to be kept in step here.
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', TOKENS[mode].bg);
 }
 
 const STORAGE_KEY = 'skiwaze-theme';

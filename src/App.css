@@ -27,6 +27,16 @@ html, body {
   overscroll-behavior: none;
 }
 
+/* theme.tsx sets --bg and color-scheme in an effect, i.e. AFTER the first paint - until then
+   `background: var(--bg)` is invalid and the canvas paints white. The fallback here is that first
+   frame, so it must match TOKENS.dark.bg and the theme-color meta in index.html. Dark because
+   initialMode() defaults to dark. It is on html rather than body so the canvas takes it directly;
+   it stays a var, not a literal, or light mode would keep painting the dark colour behind. */
+html {
+  background: var(--bg, #0f1720);
+  color-scheme: dark;
+}
+
 body {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg);

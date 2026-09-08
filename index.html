@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Tints the phone's status bar to match our own background. Without it the browser picks the
+         tint itself and it is not stable, so a light 1px divider shows above the header on some
+         loads. theme.tsx keeps this in step with the app's theme toggle (which is ours, not the
+         OS's); this literal is the pre-mount value and must match App.css's html fallback. -->
+    <meta name="theme-color" content="#0f1720" />
     <meta name="description" content="SkiNav - navigate the slopes: route a ski resort from A to B by slopes and lifts." />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="apple-mobile-web-app-title" content="SkiNav" />
