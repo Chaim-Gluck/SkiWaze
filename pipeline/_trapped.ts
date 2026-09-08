@@ -122,17 +122,17 @@ function main(): void {
   const label = (nid: string): string => {
     const p = graph.points.find((x) => x.nodeId === nid);
     const n = nodeById.get(nid);
-    return `${p ? p.name : nid} Â· ${Math.round(n?.point.ele ?? 0)} m`;
+    return `${p ? p.name : nid} · ${Math.round(n?.point.ele ?? 0)} m`;
   };
 
   console.log(`=== check:trapped ${id} ===`);
   console.log(`nodes=${graph.nodes.length} edges=${graph.edges.length} lift_stations=${liftStations.length}`);
-  console.log(`\ntrapped (can't reach any lift â†’ skier gets stuck): ${trapped.length}`);
+  console.log(`\ntrapped (can't reach any lift → skier gets stuck): ${trapped.length}`);
   trapped.slice(0, 30).forEach((n) => console.log('  - ' + label(n.id)));
-  if (trapped.length > 30) console.log(`  â€¦ and ${trapped.length - 30} more`);
+  if (trapped.length > 30) console.log(`  … and ${trapped.length - 30} more`);
   console.log(`\norphan (unreachable from the lift network): ${orphan.length}`);
   orphan.slice(0, 30).forEach((n) => console.log('  - ' + label(n.id)));
-  if (orphan.length > 30) console.log(`  â€¦ and ${orphan.length - 30} more`);
+  if (orphan.length > 30) console.log(`  … and ${orphan.length - 30} more`);
 
   // Trapped basins: terrain you can ski into that can never get back to the main mountain.
   // `acceptedBasins` MUST be passed here. Without it this check re-litigates every basin a human
@@ -142,7 +142,7 @@ function main(): void {
   const report = findTrappedBasins(graph, id, ov?.acceptedBasins);
   console.log(
     `\ntrapped basins (ski in, no way back to the main body): ${report.significant.length}` +
-      ` â€” ${report.significantNodes} stranded node(s)` +
+      ` - ${report.significantNodes} stranded node(s)` +
       (report.basins.length > report.significant.length
         ? `, plus ${report.basins.length - report.significant.length} lone dead-end node(s)`
         : ''),
@@ -153,24 +153,24 @@ function main(): void {
   report.significant.slice(0, 15).forEach((b) => {
     console.log(
       `  - ${String(b.nodes.length).padStart(4)} node(s), ${b.lifts.length} lift(s), ` +
-        `gap ${b.gapM}m, exit ${b.climbM >= 0 ? '+' : ''}${b.climbM}m â€” ${basinLabel(b)}` +
+        `gap ${b.gapM}m, exit ${b.climbM >= 0 ? '+' : ''}${b.climbM}m - ${basinLabel(b)}` +
         ` (e.g. ${label(b.exit.id)})`,
     );
   });
   if (report.significant.length > 15)
-    console.log(`  â€¦ and ${report.significant.length - 15} more`);
+    console.log(`  … and ${report.significant.length - 15} more`);
 
   if (report.accepted.length) {
     console.log(
       `\naccepted (signed off in overrides/${id}.json, not counted above): ${report.accepted.length}`,
     );
     report.accepted.forEach((b) => {
-      console.log(`  - ${String(b.nodes.length).padStart(4)} node(s) â€” ${basinLabel(b)}`);
+      console.log(`  - ${String(b.nodes.length).padStart(4)} node(s) - ${basinLabel(b)}`);
     });
   }
   for (const s of report.staleAccepted) {
     console.log(
-      `\nWARN acceptedBasins entry matched no basin (${s.nodes.join(', ')}) â€” ` +
+      `\nWARN acceptedBasins entry matched no basin (${s.nodes.join(', ')}) - ` +
         'either it is fixed now, or a refresh retired those ids.',
     );
   }
@@ -191,7 +191,7 @@ function main(): void {
       `\naccepted dead ends (signed off in overrides/${id}.json, not counted above): ${acceptedSeen.size}`,
     );
     for (const nid of acceptedSeen) {
-      console.log(`  - ${label(nid)} â€” ${acceptedNodes.get(nid)}`);
+      console.log(`  - ${label(nid)} - ${acceptedNodes.get(nid)}`);
     }
   }
   // A sign-off that no longer matches anything is worse than none: it silently stops covering the
@@ -201,7 +201,7 @@ function main(): void {
     const exists = nodeById.has(nid);
     console.log(
       `\nWARN acceptedDeadEnds node ${nid} is ${exists ? 'no longer trapped or orphan' : 'not in the graph'}` +
-        ` â€” ${exists ? 'it may be fixed now' : 'a refresh probably retired the id'} (${why})`,
+        ` - ${exists ? 'it may be fixed now' : 'a refresh probably retired the id'} (${why})`,
     );
   }
 

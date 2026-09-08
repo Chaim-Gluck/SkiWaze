@@ -4,10 +4,10 @@
 // Our pipeline samples elevation from SRTM-30m sources (open-elevation / opentopodata srtm30m),
 // so a single mis-sampled DEM pixel (a "spike"/"pothole") can slip in and silently reverse a
 // piste or invent a false rim. This audit cross-references every graph node against an INDEPENDENT
-// DEM â€” Mapzen/AWS "Terrarium" RGB terrain tiles (free, no rate limit) â€” plus a local smoothed
+// DEM - Mapzen/AWS "Terrarium" RGB terrain tiles (free, no rate limit) - plus a local smoothed
 // value (median of a small neighbourhood, mimicking how the topo map's contours smooth the DEM).
 // It FLAGS nodes whose stored elevation disagrees with the second source beyond a threshold, for
-// human review. It NEVER edits data â€” apply confirmed fixes via setNodeElevation in
+// human review. It NEVER edits data - apply confirmed fixes via setNodeElevation in
 // pipeline/overrides/<id>.json. Terrarium tiles are cached on disk (pipeline/.cache/terrarium).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -33,7 +33,7 @@ export const sampleNode = sampleTerrarium;
 type OverlayEntry = { focus: { bounds: [[number, number], [number, number]] }; lines: unknown[]; points: unknown[]; notes: string };
 async function auditResort(id: string, thresh: number): Promise<OverlayEntry | null> {
   const gp = path.join(ROOT, 'public', 'resorts', id, 'graph.json');
-  if (!fs.existsSync(gp)) { console.error(`No graph at ${gp} â€” run: npm run data ${id}`); return null; }
+  if (!fs.existsSync(gp)) { console.error(`No graph at ${gp} - run: npm run data ${id}`); return null; }
   const g = JSON.parse(fs.readFileSync(gp, 'utf8')) as ResortGraph;
   const pointName = (nid: string) => { const p = g.points.find((x) => x.nodeId === nid); return p ? p.name : ''; };
   const M = new Map<string, { id: string; our: number; terr: number; smooth: number; corrected: number; changed: boolean; lat: number; lon: number; kind: string; name: string }>();
@@ -52,7 +52,7 @@ async function auditResort(id: string, thresh: number): Promise<OverlayEntry | n
 
   // --- Routing-impact: piste edges that FLIP direction under the JOINT corrected field ----------
   // Apply every correction at once (not one node at a time) so a reversal that only appears when a
-  // whole cluster is corrected together is still caught â€” the failure mode that hides single spikes.
+  // whole cluster is corrected together is still caught - the failure mode that hides single spikes.
   const FLAT_EDGE = 60; // only skip clearly-steep pistes; a smaller fake gradient can still be a flip
   const DIR = 10;       // second source must disagree on flow direction by at least this many m
   let flips: Array<{ from: string; to: string; ao: number; bo: number; ac: number; bc: number; margin: number; strong: boolean; changed: string; geom: Array<[number, number]> }> = [];
@@ -64,10 +64,10 @@ async function auditResort(id: string, thresh: number): Promise<OverlayEntry | n
     const A = M.get(e.from), B = M.get(e.to);
     if (!A || !B) continue;
     const ourDrop = A.our - B.our; // >=0: we oriented it descending from->to
-    if (ourDrop > FLAT_EDGE) continue; // clearly descending as sampled â€” trust it, not a flip risk
+    if (ourDrop > FLAT_EDGE) continue; // clearly descending as sampled - trust it, not a flip risk
     const terrDrop = A.terr - B.terr;     // independent POINT source: <0 means to-end is really higher
     const smoothDrop = A.smooth - B.smooth; // smoothed neighbourhood, same sign convention
-    // Flag when the second source says the flow should go the OTHER way by a clear margin â€” this
+    // Flag when the second source says the flow should go the OTHER way by a clear margin - this
     // catches near-flat reversals from SMALL sampling errors that a large "changed" threshold misses.
     if (terrDrop < -DIR) {
       seenFlip.add(key);
@@ -96,8 +96,8 @@ async function auditResort(id: string, thresh: number): Promise<OverlayEntry | n
     const strong = f.strong;
     f.geom.forEach(([lo, la]) => { ob[0][0] = Math.min(ob[0][0], lo); ob[0][1] = Math.min(ob[0][1], la); ob[1][0] = Math.max(ob[1][0], lo); ob[1][1] = Math.max(ob[1][1], la); });
     oLines.push({ coords: f.geom, color: strong ? '#e11d1d' : '#f59e0b', width: 4, label: `${f.from}->${f.to} reverses (margin ${f.margin} m; fix ${f.changed})` });
-    oPoints.push({ at: f.geom[f.geom.length - 1], color: '#22a06b', r: 16, tag: f.to, label: `SUGGESTED TOP (descend from here) Â· ${f.to} Â· corrected ${f.bc} m` });
-    oPoints.push({ at: f.geom[0], color: '#f59e0b', r: 14, tag: f.from, label: `current top (looks too high) Â· ${f.from} Â· our ${f.ao}->${f.ac} m` });
+    oPoints.push({ at: f.geom[f.geom.length - 1], color: '#22a06b', r: 16, tag: f.to, label: `SUGGESTED TOP (descend from here) · ${f.to} · corrected ${f.bc} m` });
+    oPoints.push({ at: f.geom[0], color: '#f59e0b', r: 14, tag: f.from, label: `current top (looks too high) · ${f.from} · our ${f.ao}->${f.ac} m` });
   }
   const overlayEntry = oLines.length
     ? { focus: { bounds: ob }, lines: oLines, points: oPoints,
@@ -116,14 +116,14 @@ async function auditResort(id: string, thresh: number): Promise<OverlayEntry | n
   clusters.sort((a, b) => b.members.length - a.members.length);
 
   console.log(`\n=== elevation audit: ${id} ===`);
-  console.log(`nodes checked=${checked}/${g.nodes.length}  threshold=Â±${thresh} m  disagreeing=${changedNodes.length}  clusters=${clusters.length}`);
+  console.log(`nodes checked=${checked}/${g.nodes.length}  threshold=±${thresh} m  disagreeing=${changedNodes.length}  clusters=${clusters.length}`);
 
   console.log(`\n[ROUTING IMPACT] piste edges that REVERSE under the corrected field: ${flips.length}`);
   for (const f of flips.slice(0, 40)) {
     const conf = f.strong ? 'strong' : 'marginal';
     console.log(`  ${f.from}->${f.to}  now ${f.ao}->${f.bo}  corrected ${f.ac}->${f.bc}  margin ${f.margin}m [${conf}]  (fix: ${f.changed})`);
   }
-  if (flips.length > 40) console.log(`  â€¦ and ${flips.length - 40} more`);
+  if (flips.length > 40) console.log(`  … and ${flips.length - 40} more`);
   if (suppressed.length) {
     console.log(`  (${suppressed.length} verified-good candidate(s) suppressed via ignoreReversals in overrides/${id}.json: ${suppressed.map((f) => `${f.from}->${f.to}`).join(', ')})`);
   }
@@ -163,5 +163,5 @@ async function main(): Promise<void> {
   console.log(`\nwrote overlay: public/devtools/overlays/elevation-reversals.json (${Object.keys(overlay).length} resort(s) with candidates)`);
 }
 
-// Only run the audit when invoked as a script â€” _elevprobe.ts imports sampleNode from here.
+// Only run the audit when invoked as a script - _elevprobe.ts imports sampleNode from here.
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

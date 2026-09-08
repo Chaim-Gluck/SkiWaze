@@ -197,24 +197,39 @@ function pisteBidirectionalFor(tags: Record<string, string>): boolean | undefine
   return tags['oneway'] === 'no' ? true : undefined;
 }
 
+/**
+ * A name that merely repeats the ref carries no information, and it is not harmless: the closure
+ * key is `piste:<ref>~<name>` when both exist and `piste:<ref>` when only the ref does, so a run
+ * whose ways are inconsistently tagged splits into two keys and closing one leaves the other half
+ * open. Ischgl and Soelden tag `piste:ref=2` **and** `piste:name=2` on most of their runs (1423
+ * edges fleet-wide), which is how a user came to see "2" and "2 - 2" as separate entries in the
+ * Closed picker. Dropping the name can only ever merge a key with the bare-ref key denoting the
+ * same number, so unlike adopting a *different* sibling's name it needs no ambiguity guard.
+ */
+function dropSelfRefName(name: string | undefined, ref: string | undefined): string | undefined {
+  if (!name || !ref) return name;
+  return name.trim().toLowerCase() === ref.trim().toLowerCase() ? undefined : name;
+}
+
 export function normalizePiste(w: RawWay): NormPiste {
   const difficulty = w.tags['piste:difficulty'];
   const offPiste =
     difficulty === undefined
       ? undefined
       : OFF_PISTE_DIFFICULTIES.has(difficulty) || isExpertBackcountry(w.tags);
+  // `piste:name` wins over `name`, exactly as `piste:ref` wins over `ref`.
+  // Many runs are mapped on top of a road or track, which carries the ROAD's name:
+  // the Avoriaz->Les Lindarets blue is `name=Route des Lindarets` + `ref=D 228` but
+  // `piste:name=Parchets`, so we were labelling a piste with a departmental road
+  // number and it read as a service road rather than a run. Fleet-wide 143 of the
+  // 256 downhill ways carrying both tags disagree (Zermatt "Moosstrasse" vs "Moos",
+  // Alpe d'Huez "Lac Blanc" vs "Retour 1800"). The skiing name is the right one.
+  const ref = w.tags['piste:ref'] || w.tags['ref'];
   return {
     wayId: w.id,
     color: colorFor(w.tags),
-    // `piste:name` wins over `name`, exactly as `piste:ref` wins over `ref` below.
-    // Many runs are mapped on top of a road or track, which carries the ROAD's name:
-    // the Avoriaz->Les Lindarets blue is `name=Route des Lindarets` + `ref=D 228` but
-    // `piste:name=Parchets`, so we were labelling a piste with a departmental road
-    // number and it read as a service road rather than a run. Fleet-wide 143 of the
-    // 256 downhill ways carrying both tags disagree (Zermatt "Moosstrasse" vs "Moos",
-    // Alpe d'Huez "Lac Blanc" vs "Retour 1800"). The skiing name is the right one.
-    name: w.tags['piste:name'] || w.tags['name'],
-    ref: w.tags['piste:ref'] || w.tags['ref'],
+    name: dropSelfRefName(w.tags['piste:name'] || w.tags['name'], ref),
+    ref,
     area: isPisteArea(w),
     levelKey: levelKeyFor(w.tags),
     offPiste,

@@ -239,7 +239,9 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
     // this is that rule, not a second one.
     const addFlatReverse = (e: GraphEdge, geom: GraphEdge['geometry'], drop: number) => {
       const grade = e.lengthM > 0 ? Math.abs(drop) / e.lengthM : 0;
-      if (grade > DEFAULT_GRAPH_CONSTANTS.flatGradeMax) return;
+      // `taggedTwoWay` waives the gradient half here for the same reason it does in buildGraph:
+      // OSM says outright the run is two-way, and the gradient test is only our inference.
+      if (grade > DEFAULT_GRAPH_CONSTANTS.flatGradeMax && !e.taggedTwoWay) return;
       if (Math.abs(drop) > DEFAULT_GRAPH_CONSTANTS.maxTraverseClimb) return;
       if (havePair.has(`${e.to}>${e.from}`)) return;
       havePair.add(`${e.to}>${e.from}`);
@@ -270,6 +272,23 @@ export function applyOverrides(graph: ResortGraph, ov: Overrides): ResortGraph {
         }
         if (e.connectorKind === 'flat_traverse') {
           const drop = (eleOf.get(e.to) ?? 0) - (eleOf.get(e.from) ?? 0);
+          // An explicit OSM `oneway=no` is judged by the BUILDER's cap, not by this one.
+          //
+          // buildGraph grants a two-way traverse on a tagged run by waiving the gradient test and
+          // keeping only `maxTraverseClimb` (8 m). This branch re-decides the same question under
+          // `pisteFlatTolerance` (3 m) and knew nothing about that grant, so a tagged run with a
+          // 4-8 m rise lost its uphill half the instant anything corrected a neighbouring height -
+          // including corrections that left the rise completely unchanged (Madonna's w395878130
+          // sat at 6 m before and after a 4-node pin, and was deleted anyway). Both the hand
+          // overrides and the elevation-consensus pass come through here, which is why the damage
+          // was fleet-wide: 31 runs across 10 resorts, among them Bleue d'Arare, Renards, Alpage.
+          //
+          // Same discipline as `addFlatReverse` above: re-apply the builder's own rule rather than
+          // invent a second one. Grant-only - it can only keep an edge buildGraph already made,
+          // never create one - and `maxTraverseClimb` still caps it, so it cannot become a climb.
+          if (e.taggedTwoWay && Math.abs(drop) <= DEFAULT_GRAPH_CONSTANTS.maxTraverseClimb) {
+            return { ...e, geometry: geom };
+          }
           // If the correction reveals this "flat" is really a slope (drop now exceeds the flat
           // tolerance), promote the DOWNHILL direction to a one-way piste and drop the uphill
           // reverse partner — otherwise a mis-sampled near-flat run stays a dashed 2-way link.

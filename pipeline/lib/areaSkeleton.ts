@@ -1,5 +1,5 @@
 /**
- * Interior-skeleton synthesis for `area=yes` piste polygons â€” the engine behind plan Â§3.
+ * Interior-skeleton synthesis for `area=yes` piste polygons - the engine behind plan §3.
  *
  * An `area=yes` piste is a polygon, so the only thing the router can follow is its *perimeter*:
  * crossing a bowl means skiing around its rim. That is not merely ugly — the rim is often
@@ -31,7 +31,7 @@
  *
  * The arms are *routed through an interior sampling grid*, never drawn as straight connectors.
  * That is the whole point: a routed arm only ever touches points that passed a point-in-polygon
- * test, so every metre of new geometry lies on ground OSM has confirmed is piste â€” however long
+ * test, so every metre of new geometry lies on ground OSM has confirmed is piste - however long
  * the arm turns out to be. A straight connector has no such guarantee, which is why the earlier
  * projection-based draft needed a distance cap and this one does not.
  *
@@ -39,7 +39,7 @@
  * construction and connectivity is preserved without any re-attachment step.
  *
  * Elevation is deliberately absent: the search is purely 2D (centredness, not gradient). Real
- * elevation is fetched for the final vertices by the caller, never interpolated (plan Â§4b).
+ * elevation is fetched for the final vertices by the caller, never interpolated (plan §4b).
  *
  * `pipeline/build.ts` feeds this into the graph as synthetic pistes, and emits the same geometry to
  * `spines.json` for the debug map's `spines`/`arms` layers.
@@ -52,7 +52,7 @@ import { SKEL_COLORS } from './skelColors';
 const R = 6371000;
 const toRad = (d: number): number => (d * Math.PI) / 180;
 
-/** Interior sampling resolution. 12 m is roughly a piste's width tolerance, per plan Ã‚Â§3. */
+/** Interior sampling resolution. 12 m is roughly a piste's width tolerance, per plan §3. */
 const GRID_M = 12;
 /**
  * How hard the router is pushed towards the middle. A grid step costs its length multiplied by
@@ -105,9 +105,9 @@ const EXTEND_TO_EXTREMITY = Number(process.env.SKEL_EXTEND ?? 1.25);
  *
  * An arm takes its direction from elevation like any other piste, and a single arm welded at the
  * spine's nearest approach is therefore a one-way valve whose direction is decided by an accident
- * of geometry: measured on SÃ¶lden, only 14 of 54 gateway transfers between adjacent polygons worked
+ * of geometry: measured on Sölden, only 14 of 54 gateway transfers between adjacent polygons worked
  * both ways. Forking the arm to a point either side of the foot fixes that without knowing any
- * elevation, because gravity sorts the two out â€” on steep ground the forks straddle the gateway in
+ * elevation, because gravity sorts the two out - on steep ground the forks straddle the gateway in
  * height, giving one arm in and one arm out, and on gentle ground both fall under the graph's
  * near-flat thresholds and become bidirectional traverses. 40 m is the shortest distance that still
  * clears `maxTraverseClimb` (8 m) on a typical bowl gradient, so the two regimes meet rather than
@@ -117,7 +117,7 @@ const FORK_M = 40;
 
 /**
  * Fallback fork distances, tried longest first, when {@link FORK_M} has no line of sight inside the
- * polygon. Tight or strongly curved polygons cannot see 40 m along their own spine, and on SÃ¶lden
+ * polygon. Tight or strongly curved polygons cannot see 40 m along their own spine, and on Sölden
  * that cost 32 of 79 gateway arms their fork. Shorter forks degrade gracefully rather than weakly:
  * they place the fork closer to the portal in height, which makes the pair *more* likely to clear
  * the near-flat thresholds and become bidirectional outright.
@@ -227,7 +227,7 @@ const OFFS: [number, number][] = [
  * Sampling, not a vertex count: OSM vertices can be 100 m+ apart, so a way can cross a polygon
  * clean through without placing a single vertex inside it, and conversely one stray vertex inside
  * a huge polygon says nothing about coverage. Walking the line in short steps measures the thing we
- * actually care about â€” how much centreline this polygon really contains.
+ * actually care about - how much centreline this polygon really contains.
  */
 function insideLenM(line: { lon: number; lat: number }[], ring: [number, number][]): number {
   if (line.length < 2) return 0;
@@ -262,7 +262,7 @@ function insideLenM(line: { lon: number; lat: number }[], ring: [number, number]
  *
  * The absolute floor rejects a way that merely grazes a corner or shares a single rim vertex. The
  * relative term rejects a line that genuinely enters a huge polygon but only clips through one end
- * of it â€” adopting that would anchor the whole fan-out on a stub, which is the failure this pass
+ * of it - adopting that would anchor the whole fan-out on a stub, which is the failure this pass
  * exists to prevent.
  */
 const ADOPT_MIN_M = 15;
@@ -310,12 +310,12 @@ export interface OverlayLine {
 /**
  * One portal's connection to the spine.
  *
- * `coords` has a single entry when the portal already sits on the spine and needs no arm â€” that is
+ * `coords` has a single entry when the portal already sits on the spine and needs no arm - that is
  * a correct result, but the caller must still weld that point into the spine, or deleting the rim
  * would leave the portal touching nothing.
  */
 export interface SkelArm {
-  /** Graph node id (`nâ€¦`) for a real portal, or `gw<wayA>-<wayB>-<i>` for an invented gateway. */
+  /** Graph node id (`n…`) for a real portal, or `gw<wayA>-<wayB>-<i>` for an invented gateway. */
   portalId: string;
   gateway: boolean;
   coords: [number, number][];
@@ -329,13 +329,13 @@ export interface SkelArm {
  * explicitly.
  */
 export interface SkelGeom {
-  /** Spine pieces this polygon *invented* (case B). Class A/Bâ€² reuse a real OSM way instead. */
+  /** Spine pieces this polygon *invented* (case B). Class A/B′ reuse a real OSM way instead. */
   synthSpines: [number, number][][];
   /**
-   * Every spine piece this polygon actually ended up with, whichever way it got one â€” the clipped
-   * OSM centreline (class A/Bâ€²) *and* the synthesised line (case B). `synthSpines` only covers the
+   * Every spine piece this polygon actually ended up with, whichever way it got one - the clipped
+   * OSM centreline (class A/B′) *and* the synthesised line (case B). `synthSpines` only covers the
    * invented case, and the adopted case otherwise exists solely as a drawn line, which the overlay
-   * tells apart by colour â€” far too fragile to audit against. Reported so a check can ask whether
+   * tells apart by colour - far too fragile to audit against. Reported so a check can ask whether
    * the spine really crosses its polygon.
    */
   spinePieces: [number, number][][];
@@ -369,7 +369,7 @@ export interface PolyResult {
   cls: string;
   portals: number;
   routed: number;
-  /** Portals the grid could not reach â€” the number that matters for connectivity. */
+  /** Portals the grid could not reach - the number that matters for connectivity. */
   stranded: number;
   armM: number;
   /** Worst distance from a pink arm's terminal point to the spine. Should be ~0. */
@@ -397,8 +397,8 @@ export interface PolyResult {
   /** Same skeleton, expressed by role so `build.ts` can turn it into pistes. */
   skel: SkelGeom;
   /**
-   * OSM ways carrying this polygon's real centreline (classes A/Bâ€²), empty for a synthesised one.
-   * An arm welds onto one of these, never onto whatever piste happens to pass within tolerance â€”
+   * OSM ways carrying this polygon's real centreline (classes A/B′), empty for a synthesised one.
+   * An arm welds onto one of these, never onto whatever piste happens to pass within tolerance - 
    * an unrelated parallel run would otherwise gain a junction that does not exist on the ground.
    */
   spineWayIds: number[];
@@ -1951,7 +1951,7 @@ function skeleton(
 /**
  * Smallest length:width ratio a polygon may have and still be collapsed to a centreline.
  *
- * Dormant guard (plan Â§5): not one polygon in 1 004 measures below 3 â€” the squattest is 3.7:1 â€”
+ * Dormant guard (plan §5): not one polygon in 1 004 measures below 3 - the squattest is 3.7:1 - 
  * so nothing in today's data is excluded. It exists so a future resort with genuinely open bowl
  * terrain is left with its perimeter rather than silently reduced to a line.
  */
@@ -1961,7 +1961,7 @@ export const BOWL_RATIO = 3;
  * Ribbon length and aspect ratio. Width is the
  * equivalent-rectangle width `2A/P`, and length is derived as `A/width` rather than measured along
  * the ring, so a hairpin corridor does not read as "short and fat" just because its ends double
- * back. Any deviation here silently reclassifies polygons â€” an earlier `2A/(P/2)` halved every
+ * back. Any deviation here silently reclassifies polygons - an earlier `2A/(P/2)` halved every
  * ratio and dropped 60 of 1 004 polygons that the classifier had passed.
  */
 function ringMetrics(ring: { lon: number; lat: number }[]): { lenM: number; ratio: number } {
@@ -2057,14 +2057,14 @@ function fallLineCheck(
  * Synthesise a skeleton for every eligible `area=yes` polygon in a built graph.
  *
  * Takes an already-built `ResortGraph` because portals are defined by what a ring node touches
- * *outside* its own polygon, and the spine (classes A/Bâ€²) is an existing OSM centreline â€” both are
+ * *outside* its own polygon, and the spine (classes A/B′) is an existing OSM centreline - both are
  * properties of the assembled graph, not of the raw ways. `build.ts` therefore builds once to
  * discover them, then rebuilds with the skeletons swapped in.
  */
 export function buildSkeletons(graph: ResortGraph, pistes: NormPiste[], opts: SkeletonOpts = {}): PolyResult[] {
   // Elevation anywhere inside a polygon, by nearest graph node. A spine vertex is synthesised
   // geometry and carries no elevation of its own, but every polygon is ringed by nodes that do and
-  // a spine point lies inside that ring, so the nearest one is a fair sample â€” and it is the
+  // a spine point lies inside that ring, so the nearest one is a fair sample - and it is the
   // *shipped* elevation, so this judges the spine against the numbers the router will actually use.
   const eleNodes = graph.nodes
     .filter((n) => n.point.ele != null)
@@ -2095,7 +2095,7 @@ export function buildSkeletons(graph: ResortGraph, pistes: NormPiste[], opts: Sk
   //     synthesised from portals alone -- even where a single run covered 96% of the polygon
   //     (Sella Ronda w1249541237 / "9 Diego", Val Thorens w1044470307 / "Bouchet").
   //   - a named polygon matched ONE name, but a run is routinely split across several named ways:
-  //     Sella Ronda w1337115698 is covered end to end by "6 Pian Frataces" then "1 Sass BecÃ¨", and
+  //     Sella Ronda w1337115698 is covered end to end by "6 Pian Frataces" then "1 Sass Becè", and
   //     Val Thorens w46717811 by "Lac Blanc" then "Boulevard Lauzes". One name can never span it.
   // A line that lies inside the ring IS this polygon's centreline regardless of what it is called,
   // so ask the geometry. Name matching is not kept as a fallback: it adds nothing a geometric test
@@ -2264,7 +2264,7 @@ export function buildSkeletons(graph: ResortGraph, pistes: NormPiste[], opts: Sk
     // Fall-line fact check. Nothing has ever verified that the adopted centreline actually crosses
     // this polygon: the spine is whichever OSM way of the same named run happens to touch the ring,
     // so a run that clips a corner, or a few stubs around one junction, can become the "centreline"
-    // of a polygon it never descends. Measure the spine's own drop against the polygon's own drop â€”
+    // of a polygon it never descends. Measure the spine's own drop against the polygon's own drop - 
     // a spine that descends nothing is carrying nobody down the mountain, whatever its shape.
     const fall = fallLineCheck(p.points, res.skel.spinePieces, eleAt);
     if (!res) continue;

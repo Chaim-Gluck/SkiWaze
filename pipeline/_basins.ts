@@ -1,15 +1,15 @@
 /**
- * `npm run check:basins` Ã¢â‚¬â€ find trapped basins and emit a map-debug overlay + review list.
+ * `npm run check:basins` - find trapped basins and emit a map-debug overlay + review list.
  *
  * A trapped basin is terrain you can ski into but never get back out of. See
  * `lib/trappedBasins.ts` for why this replaced the narrower "one-way pocket" test.
  *
- * A pin on a node is not enough to judge one of these Ã¢â‚¬â€ you cannot see the extent, so you cannot
+ * A pin on a node is not enough to judge one of these - you cannot see the extent, so you cannot
  * tell a stranded sector from a genuinely separate ski area, and a reviewer looking at a 3-node
  * dot will rightly say "but everything around it is trapped too". So this draws the whole basin:
- *   - public/devtools/overlays/trapped-basins.json Ã¢â‚¬â€ the basin in red, the edges that lead into it
+ *   - public/devtools/overlays/trapped-basins.json - the basin in red, the edges that lead into it
  *     in green, and the shortest candidate link in amber.
- *   - public/devtools/overlays/review-list.json    Ã¢â‚¬â€ the same basins as prev/next entries.
+ *   - public/devtools/overlays/review-list.json - the same basins as prev/next entries.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -55,7 +55,7 @@ function main(): void {
     if (report.mainShare < MAIN_SHARE_WARN) {
       warnings.push(
         `${id}: main body is only ${(report.mainShare * 100).toFixed(0)}% of the resort ` +
-          `(${report.mainSize}/${graph.nodes.length}) Ã¢â‚¬â€ the mountain is fractured, not just leaky.`,
+          `(${report.mainSize}/${graph.nodes.length}) - the mountain is fractured, not just leaky.`,
       );
     }
     if (!report.significant.length) continue;
@@ -103,7 +103,7 @@ function main(): void {
         tag: 'exit',
         label:
           `<b>${b.exit.id}</b> ${named.get(b.exit.id) ?? ''}<br>` +
-          `${Math.round(b.exit.point.ele ?? 0)} m Ã¢â‚¬â€ trapped basin: ${b.nodes.length} nodes, ` +
+          `${Math.round(b.exit.point.ele ?? 0)} m - trapped basin: ${b.nodes.length} nodes, ` +
           `${b.lifts.length} lift(s), ${b.entries.length} way(s) in<br>${basinLabel(b)}`,
       });
       points.push({

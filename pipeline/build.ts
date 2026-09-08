@@ -20,6 +20,7 @@ import { pruneRedundantArms } from './lib/pruneArms';
 import { dropOutOfAreaSpill } from './lib/bboxSpill';
 import { dropInertFragments } from './lib/inertFragments';
 import { linkLiftBaseSkiIns } from './lib/liftSkiIn';
+import { tidyStationAccessLinks } from './lib/stationAccess';
 import { weldCoincidentNodes } from './lib/weldCoincident';
 import { markSpineDuplicates } from './lib/spineDuplicates';
 import { dropTraversesAlongSurfaceLifts } from './lib/surfaceLiftParallel';
@@ -83,10 +84,10 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
   const buildOpts = { rejectDrawnLiftDirection: liftDir.reject };
   let graph = buildResortGraph(resort.id, pistes, lifts, DEFAULT_GRAPH_CONSTANTS, buildOpts);
 
-  // Replace `area=yes` polygons with an interior skeleton (plan Â§3). The polygon's *perimeter* is
+  // Replace `area=yes` polygons with an interior skeleton (plan §3). The polygon's *perimeter* is
   // what the router can follow today, so crossing a bowl means skiing around its rim. Two passes
   // are needed because a portal is defined by what a ring node touches OUTSIDE its own polygon, and
-  // the spine of a class A/Bâ€² polygon is an existing centreline â€” both are properties of the
+  // the spine of a class A/B′ polygon is an existing centreline - both are properties of the
   // assembled graph, not of the raw ways. So: build once to discover them, then rebuild with the
   // skeletons in place of the polygons.
   const skels = buildSkeletons(graph, pistes);
@@ -94,11 +95,11 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
   if (corridors.length)
     console.log(
       `  corridors: ${corridors.length} squat polygon(s) spined gateway-to-gateway` +
-        ` (${corridors.map((s) => 'w' + s.wayId).slice(0, 12).join(' ')}${corridors.length > 12 ? ' â€¦' : ''})`,
+        ` (${corridors.map((s) => 'w' + s.wayId).slice(0, 12).join(' ')}${corridors.length > 12 ? ' …' : ''})`,
     );
   // Fall-line fact check: how many polygons ended up with a spine that does not descend them? A
   // spine is adopted from whichever OSM way of the same run touches the ring, and nothing has ever
-  // verified it crosses the polygon â€” so this counts the ones where the adopted centreline is
+  // verified it crosses the polygon - so this counts the ones where the adopted centreline is
   // demonstrably the wrong line. Report only for now; the number decides what to do about it.
   const FALL_MIN = 0.35;
   const graded = skels.filter((s) => s.fall.polyDropM >= 15);
@@ -112,12 +113,12 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
     for (const s of (process.env.FALLDIAG === 'all' ? [...graded] : [...flat]).sort((a, b) => a.fall.dropRatio - b.fall.dropRatio).slice(0, 60))
       console.log(
         `    w${s.wayId} drop=${s.fall.dropRatio.toFixed(2)} (${s.fall.spineDropM.toFixed(0)}m of ${s.fall.polyDropM.toFixed(0)}m)` +
-          ` angle=${s.fall.angleDeg.toFixed(0)}Â° span=${s.spanFrac.toFixed(2)}${s.synth ? ' synth' : ''}  ${s.label}`,
+          ` angle=${s.fall.angleDeg.toFixed(0)}° span=${s.spanFrac.toFixed(2)}${s.synth ? ' synth' : ''}  ${s.label}`,
       );
   const sk = skeletonPistes(skels, pistes);
   if (sk.pistes.length) {
     // Elevation for the new vertices is FETCHED, never interpolated: interpolated values reverse
-    // ~3.8 % of segments (plan Â§4b), and a piste is emitted one-way descending, so a reversed
+    // ~3.8 % of segments (plan §4b), and a piste is emitted one-way descending, so a reversed
     // segment severs the run and hands the router a fake way to gain height.
     console.log(`  skeletons: ${sk.replaced.size} polygons, ${sk.pistes.length} ways, ${sk.newPoints.length} new vertices`);
     if (sk.unwelded) console.warn(`  ${sk.unwelded} arm(s) found no spine to weld onto`);
@@ -199,6 +200,26 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
     }
   }
 
+  // The dead-end snap invents a station link before the lift-top ski-out pass has run, so a lift
+  // top can end up with both a proper descending exit and a redundant ramp climbing back out of it.
+  // Same placement argument as the ski-in above: both rules ask about edge DIRECTION, which the
+  // overrides and the elevation consensus re-derive. See stationAccess.ts.
+  {
+    const sa = tidyStationAccessLinks(graph, DEFAULT_GRAPH_CONSTANTS.maxTraverseClimb);
+    graph = sa.graph;
+    if (sa.redundantClimbs.length > 0) {
+      console.log(
+        `  station access: dropped ${sa.redundantClimbs.length} climbing link(s) out of a station that can already be skied away from`,
+      );
+    }
+    if (sa.unboardableInbound.length > 0) {
+      console.log(
+        `  station access: dropped ${sa.unboardableInbound.length} link(s) arriving at the top of an up-only lift (nothing to board there)`,
+      );
+    }
+    if (sa.keptStranding > 0) console.log(`    (kept ${sa.keptStranding} that would strand terrain)`);
+  }
+
   // Before pruning, fuse nodes that share a spot. The snap and skeleton passes invent nodes after
   // `buildResortGraph` has already merged, so a split point can land on an existing node; the
   // resulting zero-length edge is a rung the longest-run search climbs to fake distance.
@@ -277,7 +298,7 @@ async function buildResort(resort: Resort, opts: { refresh: boolean; ttlDays: nu
   // Surface likely data issues (false-elevation reversals / non-skiable long connections)
   // so they're caught when adding or refreshing a resort. Review with: npm run check:audit <id>
   const summary = auditSummary(auditGraph(graph, acceptedDeadEndNodes(resort.id)));
-  if (summary) console.warn(`  audit: ${summary} to review â€” run: npm run check:audit ${resort.id}`);
+  if (summary) console.warn(`  audit: ${summary} to review - run: npm run check:audit ${resort.id}`);
 
   const areaPolys = pistes
     .filter((p) => p.area && p.points.length >= 3)
@@ -356,7 +377,7 @@ async function main(): Promise<void> {
     console.error(`\n${failed.length} resort(s) FAILED and were NOT written:`);
     for (const f of failed) console.error(`  - ${f.id}: ${f.err}`);
     console.error('\nStale data is still on disk for these. Re-run them individually; if the error');
-    console.error("is an UNKNOWN/EPERM open, stop the dev server first â€” it's holding the file.");
+    console.error("is an UNKNOWN/EPERM open, stop the dev server first - it's holding the file.");
     process.exit(1);
   }
 }

@@ -140,6 +140,31 @@ export interface GraphEdge {
    */
   spineDuplicate?: boolean;
 
+  /**
+   * True for the short link between a **lift station with a terminal building** and the piste
+   * network beside it. Its vertical is *inside the building* - stairs or an escalator - not a
+   * climb on snow, so `cost.ts` does not charge `CLIMB_SECONDS_PER_M` on it.
+   *
+   * A big terminal is several storeys: the DEM samples the ground at the footprint (often the
+   * boarding level, or the road outside), while skiers leave from the top floor. Paradiski's
+   * Vanoise Express base reads 1541 m against 1550-1552 m for the two runs that touch it, and
+   * both rasters agree, so this is not a bad datum to be overridden - it is the building. Charged
+   * as terrain that was 10.9 m x 12 s/m = 131 s of imaginary poling just to walk out of a major
+   * inter-sector cable car, enough to push routes off it entirely.
+   *
+   * Gated on `DOWNLOADABLE_LIFT_TYPES` because that set is exactly the types that HAVE a terminal
+   * building. A chairlift base or a drag top is an open-air ramp, so an apparent climb into one is
+   * evidence of a mis-seated station and must stay visible: fleet-wide 13 station snaps exceed
+   * `maxTraverseClimb`, and the 9 non-downloadable ones include two platter *tops* that our own
+   * lift-type rule says should be sources, i.e. probable elevation faults. Exempting those would
+   * hide them.
+   *
+   * `'ramp'` is recorded rather than simply left unset so the two cases stay distinguishable
+   * downstream: `probe:stationclimb` needs the exact snap population, and inferring it from edge
+   * shape instead swept in rescue links, plateau bridges and ski-in links (58 hits against 13).
+   */
+  stationAccess?: 'building' | 'ramp';
+
   // Lift-only
   liftType?: LiftType;
   liftName?: string;
@@ -169,6 +194,20 @@ export interface GraphEdge {
    * via `Preferences.allowOffPiste`. See NormPiste.offPiste for why the trigger is difficulty only.
    */
   offPiste?: boolean;
+  /**
+   * OSM tags this run `oneway=no`, so the mapper has stated outright that it may be travelled in
+   * both directions. `buildGraph` uses that to waive the *gradient* half of the near-flat reverse
+   * test (never the `maxTraverseClimb` cap) - see `pisteBidirectionalFor` in normalize.ts.
+   *
+   * The flag has to survive onto the edges because a LATER pass re-derives direction and would
+   * otherwise re-decide the question under a different, stricter rule. `applyOverrides` re-checks
+   * every edge touching a corrected node using `pisteFlatTolerance` (3 m), which knows nothing
+   * about the grant, so an explicitly two-way run with a 4-8 m rise silently lost its uphill half
+   * the moment anything pinned a neighbouring height - even when the correction left the rise
+   * unchanged. Measured: 31 such runs across 10 resorts, 4 from hand pins and 27 from the
+   * elevation-consensus pass, which applies its corrections through the same code.
+   */
+  taggedTwoWay?: boolean;
 }
 
 export interface ResortBBox {

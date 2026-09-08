@@ -36,7 +36,8 @@
         "probe:liftmix": "tsx pipeline/_liftmix.ts",
         "probe:goldenroutes": "tsx pipeline/_goldenroutes.ts",
         "probe:elevoverrides": "tsx pipeline/_elevoverrides.ts",
-        "check:basins": "tsx pipeline/_basins.ts"
+        "check:basins": "tsx pipeline/_basins.ts",
+        "probe:stationclimb": "tsx pipeline/_stationclimb.ts"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",

@@ -203,6 +203,38 @@ export const NON_PASSENGER_AERIALWAYS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Lifecycle states OSM records as a TOP-LEVEL key beside a live `aerialway=<type>`, e.g.
+ * `aerialway=chair_lift` + `planned=yes`. This is a different shape from the lifecycle *value*
+ * handled by `NON_PASSENGER_AERIALWAYS` (`aerialway=proposed`) and from the lifecycle *prefix*
+ * (`abandoned:aerialway=chair_lift`) that our Overpass query never asks for, so a lift wearing it
+ * sailed through every existing guard and shipped as an ordinary rideable lift.
+ *
+ * Twelve ways across five resorts did exactly that, and the damage runs in both directions: we
+ * routed skiers onto lifts that were torn down (Cervinia's "Triftji (stillgelegt)", "Grenzlift
+ * (stillgelegt)" and "Testa"; Sella Ronda's three Fedaia lifts; Tignes' "Panoramic"; Verbier's "La
+ * Combyre") and onto lifts nobody has built yet (Passo Tonale's two "Progetto" gondolas, Cervinia's
+ * "Breitboden - Rosenritz" under construction, Verbier's "TSD6 ... (en projet)"). The name of every
+ * single one corroborates its tag independently - `stillgelegt`, `Progetto`, `en projet` - but the
+ * TAG is the trigger, never the name: names are multilingual and a resort is free to call a real
+ * lift anything it likes.
+ *
+ * Removing them strands the terrain they served. That is CORRECT OUTPUT, not a regression: a
+ * synthetic bridge there would route a skier to a lift that does not physically exist. Sign the
+ * result off in `acceptedBasins` / `acceptedDeadEnds` instead.
+ *
+ * `no` is skipped because `disused=no` is a mapper stating the lift is *not* disused.
+ */
+const LIFECYCLE_TAGS: readonly string[] = [
+  'planned',
+  'proposed',
+  'construction',
+  'disused',
+  'abandoned',
+  'razed',
+  'demolished',
+];
+
+/**
  * Access values that put a lift off-limits to the skiing public. `permissive` and `customers` stay
  * routable — a resort lift is exactly "customers only".
  */
@@ -212,6 +244,10 @@ const CLOSED_ACCESS: ReadonlySet<string> = new Set(['private', 'no']);
 export function isPassengerLift(w: RawWay): boolean {
   const aerialway = w.tags['aerialway'];
   if (aerialway && NON_PASSENGER_AERIALWAYS.has(aerialway)) return false;
+  for (const k of LIFECYCLE_TAGS) {
+    const v = w.tags[k];
+    if (v && v !== 'no') return false;
+  }
   if (CLOSED_ACCESS.has(w.tags['access'])) return false;
   // A station building tagged `aerialway=yes` instead of `aerialway=station`. The `station`
   // value catches most of them, but plenty of mappers put the generic `yes` on the outline and

@@ -1,7 +1,7 @@
 /**
  * Turn synthesised area skeletons into synthetic `NormPiste`s that `buildResortGraph` can consume.
  *
- * The alternative â€” inserting edges into an already-built `ResortGraph` and deleting the rim edges â€”
+ * The alternative - inserting edges into an already-built `ResortGraph` and deleting the rim edges - 
  * would mean re-implementing node clustering, way segmentation, descent orientation, flat-traverse
  * handling and `srcWayId` tagging outside `buildGraph.ts`, and keeping them in step forever. Feeding
  * the skeleton in as ways instead makes all of that fall out of code that already exists and is
@@ -20,12 +20,12 @@ import type { PolyResult } from './areaSkeleton';
 
 /**
  * First synthetic `osmId`. Above every real OSM node id (the largest in use is ~1.3e10) so a portal
- * cluster is always named after its *real* id â€” node names stay greppable in OSM, and id-based
+ * cluster is always named after its *real* id - node names stay greppable in OSM, and id-based
  * entries in `overrides/<id>.json` keep working.
  */
 const SYNTH_BASE = 1e12;
 
-/** Douglasâ€“Peucker tolerance for skeleton geometry, per plan Â§3 step 4. */
+/** Douglas-Peucker tolerance for skeleton geometry, per plan §3 step 4. */
 const SIMPLIFY_M = 5;
 
 /**
@@ -48,7 +48,7 @@ function mx(lat: number): number {
   return Math.cos((lat * Math.PI) / 180) * 111320;
 }
 
-/** Douglasâ€“Peucker that never drops a locked vertex, so welded junctions survive simplification. */
+/** Douglas-Peucker that never drops a locked vertex, so welded junctions survive simplification. */
 function simplify(pts: LL[], tolM: number, locked?: Set<number>): LL[] {
   if (pts.length < 3) return pts;
   const k = mx(pts[0][1]);
@@ -119,10 +119,10 @@ export interface SkeletonPistes {
   pistes: NormPiste[];
   /** Polygon way ids whose rim is now represented by a skeleton and must not be passed on. */
   replaced: Set<number>;
-  /** Every vertex that needs a real elevation fetch (plan Â§4b: never interpolate these). */
+  /** Every vertex that needs a real elevation fetch (plan §4b: never interpolate these). */
   newPoints: NormPoint[];
   welds: number;
-  /** Arms whose terminal point found no spine to weld onto â€” must be 0. */
+  /** Arms whose terminal point found no spine to weld onto - must be 0. */
   unwelded: number;
 }
 
@@ -130,7 +130,7 @@ export interface SkeletonPistes {
  * @param results  skeletons from `buildSkeletons`
  * @param pistes   the resort's normalised ways. **Mutated**: welding an arm onto a real centreline
  *                 inserts a vertex into that way. The inserted point is exactly on the existing
- *                 segment, so the geometry is unchanged â€” it only creates a node to split at.
+ *                 segment, so the geometry is unchanged - it only creates a node to split at.
  */
 export function skeletonPistes(results: PolyResult[], pistes: NormPiste[]): SkeletonPistes {
   const byWay = new Map<number, NormPiste>();
@@ -139,9 +139,9 @@ export function skeletonPistes(results: PolyResult[], pistes: NormPiste[]): Skel
   let nextId = SYNTH_BASE;
   const fresh = (): number => nextId++;
   /**
-   * Portals with no OSM node of their own: invented gateways (`gwâ€¦`) and snap nodes (`snâ€¦`, minted
+   * Portals with no OSM node of their own: invented gateways (`gw…`) and snap nodes (`sn…`, minted
    * inside the graph build). Keyed by portal id so the two polygons meeting at a gateway allocate
-   * the *same* id â€” otherwise each grows an arm to its own private node and the crossing that the
+   * the *same* id - otherwise each grows an arm to its own private node and the crossing that the
    * gateway exists to create silently does not happen.
    */
   const synthPortal = new Map<string, number>();
@@ -191,8 +191,8 @@ export function skeletonPistes(results: PolyResult[], pistes: NormPiste[]): Skel
     const poly = byWay.get(r.wayId);
     if (!poly) continue;
     // Simplification must not move a line away from a point another line ends on. Arms terminate on
-    // a spine or, where portals share an approach, on a *hub arm* â€” so every arm tip is a junction
-    // that has to survive Douglasâ€“Peucker, or the weld misses by up to the tolerance.
+    // a spine or, where portals share an approach, on a *hub arm* - so every arm tip is a junction
+    // that has to survive Douglas-Peucker, or the weld misses by up to the tolerance.
     const tips = r.skel.arms.map((a) => a.coords[a.coords.length - 1]);
     const lockTips = (coords: LL[]): Set<number> => {
       const s = new Set<number>();
@@ -217,7 +217,7 @@ export function skeletonPistes(results: PolyResult[], pistes: NormPiste[]): Skel
       const t = emit(poly, s, []);
       if (t) mine.push(t);
     }
-    // Classes A/Bâ€² reuse a real OSM centreline, which is already a way in its own right.
+    // Classes A/B′ reuse a real OSM centreline, which is already a way in its own right.
     for (const w of r.spineWayIds) {
       const rp = byWay.get(w);
       if (!rp) continue;
@@ -311,7 +311,7 @@ export function skeletonPistes(results: PolyResult[], pistes: NormPiste[]): Skel
   }
 
   // Pass 3: apply the insertions. Back to front so earlier indices stay valid. A weld that lands on
-  // a vertex that is already there re-uses it rather than adding a duplicate â€” and an arm *adopts*
+  // a vertex that is already there re-uses it rather than adding a duplicate - and an arm *adopts*
   // that vertex's id rather than renaming it, because overwriting would rewrite a real OSM node id
   // into a synthetic one and detach it from every other way that shares it.
   for (const t of [...targets, ...realTargets.values()]) {

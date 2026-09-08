@@ -213,7 +213,7 @@ function buildCanonicalNodes(
     const id = `n${members.reduce((min, m) => (m.osmId < min ? m.osmId : min), members[0].osmId)}`;
     // Clusters partition the points, so two clusters cannot share a minimum. Guard anyway: a
     // silent id collision would merge unrelated nodes and corrupt routing.
-    if (nodes.has(id)) throw new Error(`node id collision: ${id} â€” clusters are not disjoint`);
+    if (nodes.has(id)) throw new Error(`node id collision: ${id} - clusters are not disjoint`);
     const lon = members.reduce((s, m) => s + m.lon, 0) / members.length;
     const lat = members.reduce((s, m) => s + m.lat, 0) / members.length;
     const eles = members.map((m) => m.ele).filter((e): e is number => e != null);
@@ -334,7 +334,7 @@ function reachedFromLiftStations(edges: GraphEdge[], liftStationIds: string[]): 
  * The published ride time, in seconds, or `undefined` when OSM doesn't say.
  *
  * Deliberately narrow: we pass on only what the `aerialway:duration` tag actually states and never
- * substitute a derived length/speed estimate. Baking an estimate into the data would freeze it â€”
+ * substitute a derived length/speed estimate. Baking an estimate into the data would freeze it - 
  * lift speeds are a user preference, so the estimate has to stay the router's job.
  */
 function osmRideSeconds(durationSec?: number): number | undefined {
@@ -345,10 +345,10 @@ function osmRideSeconds(durationSec?: number): number | undefined {
  * Repair DEM "pothole"/"false-peak" nodes BEFORE edges are oriented. Piste direction is derived
  * purely from node elevations (buildResortGraph orients each segment high->low), so a single
  * mis-sampled interior node silently reverses a segment:
- *   - a node sampled BELOW all its piste neighbours becomes a false local minimum â€” the run past it
+ *   - a node sampled BELOW all its piste neighbours becomes a false local minimum - the run past it
  *     reverses and both neighbouring pistes point INTO a dead-looking sink you could only leave by
  *     climbing (the "arrows into itself, no way out" artifact);
- *   - a node sampled ABOVE all its neighbours becomes a false local maximum â€” a phantom top you can
+ *   - a node sampled ABOVE all its neighbours becomes a false local maximum - a phantom top you can
  *     ski away from but never legitimately reach.
  * Genuine tops/bottoms are piste ENDPOINTS (graph degree 1) or lift stations; an interior
  * through/junction node (degree >= 2) that is a strict local extremum is almost always DEM noise.
@@ -356,7 +356,7 @@ function osmRideSeconds(durationSec?: number): number | undefined {
  * (one downhill exit, inflow from the rest). Iterated a few passes so cascaded dips settle.
  *
  * The extremum test is gated on GRADIENT, not on the raw height difference. Neighbours here are
- * canonical *junction* nodes, which can be a kilometre apart â€” so "more than tol above every
+ * canonical *junction* nodes, which can be a kilometre apart - so "more than tol above every
  * neighbour" is also true of every genuine summit where two runs split and both descend. Comparing
  * rise/run instead separates the two cases: a real mountain top reaches its neighbours at piste
  * gradients (a black run is ~0.7), while a mis-sampled DEM cell stands impossibly proud of ground
@@ -396,7 +396,7 @@ function repairPotholeElevations(
   for (let pass = 0; pass < 6; pass++) {
     let changed = false;
     for (const [id, nbrs] of adj) {
-      if (nbrs.size < 2) continue; // degree 1 = genuine run endpoint (top/bottom) â€” leave alone
+      if (nbrs.size < 2) continue; // degree 1 = genuine run endpoint (top/bottom) - leave alone
       const n = nodes.get(id);
       if (!n || n.isLiftStation || n.ele == null) continue;
       const near = [...nbrs]
@@ -410,7 +410,7 @@ function repairPotholeElevations(
       const highest = eles[eles.length - 1];
       const secondHighest = eles[eles.length - 2];
       // A spike must be implausibly steep relative to EVERY neighbour, not merely higher/lower
-      // than all of them â€” otherwise real summits and real basins get flattened.
+      // than all of them - otherwise real summits and real basins get flattened.
       const steepToAll = (sign: 1 | -1): boolean =>
         near.every((e) => e.dist > 0 && (sign * (n.ele! - e.ele)) / e.dist > c.spikeGradeMax);
       if (n.ele < lowest - tol && steepToAll(-1)) {
@@ -516,7 +516,7 @@ export function buildResortGraph(
   // than it starts. That is routine for an `area=yes` ring, which arcs over a rim: it drops into
   // a bowl and climbs back out, yet its two ends sit at nearly the same height. Split such a way
   // at an interior point and the halves inherit `kind: 'piste'` while one of them genuinely
-  // CLIMBS â€” SÃ¶lden's e1031 rose 287 m as a one-way black run. cost.ts charges nothing to ascend
+  // CLIMBS - Sölden's e1031 rose 287 m as a one-way black run. cost.ts charges nothing to ascend
   // a piste, so that half is a free lift: it let a skier climb out of the glacier bowl instead of
   // riding the gondola beside it.
   //
@@ -603,6 +603,7 @@ export function buildResortGraph(
           area: piste.area || undefined,
           srcWayId: piste.wayId,
             offPiste: piste.offPiste,
+          taggedTwoWay: piste.bidirectional === true || undefined,
         });
         const label = piste.ref && piste.name ? `${piste.ref} ${piste.name}` : piste.ref ? `Piste ${piste.ref}` : piste.name;
         if (label) {
@@ -610,7 +611,7 @@ export function buildResortGraph(
           pisteEndpointNames.push({ nodeId: to, name: label, role: 'bottom' });
         }
         // Near-flat cat-track: also traversable in reverse (skate/pole the gentle rise),
-        // but only when the actual rise is small â€” you can't climb toward a summit.
+        // but only when the actual rise is small - you can't climb toward a summit.
         //
         // A synthesised polygon arm skips the *gradient* half of the test (never the climb cap).
         // An arm is a 15-40 m app-invented stub joining a rim point to the polygon's centreline,
@@ -647,6 +648,7 @@ export function buildResortGraph(
             area: piste.area || undefined,
             srcWayId: piste.wayId,
             offPiste: piste.offPiste,
+            taggedTwoWay: piste.bidirectional === true || undefined,
           });
         }
 
@@ -696,8 +698,8 @@ export function buildResortGraph(
       }
     }
     if (piste.skeletonArm === true && edges.length > armEdgeStart) {
-      // Tag every edge this arm emits with its rim end. The prune pass runs last â€” after
-      // overrides, which can still delete and re-issue edges â€” so it has to be able to rebuild
+      // Tag every edge this arm emits with its rim end. The prune pass runs last - after
+      // overrides, which can still delete and re-issue edges - so it has to be able to rebuild
       // "this is one arm" from the edge list alone. `emit.ts` strips the tag on the way out.
       const portal = canonicalOf.get(piste.points[0].osmId);
       if (portal) for (let i = armEdgeStart; i < edges.length; i++) edges[i].armPortal = portal;
@@ -803,12 +805,31 @@ export function buildResortGraph(
         descInSnap.add(e.to);
       }
       // ...but only a piste/skiable descent counts as being able to SKI onward (a lift back
-      // down does not â€” a lift-only top must still be linked to the ski network).
+      // down does not - a lift-only top must still be linked to the ski network).
       if (e.kind === 'piste' || (e.kind === 'connector' && e.connectorKind === 'skiable_down')) {
         descOutSnap.add(e.from);
       }
     }
-    const deadEnds = [...nodes.values()].filter((n) => descInSnap.has(n.id) && !descOutSnap.has(n.id) && n.ele != null);
+    // The base of an ASCENDING lift is not a dead end: the skier's way out is the cable.
+    // The snap's test asks "can you ski onward", which a lift bottom fails by definition, so it
+    // was inventing a link back UP the hill so the station would have an exit (Mayrhofen's 6er
+    // Ebenwald base climbed 13 m over 27 m). Gated on the lift GAINING height, not merely on a
+    // lift departing: a downloadable gondola also has a lift edge leaving its TOP, and a gondola
+    // top genuinely does need a ski-out. The inbound direction is not lost either - `liftSkiIn.ts`
+    // is the pass that guarantees a base can be skied to.
+    const ascendingLiftBase = new Set<string>();
+    for (const e of edges) if (e.kind === 'lift' && e.dropM > 0) ascendingLiftBase.add(e.from);
+    const deadEnds = [...nodes.values()].filter(
+      (n) => descInSnap.has(n.id) && !descOutSnap.has(n.id) && n.ele != null && !ascendingLiftBase.has(n.id),
+    );
+    // Stations that have a terminal BUILDING. The link we are about to draw out of one of these
+    // runs through the station, not over snow, so its vertical is stairs (see `stationAccess`).
+    const buildingStation = new Set<string>();
+    for (const e of edges) {
+      if (e.kind !== 'lift' || !e.liftType || !DOWNLOADABLE_LIFT_TYPES.has(e.liftType)) continue;
+      buildingStation.add(e.from);
+      buildingStation.add(e.to);
+    }
     let snapped = 0;
     for (const E of deadEnds) {
       const ep: GeoPoint = { lon: E.lon, lat: E.lat, ele: E.ele };
@@ -839,6 +860,13 @@ export function buildResortGraph(
       if (Math.min(dFromEnd, dToEnd) <= c.Hmerge) {
         N = dFromEnd <= dToEnd ? X.from : X.to;
         if (N === E.id) continue;
+        // A link between two nodes OSM already joins is pure duplication, and it is worse than
+        // useless: the pair is emitted two-way, so it also asserts a reverse traversal the real
+        // way denies. Mayrhofen's 6er Ebenwald base is the case - piste w475122536 already runs
+        // 38 m down into the station, and the snap drew a straight 27 m twin beside it climbing
+        // 13 m (48%) back out, which is neither terrain nor a gap. Only the reuse branch can hit
+        // this; a fresh `s…` split node cannot already be joined to anything.
+        if (edges.some((x) => !x.synthetic && ((x.from === E.id && x.to === N) || (x.from === N && x.to === E.id)))) continue;
         P = nodeGeo(N);
       } else {
         // One snap node per dead-end, so name it after the dead-end it serves: deterministic and
@@ -863,11 +891,12 @@ export function buildResortGraph(
       const linkM = haversineM(ep, P);
       const dz = (P.ele ?? 0) - E.ele;
       const flagged = best.dist > c.Hmerge;
+      const stationAccess = E.isLiftStation ? (buildingStation.has(E.id) ? 'building' : 'ramp') : undefined;
       if (dz < -c.maxTraverseClimb) {
-        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'skiable_down', geometry: [ep, P], lengthM: linkM, dropM: -Math.abs(dz), synthetic: flagged });
+        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'skiable_down', geometry: [ep, P], lengthM: linkM, dropM: -Math.abs(dz), synthetic: flagged, stationAccess });
       } else {
-        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'flat_traverse', geometry: [ep, P], lengthM: linkM, dropM: geomDrop([ep, P]), synthetic: flagged });
-        edges.push({ id: nextEdgeId(), from: N, to: E.id, kind: 'connector', connectorKind: 'flat_traverse', geometry: [P, ep], lengthM: linkM, dropM: geomDrop([P, ep]), synthetic: flagged });
+        edges.push({ id: nextEdgeId(), from: E.id, to: N, kind: 'connector', connectorKind: 'flat_traverse', geometry: [ep, P], lengthM: linkM, dropM: geomDrop([ep, P]), synthetic: flagged, stationAccess });
+        edges.push({ id: nextEdgeId(), from: N, to: E.id, kind: 'connector', connectorKind: 'flat_traverse', geometry: [P, ep], lengthM: linkM, dropM: geomDrop([P, ep]), synthetic: flagged, stationAccess });
       }
       snapped++;
     }
@@ -974,8 +1003,8 @@ export function buildResortGraph(
   // --- Flat-junction pass -------------------------------------------------
   // Fill "dummy gaps": flat areas (restaurant aprons, lift bases, cols) where a run visibly
   // ends and another begins across a level patch, but OSM leaves a gap. To avoid wrongly
-  // linking two *parallel* runs, only bridge a DANGLING piste end â€” a node where a run
-  // terminates (arrives, nothing onward) or starts (leaves, nothing leads in) â€” to a partner
+  // linking two *parallel* runs, only bridge a DANGLING piste end - a node where a run
+  // terminates (arrives, nothing onward) or starts (leaves, nothing leads in) - to a partner
   // that supplies the missing direction, at ~the same elevation (DEM-noise tolerant).
   const descIn = new Set<string>();
   const descOut = new Set<string>();
@@ -1056,7 +1085,7 @@ export function buildResortGraph(
   // Over a link this short the DEM gradient is noise rather than terrain (6 m between two cells
   // 22 m apart reads as a 27% slope on a dead-flat summit), so the flat-traverse gradient gate
   // can't be used here. Instead the pass is anchored on topology: at least one end must be a
-  // real HUB â€” a lift station, or a node where three or more distinct neighbours meet. A point
+  // real HUB - a lift station, or a node where three or more distinct neighbours meet. A point
   // in the middle of a piste has exactly two, so two parallel runs are never bridged.
   const neighbourSets = new Map<string, Set<string>>();
   const outAdj = new Map<string, { to: string; lengthM: number }[]>();
@@ -1110,7 +1139,7 @@ export function buildResortGraph(
       const b = nb.nodeId ? nodes.get(nb.nodeId) : undefined;
       if (!b || b.id === a.id || b.ele == null) continue;
       const dz = b.ele - a.ele;
-      if (Math.abs(dz) > c.maxTraverseClimb) continue; // more than a skate â€” that's a real slope
+      if (Math.abs(dz) > c.maxTraverseClimb) continue; // more than a skate - that's a real slope
       const h = haversineM({ lon: a.lon, lat: a.lat, ele: a.ele }, { lon: b.lon, lat: b.lat, ele: b.ele });
       if (h <= c.Hmerge || h > c.plateauRadius) continue;
       if (!isHub(a) && !isHub(b)) continue;
@@ -1122,7 +1151,7 @@ export function buildResortGraph(
 
     // Only worth adding when the pair is genuinely severed. If a skier can already get from a to
     // b (or back) with a short detour along mapped runs, the plateau is already connected and a
-    // shortcut would just invent off-piste terrain â€” that's how parallel runs and switchbacks
+    // shortcut would just invent off-piste terrain - that's how parallel runs and switchbacks
     // would get wrongly bridged.
     for (const { b, h, dz } of near.slice(0, c.plateauK)) {
       if (localReach(a.id, budget).has(b.id) && localReach(b.id, budget).has(a.id)) continue;
@@ -1131,7 +1160,7 @@ export function buildResortGraph(
         if (existingPair.has(`${from}->${to}`)) continue;
         // Cul-de-sac guard: skating across the apron to `to` is only worth anything if the skier
         // can then go somewhere new. If `to`'s only onward edge leads straight back to `from` it
-        // is a pass-through node â€” the link would just offer a climb to a dead end (and, with a
+        // is a pass-through node - the link would just offer a climb to a dead end (and, with a
         // plausible-looking detour saving, make the pass look more useful than it is).
         const onward = realOut.get(to);
         if (!onward || (onward.size === 1 && onward.has(from))) continue;
@@ -1179,7 +1208,7 @@ export function buildResortGraph(
   // The escape may be another *node*, or a point in the middle of a piste *line*. Considering
   // only nodes is how this pass used to work, and it is wrong for the same reason the endpoint
   // snap above exists: runs meet mid-line far more often than end-to-end. A Madonna dead end at
-  // 1653 m has piste 78 passing 49 m away, 84% of the way along one of its edges â€” invisible to
+  // 1653 m has piste 78 passing 49 m away, 84% of the way along one of its edges - invisible to
   // a node search, which instead reached 194 m across the valley to a node that is not connected
   // to it on the snow at all. Projecting onto the line finds the link a skier would actually use,
   // and being 4x shorter it wins on distance alone, so no special-casing is needed.
@@ -1410,14 +1439,14 @@ export function buildResortGraph(
 
   // --- Orphan pass: guarantee no run is unreachable -----------------------
   // The mirror image of the rescue pass above. Rescue fixes nodes a skier can reach but never
-  // leave ("trapped"); this fixes nodes a skier can leave but never reach ("orphan") â€” real
+  // leave ("trapped"); this fixes nodes a skier can leave but never reach ("orphan") - real
   // terrain with a perfectly good way DOWN that nothing on the mountain leads INTO. Both are
   // the same OSM defect (runs meet mid-line, not end-to-end) seen from opposite directions.
   //
   // This became load-bearing with synthesised area centrelines. Deleting a polygon's rim can
   // remove the only inbound edge a zone had, and the existing endpoint-snap can't restore it:
   // that pass only fires on nodes which cannot ski ONWARD, and a node on a spine always can.
-  // Alpe d'Huez's 27-node Pic Blanc summit orphaned exactly this way â€” it kept all 10 of its
+  // Alpe d'Huez's 27-node Pic Blanc summit orphaned exactly this way - it kept all 10 of its
   // exits and lost its single entrance.
   //
   // Safety is the same argument as everywhere else: entering may never climb more than
@@ -1508,7 +1537,7 @@ export function buildResortGraph(
 
         // A one-way entrance is the only case that can create a trap: the skier drops in and
         // the link cannot carry them back out. Unless the zone can already reach a lift under
-        // its own steam, leave it sealed â€” an unreachable zone is bad, a zone you can enter and
+        // its own steam, leave it sealed - an unreachable zone is bad, a zone you can enter and
         // never leave is worse. A two-way entrance is always safe: it IS the way out.
         // Decided here, before any piste is split, so a rejected zone leaves no stray node.
         const winSourceEle = win.line ? (win.line.point.ele ?? 0) : win.node!.ele!;
@@ -1587,7 +1616,7 @@ export function buildResortGraph(
 
   // --- Infer difficulty for unrated pistes (global rule) -----------------
   // Untagged downhill runs import as color `unknown`, which the router treats as harder than
-  // black and filters out â€” orphaning any section only reachable through one. Give them their
+  // black and filters out - orphaning any section only reachable through one. Give them their
   // rated neighbours' difficulty (easiest feeder; guarded sole-feeder downstream; else hardest
   // neighbour). See inferColors.ts.
   const coloredUnrated = inheritUnratedPisteColors(edges);
@@ -1601,7 +1630,7 @@ export function buildResortGraph(
     degree.set(e.from, (degree.get(e.from) ?? 0) + 1);
     degree.set(e.to, (degree.get(e.to) ?? 0) + 1);
   }
-  // Drop nodes no edge touches. A node with no edges is not terrain â€” it is left over from a
+  // Drop nodes no edge touches. A node with no edges is not terrain - it is left over from a
   // way that lost all its segments (too short, pruned as a redundant arm, or dropped by an
   // override). Keeping them costs nothing at runtime but they are permanently both "trapped"
   // and "orphan", so they inflate every connectivity report with dust that can never be fixed.
@@ -1615,7 +1644,7 @@ export function buildResortGraph(
   }
   if (dropped > 0) console.log(`  dropped ${dropped} edgeless node(s)`);
   // Iterate the live node map (not the earlier `nodeList` snapshot) so nodes created by
-  // late passes (e.g. lift-top ski-out splits) are included â€” otherwise their edges dangle.
+  // late passes (e.g. lift-top ski-out splits) are included - otherwise their edges dangle.
   const graphNodes: GraphNode[] = [...nodes.values()].map((n) => ({
     id: n.id,
     point: { lon: n.lon, lat: n.lat, ele: n.ele },

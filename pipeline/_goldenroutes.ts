@@ -1,12 +1,12 @@
 ﻿// Golden-route timing check: does the app's estimate still match a real, recorded descent?
 //
-// Every other gate in this repo measures distance, detour rate or option counts â€” nothing guards
+// Every other gate in this repo measures distance, detour rate or option counts - nothing guards
 // the *time* estimate, which is the number the user actually reads. A cost-model change can leave
 // every route identical in shape while quietly making it 20% slower.
 //
 // Fixtures live in `fixtures/golden-routes.json` and come from real Strava ELAPSED times (elapsed,
 // not moving: it includes the lift queues our wait model estimates). Tolerances are deliberately
-// generous â€” with a handful of samples a tight bound just produces false alarms, and the point is
+// generous - with a handful of samples a tight bound just produces false alarms, and the point is
 // to catch a large drift, not to pin the model to one skier's day.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -61,8 +61,8 @@ for (const f of fixtures) {
   console.log(
     `${ok ? 'ok  ' : 'FAIL'}  ${f.label}\n` +
       `      estimate ${mins.toFixed(1)} min vs recorded ${f.expectedMinutes} min ` +
-      `(${delta >= 0 ? '+' : ''}${delta.toFixed(1)}, tolerance ${f.toleranceMinutes}) Â· ` +
-      `${(route.stats.totalDistanceM / 1000).toFixed(1)} km Â· ${route.stats.liftCount} lifts`,
+      `(${delta >= 0 ? '+' : ''}${delta.toFixed(1)}, tolerance ${f.toleranceMinutes}) · ` +
+      `${(route.stats.totalDistanceM / 1000).toFixed(1)} km · ${route.stats.liftCount} lifts`,
   );
 }
 
