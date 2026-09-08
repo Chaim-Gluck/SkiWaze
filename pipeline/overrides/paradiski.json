@@ -15,5 +15,12 @@
       "kind": "flat_traverse",
       "_why": "Magic carpet top (2031 m) -> Arc 1950 village ski-street junction (2037 m), 56 m. One-way up: the reverse already exists as a synthetic skiable_down."
     }
+  ],
+  "setNodeElevation": [
+    {
+      "node": "n2226939829",
+      "ele": 1533,
+      "_why": "Montchavin, junction of blue 'Mont Blanc' (w44644749) with red 'Montchavin' (w383420444), 45.54879/6.73595. Our chain reads 1542 and Terrarium 1546; the user read ~1533 off the contours and read the segment's other end (n611005864) as ~1552, which matches our 1550 exactly - so the disagreement is local to this node, not a systematic offset. Both rasters agreeing is not independent evidence (our field averages skadi and Terrarium where they agree within 8 m), so a map reading wins. Load-bearing: at 1542 the Mont Blanc segment drops 8.0 m over 225 m = 3.6%, which passes flatGradeMax (6%) and whose climb is EXACTLY maxTraverseClimb (8 m, passing on <=), so it shipped bidirectional. At 1533 it drops 17 m = 7.6% and both gates fail, leaving it correctly one-way east -> west. Checked for a step: the other three edges at this node (to n611746528 1512, from n610970275 1629, to n566701852 1434) all keep descending and stay well under their colour ceilings, so this is an isolated single-node patch, not the rim of a sunken area."
+    }
   ]
 }

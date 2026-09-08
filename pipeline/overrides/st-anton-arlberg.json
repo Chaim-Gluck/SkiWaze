@@ -61,8 +61,9 @@
   ],
   "addConnectors": [
     {
+      "_why": "Stuben traverse -> Albonabahn I bottom. Repointed from sn249417956: that was the dead-end snap node for the Albonabahn I base, and the snap no longer fires at the base of an ascending lift (a lift bottom is not a dead end - the cable is the way out). n249417956 IS that station, 39 m away and at the same 1409 m, which is where a skier traversing from Stuben is actually going.",
       "from": "xStubenTraverse",
-      "to": "sn249417956",
+      "to": "n249417956",
       "kind": "flat_traverse",
       "bidirectional": true
     },

@@ -1,32 +1,49 @@
 {
   "setNodeElevation": [
     {
+      "node": "n1231572764",
+      "ele": 1643,
+      "_why": "Grostè hub east apron, 1 of 4. East abutment / bottom of the 'Tapis Roulant Grostè Express - Fortini' magic carpet on the road viaduct. Ours read 1651 and Terrarium 1651, i.e. BOTH RASTERS AGREE AND BOTH ARE WRONG - an abrupt ~8 m step at a bridge head is exactly what a 30 m DEM erases - so elevationConsensus is structurally blind to it (it fires on disagreement). Ground truth 1642-1645 read off contours by the user, who also confirmed our WEST abutment n3986751322 (1649.7) is correct, so the error is one-sided. The whole east apron reads uniformly ~8 m high; all four nodes are pinned together per the atomic-patch rule (pinning part of a fault just moves the hole). Carpet stays east->west after this: |1649.7-1643| = 6.7 m is still under liftFlatDirectionM (10 m), so the drawn direction wins, and elevation alone would now agree anyway."
+    },
+    {
+      "node": "n8669583370",
+      "ele": 1643,
+      "_why": "Grostè hub east apron, 2 of 4. Fortini Express gondola base. Ours 1655, Terrarium 1655, user's reading: level with the east abutment. Same shared-DEM-error patch as n1231572764. Note this also levels the 66 m novice link w1131930104 (oneway=no) between the two, which stays two-way."
+    },
+    {
+      "node": "n296143996",
+      "ele": 1640,
+      "_why": "Grostè hub east apron, 3 of 4. Grostè 1 express base. Ours 1648, Terrarium 1647, user's reading ~1640. Same patch. The 60 m synthetic flat traverse to n1231572764 keeps its 3 m drop and stays two-way."
+    },
+    {
+      "node": "n1233967964",
+      "ele": 1649,
+      "_why": "Grostè hub east apron, 4 of 4, and the node that made the patch atomic. The junction above the two bases, ours 1657, user's reading ~1649 - the same ~8 m over-read as its three neighbours. It had to be pinned WITH them: w395878130 is a 57 m blue carrying an explicit oneway=no, so its reverse traverse is capped by maxTraverseClimb (8 m). Leaving this node at 1657 while dropping the abutment to 1643 would have turned a 6 m climb into 14 m and DELETED that reverse - a topology change caused purely by half-fixing an elevation fault. At 1649 it stays 6 m and nothing moves."
+    },
+    {
       "node": "n298987361",
-      "ele": 1952
+      "ele": 1952,
+      "_why": "Provenance unrecoverable - written in an early session before the _why convention, so the reading behind 1952 m is not recorded. Kept because it is still measurably active: the current two-raster chain samples 1975 m here, a 23 m difference, so the entry is doing real work rather than restating the DEM (verified with npm run probe:elevoverrides --details). Deliberately not re-derived - guessing a replacement reading would be worse than an unexplained entry that is demonstrably in use. If it ever needs revisiting, take contour readings for the whole connected patch, never this node alone."
     },
     {
       "node": "n5420317398",
-      "ele": 1635
+      "ele": 1635,
+      "_why": "Provenance unrecoverable - see n298987361 above. Still measurably active: the live chain samples 1648 m here, a 13 m difference."
     },
     {
       "node": "n4575135898",
-      "ele": 1903
+      "ele": 1903,
+      "_why": "Provenance unrecoverable - see n298987361 above. Still measurably active: the live chain samples 1899 m here, a +4 m difference (this is the one legacy entry that pins a node LOWER than the DEM)."
     },
     {
       "node": "n603385508",
-      "ele": 2097
-    },
-    {
-      "node": "n3986850382",
-      "ele": 2079
+      "ele": 2097,
+      "_why": "Provenance unrecoverable - written in an early session before the _why convention, so we do not know what reading or defect produced 2097. Kept because it is measurably LOAD-BEARING, which is the opposite of what `probe:elevoverrides` reports: that probe calls it redundant (the live DEM samples 2098, a 1 m difference, well inside its tolerance), but removing it and rebuilding moved this node 2097 -> 2098 and that 1 m carried the 49 m run w562245685 (e356) from -4.0 m to exactly -3.0 m - onto `pisteFlatTolerance` - turning a one-way descending piste into a two-way flat traverse at 6.25%. A threshold-straddling entry is precisely the case the 'never bulk-delete stale entries on the report alone' rule exists for. Two sibling entries removed in the same pass (n3986850382, n4090685615) were verified genuinely inert by the same snapshot-rebuild-diff and are gone."
     },
     {
       "node": "n4575900382",
-      "ele": 1735
-    },
-    {
-      "node": "n4090685615",
-      "ele": 1719
+      "ele": 1735,
+      "_why": "Provenance unrecoverable - see n298987361 above. Still measurably active: the live chain samples 1743 m here, an 8 m difference."
     }
   ],
   "splitPisteAt": [

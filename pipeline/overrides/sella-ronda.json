@@ -54,6 +54,12 @@
       "why": "Malga Ciapela valley floor (~1440 m). Terrarium reads the east end 25 m higher (a tight 3-node pothole: n13039689977, n12009588137, sn13039689977 all -21..-25 m; every other node within 300 m agrees). Checked on the map: the run really does fall west->east. 'Correcting' it would flip the piste east->west and strand n13039689977/n12009588137, whose only other links are a 22 m flat pair, inside an already-orphaned valley component. Our orientation is right; the DEM is wrong."
     }
   ],
+  "acceptedDeadEnds": [
+    {
+      "nodes": ["n1180399118", "n6541128593"],
+      "why": "Top of the DISMANTLED Sass del Mul t-bar on the Fedaia side (n1180399118 = '65 Sass del Mul (top)', 2925 m). OSM tags all three Fedaia lifts abandoned=yes as a TOP-LEVEL key beside a live aerialway type - w1054631063 gondola 'Fedaia-Pian dei Fiacconi', w1054631065 chair_lift 'Fedaia-Sass del Mul', w1054631066 t-bar 'Sass del Mul' - which is why they used to import as ordinary rideable lifts (fixed generically in overpass.ts, see AGENTS). With them gone this top can still be skied AWAY from (a 399 m red and the 297 m black 'Sass del Mul' both descend from it) but can no longer be reached, because the only lift that ever served it no longer physically exists. That is correct output, not a defect: a synthetic link here would deliver a skier to a lift that was torn down. These are the ONLY 2 nodes the lifecycle-tag filter stranded across all 5 affected resorts. The honest fix is upstream - if the Fedaia lifts are ever rebuilt and retagged, a refresh picks them up and this entry can be dropped."
+    }
+  ],
   "acceptedBasins": [
     {
       "nodes": [
