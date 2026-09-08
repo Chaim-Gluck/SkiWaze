@@ -3,7 +3,7 @@ import type { GraphIndex } from './graphIndex';
 import { DEFAULT_GRAPH_CONSTANTS } from '../config/graphConstants';
 
 /**
- * Per-edge scorer shared by the resort-wide "longest runs" card and the Aâ†’B "longest" objective,
+ * Per-edge scorer shared by the resort-wide "longest runs" card and the A→B "longest" objective,
  * so the two can't drift apart. Raw skied length is the wrong objective for both: it rewards any
  * detour that racks up metres, which is what produces visible doubling-back.
  *
@@ -949,7 +949,7 @@ export function longestDownhillStreak(
  * mesh at lift bases purely to accumulate distance, which shows up on the map as absurd loops.
  *
  * The lift-free downhill sub-graph is a DAG (edges only descend), so this is exact and O(V+E):
- * DFS from A dropping back-edges â†’ a DAG whose post-order is reverse-topological; then a
+ * DFS from A dropping back-edges → a DAG whose post-order is reverse-topological; then a
  * longest-distance DP toward B. Returns [] when B isn't reachable from A without a lift (the
  * caller falls back to allowing a lift only in that case).
  */
@@ -1013,7 +1013,7 @@ function descentPath(
     if (top.i < edges.length) {
       const e = edges[top.i++];
       const s = state.get(e.to) ?? 0;
-      if (s === 1) continue; // back-edge â†’ drop to stay acyclic
+      if (s === 1) continue; // back-edge → drop to stay acyclic
       let out = dagOut.get(top.id);
       if (!out) dagOut.set(top.id, (out = []));
       out.push(e);
@@ -1126,7 +1126,7 @@ function smoothPlumbing(
 }
 
 /**
- * Up to `k` diverse longest lift-free Aâ†’B descents. After each found run, its edges are
+ * Up to `k` diverse longest lift-free A→B descents. After each found run, its edges are
  * penalised so the next longest search is pushed onto different terrain; runs overlapping an
  * accepted one by more than `maxOverlap` (by distance) are rejected. Returns [] if B isn't
  * reachable from A without a lift.

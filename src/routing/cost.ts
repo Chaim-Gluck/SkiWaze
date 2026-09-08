@@ -219,7 +219,11 @@ export function edgeCost(edge: GraphEdge, prefs: Preferences, arrival: Date, obj
   const penalty =
     (edge.synthetic && !edge.custom ? SYNTHETIC_PENALTY : 1) * plumbingPenalty(edge);
   const skiMult = paceMultiplier(prefs.skillLevel);
-  const climbSeconds = ascentM * CLIMB_SECONDS_PER_M;
+  // A station-access link's vertical is inside the terminal building (stairs, escalator), so it is
+  // not a climb on snow and is not charged as one. See `GraphEdge.stationAccess` for why this is
+  // gated on the lift having a building at all. The horizontal term still applies, which prices
+  // walking through the station at flat-traverse pace.
+  const climbSeconds = edge.stationAccess === 'building' ? 0 : ascentM * CLIMB_SECONDS_PER_M;
   // Price a connector by the gradient it actually has, not by the label it was given.
   //
   // The pipeline picks `connectorKind` from *direction* alone (`oneWayDown ? 'skiable_down' :
