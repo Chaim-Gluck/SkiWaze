@@ -350,11 +350,14 @@
       "iconicBlurb": "Ski a resort's own signposted routes - for example the Sella Ronda both ways, a valley traverse or a famous descent - planned leg by leg under your own preferences, and told the latest you can set off and still finish before the lifts stop.",
       "liftsHeading": "Lifts ({{n}})",
       "elevationHeading": "Elevation",
-      "pistesHeading": "Pistes ({{value}})",
+      "pistesHeading_one": "Pistes ({{count}} run, {{value}})",
+      "pistesHeading_other": "Pistes ({{count}} runs, {{value}})",
+      "runsCount_one": "{{count}} run",
+      "runsCount_other": "{{count}} runs",
       "offPiste": "Off-piste",
       "vertical": "Vertical",
       "verticalDrop": "Total drop",
-      "statsSource": "Counted from OpenStreetMap data as this app uses it, so these will not match the resort's published figures."
+      "statsSource": "Counted from OpenStreetMap data as this app uses it, so these will not match the resort's published figures. Runs are counted by name, so unnamed link segments add distance but no run."
     },
     "links": {
       "title": "Custom links"

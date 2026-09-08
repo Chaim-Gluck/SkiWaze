@@ -60,21 +60,35 @@ export function ResortStatsPanel({ graph, pointCount }: Props) {
       <Divider sx={{ my: 1.5 }} />
 
       <Heading icon={<DownhillSkiingIcon />}>
-        {t('app.resort.pistesHeading', { value: fmtDistance(s.pisteM) })}
+        {t('app.resort.pistesHeading', { count: s.runCount, value: fmtDistance(s.pisteM) })}
       </Heading>
-      {s.pisteByColor.map(({ color, meters }) => (
-        <Box key={color} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, py: 0.25 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
-                       bgcolor: SLOPE_HEX[color] ?? SLOPE_HEX.unknown,
-                       border: color === 'black' ? '1px solid rgba(255,255,255,0.45)' : 'none' }} />
-            <Typography variant="body2" color="text.secondary">{t(`color.${color}`)}</Typography>
+      {/* One grid for the whole list, rows as display:contents - so the run-count and distance
+          columns size to their widest cell and line up down the card. Per-row flex cannot do
+          that: each row would size its own value independently and the numbers would stagger. */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr max-content max-content', columnGap: 2 }}>
+        {s.pisteByColor.map(({ color, meters, runs }) => (
+          <Box key={color} sx={{ display: 'contents' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, py: 0.25 }}>
+              <Box sx={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                         bgcolor: SLOPE_HEX[color] ?? SLOPE_HEX.unknown,
+                         border: color === 'black' ? '1px solid rgba(255,255,255,0.45)' : 'none' }} />
+              <Typography variant="body2" color="text.secondary">{t(`color.${color}`)}</Typography>
+            </Box>
+            <Typography
+              variant="body2" color="text.secondary"
+              sx={{ py: 0.25, textAlign: 'end', whiteSpace: 'nowrap' }}
+            >
+              {runs > 0 ? t('app.resort.runsCount', { count: runs }) : ''}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ py: 0.25, fontWeight: 600, textAlign: 'end', whiteSpace: 'nowrap' }}
+            >
+              {fmtDistance(meters)}
+            </Typography>
           </Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
-            {fmtDistance(meters)}
-          </Typography>
-        </Box>
-      ))}
+        ))}
+      </Box>
       {s.offPisteM > 0 && (
         <Row label={t('app.resort.offPiste')} value={fmtDistance(s.offPisteM)} />
       )}
