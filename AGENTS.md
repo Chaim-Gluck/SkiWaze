@@ -2269,6 +2269,24 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   copies, because `resolveClosedEdgeIds` matches the key rather than this list). Measured over all
   18 resorts: 9-181 lifts and 16-393 runs each, with **zero duplicate labels**, so the picker never
   shows two identical rows.
+- **The Closed card is ONE grouped list with multi-select pickers - not tabs, and never filtered on
+  tick.** Three decisions, each the opposite of the obvious one:
+  - **Subheaders, not tabs.** Every other overgrown card here got a tab strip (Preferences, Plan,
+    This resort), and this one must not: the card's whole job is answering *what is shut right now*,
+    so a total you can read at a glance is the feature. Tabs would hide half the answer behind a
+    click and put a count where the items should be. `ListSubheader` per group (Lifts / Runs /
+    Other), and a **lone group draws no subheader at all** - a heading over the only section is
+    noise. Groups come from the key prefix (`groupOf()`), never from a lookup into `closable`, so a
+    key whose item has since vanished from the graph still lands somewhere.
+  - **The picker is `multiple` + `disableCloseOnSelect`.** Closing a sector means closing several
+    neighbouring runs, and reopening the list for each one is the entire friction the pickers were
+    added to remove.
+  - **Already-closed options stay in the list, ticked - they are never filtered out.** Removing an
+    item on tick makes the list reflow under the finger that is about to tick the *next* one, which
+    is precisely the adjacent-items case this exists for. It also makes the control do both jobs:
+    unticking is a reopen. And it needs `renderValue={() => null}` (MUI 9's rename of `renderTags`),
+    because every closed item is already listed below with a reopen button, so chips in the input
+    would be the same fact twice in a field that grows without limit.
 - **When a feature adds a second way to do something, every place that teaches the first one is
   stale.** Adding the pickers left `app.statusNotice.tip` still saying only "⊘ on a route step" -
   and that notice fires on *landing*, before any route exists, so it was advice the user could not
