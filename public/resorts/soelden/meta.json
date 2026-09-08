@@ -17,16 +17,16 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.soelden.com/en/"
   },
-  "generatedAt": "2026-09-06T18:54:43.504Z",
+  "generatedAt": "2026-09-08T12:26:37.123Z",
   "stats": {
     "resortId": "soelden",
-    "nodeCount": 686,
-    "edgeCount": 1814,
-    "pisteEdges": 750,
+    "nodeCount": 670,
+    "edgeCount": 1720,
+    "pisteEdges": 744,
     "liftEdges": 59,
-    "connectorEdges": 1005,
-    "meaningfulPoints": 166,
-    "reachableFromLifts": 685,
+    "connectorEdges": 917,
+    "meaningfulPoints": 164,
+    "reachableFromLifts": 669,
     "unreachableNodes": 1,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -197,19 +197,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 85 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 28 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 221 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 217 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 170 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 172 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 76 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 72 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

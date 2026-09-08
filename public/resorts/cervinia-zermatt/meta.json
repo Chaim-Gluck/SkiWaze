@@ -18,21 +18,21 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.cervinia.it/en/impianti-e-piste"
   },
-  "generatedAt": "2026-09-06T18:49:31.471Z",
+  "generatedAt": "2026-09-07T20:35:06.756Z",
   "stats": {
     "resortId": "cervinia-zermatt",
-    "nodeCount": 842,
-    "edgeCount": 2223,
+    "nodeCount": 829,
+    "edgeCount": 2094,
     "pisteEdges": 869,
-    "liftEdges": 106,
-    "connectorEdges": 1248,
-    "meaningfulPoints": 339,
-    "reachableFromLifts": 835,
+    "liftEdges": 99,
+    "connectorEdges": 1126,
+    "meaningfulPoints": 333,
+    "reachableFromLifts": 822,
     "unreachableNodes": 7,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 2,
-      "missing_opening_hours": 79,
+      "missing_opening_hours": 72,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
@@ -262,18 +262,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Triftji (stillgelegt)\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Triftji (stillgelegt)\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Testa\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"Findelbahn (Eja-Sunnegga)\" has no opening_hours in OSM."
     },
     {
@@ -357,36 +345,20 @@
       "message": "Lift \"Testa Grigia\" has no opening_hours in OSM."
     },
     {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Grenzlift (stillgelegt)\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Grenzlift (stillgelegt)\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Grenzlift (stillgelegt)\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Breitboden - Rosenritz\" has no opening_hours in OSM."
+      "code": "inferred_connector",
+      "message": "Snapped 54 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 117 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Inferred 351 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 355 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Added 278 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 282 flat-junction traverse(s) bridging dangling run ends across level areas."
-    },
-    {
-      "code": "inferred_connector",
-      "message": "Added 40 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 35 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

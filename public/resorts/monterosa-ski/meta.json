@@ -17,16 +17,16 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.visitmonterosa.com/en/"
   },
-  "generatedAt": "2026-09-06T18:52:53.562Z",
+  "generatedAt": "2026-09-07T20:38:31.319Z",
   "stats": {
     "resortId": "monterosa-ski",
-    "nodeCount": 192,
-    "edgeCount": 482,
-    "pisteEdges": 182,
+    "nodeCount": 186,
+    "edgeCount": 438,
+    "pisteEdges": 176,
     "liftEdges": 53,
-    "connectorEdges": 247,
+    "connectorEdges": 209,
     "meaningfulPoints": 113,
-    "reachableFromLifts": 192,
+    "reachableFromLifts": 186,
     "unreachableNodes": 0,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -193,15 +193,15 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 26 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 6 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 76 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 77 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 58 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 56 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",

@@ -17,21 +17,21 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.tignes.net/en/"
   },
-  "generatedAt": "2026-09-06T18:51:40.101Z",
+  "generatedAt": "2026-09-07T20:37:13.591Z",
   "stats": {
     "resortId": "tignes-val-disere",
-    "nodeCount": 1074,
-    "edgeCount": 3157,
-    "pisteEdges": 1051,
-    "liftEdges": 123,
-    "connectorEdges": 1983,
-    "meaningfulPoints": 428,
-    "reachableFromLifts": 1068,
+    "nodeCount": 1061,
+    "edgeCount": 2961,
+    "pisteEdges": 1046,
+    "liftEdges": 121,
+    "connectorEdges": 1794,
+    "meaningfulPoints": 427,
+    "reachableFromLifts": 1055,
     "unreachableNodes": 6,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 5,
-      "missing_opening_hours": 99,
+      "missing_opening_hours": 98,
       "inferred_connector": 6,
       "unreachable_component": 1
     }
@@ -310,10 +310,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Panoramic\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"TKD1 Col du Palet\" has no opening_hours in OSM."
     },
     {
@@ -474,19 +470,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 166 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 63 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 564 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 549 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 428 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 424 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 60 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 57 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

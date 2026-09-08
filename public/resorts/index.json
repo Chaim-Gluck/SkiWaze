@@ -1,11 +1,11 @@
 [
   {
-    "id": "sella-ronda",
-    "name": "Sella Ronda (Dolomites)",
-    "country": "Italy",
+    "id": "soelden",
+    "name": "Sölden",
+    "country": "Austria",
     "center": {
-      "lon": 11.808,
-      "lat": 46.518
+      "lon": 10.96,
+      "lat": 46.95
     }
   },
   {
@@ -26,6 +26,15 @@
     "center": {
       "lon": 7.71,
       "lat": 45.958
+    }
+  },
+  {
+    "id": "sella-ronda",
+    "name": "Sella Ronda (Dolomites)",
+    "country": "Italy",
+    "center": {
+      "lon": 11.808,
+      "lat": 46.518
     }
   },
   {
@@ -91,15 +100,6 @@
     "center": {
       "lon": 11.81,
       "lat": 47.16
-    }
-  },
-  {
-    "id": "soelden",
-    "name": "Sölden",
-    "country": "Austria",
-    "center": {
-      "lon": 10.96,
-      "lat": 46.95
     }
   },
   {

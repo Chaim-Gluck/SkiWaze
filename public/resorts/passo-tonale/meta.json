@@ -17,20 +17,20 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.pontedilegnotonale.com/en/"
   },
-  "generatedAt": "2026-09-06T18:52:55.013Z",
+  "generatedAt": "2026-09-07T20:39:15.257Z",
   "stats": {
     "resortId": "passo-tonale",
-    "nodeCount": 205,
-    "edgeCount": 509,
-    "pisteEdges": 206,
-    "liftEdges": 40,
-    "connectorEdges": 263,
-    "meaningfulPoints": 114,
-    "reachableFromLifts": 205,
+    "nodeCount": 199,
+    "edgeCount": 455,
+    "pisteEdges": 204,
+    "liftEdges": 36,
+    "connectorEdges": 215,
+    "meaningfulPoints": 110,
+    "reachableFromLifts": 199,
     "unreachableNodes": 0,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
-      "missing_opening_hours": 32,
+      "missing_opening_hours": 30,
       "inferred_connector": 5
     }
   },
@@ -160,28 +160,20 @@
       "message": "Lift \"Presanella\" has no opening_hours in OSM."
     },
     {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Progetto Cabinovia\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Progetto\" has no opening_hours in OSM."
+      "code": "inferred_connector",
+      "message": "Snapped 15 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 30 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Inferred 72 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 79 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Added 69 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 75 flat-junction traverse(s) bridging dangling run ends across level areas."
-    },
-    {
-      "code": "inferred_connector",
-      "message": "Added 7 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 5 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

@@ -17,14 +17,14 @@
     "timezone": "Asia/Tbilisi",
     "infoUrl": "https://gudauri.com/"
   },
-  "generatedAt": "2026-09-06T18:52:30.004Z",
+  "generatedAt": "2026-09-07T20:38:05.149Z",
   "stats": {
     "resortId": "gudauri",
     "nodeCount": 99,
-    "edgeCount": 222,
+    "edgeCount": 211,
     "pisteEdges": 102,
     "liftEdges": 18,
-    "connectorEdges": 102,
+    "connectorEdges": 91,
     "meaningfulPoints": 54,
     "reachableFromLifts": 99,
     "unreachableNodes": 0,
@@ -101,7 +101,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 16 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 12 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",

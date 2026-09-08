@@ -17,29 +17,29 @@
     "timezone": "Europe/Vienna",
     "infoUrl": "https://www.ischgl.com/en/"
   },
-  "generatedAt": "2026-09-06T19:50:45.458Z",
+  "generatedAt": "2026-09-08T12:26:16.814Z",
   "stats": {
     "resortId": "ischgl-samnaun",
-    "nodeCount": 1705,
-    "edgeCount": 5344,
-    "pisteEdges": 1752,
+    "nodeCount": 1689,
+    "edgeCount": 5162,
+    "pisteEdges": 1762,
     "liftEdges": 72,
-    "connectorEdges": 3520,
-    "meaningfulPoints": 270,
-    "reachableFromLifts": 1704,
+    "connectorEdges": 3328,
+    "meaningfulPoints": 245,
+    "reachableFromLifts": 1688,
     "unreachableNodes": 1,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 39,
       "missing_opening_hours": 56,
-      "inferred_connector": 5,
+      "inferred_connector": 6,
       "unreachable_component": 1
     }
   },
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 284 duplicate OSM node(s) at 241 spot(s) where ways meet but do not share a node."
+      "message": "Unified 283 duplicate OSM node(s) at 240 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -169,9 +169,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000000245 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000000244 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000000245"
+        "n1000000000244"
       ]
     },
     {
@@ -218,9 +218,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000000669 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000000664 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000000669"
+        "n1000000000664"
       ]
     },
     {
@@ -274,9 +274,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000002654 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000002635 merges points spanning 10.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000002654"
+        "n1000000002635"
       ]
     },
     {
@@ -288,9 +288,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000002696 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000002675 merges points spanning 7.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000002696"
+        "n1000000002675"
       ]
     },
     {
@@ -540,19 +540,23 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 251 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 129 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 906 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 900 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 705 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 698 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 111 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 109 plateau traverse(s) linking hub nodes on the same level apron."
+    },
+    {
+      "code": "inferred_connector",
+      "message": "Rescued 2 trapped node(s) with a forced traverse to the nearest reachable point (2 onto a piste line)."
     },
     {
       "code": "inferred_connector",

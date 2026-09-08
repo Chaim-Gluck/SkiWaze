@@ -11,7 +11,7 @@
     "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the best candidate link. Exit n250137670 (unnamed, 1738 m) -> Chemin de Daboné (along e445) (1738 m), 1 m away and 1 m higher. NOTE that target is a point ALONG a run rather than one of its ends, so a link there would split that run. A link there would free 24 of the 24 trapped node(s) (all of them: the basin drains to this point). Wrong station height -> setNodeElevation; a real short walk or unmapped link -> addConnectors; wrong resort / a separate ski area -> tighten the bbox."
   },
   {
-    "label": "paradiski: Millerette/Violettes/Jardin Millerette +2 (22 nodes, 1 lift(s), gap 99m, exit -22m, frees 22/22)",
+    "label": "paradiski: Millerette/Violettes/Jardin Millerette +2 (21 nodes, 1 lift(s), gap 99m, exit -22m, frees 21/21)",
     "resort": "paradiski",
     "node": "n2298495957",
     "center": [
@@ -19,7 +19,7 @@
       45.603659
     ],
     "zoom": 15,
-    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the best candidate link. Exit n2298495957 (Millerette (bottom) · 1221 m, 1221 m) -> n1383158632 (1199 m), 99 m away and -22 m higher. A link there would free 22 of the 22 trapped node(s) (all of them: the basin drains to this point). Wrong station height -> setNodeElevation; a real short walk or unmapped link -> addConnectors; wrong resort / a separate ski area -> tighten the bbox."
+    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the best candidate link. Exit n2298495957 (Millerette (bottom) · 1221 m, 1221 m) -> n1383158632 (1199 m), 99 m away and -22 m higher. A link there would free 21 of the 21 trapped node(s) (all of them: the basin drains to this point). Wrong station height -> setNodeElevation; a real short walk or unmapped link -> addConnectors; wrong resort / a separate ski area -> tighten the bbox."
   },
   {
     "label": "tignes-val-disere: Fornet/Mangard/Cognon +1 (14 nodes, 1 lift(s), gap 23m, exit +12m, frees 14/14)",
@@ -30,7 +30,18 @@
       45.442615
     ],
     "zoom": 15,
-    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the best candidate link. Exit n339242904 (Fornet (top) · 2307 m, 2307 m) -> w1484293623 (along e1356) (2319 m), 23 m away and 12 m higher. NOTE that target is a point ALONG a run rather than one of its ends, so a link there would split that run. A link there would free 14 of the 14 trapped node(s) (all of them: the basin drains to this point). Wrong station height -> setNodeElevation; a real short walk or unmapped link -> addConnectors; wrong resort / a separate ski area -> tighten the bbox."
+    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the best candidate link. Exit n339242904 (Fornet (top) · 2307 m, 2307 m) -> w1484293623 (along e1352) (2319 m), 23 m away and 12 m higher. NOTE that target is a point ALONG a run rather than one of its ends, so a link there would split that run. A link there would free 14 of the 14 trapped node(s) (all of them: the basin drains to this point). Wrong station height -> setNodeElevation; a real short walk or unmapped link -> addConnectors; wrong resort / a separate ski area -> tighten the bbox."
+  },
+  {
+    "label": "val-thorens-3vallees: Plans (5 nodes, 1 lift(s), gap 29m, exit +0m, frees 5/5)",
+    "resort": "val-thorens-3vallees",
+    "node": "n9429070468",
+    "center": [
+      6.542558,
+      45.312115
+    ],
+    "zoom": 15,
+    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the best candidate link. Exit n9429070468 (unnamed, 1826 m) -> n254014171 (1826 m), 29 m away and 0 m higher. A link there would free 5 of the 5 trapped node(s) (all of them: the basin drains to this point). Wrong station height -> setNodeElevation; a real short walk or unmapped link -> addConnectors; wrong resort / a separate ski area -> tighten the bbox."
   },
   {
     "label": "paradiski: Sollières (4 nodes, 0 lift(s), gap 70m, exit +13m, frees 4/4)",
@@ -52,6 +63,6 @@
       46.531506
     ],
     "zoom": 15,
-    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the best candidate link. Exit n13686231525 (unnamed, 1675 m) -> connector (along e4998) (1678 m), 104 m away and 3 m higher. NOTE that target is a point ALONG a run rather than one of its ends, so a link there would split that run. A link there would free 3 of the 3 trapped node(s) (all of them: the basin drains to this point). Wrong station height -> setNodeElevation; a real short walk or unmapped link -> addConnectors; wrong resort / a separate ski area -> tighten the bbox."
+    "note": "Trapped basin: you can ski in, and nothing gets you back to the main mountain. Red = every trapped node (not just the core), green = the edges that lead in, amber = the best candidate link. Exit n13686231525 (unnamed, 1675 m) -> connector (along e4531) (1678 m), 104 m away and 3 m higher. NOTE that target is a point ALONG a run rather than one of its ends, so a link there would split that run. A link there would free 3 of the 3 trapped node(s) (all of them: the basin drains to this point). Wrong station height -> setNodeElevation; a real short walk or unmapped link -> addConnectors; wrong resort / a separate ski area -> tighten the bbox."
   }
 ]

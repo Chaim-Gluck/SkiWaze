@@ -17,14 +17,14 @@
     "timezone": "Asia/Jerusalem",
     "infoUrl": "https://www.skihermon.co.il/"
   },
-  "generatedAt": "2026-09-06T18:52:29.096Z",
+  "generatedAt": "2026-09-07T20:38:04.494Z",
   "stats": {
     "resortId": "mount-hermon",
     "nodeCount": 64,
-    "edgeCount": 137,
+    "edgeCount": 130,
     "pisteEdges": 62,
     "liftEdges": 9,
-    "connectorEdges": 66,
+    "connectorEdges": 59,
     "meaningfulPoints": 41,
     "reachableFromLifts": 64,
     "unreachableNodes": 0,
@@ -76,7 +76,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 11 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 8 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",

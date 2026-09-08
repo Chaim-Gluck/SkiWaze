@@ -17,20 +17,20 @@
     "timezone": "Europe/Zurich",
     "infoUrl": "https://www.verbier4vallees.ch/en/"
   },
-  "generatedAt": "2026-09-06T18:55:32.167Z",
+  "generatedAt": "2026-09-07T20:38:33.585Z",
   "stats": {
     "resortId": "verbier-4vallees",
-    "nodeCount": 778,
-    "edgeCount": 1895,
-    "pisteEdges": 724,
-    "liftEdges": 130,
-    "connectorEdges": 1041,
-    "meaningfulPoints": 276,
-    "reachableFromLifts": 776,
+    "nodeCount": 765,
+    "edgeCount": 1776,
+    "pisteEdges": 715,
+    "liftEdges": 128,
+    "connectorEdges": 933,
+    "meaningfulPoints": 272,
+    "reachableFromLifts": 763,
     "unreachableNodes": 2,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
-      "missing_opening_hours": 101,
+      "missing_opening_hours": 99,
       "inferred_connector": 5,
       "unreachable_component": 1
     }
@@ -266,10 +266,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"La Combyre\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"47001795\" has no opening_hours in OSM."
     },
     {
@@ -430,10 +426,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"TSD6 - Les Chottes - La Meina - Greppon Blanc (en projet)\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"1357862813\" has no opening_hours in OSM."
     },
     {
@@ -446,7 +438,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 111 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 60 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
@@ -454,11 +446,11 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Added 263 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 260 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 34 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 35 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

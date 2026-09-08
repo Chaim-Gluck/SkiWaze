@@ -119,7 +119,7 @@ window.__map = map;
 function syncHash(){ const c=map.getCenter(); history.replaceState(null,'',`#${c.lng.toFixed(6)},${c.lat.toFixed(6)},${map.getZoom().toFixed(2)}${curResort?','+curResort:''}${curWay?',w'+curWay:''}`); }
 map.on('moveend', syncHash);
 
-let RESORTS=[], OVERLAYS=[], REVIEW=[], curResort=null, curOverlayData=null, markers=[], curNodes=new Map(), nodePin=null, curWay=null;
+let RESORTS=[], OVERLAYS=[], REVIEW=[], curResort=null, curOverlayData=null, markers=[], curNodes=new Map(), nodePin=null, curWay=null, ovClickWired=false;
 // The hash camera is only authoritative while restoring the pasted link. Once the user starts
 // driving the tool, honouring it forever would freeze the camera over the previous resort and
 // make every later switch look like "nothing loaded".
@@ -188,15 +188,25 @@ function addSpineLayers(sp){
 // `isDownload` twin of a gondola/cable car/funicular), and a ground edge only when another ground
 // edge does. The dedupe key is by CLASS for the same reason: a two-way piste is emitted as a
 // piste + connector pair, so keying it per `kind` would draw two overlapping double heads.
+//
+// It must ALSO tell parallel LIFTS apart, because two distinct lifts can share both end nodes:
+// Vanoise Express 1 and 2 are separate cable cars between the same pair, so a key of
+// class+node-pair let the first claim it and drew NO arrow at all for the second (fleet-wide this
+// hid exactly 2 lifts, both at Paradiski - the other being Funiculaire 1). The lift name is the
+// discriminator, which still collapses the case the dedupe exists for since a download twin
+// carries its own lift's name. Ground edges deliberately keep the undiscriminated key: a two-way
+// link's two halves do NOT reliably share a source way, and keying on one splits ~3000 double
+// heads fleet-wide into pairs of overlapping single arrows.
 function buildFlow(graph){
   const cls=e=>e.kind==='lift'?'lift':(e.kind==='piste'||e.kind==='connector')?'ground':null;
+  const who=e=>e.kind==='lift'?String(e.liftName||'')+'|':'';
   const has={lift:new Set(),ground:new Set()};
-  for(const e of graph.edges||[]){ const c=cls(e); if(c) has[c].add(e.from+'>'+e.to); }
+  for(const e of graph.edges||[]){ const c=cls(e); if(c) has[c].add(who(e)+e.from+'>'+e.to); }
   const feats=[], drawn=new Set();
   for(const e of graph.edges||[]){
     const c=cls(e); if(!c) continue;
-    const bidir=has[c].has(e.to+'>'+e.from);
-    if(bidir){ const k=c+'|'+[e.from,e.to].sort().join('|'); if(drawn.has(k)) continue; drawn.add(k); }
+    const bidir=has[c].has(who(e)+e.to+'>'+e.from);
+    if(bidir){ const k=c+'|'+who(e)+[e.from,e.to].sort().join('|'); if(drawn.has(k)) continue; drawn.add(k); }
     const coords=(e.geometry&&e.geometry.length>1)?e.geometry.map(p=>[p.lon,p.lat]):null;
     if(!coords) continue;
     // A download edge is the reverse of its uphill twin, so when the pair collapses to one
@@ -245,7 +255,7 @@ function applyToggles(){
   vis('r-pistes-labels',el('t-names').checked);
   vis('r-areas-labels',el('t-names').checked && el('t-areas').checked);
   vis('r-lifts-labels',el('t-names').checked && el('t-lifts').checked);
-  vis('ov-glow',el('t-overlay').checked); vis('ov-line',el('t-overlay').checked);
+  vis('ov-glow',el('t-overlay').checked); vis('ov-line',el('t-overlay').checked); vis('ov-dash',el('t-overlay').checked);
   markers.forEach(m=>{ m.getElement().style.display = el('t-overlay').checked?'':'none'; });
 }
 // A curated list of polygons to eyeball, so a review round needs no hand-typed ids or pasted
@@ -260,14 +270,18 @@ function applyToggles(){
 // `_basins.ts` refuses to write an empty list: blanking it takes this
 // prev/next reviewer off the tool with no error anywhere (the box only shows when the file loads
 // non-empty). Keep it committed, and keep at least one entry as a schema example. Entry shape:
-//   { label, resort, way?, node?, center: [lon,lat], zoom?, note? }
-// `way` highlights a polygon, `node` drops a pin; either or both.
+//   { label, resort, way?, node?, center: [lon,lat], zoom?, note?, overlay? }
+// `way` highlights a polygon, `node` drops a pin; either or both. `overlay` is the id of the
+// investigation overlay that WROTE this round: the two controls are otherwise independent, so a
+// reviewer stepping through the list kept looking at whichever overlay happened to be selected -
+// which, silently, is often one with no data for that resort. A round must select its own overlay.
 async function gotoReview(i){
   const r=REVIEW[i]; if(!r) return;
   el('review').selectedIndex=i;
   el('revpos').textContent=`(${i+1}/${REVIEW.length})`;
   honorHash=true;
   try{
+    if(r.overlay&&el('overlay').value!==r.overlay){ el('overlay').value=r.overlay; await selectOverlay(r.overlay); }
     if(r.resort&&r.resort!==curResort){ el('resort').value=r.resort; await loadResort(r.resort); }
     if(r.center) map.jumpTo({center:r.center,zoom:r.zoom||18});
     el('findway').value=r.way?String(r.way):'';
@@ -346,12 +360,23 @@ async function drawOverlay(){
   const set=(id,d)=>{ if(map.getSource(id)) map.getSource(id).setData(d); else map.addSource(id,{type:'geojson',data:d}); };
   set('ov',empty);
   if(!map.getLayer('ov-glow')) map.addLayer({id:'ov-glow',type:'line',source:'ov',paint:{'line-color':'#fff','line-width':9,'line-opacity':0.75}});
-  if(!map.getLayer('ov-line')) map.addLayer({id:'ov-line',type:'line',source:'ov',paint:{'line-color':['get','color'],'line-width':['get','width']}});
+  if(!map.getLayer('ov-line')) map.addLayer({id:'ov-line',type:'line',source:'ov',filter:['!=',['get','dash'],true],paint:{'line-color':['get','color'],'line-width':['get','width']}});
+  // line-dasharray is NOT data-driven in MapLibre, so a dashed subset needs its own layer.
+  // Dashed = the app invented this line; solid = it comes from a real OSM way.
+  if(!map.getLayer('ov-dash')) map.addLayer({id:'ov-dash',type:'line',source:'ov',filter:['==',['get','dash'],true],paint:{'line-color':['get','color'],'line-width':['get','width'],'line-dasharray':[2,1.4]}});
+  if(!ovClickWired){
+    ovClickWired=true;
+    for(const lyr of ['ov-line','ov-dash']) map.on('click',lyr,(ev)=>{
+      const p=ev.features&&ev.features[0]&&ev.features[0].properties;
+      if(!p||!p.tip) return;
+      new maplibregl.Popup({offset:6}).setLngLat(ev.lngLat).setHTML(p.tip).addTo(map);
+    });
+  }
   el('notes').innerHTML='';
   if(!curOverlayData) return;
   const entry=curOverlayData[curResort];
   if(!entry){ el('notes').innerHTML=`<i>(no overlay data for ${curResort})</i>`; return; }
-  set('ov',{type:'FeatureCollection',features:(entry.lines||[]).map(l=>({type:'Feature',properties:{color:l.color||'#e11',width:l.width||4,way:l.way==null?'':String(l.way)},geometry:{type:'LineString',coordinates:l.coords}}))});
+  set('ov',{type:'FeatureCollection',features:(entry.lines||[]).map(l=>({type:'Feature',properties:{color:l.color||'#e11',width:l.width||4,dash:l.dash===true,tip:l.tip||'',way:l.way==null?'':String(l.way)},geometry:{type:'LineString',coordinates:l.coords}}))});
   // Draw larger markers first so smaller ones stack on top (coincident points stay visible).
   [...(entry.points||[])].map((p,i)=>({p,i})).sort((a,b)=>(b.p.r||15)-(a.p.r||15)).forEach(({p})=>{
     const s=p.r||15;

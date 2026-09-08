@@ -25,16 +25,16 @@
     "timezone": "Europe/Paris",
     "infoUrl": "https://www.portesdusoleil.com/en/"
   },
-  "generatedAt": "2026-09-06T18:53:48.717Z",
+  "generatedAt": "2026-09-07T20:38:47.917Z",
   "stats": {
     "resortId": "portes-du-soleil",
-    "nodeCount": 1933,
-    "edgeCount": 5363,
-    "pisteEdges": 1976,
+    "nodeCount": 1915,
+    "edgeCount": 5082,
+    "pisteEdges": 1970,
     "liftEdges": 211,
-    "connectorEdges": 3176,
-    "meaningfulPoints": 664,
-    "reachableFromLifts": 1929,
+    "connectorEdges": 2901,
+    "meaningfulPoints": 663,
+    "reachableFromLifts": 1911,
     "unreachableNodes": 4,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
@@ -47,7 +47,7 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 114 duplicate OSM node(s) at 103 spot(s) where ways meet but do not share a node."
+      "message": "Unified 113 duplicate OSM node(s) at 103 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -114,9 +114,9 @@
     },
     {
       "code": "suspicious_merge",
-      "message": "Node n1000000000678 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
+      "message": "Node n1000000000656 merges points spanning 8.0 m vertically (> Vmerge). Review in overrides.",
       "refs": [
-        "n1000000000678"
+        "n1000000000656"
       ]
     },
     {
@@ -870,19 +870,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 264 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 126 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 799 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 791 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 733 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 724 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 105 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 111 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",

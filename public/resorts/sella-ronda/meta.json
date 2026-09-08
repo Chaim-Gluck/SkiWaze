@@ -31,21 +31,21 @@
     "timezone": "Europe/Rome",
     "infoUrl": "https://www.dolomitisuperski.com/en/"
   },
-  "generatedAt": "2026-09-06T19:51:12.614Z",
+  "generatedAt": "2026-09-07T20:35:16.152Z",
   "stats": {
     "resortId": "sella-ronda",
-    "nodeCount": 1935,
-    "edgeCount": 5449,
-    "pisteEdges": 1724,
-    "liftEdges": 385,
-    "connectorEdges": 3340,
-    "meaningfulPoints": 819,
-    "reachableFromLifts": 1922,
-    "unreachableNodes": 13,
+    "nodeCount": 1894,
+    "edgeCount": 5030,
+    "pisteEdges": 1704,
+    "liftEdges": 383,
+    "connectorEdges": 2943,
+    "meaningfulPoints": 813,
+    "reachableFromLifts": 1879,
+    "unreachableNodes": 15,
     "warningsByCode": {
       "coincident_nodes_unified": 1,
       "suspicious_merge": 2,
-      "missing_opening_hours": 257,
+      "missing_opening_hours": 255,
       "inferred_connector": 7,
       "unreachable_component": 1
     }
@@ -53,7 +53,7 @@
   "warnings": [
     {
       "code": "coincident_nodes_unified",
-      "message": "Unified 73 duplicate OSM node(s) at 70 spot(s) where ways meet but do not share a node."
+      "message": "Unified 72 duplicate OSM node(s) at 69 spot(s) where ways meet but do not share a node."
     },
     {
       "code": "suspicious_merge",
@@ -1039,14 +1039,6 @@
     },
     {
       "code": "missing_opening_hours",
-      "message": "Lift \"Fedaia-Sass del Mul\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
-      "message": "Lift \"Sass del Mul\" has no opening_hours in OSM."
-    },
-    {
-      "code": "missing_opening_hours",
       "message": "Lift \"1123139686\" has no opening_hours in OSM."
     },
     {
@@ -1099,19 +1091,19 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Snapped 339 dead-end run(s) onto a nearby piste line (T-junction)."
+      "message": "Snapped 145 dead-end run(s) onto a nearby piste line (T-junction)."
     },
     {
       "code": "inferred_connector",
-      "message": "Inferred 982 skiable/flat connector(s) to bridge stuck nodes."
+      "message": "Inferred 954 skiable/flat connector(s) to bridge stuck nodes."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 864 flat-junction traverse(s) bridging dangling run ends across level areas."
+      "message": "Added 839 flat-junction traverse(s) bridging dangling run ends across level areas."
     },
     {
       "code": "inferred_connector",
-      "message": "Added 87 plateau traverse(s) linking hub nodes on the same level apron."
+      "message": "Added 86 plateau traverse(s) linking hub nodes on the same level apron."
     },
     {
       "code": "inferred_connector",
@@ -1119,7 +1111,7 @@
     },
     {
       "code": "inferred_connector",
-      "message": "Linked 2 lift top(s) with no ski-out onto a nearby piste line."
+      "message": "Linked 1 lift top(s) with no ski-out onto a nearby piste line."
     },
     {
       "code": "inferred_connector",
@@ -1127,12 +1119,14 @@
     },
     {
       "code": "unreachable_component",
-      "message": "13 node(s) unreachable from the main lift network.",
+      "message": "15 node(s) unreachable from the main lift network.",
       "refs": [
         "n1149155677",
         "n2610898952",
         "n14067867609",
         "n278478692",
+        "n1180399118",
+        "n6541128593",
         "n1149155667",
         "n5868831229",
         "n9691438681",
