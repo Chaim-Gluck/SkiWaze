@@ -2415,6 +2415,43 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     - **Heading-up only.** North-up has no on-screen "ahead" to bias toward, so the offset is
       applied at the two heading-up sites (the follow effect and the post-gesture recentre) and
       nowhere else.
+  - **3D terrain is the DEM paid for TWICE, and the second payment buys nothing.** The 3D toggle
+    used to switch the `hillshade` layer **on** alongside `setTerrain`, which is the same elevation
+    tiles consumed once to displace the mesh and again to shade a raster draped over that mesh. The
+    relief is already in the geometry, so the shading layer is redundant ink at full per-frame cost,
+    and it was the heaviest thing in the state a user reported rendering **black** on both a phone
+    and a desktop. It is now explicitly `'none'` in **both** branches of the effect. Two siblings
+    from the same investigation, and the order they were found in is the lesson:
+    - **Zoom is capped at `MAX_ZOOM_3D` (16) while terrain is on**, restored to 22 on the way out.
+      The `dem` source stops at `maxzoom: 15`, so every level past it meshes and drapes at a detail
+      the elevation data cannot supply - the cap removes no relief a user could ever have seen. The
+      trigger the user actually reported was *"zoom in a lot and then switch to 3D"*, with no
+      navigation involved at all, which is what took the follow camera off the suspect list.
+    - **`freezeElevation: true` on every follow `easeTo`.** With terrain on, an ease re-queries the
+      centre's ground height on **every frame**, so the camera's altitude moves under it while DEM
+      tiles are still arriving. The follow effect fires once per position tick, so each new ease
+      interrupted the last mid-flight and the view bucked and lost the skier. It is a no-op without
+      terrain, so it is set unconditionally rather than behind an `is3D` test.
+    - **`opacityWhenCovered` defaults to 0.2**, so MapLibre fades *any* marker sitting behind 3D
+      terrain - which is right for a pin on a real place and wrong for app chrome. The nav arrow
+      vanishing in 3D was entirely this. All markers spread `MARKER_ALWAYS_VISIBLE`; it is a no-op
+      in 2D, where nothing is ever occluded.
+    - **MapLibre's default `maxPitch` is 60**, so `NAV_PITCH_3D = 62` had *always* been clamped and
+      only ever read as a larger number than the camera actually used. Check a pitch against the
+      clamp before treating it as a real value anywhere.
+    - **The camera-inside-the-mesh theory was DISPROVED, and stating that is the point.** It is the
+      obvious explanation for a black map and it is wrong here: camera altitude is derived from
+      **zoom**, not from terrain, so clearance measured ~240 m at zoom 17.5 whether exaggeration was
+      1.0 or 1.4. Exaggeration was still dropped to 1.0 (honest heights, no cost), but not for that
+      reason. What was actually reproducible was **saturation** - `evaluate_javascript` timed out
+      repeatedly the moment terrain rendered at nav zoom and never did in 2D - while DEM tiles
+      fetched 200 as real PNGs, the WebGL context was never lost, no style error fired, and every
+      sampled pixel came back light. A probe that cannot reproduce the symptom has still measured
+      something; say which half you verified and which half you did not.
+  - **A row levelled by `alignItems: 'flex-end'` is levelled by BOTTOM EDGES, so a bottom margin on
+    one child is a misalignment.** The ETA card kept an `mb: 0.5` from when it and the speed dial
+    sat in opposite corners; centred and flanked, that 4 px lifted it off the dial's line and the
+    pair read as crooked. When two objects are aligned by an edge, nothing may inset that edge.
 
 - **A reservation for a bar must be conditional on the bar existing.** `App.css`'s
   `@media (max-width: 820px)` rule gives the MapLibre bottom-corner controls

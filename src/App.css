@@ -236,14 +236,14 @@ body:lang(he) {
 /* 48px, not 54: measured against the ETA card beside it, which is 45px tall. At 54 the dial was
    visibly the taller of the two free-standing objects along the bottom, which read as a size
    mismatch rather than as a hierarchy - neither is more important than the other. */
-.nav-speed-circle { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #16a34a; background: rgba(22, 163, 74, 0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; color: var(--text); }
+.nav-speed-circle { width: 54px; height: 54px; border-radius: 50%; border: 2px solid #16a34a; background: rgba(22, 163, 74, 0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; color: var(--text); }
 /* Free-standing over the map, so the translucent fill above would leave the digits sitting on bare
    snow or on satellite imagery with nothing behind them. Opaque fill plus a shadow, matching the
    ETA card it now sits beside rather than inside - and `--nav-bar`, not `--panel`, because it is
    map chrome: see the variable's own note. */
 .nav-speed-circle.standalone { background: var(--nav-bar); color: #fff; flex-shrink: 0; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3); }
-.ns-num { font-size: 19px; font-weight: 800; }
-.ns-unit { font-size: 9px; font-weight: 700; color: #16a34a; margin-top: 1px; }
+.ns-num { font-size: 21px; font-weight: 800; }
+.ns-unit { font-size: 10px; font-weight: 700; color: #16a34a; margin-top: 1px; }
 
 /* The current-run pill, carried as a MapLibre marker under the nav arrow (see `navChipEl`). Same
    rim/shadow as `.pbadge` because it is the same vocabulary seen from further away: it has to read

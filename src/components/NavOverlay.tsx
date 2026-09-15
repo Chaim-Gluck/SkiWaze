@@ -492,15 +492,16 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
             // flanks being equal, so a zero-width slot here would shove it off centre the moment
             // the dial is absent (waiting for a fix, or no speed yet). Tracks `.nav-speed-circle`'s
             // width in App.css - change both together or the card stops being centred.
-            <Box sx={{ width: 48, flexShrink: 0 }} />
+            <Box sx={{ width: 54, flexShrink: 0 }} />
           )}
         <Paper
           elevation={8}
           sx={{
             pointerEvents: 'auto', minWidth: 0, maxWidth: '100%', borderRadius: 3,
-            // Centred now, so no corner-parity nudge: that extra inline margin existed only to make
-            // the card look level with the dial when both sat in opposite corners.
-            mb: 0.5,
+            // No bottom margin. The row is `alignItems: 'flex-end'`, so the card and the speed dial
+            // are levelled by their bottom edges - any margin here lifts the card off that line and
+            // the pair reads as misaligned. This was a corner-parity nudge from when the two sat in
+            // opposite corners; centred, it has no job left.
             position: 'relative', overflow: 'hidden',
             display: 'flex', flexDirection: 'column',
             bgcolor: offRoute ? 'error.main' : NAV_BAR_BG,
@@ -532,7 +533,7 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
                 color: offRoute ? 'error.contrastText' : NAV_BAR_MUTED,
               }}
             >
-              <CloseIcon sx={{ fontSize: 18 }} />
+              <CloseIcon sx={{ fontSize: 20 }} />
             </IconButton>
           </Tooltip>
           {/* Padding on the card's physical right clears the corner button so a long remaining/ETA
@@ -541,7 +542,7 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               object in a corner rather than a full-width band, so its text has an edge on BOTH
               sides: 20px of air at the reading end, and 52px at the other so the arrival clock
               never crowds the ✕. */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 2.5, py: 0.6, ...(rtl ? { paddingInlineStart: 6.5 } : { paddingInlineEnd: 6.5 }) }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 2.75, py: 0.9, ...(rtl ? { paddingInlineStart: 7 } : { paddingInlineEnd: 7 }) }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {remaining ? (
               <>
@@ -564,18 +565,18 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
                     from the caption below, so colour had no job left to do. */}
                 <Typography
                   sx={{
-                    fontWeight: 700, fontSize: 16, lineHeight: 1.25, whiteSpace: 'nowrap',
+                    fontWeight: 700, fontSize: 18, lineHeight: 1.25, whiteSpace: 'nowrap',
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
                   {t('preview.eta', { time: fmtClock(new Date(Date.now() + remaining.timeS * 1000).toISOString()) })}
                 </Typography>
-                <Typography variant="caption" sx={{ display: 'block', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: offRoute ? 'inherit' : NAV_BAR_MUTED }}>
+                <Typography variant="caption" sx={{ display: 'block', fontSize: 13.5, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: offRoute ? 'inherit' : NAV_BAR_MUTED }}>
                   {t('nav.remaining', { distance: fmtDist(remaining.distM, t), time: fmtTime(remaining.timeS, t) })}
                 </Typography>
               </>
             ) : (
-              <Typography variant="body2" sx={{ color: offRoute ? 'inherit' : NAV_BAR_MUTED }}>
+              <Typography variant="body2" sx={{ fontSize: 15, color: offRoute ? 'inherit' : NAV_BAR_MUTED }}>
                 {waiting ? t('nav.acquiringGps') : t('nav.enRoute')}
               </Typography>
             )}

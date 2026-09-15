@@ -137,8 +137,15 @@ const EMPTY_FC: GeoFeatureCollection = { type: 'FeatureCollection', features: []
 const MARKER_ALWAYS_VISIBLE = { opacityWhenCovered: 1 } as const;
 
 /** Camera tilt with 3D terrain on. One constant, so the terrain toggle and the follow camera
- *  cannot disagree about it. */
-const NAV_PITCH_3D = 62;
+ *  cannot disagree about it. 60 is MapLibre's own default `maxPitch`, so anything above it was
+ *  silently clamped and only ever read as a larger number than the camera actually used. */
+const NAV_PITCH_3D = 60;
+
+/** Zoom ceiling with 3D terrain on, and the ordinary one to restore when it goes off. The `dem`
+ *  source stops at zoom 15, so 16 is already half a level past the last real elevation sample and
+ *  nothing beyond it adds relief - only mesh and drape work over data that cannot resolve it. */
+const MAX_ZOOM_3D = 16;
+const MAX_ZOOM_2D = 22;
 
 /**
  * Register MapLibre's RTL text plugin once per page. Without it, right-to-left scripts
@@ -640,6 +647,10 @@ export function MapView({
     map.once('idle', collapseAttrib);
     map.on('resize', collapseAttrib);
     mapRef.current = map;
+    // Dev-only handle. The map is a ref inside this component, so there is otherwise no way to ask
+    // it anything from the console or from a browser-automation probe - which meant a rendering
+    // question could only be guessed at. Never exposed in a production build.
+    if (import.meta.env.DEV) (window as unknown as { __skimap?: maplibregl.Map }).__skimap = map;
 
     map.on('load', () => {
       // Our pistes, lifts and areas are compiled from OpenStreetMap, which is ODbL and requires
@@ -1236,13 +1247,27 @@ export function MapView({
   }, [base, loaded]);
 
 
-  // 3D terrain toggle: DEM-based terrain + hillshade + pitched camera + sky.
+  // 3D terrain toggle: DEM-based terrain + pitched camera + sky.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded) return;
     if (is3D) {
-      map.setTerrain({ source: 'dem', exaggeration: 1.4 });
-      map.setLayoutProperty('hillshade', 'visibility', 'visible');
+      // Exaggeration is 1.0, deliberately. The camera's altitude comes from the ZOOM, not from the
+      // terrain, so inflating the mountain eats the clearance between the two: measured at nav zoom
+      // 17.5 over Madonna the camera sits 2410 m up with the ground at 2134 m, and 1.4x lifted every
+      // slope ahead straight through it.
+      map.setTerrain({ source: 'dem', exaggeration: 1 });
+      // Hillshade goes OFF in 3D, which reads backwards until you notice it is the same DEM being
+      // paid for twice: once to displace the mesh, once to shade a raster layer draped over that
+      // mesh. The relief is already visible in the geometry, so the second pass buys nothing and
+      // costs a full render of every DEM tile every frame. It is the heaviest thing in the state
+      // the user reported going black.
+      map.setLayoutProperty('hillshade', 'visibility', 'none');
+      // Past the DEM source's own `maxzoom` there is no more terrain to resolve, so zooming further
+      // is pure cost - MapLibre keeps meshing and draping at a detail the elevation data cannot
+      // supply. Capping is therefore free: it removes no relief the user could have seen, and it
+      // closes the "zoom right in, then switch to 3D" path that wedged the renderer.
+      map.setMaxZoom(MAX_ZOOM_3D);
       try {
         (map as { setSky?: (s: unknown) => void }).setSky?.({
           'sky-color': '#a4c8ff',
@@ -1257,6 +1282,7 @@ export function MapView({
     } else {
       map.setTerrain(null);
       map.setLayoutProperty('hillshade', 'visibility', 'none');
+      map.setMaxZoom(MAX_ZOOM_2D);
       map.easeTo({ pitch: 0, duration: 600 });
     }
     // Terrain arrives ASYNCHRONOUSLY - `setTerrain` only names the source, and the ground does not
@@ -1389,6 +1415,12 @@ export function MapView({
         : null;
     if (!center) return;
     const opts: maplibregl.EaseToOptions = { center, duration: 600 };
+    // With terrain on, an easeTo re-queries the centre's ground height on EVERY frame, so the
+    // camera's altitude moves under it while DEM tiles are still arriving. This effect fires once
+    // per position tick, so each new ease interrupts the last mid-flight and the view bucks and
+    // loses the skier. `freezeElevation` samples the height once, at the start. It is a no-op
+    // without terrain, so it is set unconditionally rather than behind an `is3D` test.
+    opts.freezeElevation = true;
     if (nav && navHeadingUp) {
       opts.bearing = nav.bearing;
       // 55 in BOTH 2D and 3D, deliberately. The terrain toggle tilts to NAV_PITCH_3D, but that is
