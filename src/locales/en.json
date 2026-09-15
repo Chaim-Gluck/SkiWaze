@@ -36,9 +36,7 @@
     "pause": "Pause",
     "resetSim": "Reset simulator",
     "liftBadge": "lift",
-    "runBadge": "run",
-    "now": "Now",
-    "next": "Next"
+    "runBadge": "run"
   },
   "link": {
     "intro": "Draw a skiable link the map is missing. Pick both ends from the list, or pin them anywhere on the map (even mid-slope) - pinned points become custom junctions.",

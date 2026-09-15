@@ -85,6 +85,7 @@ import { planRoutes, findLongestRuns, routeForEdges, type PlanResult, type Longe
 import { buildRoutePath, snapToRoute, sliceAt, remainingStats, nextStep, stepTransitions, type RoutePath } from './routing/navigation';
 import { useLiveLocation, type LivePosition } from './hooks/useLiveLocation';
 import { NavOverlay } from './components/NavOverlay';
+import { navRunChip } from './components/navChip';
 import type { NavRender } from './components/MapView';
 import { MeasuredSpeedsPanel } from './components/MeasuredSpeedsPanel';
 import {
@@ -1366,7 +1367,7 @@ export default function App() {
   }, [navData?.legKind, navData?.legColor, navData?.rem, prefs.speeds.skiSpeedByColor, prefs.skillLevel]);
 
   return (
-    <div className="app">
+    <div className="app" data-nav={navRoute ? '1' : undefined}>
       <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
         {/* Pinned LTR: the header is chrome, not prose. The brand lockup stays on the left and the
             resort / language / theme controls on the right in every language, which is also what
@@ -1777,6 +1778,7 @@ export default function App() {
             positionSimulated={previewMode && !!simPos}
             following={following && posAtResort}
             nav={navData?.render ?? null}
+            navLabel={navData && !navData.offRoute ? navRunChip(navData.step?.current) : null}
             navHeadingUp
             resorts={index ?? []}
             selectedResortId={resortId}
@@ -1797,10 +1799,27 @@ export default function App() {
           {linkPinMode && <div className="pin-hint" dir={dir}>{t('app.pinHintLink', { which: linkPinMode === 'from' ? t('app.link.fromWord') : t('app.link.toWord') })}</div>}
           {/* Positioned with an inline style, not `sx`: the RTL emotion plugin rewrites left/right in
               generated CSS whatever the container's dir is, and these buttons must stay put in
-              Hebrew — MapLibre's own controls (its stylesheet, which the plugin never sees) do. */}
+              Hebrew — MapLibre's own controls (its stylesheet, which the plugin never sees) do.
+
+              `top` is the exception and is safe in `sx`, because the plugin rewrites the INLINE axis
+              only. It drops below the manoeuvre card while navigating on a phone, exactly as the
+              Layers/Legend column on the other side does: the card is centred and nearly full width
+              there, so it covered the top of this column - and Share is the FAB that most needs to
+              stay reachable on mobile, since the two panel FABs below it do not render at that
+              width. The offset is `--nav-banner-h`, published by NavOverlay from a ResizeObserver
+              (the card is one to three lines depending on the run's name, so any constant is wrong
+              most of the time), plus the same 6px gap the other column uses so the two stay level.
+              Keyed on `navRoute` rather than on the variable's fallback: the variable is absent when
+              not navigating, and `calc(0px + 6px)` would quietly lift these buttons from 12 to 6. */}
           <Box
-            style={{ position: 'absolute', top: 12, right: 12 }}
-            sx={{ zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1 }}
+            style={{ position: 'absolute', right: 12 }}
+            sx={{
+              top: navRoute ? 'calc(var(--nav-banner-h, 0px) + 6px)' : '12px',
+              // Desktop leaves them alone: there the card is capped narrower and centred, so it
+              // never reaches this column and displacing them would be pure loss.
+              '@media (min-width: 821px)': { top: '12px' },
+              zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1,
+            }}
           >
             <Tooltip title={locateTip} placement="left">
               <Fab

@@ -6,6 +6,7 @@ import type { LivePosition } from '../hooks/useLiveLocation';
 import { posAtS, type RoutePath, type TurnDir } from '../routing/navigation';
 import { tr, SHIELD_SLOT } from '../utils/text';
 import { fmtClock } from '../utils/format';
+import { COLOR_HEX as NAV_COLOR_HEX } from './navChip';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -114,15 +115,18 @@ function bannerFont(len: number): number {
   return 18;
 }
 
-const COLOR_HEX: Record<string, string> = {
-  green: '#2e7d32', blue: '#1565c0', red: '#d32f2f', black: '#111111', unknown: '#ff9800',
-};
+const COLOR_HEX = NAV_COLOR_HEX;
 /**
- * Manoeuvre-banner background. Fixed, not a theme token: this bar reads over the map tiles, which
- * do not change with the theme, so tying it to the light panel colour would make it unreadable in
- * exactly the conditions (bright snow) it is most needed.
+ * Background for the WHOLE nav overlay - manoeuvre banner, ETA card and speed dial alike. Fixed,
+ * not a theme token: these read over the map tiles, which do not change with the theme, so tying
+ * them to the light panel colour would make them unreadable in exactly the conditions (bright snow)
+ * they are most needed. The overlay was previously half-converted - the banner fixed, the card and
+ * the dial following `background.paper` - which in light mode left one dark card beside a white one.
+ * Defined in App.css so the CSS-styled dial shares the one definition.
  */
-const NAV_BAR_BG = '#16233d';
+const NAV_BAR_BG = 'var(--nav-bar)';
+/** Secondary text on the same background. Replaces `text.secondary`, which inverts with the theme. */
+const NAV_BAR_MUTED = 'rgba(255,255,255,0.72)';
 
 /** How far before a manoeuvre "skip to next turn" drops you. */
 const SKIP_LEAD_M = 50;
@@ -163,7 +167,12 @@ function StepBadge({ step, big, inline }: { step?: DisplayStep; big?: boolean; i
 }
 
 export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExit, onReroute, sim }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // The bottom bar is pinned to the physical corners in EVERY language (see the split-corner
+  // comment below), so the two elements need a direction-aware `flexDirection` rather than the
+  // inherited RTL row order. `direction: 'ltr'` is NOT an option: stylis-plugin-rtl rewrites it
+  // to `rtl` and produces the exact opposite of what it says.
+  const rtl = i18n.dir() === 'rtl';
   const preview = !!sim?.preview;
   // Simulator state. DEV picks an absolute speed in metres per second from a slider, because that
   // is what the tool was built for. Preview instead picks a MULTIPLE of the skier's own modelled
@@ -292,24 +301,18 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           ) : (
             /* The banner answers "what do I do next, and how far away is it" - so the manoeuvre
                is the NEXT step and the distance to it is the largest thing on screen. The run you
-               are currently on is context, not instruction, so it drops to the quiet strip below,
-               which is where Waze puts the street you are on.
+               are currently on is context, not instruction, so it lives on the chip under the
+               arrow on the map, which is where Waze puts the street you are on.
 
-               Size alone was not enough to say "this is ahead of you" - the two lines looked like
-               peers. The turn arrow and the explicit "Next" label are what make the hierarchy
-               readable without decoding it from the font size. */
+               There is no "NEXT" caption: the turn arrow already says "this is ahead of you", so
+               the word was a label restating its own glyph, and it cost the column the width of
+               five uppercase letters. Size alone was never the thing carrying the hierarchy - the
+               arrow is. */
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              {/* "NEXT" captions the manoeuvre column, not the row: it labels the arrow and the
-                  distance (the "this is ahead of you" part), while the sentence beside it is the
-                  instruction itself. On its own row it cost banner height; at the row's start it
-                  read as a label on the run name. */}
+              {/* A fixed `minWidth` even though the caption is gone: it keeps the manoeuvre column
+                  a stable width, so the instruction beside it does not shift sideways every time
+                  the distance goes from "1.2 km" to "90 m". */}
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 62, flexShrink: 0 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: 800, fontSize: 10, opacity: 0.5, letterSpacing: 1, textTransform: 'uppercase', lineHeight: 1.2 }}
-                >
-                  {t('nav.next')}
-                </Typography>
                 <TurnArrow turn={step?.turn} />
                 {step && step.distToNextM > 5 && (
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.4 }}>
@@ -338,54 +341,6 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               </Typography>
             </Box>
           )}
-          </Box>
-          {/* The run you are ON, directly under the run you are heading FOR - the two names are the
-              same kind of fact and belong side by side, where they used to be separated by the whole
-              map. It sits BELOW the manoeuvre, never above: the arrow and distance are the
-              instruction and this is reference, so loud-then-quiet is the reading order.
-
-              Height is RESERVED even when there is nothing to say (waiting, off-route, arriving).
-              `--nav-banner-h` drives where the map's own controls sit, so a strip that appears and
-              disappears would make them jump mid-run. */}
-          <Box
-            sx={{
-              px: 1.75, py: 0.6, minHeight: 32, minWidth: 0, boxSizing: 'border-box',
-              bgcolor: offRoute ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.10)',
-              // `gap` MUST match the manoeuvre row above (1.5, not the 1.25 used elsewhere in this
-              // file): both columns are 62 wide from the same padding origin, so the gap alone
-              // decides where each hairline lands, and a 0.25 difference put them 2px apart.
-              display: 'flex', alignItems: 'center', gap: 1.5,
-            }}
-          >
-            {!waiting && !offRoute && step?.current && (
-              <>
-                {/* Boxed to the same width as the "NEXT" caption above it, so the two captions and
-                    the two hairlines line up as one column rather than at unrelated offsets. */}
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: 700, opacity: 0.6, flexShrink: 0, width: 62, textAlign: 'center' }}
-                >
-                  {t('nav.now')}
-                </Typography>
-                <Box sx={{ alignSelf: 'stretch', width: '1px', bgcolor: 'rgba(255,255,255,0.18)', flexShrink: 0 }} />
-                {/* Wrap to two lines rather than ellipsing. A lift's mapped name is routinely long
-                    ("Tapis Roulant Grostè Express - Fortini") and it is the one fact this band
-                    exists to carry, so cutting it to "Tapis Rou..." fails at its only job. */}
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: 600, minWidth: 0, overflow: 'hidden', opacity: 0.9,
-                    // Centred in the remaining space, exactly like the instruction above it: the two
-                    // share a column, so left-aligning this one made the strip read as detached
-                    // from the row it sits under.
-                    flex: 1, textAlign: 'center',
-                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                  }}
-                >
-                  {stepNodes(t, step.current)}
-                </Typography>
-              </>
-            )}
           </Box>
         </Paper>
 
@@ -419,7 +374,9 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
             elevation={4}
             sx={{
               pointerEvents: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexWrap: 'wrap', rowGap: 0.5, columnGap: 0.75, px: 1, py: 0.5,
+              // Tighter than the cards around it: this is a transient control surface, not a
+              // reading, so it should take the least width it can and give the map back.
+              flexWrap: 'wrap', rowGap: 0.25, columnGap: 0.25, px: 0.5, py: 0.25,
               maxWidth: '100%', borderRadius: 2,
               ...(preview ? { border: '2px solid var(--sim)' } : null),
             }}
@@ -502,15 +459,52 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
             banner above it is the INSTRUCTION card and carries nothing else, so a glance up answers
             exactly one question. The run you are on is reference, not instruction, which is why it
             lives down here beside the ETA rather than under the arrow. */}
+        {/* The bar is SPLIT into the two bottom corners: the speed dial free-standing at the
+            bottom-left, the remaining/ETA card at the bottom-right, with the middle of the screen
+            left clear. That middle is where the skier's own arrow and its current-run chip sit, so
+            a full-width bar across the bottom covers exactly the part of the map the rider is
+            skiing into. Two consequences: the dial needs `.standalone` (an opaque fill and a
+            shadow, because over bare snow or satellite imagery the translucent version has nothing
+            behind it), and the hairline that used to separate the two is gone - they are now two
+            separate objects with air between them, so a rule between them would be drawing a
+            boundary that the layout already states.
+            Pinned to the PHYSICAL corners in every language, hence `flexDirection` rather than the
+            inherited RTL row order: left/right here are positions on the map, not reading order,
+            and a Hebrew skier's speed does not belong on the other side of the screen from an
+            English one's. */}
+        {/* Speed dial stays pinned to the bottom-LEFT corner; the ETA card is CENTRED. The two
+            flanking slots are the same fixed width, which is what puts the card dead centre under
+            `space-between` - centring it with `justifyContent: 'center'` instead would make it
+            drift as soon as the dial appears or disappears. */}
+        <Box
+          sx={{
+            width: '100%', display: 'flex', flexDirection: rtl ? 'row-reverse' : 'row',
+            alignItems: 'flex-end', justifyContent: 'space-between', gap: 1,
+          }}
+        >
+          {!waiting && speedMps != null && speedMps >= 0 ? (
+            <div className="nav-speed-circle standalone">
+              <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
+              <span className="ns-unit">{t('units.kmhShort')}</span>
+            </div>
+          ) : (
+            // An empty slot of the SAME width, not a conditional: the card is centred by the two
+            // flanks being equal, so a zero-width slot here would shove it off centre the moment
+            // the dial is absent (waiting for a fix, or no speed yet). Tracks `.nav-speed-circle`'s
+            // width in App.css - change both together or the card stops being centred.
+            <Box sx={{ width: 48, flexShrink: 0 }} />
+          )}
         <Paper
           elevation={8}
           sx={{
-            pointerEvents: 'auto', width: 'min(560px, 94%)', borderRadius: 3,
-            '@media (min-width: 821px)': { width: 'min(460px, 94%)' },
+            pointerEvents: 'auto', minWidth: 0, maxWidth: '100%', borderRadius: 3,
+            // Centred now, so no corner-parity nudge: that extra inline margin existed only to make
+            // the card look level with the dial when both sat in opposite corners.
+            mb: 0.5,
             position: 'relative', overflow: 'hidden',
             display: 'flex', flexDirection: 'column',
-            bgcolor: offRoute ? 'error.main' : 'background.paper',
-            color: offRoute ? 'error.contrastText' : 'text.primary',
+            bgcolor: offRoute ? 'error.main' : NAV_BAR_BG,
+            color: offRoute ? 'error.contrastText' : '#fff',
           }}
         >
           {/* Exit is an absolutely positioned corner icon, not a row of its own: a dedicated band
@@ -530,47 +524,58 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
                 // at the inline end so it is still out of the reading path, and `insetInlineEnd`
                 // keeps it following the document direction under RTL.
                 position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-                insetInlineEnd: 6, zIndex: 1, p: 0.5,
-                color: offRoute ? 'error.contrastText' : 'text.secondary',
+                // Physically right in both directions, because the card is pinned to the RIGHT
+                // corner in both: the X must sit on the screen edge, never on the side facing the
+                // middle of the map. Under RTL `insetInlineStart` IS the physical right.
+                ...(rtl ? { insetInlineStart: 9 } : { insetInlineEnd: 9 }),
+                zIndex: 1, p: 0.75,
+                color: offRoute ? 'error.contrastText' : NAV_BAR_MUTED,
               }}
             >
               <CloseIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          {/* The inline-end padding clears the corner button so a long remaining/ETA line cannot
-              run under it. */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1.75, py: 0.6, paddingInlineEnd: 4 }}>
-          {!waiting && speedMps != null && speedMps >= 0 && (
-            <>
-              <div className="nav-speed-circle">
-                <span className="ns-num">{Math.round(speedMps * 3.6)}</span>
-                <span className="ns-unit">{t('units.kmhShort')}</span>
-              </div>
-              {/* Same half-height hairline as the manoeuvre card: it separates the dial from the
-                  remaining/ETA readings without drawing a box around either, and it travels with
-                  the row under RTL because it is placed in logical flow. */}
-              <Box sx={{ alignSelf: 'center', width: '1px', height: 32, bgcolor: 'divider', flexShrink: 0 }} />
-            </>
-          )}
+          {/* Padding on the card's physical right clears the corner button so a long remaining/ETA
+              line cannot run under it. */}
+          {/* Roomier than the manoeuvre card's padding on purpose. This card is a free-standing
+              object in a corner rather than a full-width band, so its text has an edge on BOTH
+              sides: 20px of air at the reading end, and 52px at the other so the arrival clock
+              never crowds the ✕. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 2.5, py: 0.6, ...(rtl ? { paddingInlineStart: 6.5 } : { paddingInlineEnd: 6.5 }) }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {remaining ? (
               <>
-                {/* Distance and countdown belong on ONE line - they are two readings of the same
-                    fact - and the clock arrival gets its own line below, because it answers a
-                    different question: "22 min left" is a duration, "14:05" is something you
-                    compare against a lift closing time or a lunch booking. */}
+                {/* ARRIVAL CLOCK ON TOP. It is the reading you act on: "19:47" is what you compare
+                    against a lift closing time or a lunch booking, while "36 min left" is the same
+                    fact expressed relative to now and only tells you how long to keep going.
+                    Distance and countdown share the line below - they are two readings of one
+                    thing, so splitting them would say there are three facts here. */}
+                {/* 700, not 800. Hebrew is capped at 600 by the `:lang(he)` weight rule, so the
+                    two languages were rendering this line 200 apart and only the English one read
+                    as shouting - worst on "ETA", which is all-caps and so carries no descenders or
+                    lowercase to break up the mass. Dropping to 700 closes most of that gap and
+                    leaves Hebrew untouched, since the cap still catches it. */}
+                {/* Colours go through `sx`, not the `color` prop. On this card the prop lost to the
+                    Paper's own inherited `color: #fff` and both lines rendered plain white - which
+                    is why the accent this line used to carry was dead code for as long as it
+                    existed. The clock takes the card's plain white: `#4aa8ff` on this navy is ~3.4:1,
+                    under the body-text bar and read in glare on snow, and blue already means
+                    "interactive" everywhere else in the app. Size and weight already separate it
+                    from the caption below, so colour had no job left to do. */}
                 <Typography
-                  sx={{ fontWeight: 800, fontSize: 16, lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                  color={offRoute ? 'inherit' : 'primary.main'}
+                  sx={{
+                    fontWeight: 700, fontSize: 16, lineHeight: 1.25, whiteSpace: 'nowrap',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
                 >
-                  {t('nav.remaining', { distance: fmtDist(remaining.distM, t), time: fmtTime(remaining.timeS, t) })}
-                </Typography>
-                <Typography variant="caption" color={offRoute ? 'inherit' : 'text.secondary'} sx={{ display: 'block', lineHeight: 1.3, fontVariantNumeric: 'tabular-nums' }}>
                   {t('preview.eta', { time: fmtClock(new Date(Date.now() + remaining.timeS * 1000).toISOString()) })}
+                </Typography>
+                <Typography variant="caption" sx={{ display: 'block', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: offRoute ? 'inherit' : NAV_BAR_MUTED }}>
+                  {t('nav.remaining', { distance: fmtDist(remaining.distM, t), time: fmtTime(remaining.timeS, t) })}
                 </Typography>
               </>
             ) : (
-              <Typography variant="body2" color={offRoute ? 'inherit' : 'text.secondary'}>
+              <Typography variant="body2" sx={{ color: offRoute ? 'inherit' : NAV_BAR_MUTED }}>
                 {waiting ? t('nav.acquiringGps') : t('nav.enRoute')}
               </Typography>
             )}
@@ -587,6 +592,11 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
           )}
           </Box>
         </Paper>
+        {/* Balances the speed dial so the card lands dead centre. Always present, even when the
+            dial is not, because the dial's slot is held open too. Width tracks `.nav-speed-circle`
+            in App.css. */}
+        <Box sx={{ width: 48, flexShrink: 0 }} />
+        </Box>
       </Box>
     </>
   );

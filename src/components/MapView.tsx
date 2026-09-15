@@ -176,6 +176,21 @@ function userLocEl(): HTMLElement {
   return el;
 }
 
+/**
+ * The "you are on this run" pill, anchored under the nav arrow rather than parked in the overlay.
+ *
+ * Map-anchored because "what am I on" is a fact about a place: reading it a few pixels under the
+ * puck costs no eye travel, and when the user pans off themselves the label leaves with them
+ * instead of continuing to caption a spot that is no longer on screen. `viewport` alignment on both
+ * axes so it stays upright and legible whatever the bearing and pitch - the arrow rotates, the name
+ * must not.
+ */
+function navChipEl(): HTMLElement {
+  const el = document.createElement('div');
+  el.className = 'nav-run-chip';
+  return el;
+}
+
 /** Bigger directional arrow used while actively navigating a route. */
 function navArrowEl(): HTMLElement {
   const el = document.createElement('div');
@@ -451,6 +466,12 @@ interface MapViewProps {
   userPosition: LivePosition | null;
   following: boolean;
   nav: NavRender | null;
+  /**
+   * The current run's name and colour, drawn as a pill under the nav arrow. Comes from
+   * `navRunChip()` in NavOverlay, so the colour vocabulary lives in one place. Null whenever there
+   * is nothing honest to say - no name, or a state (waiting, off-route) that cannot know.
+   */
+  navLabel?: { text: string; color: string } | null;
   navHeadingUp: boolean;
   resorts?: ResortIndexEntry[];
   selectedResortId?: string;
@@ -471,7 +492,7 @@ interface MapViewProps {
 
 export function MapView({
   center, zoom, geo, routeFC, selectedRange, from, to, linkFrom, linkTo, focusGeometry, closedGeometry, fitRequest, onMapClick,
-  userPosition, following, nav, navHeadingUp, resorts, selectedResortId, onSelectResort, positionSimulated = false,
+  userPosition, following, nav, navLabel, navHeadingUp, resorts, selectedResortId, onSelectResort, positionSimulated = false,
   globalView = false, onEnterGlobalView, resortFrameSeq = 0, allowOffPiste = false,
 }: MapViewProps) {
   const { t } = useTranslation();
@@ -508,6 +529,7 @@ export function MapView({
   // Live location + navigation are driven by props (shared hook lives in App).
   const userMarker = useRef<maplibregl.Marker | null>(null);
   const navMarker = useRef<maplibregl.Marker | null>(null);
+  const navChip = useRef<maplibregl.Marker | null>(null);
 
   // Keep latest data/handlers in refs so the map's async 'load' handler never
   // captures stale values (this is what previously left overlays blank on first load).
@@ -557,6 +579,21 @@ export function MapView({
   // wait before recentring back onto the user.
   const FOLLOW_ZOOM = 15;
   const FOLLOW_RESUME_MS = 4000;
+  /**
+   * While navigating heading-up, the skier sits BELOW the centre of the map, not on it.
+   *
+   * Centring the puck spends half the screen on ground already skied. Every turn-by-turn app
+   * offsets the camera for this reason: what you need is what is ahead, and behind you is only
+   * worth the glance that confirms the line you came down. Expressed as a fraction of the map's
+   * height rather than a pixel count so it holds on a phone and on a desktop pane alike, and
+   * applied as easeTo's `offset` (the target's position relative to the container centre) rather
+   * than as map `padding`, because padding is global state that would then silently skew every
+   * unrelated `fitBounds` in the component.
+   *
+   * Only ever applied in heading-up navigation. North-up has no forward direction on screen, so
+   * there is no "ahead" to bias toward and an offset would just be off-centre.
+   */
+  const NAV_LOOKAHEAD_FRAC = 0.22;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -568,6 +605,19 @@ export function MapView({
       zoom,
     });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+    // MapLibre auto-compacts the credit when the map is narrow (<=640px) but renders it already
+    // OPEN, so on a phone it wraps to two lines and pushes the zoom/compass that much further off
+    // the corner. Collapse it to the (i) whenever the compact class is present - that keys the
+    // behaviour to MapLibre's own width rule, so the full credit still shows on a desktop map
+    // where there is room for it. The (i) toggle is untouched, so nothing is hidden from the user.
+    const collapseAttrib = () => {
+      map.getContainer()
+        .querySelector('.maplibregl-ctrl-attrib.maplibregl-compact')
+        ?.classList.remove('maplibregl-compact-show');
+    };
+    collapseAttrib();
+    map.once('idle', collapseAttrib);
+    map.on('resize', collapseAttrib);
     mapRef.current = map;
 
     map.on('load', () => {
@@ -982,6 +1032,7 @@ export function MapView({
           opts.bearing = nv.bearing;
           opts.pitch = 55;
           opts.zoom = 16;
+          opts.offset = [0, Math.round(map.getContainer().clientHeight * NAV_LOOKAHEAD_FRAC)];
         } else {
           opts.zoom = FOLLOW_ZOOM;
         }
@@ -1261,6 +1312,8 @@ export function MapView({
       rem?.setData(EMPTY_FC as never);
       navMarker.current?.remove();
       navMarker.current = null;
+      navChip.current?.remove();
+      navChip.current = null;
       for (const l of routeLayers) if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', 'visible');
       if (map.getPitch() > 0 && !is3D) map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
       return;
@@ -1272,7 +1325,25 @@ export function MapView({
     navMarker.current.getElement().classList.toggle('simulated', positionSimulated);
     navMarker.current.setRotation(nav.bearing);
     navMarker.current.setLngLat([nav.lon, nav.lat]).addTo(map);
-  }, [nav, loaded, is3D, positionSimulated]);
+    // The run pill hangs off the SAME position as the arrow, offset down in screen pixels, so it
+    // tracks the puck for free. Removed rather than emptied when there is nothing to say: an empty
+    // pill is still a painted rectangle under the arrow.
+    if (!navLabel) {
+      navChip.current?.remove();
+      navChip.current = null;
+    } else {
+      if (!navChip.current) {
+        navChip.current = new maplibregl.Marker({
+          element: navChipEl(), anchor: 'top', offset: [0, 36],
+          rotationAlignment: 'viewport', pitchAlignment: 'viewport',
+        });
+      }
+      const el = navChip.current.getElement();
+      el.textContent = navLabel.text;
+      el.style.background = navLabel.color;
+      navChip.current.setLngLat([nav.lon, nav.lat]).addTo(map);
+    }
+  }, [nav, navLabel, loaded, is3D, positionSimulated]);
 
   // Follow-me camera (heading-up + tilted while navigating).
   useEffect(() => {
@@ -1293,6 +1364,7 @@ export function MapView({
     if (nav && navHeadingUp) {
       opts.bearing = nav.bearing;
       opts.pitch = 55;
+      opts.offset = [0, Math.round(map.getContainer().clientHeight * NAV_LOOKAHEAD_FRAC)];
       if (map.getZoom() < 15) opts.zoom = 16;
     } else if (endingNav && !is3D) {
       // Leaving navigation: flatten the heading-up tilt (our recentre easeTo would otherwise

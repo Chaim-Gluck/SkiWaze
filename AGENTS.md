@@ -1129,6 +1129,14 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   and assert nothing unexpected is left; and the round-trip is **cp1252, not latin1** — the mojibake
   leans on 0x80-0x9F, which latin1 leaves as control codes. Cause was `Set-Content`; the standing rule
   (use the edit tool or `[IO.File]::WriteAllText`) is what prevents a repeat.
+  **`[IO.File]::WriteAllText` is only half the rule - `Get-Content -Raw` corrupts on the READ.** It
+  decodes a UTF-8 file as the ANSI codepage, so a read-modify-write round-trip mojibakes every
+  non-ASCII byte *however carefully you write it back*. This bit `NavOverlay.tsx` (a regex to delete
+  one dead helper), turning `🚡` into `ðŸš¡` on screen - the user reported it as "jibrish in the upper
+  card" - and silently damaging a `—` in a returned string, a `·`, a `⚠` and an OSM name. The repair
+  is the cp1252 reverse round-trip above, run per character with an **abort on any unmappable char or
+  U+FFFD** so a partial decode cannot be mistaken for a fix. The real rule is simpler: **use the edit
+  tool for source edits.** Never do PowerShell string surgery on a file containing non-ASCII.
 - **Not every lift is an `aerialway`.** Funiculars and cogwheel railways are tagged `railway=funicular`
   / `railway=rack`, so a query for `aerialway` alone silently misses them — for years we fetched
   **zero** of the 22 that exist across the fleet. They are ordinary ski lifts to a skier and several
@@ -2259,10 +2267,11 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     (`{{value}}\u00A0km`) in **both** locales, plus binding "left" to the time in `nav.remaining`.
     Trap when verifying: `JSON.stringify` prints NBSP indistinguishably from a space — **dump
     `charCodeAt`**, never trust the printed string.
-  - **The nav banner's hierarchy needs an arrow and a word, not just a bigger font.** The manoeuvre
+  - **The nav banner's hierarchy needs an arrow, not just a bigger font.** The manoeuvre
     block and the "Now" strip read as peers when the only difference was size. `turnAt()` in
-    `navigation.ts` supplies a Waze-style arrow, and an explicit "Next" caption sits above the run
-    name. Three things about it: the arrow has **exactly three states** and both turning glyphs are
+    `navigation.ts` supplies a Waze-style arrow. (A "Next" caption sat above the run name for a
+    while and was later removed - see the caption bullet below.) Three things about it: the arrow
+    has **exactly three states** and both turning glyphs are
     the *slight* ones — a square 90° glyph reads as "turn at the junction", which is not what a
     piste does (it bends, and the arrow only has to say which side), and grading the angle finer
     just produces arrows that argue about the same bend; it measures the bearing change over a
@@ -2278,28 +2287,167 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     off this card it became a single row, and a top-corner X on a one-row card reads as jammed into
     the edge instead of as part of the row. Its inline-end inset is mirrored as padding on the ETA
     row, so a long remaining/ETA line can never run under it.
-  - **The run you are ON belongs under the run you are heading FOR, on the same card.** The two are
-    the same kind of fact and were separated by the whole map - manoeuvre banner at the top, "Now"
-    strip on the ETA card at the bottom. The strip now closes the top `Paper`. Three things it
-    needs, and the first two are the ones that showed up as visible defects within minutes:
-    - **Its `gap` must equal the manoeuvre row's** (`1.5`, not the `1.25` used elsewhere in the
-      file). The "NEXT" column and the "NOW" caption are both 62 wide from the same padding origin,
-      so the gap alone decides where each hairline lands; a 0.25 difference put the two rules 2 px
-      apart, which reads as a mistake. Exact alignment beyond that is not achievable - the
-      manoeuvre column is `minWidth: 62` and grows with the distance string.
-    - **The text is `flex: 1, textAlign: 'center'`, matching the instruction above it.** Left-aligned
-      it read as a detached band rather than as the foot of the same column.
-    - **Height is RESERVED (`minHeight: 32`) even when there is nothing to say** - waiting,
-      off-route, arriving. `--nav-banner-h` drives where MapView's controls sit, so a strip that
-      appears and disappears would make them jump mid-run.
-    Net effect: top card ~74 -> 106 px, ETA card ~110 -> 64 px, so the pair got shorter overall and
-    the bottom card gives back 46 px of map.
-  - **Keep the "NOW" caption; do not swap it for a progressive tense.** "Skiing 89 Nambino" is
-    self-labelling in English and is what Waze does, but **Hebrew has no genderless present
-    participle** (`גולש`/`גולשת`, `רוכב`/`רוכבת`) and we have no user gender, so the caption is what
-    keeps the string genderless. It would also fork the catalogue - `step.piste.badgeName`,
-    `step.liftUpBadge` and friends are shared with the step list, where the imperative is correct -
-    and `NEXT`/`NOW` are the paired labels that make the two-column geometry work at all.
+  - **The whole nav overlay is FIXED dark chrome, and half-converting it is the bug.** Every piece
+    of it - manoeuvre banner, ETA card, speed dial - reads over **map tiles, which do not change
+    with the app theme**, so a fill taken from the light panel colour puts a white card on bright
+    snow in exactly the conditions navigation matters most. That reasoning was written on the
+    banner's own `NAV_BAR_BG` from the start and simply never applied to its two neighbours, which
+    followed `background.paper` - so light mode drew one dark card beside a white one and a washed
+    out dial, which is what a user reported ("pale like a sick person"). The colour is
+    **`--nav-bar` in `App.css`, deliberately outside `TOKENS`**, exactly like `--sim`: it is one
+    value for both modes, and listing it in the theme would imply it could differ. Three follow-ons,
+    each of which bit:
+    - **Accent and muted text have to be pinned too.** `primary.main` and `text.secondary` invert
+      with the theme, so on a fixed background they are only right in one mode - light mode's
+      `#1565c0` is near-invisible on navy. `NAV_BAR_ACCENT` is the *dark* palette's blue, so dark
+      mode is unchanged and light mode stops inverting.
+    - **Colour must go through `sx`, never the `color` PROP.** The `Paper` sets `color: '#fff'`,
+      and `<Typography color={...}>` lost to that inherited value - both readings rendered plain
+      white with no error anywhere. `sx` won. Suspect this whenever a Typography colour silently
+      does nothing inside a coloured container.
+    - **Dark mode is not byte-identical, and say so.** The card and dial were `#1b2733` (panel
+      slate) and are now `#16233d` (nav navy). That shift *is* the fix - it is what makes them
+      match the banner - but it is a change to the mode that looked fine, so it must be reported
+      rather than described as a no-op.
+  - **The manoeuvre card mirrors in RTL; the bottom bar does not. They are different kinds of
+    thing.** The bottom bar is pinned to **physical map corners** in every language (the speed dial
+    is bottom-left of the *terrain*, not of the reading order) - so it needs
+    `flexDirection: rtl ? 'row-reverse' : 'row'` and `rtl ? insetInlineStart : insetInlineEnd` to
+    defeat the inherited RTL order. The manoeuvre card is the opposite: it is a **sentence**
+    spanning the full width with an icon leading it, and "leading" means where reading starts,
+    which in Hebrew is the right. Waze and Google Maps both mirror their manoeuvre banner in Hebrew.
+    The risk worth checking before accepting that is the arrow **glyph** flipping - "bear left"
+    must stay left in the *world* whatever the language - and it does not: measured in Hebrew the
+    SVG carries `transform: none`, because `stylis-plugin-rtl` rewrites CSS properties and not SVG
+    path data. The column moves to the right, the arrow inside keeps pointing where the terrain
+    goes. Note `direction: 'ltr'` is **not** available as an escape hatch: the plugin rewrites it to
+    `direction: 'rtl'`, producing the exact opposite of what the code says.
+  - **The bottom bar is two objects in two corners, and the empty slot is load-bearing.** Speed dial
+    bottom-left, ETA card bottom-right, no hairline between them - a single centred bar made the
+    two readings look like one instrument when they answer different questions. Implemented as a
+    full-width `justify-content: space-between` row, which means **an empty `<Box />` placeholder is
+    required** when there is no speed: with a single child, `space-between` parks it at the *start*,
+    so the ETA card silently jumps to the wrong corner while waiting for a fix. The dial also needs
+    its `.standalone` rule once free-standing - the default translucent green fill has nothing
+    behind it over snow or satellite imagery.
+  - **Optical corner parity is not numeric parity.** The dial sits at 10 px from both edges and the
+    ETA card at 14. A circle's corner-most point is a single tangent; a rounded rectangle's whole
+    corner arc crowds the edge, so at equal insets the card reads as falling off the screen. The
+    extra 4 px is `mb: 0.5` plus a direction-aware `marginInline*`.
+  - **A caption that repeats what a glyph already says is deleted, and a badge is centred in
+    PIXELS.** Two trims to the manoeuvre card. "NEXT" went because the arrow already states "this
+    is ahead of you" - but the 62 px `minWidth` on that column stayed, or the instruction shifts
+    sideways as the distance string changes width. And the inline shield was reproportioned
+    (38x22, font 15) then measured against the text line's centre: `vertical-align: middle` centres
+    an inline-block on **baseline + half x-height**, which is not the line box's centre, so it sat
+    **1.6 px low**. The correction is `position: relative; top: -1.5px` in **px, not `em`** - `em`
+    on the badge resolves against the badge's own 15 px, while the sentence around it varies 14-18 px
+    via `bannerFont()`. `.pbadge.big` is used only in this banner, so it has no blast radius.
+  - **On the ETA card the arrival CLOCK leads and the countdown is the caption.** "19:47" is the
+    reading you act on - you compare it against a lift closing time or a lunch booking - while
+    "36 min left" is the same fact relative to now and only says how long to keep going. Distance
+    and countdown share the caption line because they are two readings of one thing; splitting them
+    would assert there are three facts on the card.
+  - **A weight that looks right in Hebrew is shouting in English, because the cap only applies to
+    one of them.** `App.css` caps Hebrew at 600 under `:lang(he)`, so a literal `fontWeight: 800`
+    rendered the two languages **200 apart** and only English was heavy - worst on "ETA", which is
+    all-caps and so carries no descenders or lowercase to break up the mass. Dropping the base to
+    700 closes most of the gap and leaves Hebrew untouched, since the cap still catches it. Check
+    the *computed* weight in both languages before and after; the authored number is only the
+    English one.
+  - **SUPERSEDED - the run you are ON is a chip on the map, not a strip on the manoeuvre card.**
+    This bullet used to say the opposite ("the run you are ON belongs under the run you are heading
+    FOR, on the same card"), and the reasoning was sound as far as it went: the two names are the
+    same kind of fact and were separated by the whole map. What it missed is that they are *not*
+    the same kind of **instruction**. The manoeuvre card answers "what do I do next"; the current
+    run answers "where am I". Putting the second inside the first made a card whose job is one
+    question carry two, and paid ~32 px of map for the second one on every frame - including the
+    frames with nothing to say, because the strip reserved its height unconditionally. It is now a
+    single minimal pill, and it lives **on the map as a MapLibre marker anchored under the nav
+    arrow**, not in the overlay at all.
+    - **It is a marker, not a floating div, and that is the whole point.** "What am I on" is a fact
+      about a *place*, so it belongs at the place. A first pass parked it at the foot of the screen
+      and the user rejected it for the same reason the strip was rejected: the eye has to travel
+      away from the puck to read a label about the puck. Anchored at `nav.lon/lat` with
+      `anchor:'top'`, `offset:[0,36]` it sits directly under the arrow and **goes with the skier
+      when the user pans**, instead of continuing to caption a spot that is no longer on screen.
+      `rotationAlignment` and `pitchAlignment` are both `'viewport'`, so the pill stays upright and
+      legible while the arrow rotates under it.
+    - **A marker's box has no parent width**, so its `max-width` must be in viewport units (`46vw`).
+      A percentage resolves against a content-sized box and silently does nothing - the pill then
+      grows to whatever a long OSM name needs and covers the terrain ahead.
+    - **It is handed in as data, not as JSX.** `navRunChip(step)` returns `{ text, color } | null`
+      and lives in its own `src/components/navChip.ts`, because exporting a non-component from a
+      `.tsx` file trips `react(only-export-components)` (fast refresh). `NavOverlay` imports
+      `COLOR_HEX` back from it so the colour vocabulary exists once; `App.tsx` passes the result to
+      `MapView` as `navLabel`; when it is `null` the marker is **removed**, never emptied - an empty
+      pill is a visible white crumb under the arrow.
+    - **No verb, and the name only.** No "Ski"/"Take"/"Traverse" prefix, no colour word, no
+      sentence - `DisplayStep.name`, which is the raw mapped name and so is never translated.
+      **Nothing at all when the step has no name**, which is the honest answer for an unnamed
+      traverse rather than a pill reading "traverse".
+    - **This retires the `nav.now` caption and the rule that defended it.** That caption existed
+      *solely* because Hebrew has no genderless present participle (`גולש`/`גולשת`,
+      `רוכב`/`רוכבת`) and we have no user gender, so an English-style self-labelling "Skiing 89
+      Nambino" could not be translated. A bare name has no gender to get wrong, so the problem is
+      not worked around - it is gone. `nav.now` is deleted from both catalogues. (`nav.next` was
+      later deleted too, for a different reason - see the caption bullet above. The manoeuvre card
+      keeps its two-column geometry.)
+    - **Colour is the app's existing vocabulary, never a new one.** The slope's own colour from
+      `COLOR_HEX` for a piste, and for a lift the same slate `#37475a` that `.pbadge.lift` already
+      uses in the step list. A skier learns the mapping once and it holds in the step list, on the
+      map and here. Inventing a separate lift colour would have been a second vocabulary for one
+      fact.
+    - **The reserved-height rule dies with the strip, and is solved better.** The old `minHeight: 32`
+      existed because `--nav-banner-h` drives where MapView's controls sit, so a strip that appeared
+      and disappeared moved them mid-run. A chip floating over the map is in no card, measures into
+      no variable, and can therefore come and go freely. The paired `gap: 1.5` / 62-wide-caption
+      alignment constraints go with it.
+  - **The navigation camera looks AHEAD, not at the skier.** Centring the puck spends half the map
+    on terrain already skied. Both heading-up `easeTo` sites pass
+    `offset: [0, containerHeight * NAV_LOOKAHEAD_FRAC]` (0.22), which by MapLibre's definition
+    ("offset of the target center relative to real map container center") places the puck **below**
+    centre - measured live at ~73% of the map's height. Three things:
+    - **Use `easeTo.offset`, never map `padding`.** Padding is global camera state and would
+      silently skew every unrelated `fitBounds` in the component.
+    - **A fraction of container height, never a pixel constant**, so it holds on a phone and on a
+      desktop map pane alike.
+    - **Heading-up only.** North-up has no on-screen "ahead" to bias toward, so the offset is
+      applied at the two heading-up sites (the follow effect and the post-gesture recentre) and
+      nowhere else.
+
+- **A reservation for a bar must be conditional on the bar existing.** `App.css`'s
+  `@media (max-width: 820px)` rule gives the MapLibre bottom-corner controls
+  `margin-bottom: calc(64px + safe-area)` to clear the bottom nav bar - but that bar is rendered
+  `isMobile && !navRoute`, so during navigation it is **gone** and the 64 px was still being held.
+  The zoom/compass and the ODbL credit floated ~64 px off the corner for the whole run, which the
+  user reported as "as if the navigation card is not open". `.app` carries `data-nav` while
+  navigating and the rule is undone under `.app[data-nav]`. Generalise it: any layout that subtracts
+  space for a conditionally-rendered element owes the same condition, and the tell is an offset that
+  looks right in the state you developed in and wrong in the other one.
+- **Every map control column owes the `--nav-banner-h` dodge, not just the left one.** The
+  Layers/Legend column in `MapView.tsx` has dodged the manoeuvre card since nav shipped; the
+  locate/share FAB column in `App.tsx` (~L1808) did not, so on a phone the share button sat under
+  the card. Same pattern: `top: navRoute ? 'calc(var(--nav-banner-h, 0px) + 6px)' : '12px'` in `sx`
+  with a `@media (min-width: 821px)` override, `position`/`right` left **inline** so the RTL plugin
+  cannot flip them. Keyed on `navRoute`, **never** on the variable's own fallback - `calc(0px + 6px)`
+  would silently lift the buttons from 12 to 6 whenever not navigating.
+- **A styling attribute attached to a layout SLOT follows the slot when rows are reordered.** The
+  ETA clock turned blue with nobody having asked for it, via two compounding steps: a
+  `<Typography color="primary.main">` had been **silently losing** to the parent `Paper`'s
+  `color: '#fff'` for months (the same value in `sx` wins - suspect this whenever a Typography
+  colour does nothing inside a coloured container), so the decision sat dormant; a later row flip
+  moved it onto different content because it was attached to the bold line, not to the clock; and
+  the prop-to-`sx` fix then made it render for the first time, on the wrong reading. It is now plain
+  white - `#4aa8ff` on `#16233d` is ~3.4:1, under the 4.5:1 body-text bar, and blue already means
+  "interactive" in this app.
+- **The ETA card is centred with equal-width flanking slots, not `justify-content: center`.** The
+  bottom row is dial | card | spacer under `space-between`. With `center` the card would drift
+  horizontally the moment the speed dial appears or disappears (waiting for a fix, or no speed yet).
+  The two spacer widths **must track `.nav-speed-circle`'s width in `App.css`** - they live in two
+  different files with no shared constant, so both carry a comment saying so. Dial is 48x48 against
+  the card's measured 45 px.
+
 - **A portalled overlay centres on the VIEWPORT, and on desktop the map is not the viewport.** A MUI
   `Dialog` or `Snackbar` renders into `<body>`, so "centred" means centred on the window - but the
   desktop layout puts a 400 px sidebar beside the map, leaving anything centred over the map 200 px
