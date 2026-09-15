@@ -2106,6 +2106,70 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   Pins get their **own, higher** threshold (`PIN_MINZOOM`): at the mode threshold a resort is
   already only ~30 px across. The route line is deliberately *not* gated — it stays readable when
   zoomed out, and hiding it could blank a long route that "fit to route" had just framed.
+- **The "Map" base is OpenFreeMap Liberty, a VECTOR style, and `tile.openstreetmap.org` is gone.**
+  The decision and every reason for it, because the obvious reading of the OSM tile policy is the
+  wrong one and will otherwise be re-litigated:
+  - **It is not a rights problem.** The policy's own opening line is *"OSM data is free for everyone
+    to use. Our tile servers are not"*, and §9 scopes the whole document to the raster tiles at
+    `tile.openstreetmap.org`. Web-app use is **explicitly permitted** (*"normal interactive viewing
+    by a human where the client requests only the tiles needed for the current viewport"*). None of
+    this touches the **pipeline** - Overpass is a different service under a different policy, and
+    the data itself is ODbL-free. Do not conflate the two.
+  - **What actually decided it is §4: offline use is flatly prohibited** and *"will be blocked
+    without notice"*. That kills the `offline-pwa` backlog item outright on raster tiles, and the
+    policy's own recommended remedy is to move to vector tiles or a provider that permits caching.
+    Secondary: §7 gives no SLA, reserves withdrawal at any time and singles out commercial or
+    donation-seeking services.
+  - **We had violated exactly one named rule, and it was invisible.** *"You must not set a
+    restrictive Referrer-Policy that prevents the HTTP Referer header being sent"* - which is
+    precisely the Azure `same-origin` default fixed in `staticwebapp.config.json`. Worse, the
+    `Referer` and `User-Agent` are the **browser's** to send, so a privacy extension or an embedded
+    webview can get a user blocked with nothing we can detect or fix. A dependency whose compliance
+    we cannot guarantee per user is a dependency we do not control.
+  - **Measured, not assumed** (one 1200x800 viewport at z14 over Madonna): Liberty **197 KB** of
+    tiles against the raster's **617 KB**, 15 requests against 35, and because Liberty's vector
+    source stops at `maxzoom: 14` and everything past it re-renders client-side, **zooming in to
+    inspect a junction costs zero bytes** where raster needed a fresh set per zoom level. First view
+    adds a 42 KB style and one sprite pair (48 KB at 1x, 116 KB at 2x) - **a browser fetches one
+    pair, never all four**, which an early version of the measurement got wrong by summing them.
+    Caveat to state whenever quoting this: **bytes were measured, wall-clock was not.** Vector moves
+    work from network to CPU, so first paint on a low-end phone need not improve proportionally.
+  - **It is SPLICED into the live style, never `setStyle`.** `setStyle` tears down every source,
+    layer and `addImage` we add on load (the resort flags among them) and would require re-adding
+    all of it on `styledata` - a do-no-harm violation for what is only a change of base map.
+    `loadLibertyLayers()` fetches the style, adds its sources, calls **`map.setSprite()`** and
+    re-adds each layer under a `lib-` prefix before `'hillshade'`, so shaded relief and every data
+    layer still draw on top. `setSprite` is the thing that made this viable at all: `BASE_STYLE`
+    sets only `glyphs`, and Liberty's icon layers draw nothing without a sprite.
+  - **`BASE_STYLE` keeps a flat `base-void` background layer** so the moment before the 42 KB style
+    arrives reads as a loading map rather than a white page, and `loadLibertyLayers` fails soft -
+    a dead tile host leaves that background, not a crash.
+  - Reshaping the `BaseMap` union was safe because `base` is plain `useState` in `MapView.tsx` and
+    is **never persisted** - same reasoning as `openSection`. Check that before reshaping any union.
+  - **Do not score a base map on whether it draws lift lines.** That was an early argument for
+    staying on OSM raster and the user disproved it: we draw our own lifts from `geo.json`, so
+    base-map lifts are duplicate ink - and a raster base paints **raw** OSM, including the 401
+    non-passenger aerialways, 322 station polygons and 16 lifecycle-dead lifts (*"Progetto
+    Cabinovia"*, *"(en projet)"*) the pipeline deliberately removes. A base map that shows lifts will
+    therefore **contradict** our own layer by advertising a lift that was torn down. Terrain context
+    is ours too (`dem` + `hillshade`), so the base map's real job is narrow - roads, buildings, place
+    names, land cover.
+- **ODbL attribution must follow OUR DATA, not whichever base map happens to credit OSM.** Our
+  pistes, lifts and areas are compiled from OpenStreetMap and require attribution independently of
+  the base. Until the `pistes` GeoJSON source carried an `attribution`, the credit rode entirely on
+  the base map's own string - so selecting **satellite** left the map crediting only
+  `Imagery © Esri, Maxar, Earthstar Geographics` while every run and lift drawn on it was
+  OSM-derived. It was masked for as long as it existed only because 2 of the 3 bases happened to
+  credit OSM. MapLibre lists a source's attribution only while that source is **in use**, which is
+  what makes the source the right place to put it - and also makes the attribution control the one
+  reliable oracle for *"did this base map actually load"*, far better than counting requests.
+- **Two probe traps when measuring anything MapLibre fetches, and both produce a confident, wrong
+  ZERO.** Chasing the Liberty verification cost an hour to these: **(a) MapLibre fetches vector
+  tiles and glyphs in a Web Worker**, so they never appear in the main thread's
+  `performance.getEntriesByType('resource')` - the count was 0 while the map was demonstrably
+  drawing. **(b) That buffer caps at 250 entries** by default, and in dev Vite's own module requests
+  exhaust it unaided, so even main-thread traffic can vanish. `setResourceTimingBufferSize` and
+  `clearResourceTimings` help with (b) and cannot help with (a). Use the attribution control.
 - **`symbol-placement: 'line-center'` gives a feature exactly ONE label, at its midpoint.** That is
   why lift names kept disappearing when the user zoomed in: past the midpoint the lift had no name
   *anywhere* on screen, and only zooming back out brought it into view. Pistes had the same symptom

@@ -220,7 +220,6 @@
     "toggle3d": "הפעל/כבה תלת-ממד",
     "base": {
       "standard": "מפה",
-      "liberty": "Liberty",
       "topo": "טופוגרפית",
       "satellite": "לוויין"
     },

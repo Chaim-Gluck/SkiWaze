@@ -28,13 +28,6 @@ const BASE_STYLE: StyleSpecification = {
   // as real application/x-protobuf, including the Hebrew range (1280-1535) the RTL locale needs.
   glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
   sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: '© OpenStreetMap contributors',
-    },
     topo: {
       type: 'raster',
       tiles: [
@@ -63,27 +56,34 @@ const BASE_STYLE: StyleSpecification = {
     },
   },
   layers: [
-    { id: 'base-osm', type: 'raster', source: 'osm' },
+    // A flat fill under everything, so the moment before Liberty's style arrives reads as "map
+    // loading" rather than as a white page. Liberty draws its own background over this.
+    { id: 'base-void', type: 'background', paint: { 'background-color': '#eef1f5' } },
     { id: 'base-topo', type: 'raster', source: 'topo', layout: { visibility: 'none' } },
     { id: 'base-satellite', type: 'raster', source: 'satellite', layout: { visibility: 'none' } },
     { id: 'hillshade', type: 'hillshade', source: 'dem', layout: { visibility: 'none' }, paint: { 'hillshade-exaggeration': 0.35 } },
   ],
 };
 
-export type BaseMap = 'standard' | 'liberty' | 'topo' | 'satellite';
+export type BaseMap = 'standard' | 'topo' | 'satellite';
 
 /**
- * OpenFreeMap "Liberty" - a VECTOR base, offered alongside the three rasters so the OSM look can be
- * compared against it in situ before we commit to anything. It is a candidate replacement for
- * `tile.openstreetmap.org`, whose usage policy forbids an app leaning on their volunteer servers:
- * OpenFreeMap needs no API key, publishes no usage limit, and is already a dependency (it serves our
- * `glyphs` above), so it adds no new host.
+ * The "standard" base is OpenFreeMap "Liberty", a VECTOR style.
  *
- * It is loaded LAZILY and spliced into the live style rather than swapped in with `setStyle`.
- * `setStyle` would tear down every source and layer we add on load - including the images registered
- * with `addImage` for the resort flags - and re-adding all of that on `styledata` is exactly the
- * do-no-harm violation this trial must avoid. Injecting instead means a user who never picks Liberty
- * pays nothing, and the three raster bases keep working untouched.
+ * It replaced `tile.openstreetmap.org`, whose usage policy is about server capacity rather than
+ * rights: the data is free, but the tile servers are donation-funded, best-effort, withdrawable
+ * without notice, and - the part that actually decided it - forbid offline use outright, which the
+ * offline-pwa work needs. OpenFreeMap needs no API key, publishes no usage limit, and was already a
+ * dependency (it serves our `glyphs` above), so this adds no new host.
+ *
+ * Measured over one 1200x800 viewport at z14: 197 KB against the raster's 617 KB, and because the
+ * vector tiles stop at z14 and everything beyond re-renders client-side, zooming in to inspect a
+ * junction costs NOTHING where raster needed a fresh set per zoom level.
+ *
+ * It is spliced into the live style rather than swapped in with `setStyle`. `setStyle` would tear
+ * down every source and layer we add on load - including the images registered with `addImage` for
+ * the resort flags - and re-adding all of that on `styledata` is a do-no-harm violation for what is
+ * purely a change of base map.
  */
 const LIBERTY_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 /** Marks every layer spliced in from Liberty, so the base switch can toggle them as one group. */
@@ -571,7 +571,13 @@ export function MapView({
     mapRef.current = map;
 
     map.on('load', () => {
-      map.addSource('pistes', { type: 'geojson', data: EMPTY_FC });
+      // Our pistes, lifts and areas are compiled from OpenStreetMap, which is ODbL and requires
+      // attribution independently of whichever base map is showing. Until this was set the credit
+      // rode on the base map's own string, so selecting satellite left the map crediting only Esri
+      // while every run and lift drawn on it was OSM-derived. MapLibre shows a source's attribution
+      // only while that source is in use, so putting it here makes the credit follow OUR DATA.
+      const OSM_DATA_ATTRIB = 'Ski data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
+      map.addSource('pistes', { type: 'geojson', data: EMPTY_FC, attribution: OSM_DATA_ATTRIB });
       map.addSource('areas', { type: 'geojson', data: EMPTY_FC });
       map.addSource('lifts', { type: 'geojson', data: EMPTY_FC });
       map.addSource('route', { type: 'geojson', data: EMPTY_FC });
@@ -1119,10 +1125,10 @@ export function MapView({
     }
   }, [linkFrom, linkTo, markersVisible]);
 
-  // Base-map switch: toggle visibility of the base layers. The three rasters are baked into
-  // BASE_STYLE; Liberty is vector and fetched on first selection, so this effect is async and must
-  // re-check `base` after the await - a user can switch again while the style is still downloading,
-  // and showing it then would override the choice they just made.
+  // Base-map switch: toggle visibility of the base layers. Topo and satellite are rasters baked into
+  // BASE_STYLE; the standard base is Liberty, a vector style spliced in on first use, so this effect
+  // is async and must re-check `base` after the await - a user can switch again while the style is
+  // still downloading, and showing it then would override the choice they just made.
   const libertyIds = useRef<string[] | null>(null);
   const libertyLoading = useRef(false);
   useEffect(() => {
@@ -1130,7 +1136,6 @@ export function MapView({
     if (!map || !loaded) return;
     let cancelled = false;
 
-    map.setLayoutProperty('base-osm', 'visibility', base === 'standard' ? 'visible' : 'none');
     map.setLayoutProperty('base-topo', 'visibility', base === 'topo' ? 'visible' : 'none');
     map.setLayoutProperty('base-satellite', 'visibility', base === 'satellite' ? 'visible' : 'none');
 
@@ -1140,7 +1145,7 @@ export function MapView({
       }
     };
 
-    if (base !== 'liberty') { showLiberty(false); return; }
+    if (base !== 'standard') { showLiberty(false); return; }
     if (libertyIds.current) { showLiberty(true); return; }
     if (libertyLoading.current) return;
 
@@ -1150,9 +1155,9 @@ export function MapView({
     loadLibertyLayers(map, 'hillshade')
       .then((ids) => {
         libertyIds.current = ids;
-        if (!cancelled && base === 'liberty') showLiberty(true);
+        if (!cancelled && base === 'standard') showLiberty(true);
       })
-      .catch(() => { /* leave the previous base showing rather than blanking the map */ })
+      .catch(() => { /* leave the flat background showing rather than crashing the map */ })
       .finally(() => { libertyLoading.current = false; });
 
     return () => { cancelled = true; };
@@ -1367,7 +1372,6 @@ export function MapView({
             <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 0.75 }}>
               <ToggleButtonGroup exclusive size="small" value={base} onChange={(_, v) => v && setBase(v)}>
                 <ToggleButton value="standard" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.standard')}</ToggleButton>
-                <ToggleButton value="liberty" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.liberty')}</ToggleButton>
                 <ToggleButton value="topo" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.topo')}</ToggleButton>
                 <ToggleButton value="satellite" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.satellite')}</ToggleButton>
               </ToggleButtonGroup>
