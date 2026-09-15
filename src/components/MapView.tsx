@@ -70,7 +70,55 @@ const BASE_STYLE: StyleSpecification = {
   ],
 };
 
-export type BaseMap = 'standard' | 'topo' | 'satellite';
+export type BaseMap = 'standard' | 'liberty' | 'topo' | 'satellite';
+
+/**
+ * OpenFreeMap "Liberty" - a VECTOR base, offered alongside the three rasters so the OSM look can be
+ * compared against it in situ before we commit to anything. It is a candidate replacement for
+ * `tile.openstreetmap.org`, whose usage policy forbids an app leaning on their volunteer servers:
+ * OpenFreeMap needs no API key, publishes no usage limit, and is already a dependency (it serves our
+ * `glyphs` above), so it adds no new host.
+ *
+ * It is loaded LAZILY and spliced into the live style rather than swapped in with `setStyle`.
+ * `setStyle` would tear down every source and layer we add on load - including the images registered
+ * with `addImage` for the resort flags - and re-adding all of that on `styledata` is exactly the
+ * do-no-harm violation this trial must avoid. Injecting instead means a user who never picks Liberty
+ * pays nothing, and the three raster bases keep working untouched.
+ */
+const LIBERTY_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+/** Marks every layer spliced in from Liberty, so the base switch can toggle them as one group. */
+const LIBERTY_PREFIX = 'lib-';
+
+/**
+ * Splice Liberty's sources and layers into an already-running map, under `beforeId`.
+ *
+ * Resolves to the ids added, or an empty array if it could not load - a base map that fails to fetch
+ * must leave the map exactly as it was, never a blank screen. Idempotent: a second call is a no-op,
+ * so switching back and forth does not re-add anything.
+ */
+async function loadLibertyLayers(map: maplibregl.Map, beforeId: string): Promise<string[]> {
+  const style = (await (await fetch(LIBERTY_STYLE_URL)).json()) as StyleSpecification;
+
+  // Liberty's vector source is `openmaptiles`; none of our source names can collide with it, so the
+  // layers' `source` references carry over unchanged.
+  for (const [id, src] of Object.entries(style.sources ?? {})) {
+    if (!map.getSource(id)) map.addSource(id, src);
+  }
+  // Icon layers draw nothing without a sprite, and BASE_STYLE deliberately sets only `glyphs`.
+  if (style.sprite && typeof style.sprite === 'string') map.setSprite(style.sprite);
+
+  const added: string[] = [];
+  for (const layer of style.layers ?? []) {
+    const id = LIBERTY_PREFIX + layer.id;
+    if (map.getLayer(id)) { added.push(id); continue; }
+    map.addLayer(
+      { ...layer, id, layout: { ...('layout' in layer ? layer.layout : {}), visibility: 'none' } } as never,
+      beforeId,
+    );
+    added.push(id);
+  }
+  return added;
+}
 
 const EMPTY_FC: GeoFeatureCollection = { type: 'FeatureCollection', features: [] };
 
@@ -1071,14 +1119,45 @@ export function MapView({
     }
   }, [linkFrom, linkTo, markersVisible]);
 
-  // Base-map switch: toggle visibility of the three base raster layers.
+  // Base-map switch: toggle visibility of the base layers. The three rasters are baked into
+  // BASE_STYLE; Liberty is vector and fetched on first selection, so this effect is async and must
+  // re-check `base` after the await - a user can switch again while the style is still downloading,
+  // and showing it then would override the choice they just made.
+  const libertyIds = useRef<string[] | null>(null);
+  const libertyLoading = useRef(false);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded) return;
+    let cancelled = false;
+
     map.setLayoutProperty('base-osm', 'visibility', base === 'standard' ? 'visible' : 'none');
     map.setLayoutProperty('base-topo', 'visibility', base === 'topo' ? 'visible' : 'none');
     map.setLayoutProperty('base-satellite', 'visibility', base === 'satellite' ? 'visible' : 'none');
+
+    const showLiberty = (visible: boolean) => {
+      for (const id of libertyIds.current ?? []) {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+      }
+    };
+
+    if (base !== 'liberty') { showLiberty(false); return; }
+    if (libertyIds.current) { showLiberty(true); return; }
+    if (libertyLoading.current) return;
+
+    libertyLoading.current = true;
+    // Inserted before `hillshade`, the last layer in BASE_STYLE, so shaded relief and every data
+    // layer we add on load still draw on top of it.
+    loadLibertyLayers(map, 'hillshade')
+      .then((ids) => {
+        libertyIds.current = ids;
+        if (!cancelled && base === 'liberty') showLiberty(true);
+      })
+      .catch(() => { /* leave the previous base showing rather than blanking the map */ })
+      .finally(() => { libertyLoading.current = false; });
+
+    return () => { cancelled = true; };
   }, [base, loaded]);
+
 
   // 3D terrain toggle: DEM-based terrain + hillshade + pitched camera + sky.
   useEffect(() => {
@@ -1288,6 +1367,7 @@ export function MapView({
             <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 0.75 }}>
               <ToggleButtonGroup exclusive size="small" value={base} onChange={(_, v) => v && setBase(v)}>
                 <ToggleButton value="standard" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.standard')}</ToggleButton>
+                <ToggleButton value="liberty" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.liberty')}</ToggleButton>
                 <ToggleButton value="topo" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.topo')}</ToggleButton>
                 <ToggleButton value="satellite" sx={{ px: 1.25, py: 0.25 }}>{t('layers.base.satellite')}</ToggleButton>
               </ToggleButtonGroup>

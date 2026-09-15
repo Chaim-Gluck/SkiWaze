@@ -216,6 +216,7 @@
     "toggle3d": "Toggle 3D terrain",
     "base": {
       "standard": "Map",
+      "liberty": "Liberty",
       "topo": "Topo",
       "satellite": "Sat"
     },
