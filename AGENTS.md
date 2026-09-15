@@ -2623,7 +2623,15 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   stylesheet rule. One documented exception, `.num-hero`: an element holding **digits only** carries
   no Hebrew glyphs, so the cap's reason does not apply while the cap would visibly weaken the
   reading the user is navigating by. Use it only where the text can never contain a word.
-- **Known gap:** the named-point labels in `graph.points` (`"Grostè (top) · 2496 m"`) are composed
+- **The Hebrew weight rule RAISES as well as caps, so any line left at a lower default renders in two
+  different weights.** `App.css`'s `:lang(he)` block is `font-weight: 600 !important` on a list of MUI
+  typography classes - stated as a cap, but it is an absolute, so a `.MuiTypography-caption` (MUI
+  default **400**) comes out heavier in Hebrew than in English rather than lighter. The nav card's
+  remaining/ETA line was exactly this and the user read it as English being "thinner and a bit
+  smaller" - Arial's larger x-height compounding the 200-weight gap. The fix is to state 600 on the
+  element, which levels English and leaves Hebrew untouched because its own rule already forces that
+  value. **Check any Typography under 600 against that class list before assuming both languages
+  match.** (`"Grostè (top) · 2496 m"`) are composed
   **by the pipeline** in English, so they stay English in Hebrew. Fixing it means emitting the parts
   structurally (`name` + `side` + `ele`) and composing them in the UI, plus a data rebuild.
 

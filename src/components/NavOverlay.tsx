@@ -571,7 +571,12 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
                 >
                   {t('preview.eta', { time: fmtClock(new Date(Date.now() + remaining.timeS * 1000).toISOString()) })}
                 </Typography>
-                <Typography variant="caption" sx={{ display: 'block', fontSize: 13.5, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: offRoute ? 'inherit' : NAV_BAR_MUTED }}>
+                {/* The `:lang(he)` rule in App.css sets `.MuiTypography-caption` to 600, so Hebrew
+                    was rendering this line at 600 while English took MUI's caption default of 400 -
+                    two different weights for one line, which read as English being thinner and
+                    (Arial's larger x-height compounding it) smaller. Stating 600 here levels them:
+                    Hebrew is unchanged, since its own rule already forces exactly that. */}
+                <Typography variant="caption" sx={{ display: 'block', fontSize: 14, fontWeight: 600, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: offRoute ? 'inherit' : NAV_BAR_MUTED }}>
                   {t('nav.remaining', { distance: fmtDist(remaining.distM, t), time: fmtTime(remaining.timeS, t) })}
                 </Typography>
               </>
