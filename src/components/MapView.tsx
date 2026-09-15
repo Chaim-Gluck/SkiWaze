@@ -123,6 +123,24 @@ async function loadLibertyLayers(map: maplibregl.Map, beforeId: string): Promise
 const EMPTY_FC: GeoFeatureCollection = { type: 'FeatureCollection', features: [] };
 
 /**
+ * Every marker we draw is app CHROME, so the mountain may never hide it.
+ *
+ * With 3D terrain on, MapLibre treats a marker as a thing standing on the ground and fades it to
+ * `opacityWhenCovered` (default **0.2**) whenever the DEM surface is between it and the camera.
+ * That is right for a pin marking a physical place and wrong for everything we have: the nav arrow
+ * IS the skier, and at pitch 62 with 1.4x exaggeration the ridge the skier is about to ski over
+ * sits directly in the line of sight, so switching to 3D mid-descent made the arrow and its run
+ * pill vanish. Losing your own position marker on a mountain is the one failure this app must not
+ * have. The A/B pins and custom-link dots are the same case - they say "the route starts here",
+ * not "an object is standing here".
+ */
+const MARKER_ALWAYS_VISIBLE = { opacityWhenCovered: 1 } as const;
+
+/** Camera tilt with 3D terrain on. One constant, so the terrain toggle and the follow camera
+ *  cannot disagree about it. */
+const NAV_PITCH_3D = 62;
+
+/**
  * Register MapLibre's RTL text plugin once per page. Without it, right-to-left scripts
  * (Hebrew, Arabic — e.g. Mount Hermon's labels) render reversed/disconnected. Deferred, so the
  * plugin is only fetched when RTL text actually appears. Bundled locally to stay offline-friendly.
@@ -510,6 +528,9 @@ export function MapView({
 
   const [base, setBase] = useState<BaseMap>('standard');
   const [is3D, setIs3D] = useState(false);
+  // Bumped when the map settles after a terrain change, so the follow camera can re-frame once the
+  // DEM has actually raised the ground under it.
+  const [terrainSeq, setTerrainSeq] = useState(0);
   const [showPistes, setShowPistes] = useState(true);
   const [showLifts, setShowLifts] = useState(true);
   const [showAreas, setShowAreas] = useState(false);
@@ -1141,14 +1162,14 @@ export function MapView({
     const map = mapRef.current;
     if (!map) return;
     if (from && markersVisible) {
-      if (!fromMarker.current) fromMarker.current = new maplibregl.Marker({ color: '#2e7d32' });
+      if (!fromMarker.current) fromMarker.current = new maplibregl.Marker({ color: '#2e7d32', ...MARKER_ALWAYS_VISIBLE });
       fromMarker.current.setLngLat([from.lon, from.lat]).addTo(map);
     } else {
       fromMarker.current?.remove();
       fromMarker.current = null;
     }
     if (to && markersVisible) {
-      if (!toMarker.current) toMarker.current = new maplibregl.Marker({ color: '#c62828' });
+      if (!toMarker.current) toMarker.current = new maplibregl.Marker({ color: '#c62828', ...MARKER_ALWAYS_VISIBLE });
       toMarker.current.setLngLat([to.lon, to.lat]).addTo(map);
     } else {
       toMarker.current?.remove();
@@ -1161,14 +1182,14 @@ export function MapView({
     const map = mapRef.current;
     if (!map) return;
     if (linkFrom && markersVisible) {
-      if (!linkFromMarker.current) linkFromMarker.current = new maplibregl.Marker({ element: linkDotEl('#2e7d32') });
+      if (!linkFromMarker.current) linkFromMarker.current = new maplibregl.Marker({ element: linkDotEl('#2e7d32'), ...MARKER_ALWAYS_VISIBLE });
       linkFromMarker.current.setLngLat([linkFrom.lon, linkFrom.lat]).addTo(map);
     } else {
       linkFromMarker.current?.remove();
       linkFromMarker.current = null;
     }
     if (linkTo && markersVisible) {
-      if (!linkToMarker.current) linkToMarker.current = new maplibregl.Marker({ element: linkDotEl('#c62828') });
+      if (!linkToMarker.current) linkToMarker.current = new maplibregl.Marker({ element: linkDotEl('#c62828'), ...MARKER_ALWAYS_VISIBLE });
       linkToMarker.current.setLngLat([linkTo.lon, linkTo.lat]).addTo(map);
     } else {
       linkToMarker.current?.remove();
@@ -1232,12 +1253,18 @@ export function MapView({
           'fog-ground-blend': 0.7,
         });
       } catch { /* sky is cosmetic */ }
-      map.easeTo({ pitch: 62, duration: 600 });
+      map.easeTo({ pitch: NAV_PITCH_3D, duration: 600 });
     } else {
       map.setTerrain(null);
       map.setLayoutProperty('hillshade', 'visibility', 'none');
       map.easeTo({ pitch: 0, duration: 600 });
     }
+    // Terrain arrives ASYNCHRONOUSLY - `setTerrain` only names the source, and the ground does not
+    // actually rise until the DEM tiles load. The camera keeps its own altitude while it does, so
+    // by the time the terrain is in place the view has drifted off the point it was framing, which
+    // during navigation means losing the skier. Re-frame once the map settles; the follow effect
+    // owns the framing (centre, bearing and lookahead offset), so this only has to poke it.
+    map.once('idle', () => setTerrainSeq((s) => s + 1));
   }, [is3D, loaded]);
 
   // Overlay toggles: pistes/connectors and lifts. This effect is the single owner of visibility for
@@ -1283,7 +1310,7 @@ export function MapView({
       return;
     }
     if (!userMarker.current) {
-      userMarker.current = new maplibregl.Marker({ element: userLocEl(), rotationAlignment: 'map' });
+      userMarker.current = new maplibregl.Marker({ element: userLocEl(), rotationAlignment: 'map', ...MARKER_ALWAYS_VISIBLE });
     }
     const el = userMarker.current.getElement();
     const hasHeading = userPosition.heading != null;
@@ -1321,7 +1348,7 @@ export function MapView({
     for (const l of routeLayers) if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', 'none');
     trav?.setData(lineFC(nav.traveled) as never);
     rem?.setData(lineFC(nav.remaining) as never);
-    if (!navMarker.current) navMarker.current = new maplibregl.Marker({ element: navArrowEl(), rotationAlignment: 'map' });
+    if (!navMarker.current) navMarker.current = new maplibregl.Marker({ element: navArrowEl(), rotationAlignment: 'map', ...MARKER_ALWAYS_VISIBLE });
     navMarker.current.getElement().classList.toggle('simulated', positionSimulated);
     navMarker.current.setRotation(nav.bearing);
     navMarker.current.setLngLat([nav.lon, nav.lat]).addTo(map);
@@ -1336,6 +1363,7 @@ export function MapView({
         navChip.current = new maplibregl.Marker({
           element: navChipEl(), anchor: 'top', offset: [0, 36],
           rotationAlignment: 'viewport', pitchAlignment: 'viewport',
+          ...MARKER_ALWAYS_VISIBLE,
         });
       }
       const el = navChip.current.getElement();
@@ -1363,6 +1391,10 @@ export function MapView({
     const opts: maplibregl.EaseToOptions = { center, duration: 600 };
     if (nav && navHeadingUp) {
       opts.bearing = nav.bearing;
+      // 55 in BOTH 2D and 3D, deliberately. The terrain toggle tilts to NAV_PITCH_3D, but that is
+      // the browsing tilt: navigating, the camera is close to the ground and a steeper pitch risks
+      // clipping into an exaggerated DEM. This effect runs after the terrain one on the same
+      // commit, so nav keeps its own tilt whichever way the toggle is set.
       opts.pitch = 55;
       opts.offset = [0, Math.round(map.getContainer().clientHeight * NAV_LOOKAHEAD_FRAC)];
       if (map.getZoom() < 15) opts.zoom = 16;
@@ -1376,7 +1408,7 @@ export function MapView({
       opts.zoom = FOLLOW_ZOOM;
     }
     map.easeTo(opts);
-  }, [userPosition, nav, following, navHeadingUp, loaded, is3D]);
+  }, [userPosition, nav, following, navHeadingUp, loaded, is3D, terrainSeq]);
 
   return (
     <div className="map-shell">
