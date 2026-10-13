@@ -2453,6 +2453,47 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     sat in opposite corners; centred and flanked, that 4 px lifted it off the dial's line and the
     pair read as crooked. When two objects are aligned by an edge, nothing may inset that edge.
 
+- **The A/B pins distinguish by PATTERN, not hue, and the panel shows the pin rather than its
+  colour.** They were MapLibre's stock teardrop in green and red - the generic start/stop
+  convention, chosen by nobody - which is wrong here twice over. Green and red are this app's
+  **slope-difficulty vocabulary** (piste lines, step shields, legend, nav chip, Preferences chips),
+  so on a map covered in green and red lines the two pins read as "easy run" and "hard run" rather
+  than start and finish; and red/green is the **worst possible pair for colour-blindness** (~8% of
+  men) applied to the one pair a user must tell apart at a glance. Every other hue is spoken for too
+  (magenta is lifts on the debug map), so the honest fix is not a different colour - it is the same
+  navy `#16233d` drop for both, with a **chequered flag** filling the finish. That survives
+  greyscale, glare and colour-blindness, and it is a symbol a skier already knows instead of a code
+  they must learn. Same discipline as casing the polygon spines rather than recolouring them.
+  Four things it took three rounds of mockups to get right:
+  - **A chequer needs square SIZE and square COUNT, and the first attempt bought one with the
+    other.** MapLibre's marker has a white disc of r=5.5 at (14,15) in its 27x41 viewBox - an 11 px
+    hole - and chequering *that* gives 2x2 at 5.5 px, right on the floor where a pattern dithers to
+    flat grey. Growing the disc to 15 px buys 7.5 px squares and still only 2x2, which the user
+    rejected in exactly the right words: *"not enough checkers to understand it is a finish point"*.
+    **Dropping the hole inverts the problem** - the body is 27 px wide, so a 4x5 grid over the whole
+    drop gives ~5.4 px squares *and* 20 cells. At 2x2 the eye reads "a shape with squares on it"; at
+    4x5 it reads "flag". If it ever mushes on a low-DPI phone the remedy is 4x5 -> 3x4, one pair of
+    numbers in `pinGlyphs.ts`, not a redesign.
+  - **The silhouette is MapLibre's own geometry lifted verbatim**, body path, border path and the
+    stacked ground-shadow ellipses, so the familiar shape is unchanged and **the tip is still the
+    anchor**. Supplying `element` makes MapLibre drop the default marker's offset, so `pinOffset()`
+    re-applies its own `-14` - derived from the tip sitting at the shadow ellipse's centre, not at
+    the foot of the 41 px box. Reuse the number rather than deriving a second answer to it.
+  - **Custom-link endpoints are the SAME pins, smaller.** They were a separate dot marker whose
+    comment said "deliberately distinct from the nav pins", which is backwards: a from and a to mean
+    the same thing in both places, so two shapes for one concept is a second vocabulary for one
+    fact - the same mistake as inventing a separate lift colour. They are drawn at `LINK_PIN_SCALE`
+    (0.72) only so the two *pairs* stay separable when both are on screen. Note the dot version had
+    a sharper form of the colour bug than the map did: `CustomLinkPanel` uses green and red a few
+    lines below to pick the link's **slope colour**, so one panel was spending red on two unrelated
+    meanings.
+  - **The panel labels carry the glyph, not the colour.** `PointPicker`'s `accent` prop existed for
+    exactly one thing - tinting the From/To label text - and is deleted. Showing the marker teaches
+    the symbol the user is about to hunt for on the map, the same reasoning as the Plan tab strip
+    carrying the FAB glyphs. The artwork lives in `src/components/pinGlyphs.ts`, a plain `.ts` for
+    the same reason as `navChip.ts`: exporting a non-component from a `.tsx` trips
+    `react(only-export-components)`.
+
 - **A reservation for a bar must be conditional on the bar existing.** `App.css`'s
   `@media (max-width: 820px)` rule gives the MapLibre bottom-corner controls
   `margin-bottom: calc(64px + safe-area)` to clear the bottom nav bar - but that bar is rendered

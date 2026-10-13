@@ -15,6 +15,7 @@ import Typography from '@mui/material/Typography';
 import LayersIcon from '@mui/icons-material/Layers';
 import CloseIcon from '@mui/icons-material/Close';
 import { Legend } from './Legend';
+import { pinEl, pinOffset, LINK_PIN_SCALE } from './pinGlyphs';
 import type { GeoFeatureCollection, ResortIndexEntry } from '../data/resortData';
 import type { LivePosition } from '../hooks/useLiveLocation';
 import { resortFlagCode, flagImageData } from '../utils/flags';
@@ -183,15 +184,7 @@ function rangeFilter(range: [number, number] | null): maplibregl.FilterSpecifica
   return ['all', ['>=', ['get', 'stepIndex'], range[0]], ['<=', ['get', 'stepIndex'], range[1]]];
 }
 
-/** A distinct dot marker (not the teardrop nav pin) for custom-link endpoints. */
-function linkDotEl(color: string): HTMLElement {
-  const el = document.createElement('div');
-  el.style.cssText = `width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 5px rgba(0,0,0,.55);cursor:pointer;`;
-  return el;
-}
-
-/** Live-location "puck": a heading arrow (when a compass heading is known) or a plain dot. */
-function userLocEl(): HTMLElement {
+/** Live-location "puck": a heading arrow (when a compass heading is known) or a plain dot. */function userLocEl(): HTMLElement {
   const el = document.createElement('div');
   el.className = 'user-loc';
   el.innerHTML =
@@ -1173,14 +1166,14 @@ export function MapView({
     const map = mapRef.current;
     if (!map) return;
     if (from && markersVisible) {
-      if (!fromMarker.current) fromMarker.current = new maplibregl.Marker({ color: '#2e7d32', ...MARKER_ALWAYS_VISIBLE });
+      if (!fromMarker.current) fromMarker.current = new maplibregl.Marker({ element: pinEl('start'), offset: pinOffset(), ...MARKER_ALWAYS_VISIBLE });
       fromMarker.current.setLngLat([from.lon, from.lat]).addTo(map);
     } else {
       fromMarker.current?.remove();
       fromMarker.current = null;
     }
     if (to && markersVisible) {
-      if (!toMarker.current) toMarker.current = new maplibregl.Marker({ color: '#c62828', ...MARKER_ALWAYS_VISIBLE });
+      if (!toMarker.current) toMarker.current = new maplibregl.Marker({ element: pinEl('finish'), offset: pinOffset(), ...MARKER_ALWAYS_VISIBLE });
       toMarker.current.setLngLat([to.lon, to.lat]).addTo(map);
     } else {
       toMarker.current?.remove();
@@ -1188,19 +1181,19 @@ export function MapView({
     }
   }, [from, to, markersVisible]);
 
-  // Custom-link endpoint markers (dots, distinct from the nav pins).
+  // Custom-link endpoint markers: the same pins as the route's A and B, drawn smaller.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     if (linkFrom && markersVisible) {
-      if (!linkFromMarker.current) linkFromMarker.current = new maplibregl.Marker({ element: linkDotEl('#2e7d32'), ...MARKER_ALWAYS_VISIBLE });
+      if (!linkFromMarker.current) linkFromMarker.current = new maplibregl.Marker({ element: pinEl('start', LINK_PIN_SCALE), offset: pinOffset(LINK_PIN_SCALE), ...MARKER_ALWAYS_VISIBLE });
       linkFromMarker.current.setLngLat([linkFrom.lon, linkFrom.lat]).addTo(map);
     } else {
       linkFromMarker.current?.remove();
       linkFromMarker.current = null;
     }
     if (linkTo && markersVisible) {
-      if (!linkToMarker.current) linkToMarker.current = new maplibregl.Marker({ element: linkDotEl('#c62828'), ...MARKER_ALWAYS_VISIBLE });
+      if (!linkToMarker.current) linkToMarker.current = new maplibregl.Marker({ element: pinEl('finish', LINK_PIN_SCALE), offset: pinOffset(LINK_PIN_SCALE), ...MARKER_ALWAYS_VISIBLE });
       linkToMarker.current.setLngLat([linkTo.lon, linkTo.lat]).addTo(map);
     } else {
       linkToMarker.current?.remove();

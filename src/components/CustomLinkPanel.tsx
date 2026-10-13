@@ -18,6 +18,7 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import PlaceIcon from '@mui/icons-material/Place';
 import AddIcon from '@mui/icons-material/Add';
+import { pinSvg } from './pinGlyphs';
 
 export type LinkColor = PisteColor | 'none';
 export type LinkDirection = 'ab' | 'ba' | 'both';
@@ -80,10 +81,11 @@ function groupLinks(edges: GraphEdge[]): LinkGroup[] {
 }
 
 function EndpointRow({
-  label, accent, value, points, onPick, onPin, pinActive, onClear,
+  label, end, value, points, onPick, onPin, pinActive, onClear,
 }: {
   label: string;
-  accent: string;
+  /** Which end of the link this is, so its label carries the matching map dot. */
+  end: 'from' | 'to';
   value: string | null;
   points: MeaningfulPoint[];
   onPick: (nodeId: string) => void;
@@ -94,7 +96,17 @@ function EndpointRow({
   const { t } = useTranslation();
   return (
     <Box sx={{ mb: 1.5 }}>
-      <Typography variant="body2" sx={{ color: accent, fontWeight: 700, mb: 0.5 }}>{label}</Typography>
+      {/* Same reasoning as the Plan form: the label shows the marker, not a colour. It matters more
+          here, because the slope-colour picker a few lines below genuinely uses green and red - so
+          one panel was spending red on two unrelated meanings. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+        <Box
+          aria-hidden
+          sx={{ lineHeight: 0, flex: '0 0 auto' }}
+          dangerouslySetInnerHTML={{ __html: pinSvg(end === 'to' ? 'finish' : 'start', 0.62) }}
+        />
+        <Typography variant="body2" sx={{ fontWeight: 700 }}>{label}</Typography>
+      </Box>
       <Autocomplete
         size="small"
         options={points}
@@ -133,9 +145,9 @@ export function CustomLinkPanel({
             {t('link.intro')}
           </Typography>
 
-          <EndpointRow label={t('link.from')} accent="#2e7d32" value={fromLabel} points={points}
+          <EndpointRow label={t('link.from')} end="from" value={fromLabel} points={points}
             onPick={onPickFrom} onPin={onPinFrom} pinActive={pinFromActive} onClear={onClearFrom} />
-          <EndpointRow label={t('link.to')} accent="#c62828" value={toLabel} points={points}
+          <EndpointRow label={t('link.to')} end="to" value={toLabel} points={points}
             onPick={onPickTo} onPin={onPinTo} pinActive={pinToActive} onClear={onClearTo} />
 
           <TextField select size="small" fullWidth label={t('link.slopeColor')} sx={{ mb: 1.5 }}

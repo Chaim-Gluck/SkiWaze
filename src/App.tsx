@@ -1494,7 +1494,7 @@ export default function App() {
           <div className="panel">
             <PointPicker
               label={t('app.plan.from')}
-              accent="#2e7d32"
+              end="start"
               points={points}
               valueNodeId={fromNodeId}
               customLabel={fromCustom}
@@ -1505,7 +1505,7 @@ export default function App() {
             />
             <PointPicker
               label={t('app.plan.to')}
-              accent="#c62828"
+              end="finish"
               points={points}
               valueNodeId={toNodeId}
               customLabel={toCustom}

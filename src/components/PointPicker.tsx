@@ -8,10 +8,12 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import PlaceIcon from '@mui/icons-material/Place';
+import { pinSvg } from './pinGlyphs';
 
 interface Props {
   label: string;
-  accent: string;
+  /** Which end this picker is, so its label carries the matching map marker. */
+  end: 'start' | 'finish';
   points: MeaningfulPoint[];
   valueNodeId: string | null;
   customLabel?: string | null;
@@ -23,7 +25,7 @@ interface Props {
 
 export function PointPicker({
   label,
-  accent,
+  end,
   points,
   valueNodeId,
   customLabel,
@@ -44,9 +46,19 @@ export function PointPicker({
 
   return (
     <Box sx={{ mb: 1.5 }}>
-      <Typography variant="body2" sx={{ color: accent, fontWeight: 700, mb: 0.5 }}>
-        {label}
-      </Typography>
+      {/* The label carries the map marker itself rather than its colour: it teaches the symbol the
+          user is about to look for on the map, the same reason the Plan tab strip carries the FAB
+          glyphs. The old green/red accent collided with the slope palette and said nothing. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+        <Box
+          aria-hidden
+          sx={{ lineHeight: 0, flex: '0 0 auto' }}
+          dangerouslySetInnerHTML={{ __html: pinSvg(end, 0.62) }}
+        />
+        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          {label}
+        </Typography>
+      </Box>
       <Autocomplete
         size="small"
         options={options}
