@@ -85,7 +85,14 @@ let clipSeq = 0;
  * draws it at 1. The clip id is uniquified because several of these can be in one document at once
  * and a duplicate id would silently clip the wrong element.
  */
-export function pinSvg(kind: 'start' | 'finish', scale = 1): string {
+/**
+ * The drop shadow is a stack of black ellipses at 4% opacity, so it is invisible on a dark
+ * background by construction. That is right on the map, where it lifts the pin off the snow and
+ * the tiles never follow the app theme, and wrong in a panel, where it would have to be
+ * theme-aware to survive. The inline glyphs therefore pass `shadow: false` and render identically
+ * in both themes; at 0.62x it was only ever a few pixels of grey smudge.
+ */
+export function pinSvg(kind: 'start' | 'finish', scale = 1, shadow = true): string {
   const id = `pinclip${clipSeq++}`;
   const inner =
     kind === 'finish'
@@ -97,10 +104,21 @@ export function pinSvg(kind: 'start' | 'finish', scale = 1): string {
       : // Start is the same drop left blank, with maplibre's own white disc in the head.
         `<path d="${BODY_PATH}" fill="${PIN_NAVY}"/>` +
         '<circle cx="13.5" cy="15" r="6" fill="#ffffff"/>';
+  // A white halo under the body, so a navy drop still reads on dark ground. It is needed in two
+  // places that look unrelated and are the same problem: over satellite imagery on the map, and on
+  // the dark-theme panel, where the start pin's navy is the panel's own colour and only its white
+  // disc was surviving. Drawn as a stroked copy of the body path rather than a stroke on the body
+  // itself, which would be centred and so eat 1px of the artwork.
+  const halo =
+    `<path d="${BODY_PATH}" fill="#ffffff" stroke="#ffffff" stroke-width="2.4" ` +
+    'stroke-linejoin="round"/>';
+  // The viewBox gains 2 units of padding on every side so the halo is not clipped at the silhouette
+  // edge; width/height grow with it so one SVG unit is still one pixel at scale 1. The offset is
+  // unaffected: the box grew 4 units taller, so the centre and the tip both moved down 2.
   return (
-    `<svg display="block" width="${PIN_W * scale}" height="${PIN_H * scale}" ` +
-    `viewBox="0 0 ${PIN_W} ${PIN_H}">` +
-    `<g fill-rule="nonzero">${shadowSvg()}${inner}` +
+    `<svg display="block" width="${(PIN_W + 4) * scale}" height="${(PIN_H + 4) * scale}" ` +
+    `viewBox="-2 -2 ${PIN_W + 4} ${PIN_H + 4}">` +
+    `<g fill-rule="nonzero">${shadow ? shadowSvg() : ''}${halo}${inner}` +
     `<path d="${BORDER_PATH}" fill="#000000" opacity="0.25"/>` +
     '</g></svg>'
   );

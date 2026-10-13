@@ -103,7 +103,7 @@ function EndpointRow({
         <Box
           aria-hidden
           sx={{ lineHeight: 0, flex: '0 0 auto' }}
-          dangerouslySetInnerHTML={{ __html: pinSvg(end === 'to' ? 'finish' : 'start', 0.62) }}
+          dangerouslySetInnerHTML={{ __html: pinSvg(end === 'to' ? 'finish' : 'start', 0.62, false) }}
         />
         <Typography variant="body2" sx={{ fontWeight: 700 }}>{label}</Typography>
       </Box>

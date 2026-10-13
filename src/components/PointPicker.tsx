@@ -53,7 +53,7 @@ export function PointPicker({
         <Box
           aria-hidden
           sx={{ lineHeight: 0, flex: '0 0 auto' }}
-          dangerouslySetInnerHTML={{ __html: pinSvg(end, 0.62) }}
+          dangerouslySetInnerHTML={{ __html: pinSvg(end, 0.62, false) }}
         />
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
           {label}

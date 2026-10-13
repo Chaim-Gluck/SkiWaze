@@ -2493,6 +2493,22 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
     carrying the FAB glyphs. The artwork lives in `src/components/pinGlyphs.ts`, a plain `.ts` for
     the same reason as `navChip.ts`: exporting a non-component from a `.tsx` trips
     `react(only-export-components)`.
+  - **A navy marker needs a WHITE HALO, and the two places it vanishes look unrelated.** Every
+    slope hue is spoken for, so the drop is the nav-chrome navy - which is also the dark-theme
+    panel's own background, so in the Plan card only the start pin's white disc survived, and the
+    same pin would have disappeared over dark satellite imagery on the map. One halo fixes both.
+    It is a **stroked copy** of the body path under the body, never a stroke on the body itself,
+    which would be centred and eat 1 px of the artwork; the `viewBox` therefore gains 2 units of
+    padding on every side, with `width`/`height` grown to match so one unit is still one pixel and
+    `pinOffset()` is unchanged (the box grew symmetrically, so the centre and the tip both moved
+    down 2).
+  - **The drop shadow is dropped in the panels, not recoloured.** It is black ellipses at 4%
+    opacity, so it is invisible on a dark background *by construction*. On the map that is correct
+    and must stay - it lifts the pin off the snow, and the tiles never follow the app theme - but
+    in a panel the only way to make it show is to make the glyph theme-aware, which would mean two
+    different rules for one drawing. `pinSvg(kind, scale, shadow)` lets the two inline call sites
+    pass `false`, so they render identically in both themes; at 0.62x the shadow was a few pixels
+    of grey smudge and nothing was lost.
 
 - **A reservation for a bar must be conditional on the bar existing.** `App.css`'s
   `@media (max-width: 820px)` rule gives the MapLibre bottom-corner controls
