@@ -21,6 +21,9 @@ NOTES.local.md
 # Local-only session handoff (regenerated as work lands; not for other users)
 HANDOFF.local.md
 
+# Local-only canonical backlog (stable task IDs; not for publication)
+/BACKLOG.md
+
 # Secrets / environment files
 .env
 .env.*

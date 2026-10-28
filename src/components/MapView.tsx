@@ -1452,12 +1452,15 @@ export function MapView({
           move at all: there the card is capped narrower and inset past this column, so it never
           reaches them and displacing them would be pure loss.
 
+          The navigation-mode attribute remains present while waiting for a fix; `nav` does not.
           `top` is safe in `sx` (the RTL plugin rewrites the inline axis only); `left` is not. */}
       <Box
         style={{ position: 'absolute', left: 10 }}
         sx={{
-        top: nav ? 'calc(var(--nav-banner-h, 0px) + 6px)' : '10px',
-        '@media (min-width: 821px)': { top: '10px' },
+        top: '10px',
+        '@media (max-width: 820px)': {
+          '.app[data-nav] &': { top: 'calc(var(--nav-banner-h, 0px) + 6px)' },
+        },
         zIndex: 5, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start',
         // Stop short of the map's right-hand Fab column instead of running under it. The locate Fab
         // is size="small" (40px) at right:12, so it owns the last 52px; 10px left inset + 10px gap

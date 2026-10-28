@@ -508,6 +508,7 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
             color: offRoute ? 'error.contrastText' : '#fff',
           }}
         >
+          <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 1.25, px: 2.75, py: 0.9, ...(rtl ? { paddingInlineStart: 7 } : { paddingInlineEnd: 7 }) }}>
           {/* Exit is an absolutely positioned corner icon, not a row of its own: a dedicated band
               for one control costs the card as much height as the reading it exists to show. Icon
               only - a labelled button the width of "Exit" squeezed the remaining-distance line into
@@ -519,15 +520,10 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               aria-label={t('nav.exit')}
               onClick={onExit}
               sx={{
-                // Vertically CENTRED, not pinned to the corner: since the "Now" strip moved up to
-                // the manoeuvre card this Paper is a single row, and a top-corner X on a one-row
-                // card reads as jammed into the edge rather than as belonging to the row. It stays
-                // at the inline end so it is still out of the reading path, and `insetInlineEnd`
-                // keeps it following the document direction under RTL.
+                // Centre Exit on the readings row, not the whole card: an off-route action row
+                // below it must not move the close control away from the clock and countdown.
                 position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-                // Physically right in both directions, because the card is pinned to the RIGHT
-                // corner in both: the X must sit on the screen edge, never on the side facing the
-                // middle of the map. Under RTL `insetInlineStart` IS the physical right.
+                // Keep it physically right in both languages. Under RTL, inline start is right.
                 ...(rtl ? { insetInlineStart: 9 } : { insetInlineEnd: 9 }),
                 zIndex: 1, p: 0.75,
                 color: offRoute ? 'error.contrastText' : NAV_BAR_MUTED,
@@ -542,7 +538,6 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               object in a corner rather than a full-width band, so its text has an edge on BOTH
               sides: 20px of air at the reading end, and 52px at the other so the arrival clock
               never crowds the ✕. */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 2.75, py: 0.9, ...(rtl ? { paddingInlineStart: 7 } : { paddingInlineEnd: 7 }) }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {remaining ? (
               <>
@@ -586,17 +581,21 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
               </Typography>
             )}
           </Box>
-          {offRoute && (
-            <Button
-              variant="contained"
-              startIcon={<AltRouteIcon />}
-              onClick={onReroute}
-              sx={{ borderRadius: 5, textTransform: 'none', fontWeight: 700, px: 2, boxShadow: 2, flexShrink: 0 }}
-            >
-              {t('nav.reroute')}
-            </Button>
-          )}
           </Box>
+          {/* Re-route is an action, not a reading; its own row keeps it from crowding the ETA. */}
+          {offRoute && (
+            <Box sx={{ px: 1.5, pb: 0.75 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<AltRouteIcon />}
+                onClick={onReroute}
+                sx={{ borderRadius: 5, textTransform: 'none', fontWeight: 700, px: 2, boxShadow: 2, flexShrink: 0 }}
+              >
+                {t('nav.reroute')}
+              </Button>
+            </Box>
+          )}
         </Paper>
         {/* Balances the speed dial so the card lands dead centre. Always present, even when the
             dial is not, because the dial's slot is held open too. Width tracks `.nav-speed-circle`
@@ -607,4 +606,3 @@ export function NavOverlay({ step, remaining, speedMps, offRoute, waiting, onExi
     </>
   );
 }
-

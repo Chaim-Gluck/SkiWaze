@@ -4,6 +4,15 @@ Handoff/orientation doc for humans and AI agents picking up this project. Keep i
 **public-safe**: no secrets, no exact cloud resource names, no personal emails, no internal
 URLs. Operational specifics live in `NOTES.local.md` (git-ignored).
 
+## Local backlog
+`BACKLOG.md` is the canonical **local, git-ignored** backlog. When listing, selecting or
+updating backlog work, read that file first and preserve its stable B/F/V identifiers,
+categories and statuses instead of reconstructing a list from historical notes.
+Update the same entries as decisions or work progress; a session task database is only
+a convenience mirror. Do not stage, force-add, commit or publish `BACKLOG.md`.
+The file is not distributed with a clone or worktree. If it is missing, obtain the
+user's local copy or the known main-checkout copy rather than inventing a replacement.
+
 ## What this is
 **SkiWaze** — "Waze for ski resorts." Plan a route from point **A** to point **B** on a
 mountain by combining downhill pistes and uphill lifts, respecting the skier's ability
@@ -2282,11 +2291,15 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   - **Icon-only in a corner beats a labelled button in the middle of a status bar.** The ETA bar's
     "✕ Exit" button was as wide as the text it sat beside and forced the remaining-distance line to
     wrap. It is now an absolutely positioned `IconButton` with the word surviving in the tooltip and
-    `aria-label`, `insetInlineEnd` (logical property, so RTL flips it) and **vertically centred**
-    (`top: 50%` + `translateY(-50%)`) rather than pinned to the corner - once the "Now" strip moved
-    off this card it became a single row, and a top-corner X on a one-row card reads as jammed into
-    the edge instead of as part of the row. Its inline-end inset is mirrored as padding on the ETA
-    row, so a long remaining/ETA line can never run under it.
+    `aria-label`, `insetInlineEnd` (logical property, so RTL flips it) and **vertically centred on
+    the readings row** (`top: 50%` + `translateY(-50%)`) rather than pinned to the corner.
+    Its inline-end inset is mirrored as padding on the ETA row, so a long remaining/ETA line
+    cannot run under it.
+  - **An off-route action gets its own row, not space stolen from the readings.** Re-route beside
+    the ETA covered the clock and clipped the remaining text on phones. It now occupies a
+    full-width row below the readings only while off-route. Exit is anchored to the readings
+    row rather than the whole Paper, so the action's extra height cannot move the close control.
+    Normal navigation keeps its single readings row.
   - **The whole nav overlay is FIXED dark chrome, and half-converting it is the bug.** Every piece
     of it - manoeuvre banner, ETA card, speed dial - reads over **map tiles, which do not change
     with the app theme**, so a fill taken from the light panel colour puts a white card on bright
@@ -2526,6 +2539,9 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
   with a `@media (min-width: 821px)` override, `position`/`right` left **inline** so the RTL plugin
   cannot flip them. Keyed on `navRoute`, **never** on the variable's own fallback - `calc(0px + 6px)`
   would silently lift the buttons from 12 to 6 whenever not navigating.
+  The left column must also key off navigation **mode**, not the `nav` position data:
+  waiting has no usable fix but still renders the banner. Its mobile rule uses the
+  existing `.app[data-nav]` attribute; desktop and ordinary browsing keep the original inset.
 - **A styling attribute attached to a layout SLOT follows the slot when rows are reordered.** The
   ETA clock turned blue with nobody having asked for it, via two compounding steps: a
   `<Typography color="primary.main">` had been **silently losing** to the parent `Paper`'s
@@ -2789,4 +2805,3 @@ things closed. Making status *real* is a research-heavy follow-up; findings so f
 - **Recommendation:** build the real adapters **closer to the season** (summer feeds are empty; HTML
   layouts will change by winter). Start with 1–2 resorts, prefer any that expose true JSON, and keep
   "assumed open" as the fallback where there's no data.
-
