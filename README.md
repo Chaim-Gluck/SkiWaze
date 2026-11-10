@@ -153,7 +153,8 @@ Hosted on a **static web host** as a plain static site. Deploys are **manual** �
 - **GitHub Actions (recommended):** Actions tab → *Deploy to Azure Static Web Apps (manual)* →
   **Run workflow**. It builds on the runner and uploads `dist/`. It reads the deploy token from
   the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN` (stored in GitHub, never in the repo)
-  and re-resolves dependencies from public npm, so it doesn't depend on any local registry.
+  and installs the committed dependency versions from public npm with `npm ci`, so it
+  doesn't depend on any local registry.
 - **CLI (local):** `npm run build`, then upload `dist/` with the hosting provider's CLI using
   the deploy token.
 
@@ -185,6 +186,7 @@ queue times, live GPS turn-by-turn, 3D terrain, offline/PWA.
 - **Ski/route data:** derived from **© OpenStreetMap contributors**, licensed under the
   [Open Database License (ODbL)](https://www.openstreetmap.org/copyright). The compiled
   datasets in `public/resorts/*` are produced from OpenStreetMap via the Overpass API.
-- **Base map tiles:** OpenStreetMap (standard), OpenTopoMap (CC-BY-SA), and Esri World
-  Imagery — each credited in the in-app map attribution control.
+- **Base maps:** OpenFreeMap Liberty (OpenStreetMap/OpenMapTiles and Natural Earth),
+  OpenTopoMap (CC-BY-SA), and Esri World Imagery - each credited in the in-app map
+  attribution control and subject to its provider's terms.
 - **Elevation:** Terrain Tiles (AWS Open Data).

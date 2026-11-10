@@ -22,11 +22,7 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        # The committed package-lock.json may resolve against a private registry that
-        # GitHub-hosted runners can't reach, so we drop it and resolve fresh from public npm.
-        run: |
-          rm -f package-lock.json
-          npm install --registry=https://registry.npmjs.org --no-audit --no-fund
+        run: npm ci --registry=https://registry.npmjs.org --no-audit --no-fund
 
       - name: Build
         run: npm run build

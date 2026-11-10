@@ -680,8 +680,9 @@ npm run probe:liftmix        # lift counts by type per resort — a quick read o
 - Static site: `npm run build` → `dist/` of static assets → uploaded to a **static web host**.
 - **Manual only:** the deploy GitHub Actions workflow is `workflow_dispatch` (Run workflow) —
   a plain `git push` never publishes.
-- CI removes `package-lock.json` and reinstalls from **public npm** (the committed lock may
-  reference a private registry the runner can't reach), then builds and uploads `dist/`.
+- The committed `package-lock.json` resolves from **public npm**. CI uses `npm ci` to install
+  those exact versions, then builds and uploads `dist/`. Keep registry URLs public when
+  updating dependencies; machine-specific registry configuration belongs in the ignored `.npmrc`.
 - SPA routing + cache headers are configured in `public/staticwebapp.config.json`.
 - Exact resource names, the live URL, provider admin commands, and account details are in
   **`NOTES.local.md`** (git-ignored) — not committed.
