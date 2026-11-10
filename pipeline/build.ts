@@ -1,4 +1,4 @@
-// SkiWaze data pipeline orchestrator.
+// SkiWays data pipeline orchestrator.
 // Usage: tsx pipeline/build.ts <resortId|all>
 import fs from 'node:fs';
 import path from 'node:path';

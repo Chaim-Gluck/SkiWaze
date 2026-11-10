@@ -1,4 +1,4 @@
-# SkiWaze — Plan & Roadmap
+# SkiWays — Plan & Roadmap
 
 "Waze for ski resorts": route A→B across pistes + lifts, respecting ability, slope-color
 preferences, allowed lift types, and lift hours, with realistic time estimates and live

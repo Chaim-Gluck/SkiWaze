@@ -1,6 +1,6 @@
-# SkiWaze UI & UX Style Guide
+# SkiWays UI & UX Style Guide
 
-The SkiWaze UI uses **React + TypeScript (strict) + Vite + Material UI (MUI)** with a shared
+The SkiWays UI uses **React + TypeScript (strict) + Vite + Material UI (MUI)** with a shared
 light/dark theme. This guide describes the look & feel to keep. It is about **presentation
 only** — read §0 first; it overrides everything else here.
 
@@ -55,7 +55,7 @@ by MUI — style those with tokenized CSS.
 - **Map-first.** The map fills the screen; UI floats over/beside it.
 - **Desktop/tablet (>820px)**: persistent **left panel** + top `AppBar`.
 - **Mobile (≤820px)**: full-screen map + a **bottom sheet** (slide up, drag handle, scroll) for
-  the controls — **not** a bottom-navigation bar (SkiWaze has one map + contextual tools, not
+  the controls — **not** a bottom-navigation bar (SkiWays has one map + contextual tools, not
   3–5 top-level destinations).
 - **Feedback**: `Snackbar`/`Alert` for transient messages, `Dialog` for important explainers.
   English only — no i18n/RTL.

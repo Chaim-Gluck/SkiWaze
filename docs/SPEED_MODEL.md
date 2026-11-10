@@ -1,6 +1,6 @@
 # Ski speed & time model
 
-How SkiWaze turns a route into a **time estimate**, and why there are two different "speeds".
+How SkiWays turns a route into a **time estimate**, and why there are two different "speeds".
 Single source of truth: [`src/config/speedModel.ts`](../src/config/speedModel.ts).
 
 ## Progress speed vs. true move speed

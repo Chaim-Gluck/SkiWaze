@@ -110,18 +110,10 @@ body:lang(he) {
   background-clip: text;
   color: transparent;
 }
-.logo-tag { font-weight: 700; font-size: 12px; letter-spacing: 4px; color: var(--muted); margin-top: 3px; }
+.logo-tag { font-weight: 700; font-size: 12px; letter-spacing: 4px; color: var(--muted); margin-top: 3px; white-space: nowrap; }
 /* Hebrew has no tracked-caps convention and 4px just looks broken. Keyed on :lang, not [dir],
    because the header is deliberately pinned dir="ltr". */
 .logo-tag:lang(he) { letter-spacing: 1px; font-size: 13px; }
-
-/* The tagline is what sets the lockup's width (measured: 170px of ink against the wordmark's 138)
-   and it is the only part of the header carrying no information, so it is the first thing to go —
-   but only once it actually stops fitting. With it the bar needs 397px (brand 213 + picker 88 +
-   one 40px button + 48 of padding and gaps); below 400 that no longer holds. */
-@media (max-width: 399px) {
-  .logo-tag { display: none; }
-}
 
 .body {
   display: flex;
@@ -288,6 +280,19 @@ body:lang(he) {
   }
 }
 
+/* Keep the slogan visible without crowding the resort picker or adding header height. */
+@media (max-width: 399px) {
+  .logo-mark { gap: 8px; }
+  .logo-tag { font-size: 10px; letter-spacing: 0.5px; }
+  .logo-tag:lang(he) { font-size: 12px; letter-spacing: 0.25px; }
+}
+
+@media (max-width: 359px) {
+  .logo-name { font-size: 21px; }
+  .logo-tag { font-size: 9px; letter-spacing: 0; }
+  .logo-tag:lang(he) { font-size: 11px; letter-spacing: 0; }
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -319,4 +324,3 @@ body:lang(he) {
   font-weight: 600;
   font-size: 13px;
 }
-

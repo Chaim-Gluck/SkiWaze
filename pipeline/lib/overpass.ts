@@ -7,7 +7,7 @@ const OVERPASS_ENDPOINTS = [
   'https://overpass.private.coffee/api/interpreter',
 ];
 
-const USER_AGENT = 'SkiWaze/0.1 (ski routing dev tool)';
+const USER_AGENT = 'SkiWays/0.1 (ski routing dev tool)';
 
 /** A single OSM way with parallel node-id / coordinate arrays (from `out geom`). */
 export interface RawWay {

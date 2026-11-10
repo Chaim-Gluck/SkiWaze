@@ -1,12 +1,15 @@
-# ⛷ SkiWaze
+# ⛷ SkiWays
 
-**Waze for ski resorts** — navigate from point A to point B on a mountain by combining
+**Navigate the slopes** — plan a route from point A to point B on a mountain by combining
 downhill pistes and uphill lifts, respecting your ability, slope-color preferences,
 allowed lift types, and lift opening hours, with realistic time estimates.
 
 Web app: **React + TypeScript + Vite + MapLibre GL**. Ski data comes from **OpenStreetMap**
 (via the Overpass API) plus an elevation service, preprocessed offline into static per-resort
 routing graphs. No login in v1 — preferences are stored in your browser.
+
+The app is branded **SkiWays**; the repository/package names and existing browser-storage
+keys stay unchanged.
 
 ## Features
 - Pick a resort (defaults to your nearest by geolocation, else **Madonna di Campiglio**).
@@ -54,7 +57,7 @@ Val Thorens – Les 3 Vallées (FR), Tignes – Val d'Isère / Espace Killy (FR)
 
 ## How the graph is built (node identity & skiability)
 The hard part is deciding when two nearby points are the **same** node and when a gap is
-**skiable** (and in which direction). SkiWaze models every node in 3D (lon, lat, **elevation**).
+**skiable** (and in which direction). SkiWays models every node in 3D (lon, lat, **elevation**).
 
 **These rules live in the shared pipeline (`pipeline/lib/buildGraph.ts` + `src/config/graphConstants.ts`)
 and therefore apply identically to EVERY resort — current and any future one you add.** There is

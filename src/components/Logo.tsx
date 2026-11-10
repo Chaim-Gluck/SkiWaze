@@ -6,12 +6,12 @@ interface Props {
 }
 
 /**
- * SkiNav header lockup: the teardrop-pin ski icon + the "SKINAV" wordmark
- * ("NAV" in the brand blue→green gradient) and the "NAVIGATE THE SLOPES" tagline.
+ * SkiWays header lockup: the teardrop-pin ski icon + the "SkiWays" wordmark
+ * ("Ways" in the brand blue→green gradient) and the "NAVIGATE THE SLOPES" tagline.
  *
  * The user-facing name is deliberately NOT the repository/package name (`skiwaze`): the wordmark is
- * the one thing a visitor sees, and "Waze" is someone else's trademark. Renaming the repo, the
- * package or the code identifiers would churn every path and import for no benefit here.
+ * the one thing a visitor sees. Repository/package names and browser-storage identifiers stay
+ * unchanged so a branding update cannot break links or returning users' saved settings.
  */
 export function Logo({ className }: Props) {
   const { t } = useTranslation();
@@ -20,7 +20,7 @@ export function Logo({ className }: Props) {
       <img src={pinUrl} alt="" className="logo-pin" />
       <span className="logo-words">
         <span className="logo-name">
-          SKI<span className="logo-accent">NAV</span>
+          Ski<span className="logo-accent">Ways</span>
         </span>
         {/* The wordmark is the brand and never translates; the tagline is a sentence, so it does. */}
         <span className="logo-tag">{t('app.tagline')}</span>

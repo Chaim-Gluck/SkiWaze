@@ -1,4 +1,4 @@
-# AGENTS.md — SkiWaze
+# AGENTS.md — SkiWays
 
 Handoff/orientation doc for humans and AI agents picking up this project. Keep it
 **public-safe**: no secrets, no exact cloud resource names, no personal emails, no internal
@@ -14,11 +14,18 @@ The file is not distributed with a clone or worktree. If it is missing, obtain t
 user's local copy or the known main-checkout copy rather than inventing a replacement.
 
 ## What this is
-**SkiWaze** — "Waze for ski resorts." Plan a route from point **A** to point **B** on a
+**SkiWays** — "Navigate the slopes." Plan a route from point **A** to point **B** on a
 mountain by combining downhill pistes and uphill lifts, respecting the skier's ability
 (max difficulty), slope-color preferences, allowed lift types, and lift opening hours, with
 realistic time estimates. There is also a **Longest skiable run** finder (longest lift-free
 descent for your level). No login in v1 — preferences persist in the browser (localStorage).
+
+**Branding:** the app name is SkiWays; the repository/package retain their existing
+SkiWaze / `skiwaze` names. Keep the slogan "Navigate the slopes" and its existing
+translation. Browser-storage keys are compatibility identifiers, not display
+branding: do not rename them or lose returning users' saved settings.
+The slogan stays visible on mobile too; compact its type and tracking rather than
+hiding it or increasing the header height.
 
 ## Tech stack
 - **Web app:** React 19 + TypeScript + Vite, map rendering via **MapLibre GL**.

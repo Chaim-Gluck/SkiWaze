@@ -1,7 +1,7 @@
 {
-  "name": "SkiNav",
-  "short_name": "SkiNav",
-  "description": "SkiNav - navigate the slopes: route a ski resort from A to B by slopes and lifts.",
+  "name": "SkiWays",
+  "short_name": "SkiWays",
+  "description": "SkiWays - navigate the slopes: route a ski resort from A to B by slopes and lifts.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1720",

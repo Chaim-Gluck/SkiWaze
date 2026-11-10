@@ -362,7 +362,7 @@
     },
     "about": {
       "title": "About",
-      "what": "SkiNav plans a route from A to B across a ski resort, combining pistes and lifts and respecting your level, your slope preferences and lift opening hours. It also finds the longest lift-free descent on the mountain.",
+      "what": "SkiWays plans a route from A to B across a ski resort, combining pistes and lifts and respecting your level, your slope preferences and lift opening hours. It also finds the longest lift-free descent on the mountain.",
       "data": "Terrain data comes from OpenStreetMap and is compiled offline, so routing runs entirely in your browser. Times and distances are estimates: always follow the signs on the mountain.",
       "credit": "Built by {{name}}, 2026"
     },
@@ -406,8 +406,8 @@
       "toDest": "Share the “To” destination",
       "toDestNamed": "Share the “To” destination: {{name}}",
       "thisSpot": "this spot",
-      "msgHere": "📍 Meet me at {{place}} - open this SkiNav link to navigate there:",
-      "msgMe": "📍 Come meet me on the slopes! Open this SkiNav link and it'll route you to my location:"
+      "msgHere": "📍 Meet me at {{place}} - open this SkiWays link to navigate there:",
+      "msgMe": "📍 Come meet me on the slopes! Open this SkiWays link and it'll route you to my location:"
     },
     "sharePrompt": {
       "text": "A location was shared with you - set as your destination. Navigate there?",

@@ -952,7 +952,7 @@ export default function App() {
   };
 
   // ---- Share a location ------------------------------------------------------------------
-  // Build a deep-link that opens SkiWaze at this resort with `coord` as the destination.
+  // Build a deep-link that opens SkiWays at this resort with `coord` as the destination.
   const buildShareUrl = (coord: LonLat, name?: string): string => {
     const url = new URL(window.location.origin + window.location.pathname);
     url.searchParams.set('resort', resortId);
@@ -964,7 +964,7 @@ export default function App() {
   const shareCoord = async (coord: LonLat, name: string | undefined, message: string) => {
     const url = buildShareUrl(coord, name);
     if (navigator.share) {
-      try { await navigator.share({ title: 'SkiWaze', text: message, url }); }
+      try { await navigator.share({ title: 'SkiWays', text: message, url }); }
       catch { /* user cancelled the share sheet */ }
     } else if (navigator.clipboard?.writeText) {
       try { await navigator.clipboard.writeText(`${message}\n${url}`); notify(t('app.notice.shareCopied'), 'success'); }

@@ -1,7 +1,7 @@
 // Canvas-drawn country flags, used both as MapLibre marker icons (ImageData) and as small
 // picker chips (data URL). Emoji flags are avoided on purpose: Windows renders them as letter
 // pairs and MapLibre can't draw emoji at all, so we paint the flags ourselves for a consistent,
-// correct look everywhere. Only the countries SkiWaze currently covers are implemented.
+// correct look everywhere. Only the countries SkiWays currently covers are implemented.
 
 const COUNTRY_CODE: Record<string, string> = {
   Austria: 'AT',

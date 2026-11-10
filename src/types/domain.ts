@@ -1,4 +1,4 @@
-// Core domain model for SkiWaze. Shared by the offline data pipeline (Node)
+// Core domain model for SkiWays. Shared by the offline data pipeline (Node)
 // and the web app (browser). Keep this framework-free so both can import it.
 
 /** A geographic point with elevation in meters above sea level. */
