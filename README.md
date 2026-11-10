@@ -1,67 +1,136 @@
 # ⛷ SkiWays
 
-**Navigate the slopes** — plan a route from point A to point B on a mountain by combining
+**Navigate the slopes** - plan a route from point A to point B on a mountain by combining
 downhill pistes and uphill lifts, respecting your ability, slope-color preferences,
-allowed lift types, and lift opening hours, with realistic time estimates.
+allowed lift types, and available lift opening hours. Follow it with live GPS guidance,
+or explore the mountain in 2D or 3D.
 
-Web app: **React + TypeScript + Vite + MapLibre GL**. Ski data comes from **OpenStreetMap**
-(via the Overpass API) plus an elevation service, preprocessed offline into static per-resort
-routing graphs. No login in v1 — preferences are stored in your browser.
+Web app: **React + TypeScript + Vite + MapLibre GL**, with **Material UI** and
+**English / Hebrew (RTL)**. Ski data comes from **OpenStreetMap** and elevation datasets,
+compiled ahead of time into static per-resort routing graphs. Routes are calculated in
+the browser, with no account or installation required.
 
 The app is branded **SkiWays**; the repository/package names and existing browser-storage
 keys stay unchanged.
 
 ## Features
-- Pick a resort (defaults to your nearest by geolocation, else **Madonna di Campiglio**).
+- Choose from **18 resorts** using the country-grouped picker or resort markers on the map.
+  With location permission, a nearby resort can be selected automatically; otherwise the
+  default is **Madonna di Campiglio**.
 - Choose **A** and **B** from named points (lift tops/bottoms, named piste ends), your
   current location, or by pinning on the map.
-- **Fastest** routing that mixes slopes + lifts, or a **Longest skiable streak** mode that
-  maximises your longest lift-free descent.
-- Get **2–3 diverse route options** with stats (time, distance, descent, lifts, color
-  breakdown, longest streak) and pick the one you like — nothing is auto-chosen for you.
-- **Go now** or **arrive by** a time (derives when to start).
-- Set your **max difficulty**, **preferred colors**, and **allowed lift types**.
-- Warnings when a lift on the route is **about to close**, and popups when data
-  (opening hours, wait times, speeds) is unavailable and defaults are used.
+- Compare **Balanced**, **Fastest**, **Fewest lifts**, **My preferred runs**, and
+  **Longest run** routing. Balanced compares different goals; individual modes offer up to
+  three distinct options when the terrain allows, with time, distance, descent and lift stats.
+- Find the **longest lift-free descent between A and B**, or use **This resort > Longest**
+  to find up to three descents anywhere in the resort. If B cannot be reached without a
+  lift, the A-to-B longest mode can offer a lift-assisted route instead.
+- Plan for **now** or **arrive by** a chosen time, including the estimated time to leave.
+- Set your **max difficulty**, **preferred colors**, **allowed lift types**, skiing pace,
+  and whether to allow a bit of poling or avoid app-added bridges.
+- Use **live GPS turn-by-turn guidance** with a following map, current-run label,
+  next-turn instructions, remaining distance/time, ETA and available GPS speed.
+  Off-route warnings offer a **Re-route** action.
+- When location is unavailable or you are away from the mountain, an optional, clearly
+  labelled **Preview** can play through the route. Preview is simulated, not live guidance.
+- Switch between **Map** (OpenFreeMap Liberty), **Topo**, and **Satellite** bases, with
+  optional **3D terrain** and piste, lift, area and label layers.
+- Mark lifts and runs **closed** from the Closed panel or route steps. Saved closures
+  affect routing and are shown on the map; reopen them when conditions change.
+- Add **custom links** for connections you know are skiable. These remain local to your browser.
+- **Share your location or a meeting point by link**, including through WhatsApp.
+  A friend can open it in a browser and plan from their own start to the same destination,
+  without installing the app. This shares a fixed point, not continuous live friend tracking.
+- Use your **locally measured skiing speeds** from real GPS navigation to personalize estimates.
+- Light/dark themes and a mobile layout with bottom navigation and a bottom sheet.
+
+## Safety, status and privacy
+**There is no live lift/piste-status or queue feed.** Terrain is assumed open unless you
+mark it closed. Opening-hours warnings use the hours recorded in the data, where available;
+missing hours and queue waits rely on assumptions, not live resort information.
+Follow official closures, signs and resort instructions. Times and GPS positions are estimates,
+and dotted app-added connections are not proof that terrain is skiable.
+
+**Off-piste is excluded from routing and hidden on the map by default.** Routing over it
+requires an explicit preference, and displaying it uses a separate layer toggle. It is
+unmarked, unpatrolled terrain, not an ordinary black run.
+
+Location needs browser permission and **HTTPS**, or `localhost` during development.
+Keep the app visible while navigating; background GPS and screen-wake behavior depend on
+the browser and device. 3D performance also depends on the device; 2D remains available.
+
+Routing runs on the client. Preferences, closures, custom links and measured-speed samples
+are stored in the browser. **This does not mean there is no server communication:** the app
+downloads static resort data and third-party map resources. Shared links include the meeting
+point in their URL query, so the hosting service and the service used to send the link can
+receive those coordinates.
 
 ## Getting started
+Use a supported **Node.js LTS** release (22.12 or newer) and npm.
+
 ```bash
-npm install
+npm ci
 npm run dev        # start the web app
+npm run build      # TypeScript project build + production bundle
+npm run lint       # oxlint
+npm run preview    # serve the production bundle after building
 ```
 
-> Note: if your machine needs a private npm registry, put it in a git-ignored `.npmrc`.
-> External contributors just use public npm.
+The compiled resort data is already included, so running the web app does **not** require
+rebuilding it. App and pipeline APIs need no custom API keys. The committed lockfile uses
+public npm; keep machine-specific npm configuration in a git-ignored `.npmrc`, not the lockfile.
 
 > **Contributors / AI agents:** see [`AGENTS.md`](./AGENTS.md) for architecture, data model,
 > domain invariants, gotchas, and conventions.
 
 ## Data pipeline
-Resort data is fetched from OpenStreetMap + an elevation API and compiled into
-`public/resorts/<id>/{graph.json, geo.json, meta.json}` (plus `resorts/index.json`).
-The web app only reads these static files — it never calls Overpass at runtime.
+The Node/TypeScript pipeline fetches OpenStreetMap pistes, passenger lifts and road barriers
+through Overpass. Elevations come primarily from **Skadi SRTM and Terrarium rasters** sampled
+locally, with an **ASTER API tiebreaker** where needed.
+
+It compiles `public/resorts/<id>/{graph.json, geo.json, meta.json}` and updates
+`public/resorts/index.json`. Each build also emits `spines.json` for the debug map; the normal
+app does not download that review artifact. **Overpass queries and routing-graph elevation
+enrichment run only in the build pipeline.** The app reads compiled routing data; its basemap
+and 3D terrain resources are loaded separately at runtime.
 
 ```bash
 npm run data madonna-di-campiglio   # build one resort
-npm run data:all                    # build all five resorts
-npm run data:refresh                # force re-sync (ignore the 30-day cache)
+npm run data:all                    # build every configured resort
+npm run data:refresh                # refresh OSM inputs for every resort
+npm run data -- madonna-di-campiglio --refresh  # refresh OSM for one resort
 ```
 
-Raw Overpass responses and elevation lookups are cached on disk in `pipeline/.cache/`
-(git-ignored) with a 30-day TTL, so rebuilds are fast and don't hammer the public APIs.
-The compiled `public/resorts/*` files are the saved dataset and should be committed.
+Overpass inputs use a **30-day disk cache** in the git-ignored `pipeline/.cache/`.
+Elevation samples and downloaded rasters are persistent caches; `--refresh` refetches OSM,
+not the entire elevation dataset. Compiled resort files are committed, raw caches are not.
 
 ### Resorts
-Madonna di Campiglio (IT, default), Cervinia–Zermatt (IT/CH), Sella Ronda / Canazei (IT),
-Val Thorens – Les 3 Vallées (FR), Tignes – Val d'Isère / Espace Killy (FR).
+The current 18 configured resorts are:
+
+| Country / countries | Resorts |
+|---|---|
+| Italy | Madonna di Campiglio (including Pinzolo and Folgarida-Marilleva), Sella Ronda, Monterosa Ski, Pontedilegno-Tonale |
+| France | Les 3 Vallées, Tignes - Val d'Isère, Paradiski (Les Arcs - La Plagne), Alpe d'Huez, Les 2 Alpes |
+| Austria | Ski Arlberg (St. Anton, Lech, Zürs, Warth), Mayrhofen, Sölden |
+| Switzerland | Verbier - 4 Vallées |
+| Switzerland / Italy | Zermatt - Cervinia (Matterhorn Ski Paradise) |
+| Austria / Switzerland | Ischgl - Samnaun (Silvretta Arena) |
+| France / Switzerland | Portes du Soleil |
+| Georgia | Gudauri |
+| Israel | Mount Hermon |
+
+`src/config/resorts.ts` is the source of truth for names, extraction boundaries and official
+information links. Some areas contain genuine disconnected sectors or valley run-outs;
+the graph does not invent connections to make them routable.
 
 ## How the graph is built (node identity & skiability)
 The hard part is deciding when two nearby points are the **same** node and when a gap is
 **skiable** (and in which direction). SkiWays models every node in 3D (lon, lat, **elevation**).
 
-**These rules live in the shared pipeline (`pipeline/lib/buildGraph.ts` + `src/config/graphConstants.ts`)
-and therefore apply identically to EVERY resort — current and any future one you add.** There is
-no per-resort graph code; adding a resort just runs the same passes.
+**Graph rules live in the shared pipeline** (`pipeline/build.ts`, `pipeline/lib/` and
+`src/config/graphConstants.ts`) and apply to every resort. There is no per-resort routing code.
+The full invariants and pass ordering are documented in [`AGENTS.md`](AGENTS.md).
 
 - **Same point** only when two endpoints are within *both* a horizontal (`Hmerge`) *and*
   vertical (`Vmerge`) tolerance — so two huts a short distance apart but at different heights
@@ -69,29 +138,31 @@ no per-resort graph code; adding a resort just runs the same passes.
 - **Endpoint-to-line snapping** (`snapToLineRadius`, 45 m): a run whose endpoint touches
   another run's *middle* (a T-junction) is connected by splitting that run at the touch point.
   This closes the most common OSM gap class.
-- **Skiable gaps** between close-but-distinct "stuck" nodes get a **directional** connector:
-  downhill-only (higher→lower) when the gradient is skiable, near-flat gaps become a
-  bidirectional traverse, and uphill is never inferred.
+- **Gap-filling passes** can add short, explicitly synthetic connectors. Direction, climb,
+  road-crossing and reachability guards limit these guesses; proximity alone is not evidence
+  that a crossing exists.
 - **Slopes are one-way** (descending only), **except near-flat cat-tracks** (gradient
-  ≤ `flatGradeMax`) which also get a reverse traverse — but never a rise over `maxTraverseClimb`
-  (you can skate a few metres, not climb toward a summit).
-- **Lifts** are up-only, except gondolas/cable-cars/funiculars which also carry skiers **down**.
-- **Flat areas / junctions** take direction from their surroundings (the "K" swap) without ever
-  gaining elevation.
-- **Rescue pass** guarantees no run is a dead route: a node that can't reach any lift is linked
-  to the nearest reachable node within `rescueRadius`; large drops become one-way so the reverse
-  can't be abused to climb.
-- **Slope numbers** (OSM `ref`/`piste:ref`) are shown before names in directions and the A/B list.
-- Inferred/rescue/snap links (and user custom links) are marked **synthetic** → drawn dotted,
-  flagged in routes, and excludable via the "Avoid app-added bridges" toggle.
-- A per-resort `pipeline/overrides/<id>.json` can correct any heuristic mistake
-  (force-merge/split nodes, add/remove connectors, set lift download capability).
+  ≤ `flatGradeMax`) which can earn a reverse traverse within `maxTraverseClimb`.
+  An explicit mapped `oneway=no` can waive the grade test, not the climb cap. Limited mapped
+  lift-access climbs are handled separately and charged as climbing, not free skiing.
+- **Lifts** are normally up-only. Gondolas, cable cars and funiculars can carry skiers down;
+  explicit two-way tags can also grant a reverse direction to eligible aerial lifts or
+  people movers. Non-passenger and lifecycle-dead lifts are filtered out.
+- **Area pistes** contribute routing through interior spines and connections, while the map
+  displays the polygons as fills instead of drawing their rims as extra runs.
+- **Automatic elevation-consensus corrections** re-derive affected directions and use
+  reachability guards. Where automatic evidence is insufficient, an evidence-backed human
+  override can pin a correction.
+- **App-added bridges** are dotted magenta and can be excluded with the corresponding
+  preference. **User custom links** are dotted cyan and remain a separate, deliberate input.
+- Per-resort `pipeline/overrides/<id>.json` files hold reviewed data corrections.
+  `acceptedBasins` and `acceptedDeadEnds` record legitimate disconnections for the audits;
+  they do not add graph connections.
 
 ## Adding a resort
-Adding a resort is a **supported, routine operation and should go smoothly**. The pipeline is fully
-generic — the same graph rules apply to every resort, with **no per-resort code**. Every defect we
-have hit so far has been turned into a build-time rule that fires for all resorts, so a new resort
-mostly just works.
+Adding a resort uses the existing shared pipeline, with **no per-resort routing code**.
+Mapping gaps and elevation faults still require acceptance review, and sometimes
+evidence-backed overrides. A reusable defect belongs in a shared build-time rule.
 
 1. **Define it** — add an entry to `RESORTS` in `src/config/resorts.ts`
    (`id`, `name`, `country`, `center`, `bbox`, `defaultZoom`, `timezone`). The **`bbox`** is the
@@ -102,14 +173,13 @@ mostly just works.
    elevation-consensus pass, which repairs mis-oriented piste segments automatically.
 3. **Audit it — one command** —
    ```bash
-   npm run check:resort <id>                    # the acceptance gate: one verdict table
-   npm run check:resort <id> --skip-elevation   # skip the (slower) second-DEM cross-check
+   npm run check:resort <id>                     # the acceptance gate: one verdict table
+   npm run check:resort -- <id> --skip-elevation  # skip the second-DEM cross-check
    ```
    Each line reports `ok` / `REVIEW` / `FAIL`. **`REVIEW` is not failure** — these tools report
    *candidates*, not certainties, and a valley run ending at a road is a legitimate "trapped" node.
-   Verify every candidate on the map (`/devtools/mapdebug.html`, or the deep-link
-   `?resort=<id>&at=<lat>,<lon>&z=18`) before writing an override. `FAIL` means the check itself
-   errored — fix the tooling first.
+   Review candidates using the investigation-specific debug-map recipe in `AGENTS.md`
+   before writing an override. `FAIL` means the check itself errored - fix the tooling first.
 4. **Sign off the islands** — `npm run check:basins` finds terrain you can ski *into* that cannot
    get back to the main body. Usually the biggest review job on a new resort, and most of what it
    finds is **not a bug** (ski-bus satellites, village run-outs, nursery pods). Record each verdict
@@ -122,9 +192,10 @@ mostly just works.
 7. **Ship** — commit `public/resorts/<id>/*` and `src/config/resorts.ts` (plus any override), push,
    then deploy (below).
 
-Genuine data gaps are fixed with a `pipeline/overrides/<id>.json` file — see
-`pipeline/overrides/example.json.example` for the schema; overrides run *after* the generic passes.
-Real-world dead-ends (a valley run ending at a road with no lift) are fine to leave.
+Use `pipeline/overrides/<id>.json` only for corrections supported by real-world evidence;
+see `pipeline/overrides/example.json.example` for examples and `pipeline/lib/overrides.ts`
+for the schema. Overrides run after the initial graph build, followed by guarded corrections
+and cleanup passes. Real-world dead-ends are signed off, not bridged.
 
 ### Pitfalls — see `AGENTS.md`
 **Every pitfall we have discovered and handled, with its symptom, diagnosis and fix, lives in
@@ -169,17 +240,23 @@ src/
   utils/                 geo + formatting helpers
   routing/               graph index, cost, Dijkstra, alternatives, longest-streak, planner
   components/            MapView, PointPicker, PreferencesPanel, RouteOptions
-  data/, state/          static-data loaders, localStorage preferences
+  hooks/                 live GPS location
+  i18n/, locales/        language setup and English/Hebrew catalogues
+  data/, state/          static-data loaders and browser-local settings/contributions
+  theme.tsx              shared MUI theme and CSS tokens
   App.tsx                main UI
 pipeline/
   lib/                   overpass, normalize, elevation, buildGraph, overrides, validate, emit, cache
   build.ts               orchestrator (npm run data)
 public/resorts/          compiled per-resort datasets (the saved data)
+docs/                   speed-model and style references
 ```
 
-## Not in v1 (future)
-Login / accounts, Strava integration (personal average speeds), live lift status &
-queue times, live GPS turn-by-turn, 3D terrain, offline/PWA.
+## Not yet available
+Accounts and cross-device sync, Strava integration, live lift/piste status and queue feeds,
+signposted **Iconic routes** (the tab currently says "Coming soon"), and complete offline
+maps / PWA support. Local measured-speed calibration, live GPS navigation and 3D terrain
+are already available; they are not future features.
 
 ## License & attribution
 - **Code:** [MIT](./LICENSE).
@@ -189,4 +266,6 @@ queue times, live GPS turn-by-turn, 3D terrain, offline/PWA.
 - **Base maps:** OpenFreeMap Liberty (OpenStreetMap/OpenMapTiles and Natural Earth),
   OpenTopoMap (CC-BY-SA), and Esri World Imagery - each credited in the in-app map
   attribution control and subject to its provider's terms.
-- **Elevation:** Terrain Tiles (AWS Open Data).
+- **Elevation:** Skadi SRTM and Terrarium (Terrain Tiles / AWS Open Data), with ASTER via
+  OpenTopoData for tiebreaking. Provider data and map assets retain their own terms;
+  the code's MIT license does not replace them.
