@@ -253,10 +253,13 @@ docs/                   speed-model and style references
 ```
 
 ## Not yet available
-Accounts and cross-device sync, Strava integration, live lift/piste status and queue feeds,
-signposted **Iconic routes** (the tab currently says "Coming soon"), and complete offline
-maps / PWA support. Local measured-speed calibration, live GPS navigation and 3D terrain
-are already available; they are not future features.
+- User accounts.
+- Cross-device synchronization.
+- Strava integration.
+- Live lift and piste status feeds.
+- Live lift queue times.
+- Planning for signposted iconic routes.
+- Complete offline maps and PWA support.
 
 ## License & attribution
 - **Code:** [MIT](./LICENSE).
